@@ -1,0 +1,106 @@
+{
+  "date": "2026-05-08",
+  "target": "<demo-host>",
+  "summary": {
+    "plugin_local_monitoring_type_0": "created hosts/Server/Plugin.1, removed cleanly; DetectorEx and ExternalDetector factories remained NOT_FOUND",
+    "plugin_local_monitoring_type_1": "created hosts/Server/Plugin.2, removed cleanly; DetectorEx and ExternalDetector factories remained NOT_FOUND",
+    "parent_creation": "DetectorEx/ExternalDetector child creation under host, AVDetector, AppDataDetector, DeviceIpint, and TextEventSource did not create any object",
+    "direct_grpc_raise": "DetectorEx spelling variants returned gRPC 14; AppDataDetector returned gRPC 13 BAD_OPERATION",
+    "cleanup": "hosts/Server/Plugin.1, hosts/Server/Plugin.2, and hosts/Server/DetectorEx.0/1/2 were not found after probes"
+  },
+  "plugin_probe": [
+    {
+      "module_name": "LocalMonitoring",
+      "type": 0,
+      "created_uid": "hosts/Server/Plugin.1",
+      "removed": true,
+      "detector_ex_factory_status": "NOT_FOUND",
+      "external_detector_factory_status": "NOT_FOUND",
+      "detector_ex_units_found": 0
+    },
+    {
+      "module_name": "LocalMonitoring",
+      "type": 1,
+      "created_uid": "hosts/Server/Plugin.2",
+      "removed": true,
+      "detector_ex_factory_status": "NOT_FOUND",
+      "external_detector_factory_status": "NOT_FOUND",
+      "detector_ex_units_found": 0
+    }
+  ],
+  "parent_creation_probe": [
+    {
+      "parent": "hosts/Server",
+      "type": "DetectorEx",
+      "result": "empty_added_failed_and_failed_reason"
+    },
+    {
+      "parent": "hosts/Server",
+      "type": "ExternalDetector",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/AVDetector.1",
+      "type": "DetectorEx",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/AVDetector.1",
+      "type": "ExternalDetector",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/AppDataDetector.22",
+      "type": "DetectorEx",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/AppDataDetector.22",
+      "type": "ExternalDetector",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/DeviceIpint.24",
+      "type": "DetectorEx",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/DeviceIpint.24",
+      "type": "ExternalDetector",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/DeviceIpint.24/TextEventSource.0",
+      "type": "DetectorEx",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    },
+    {
+      "parent": "hosts/Server/DeviceIpint.24/TextEventSource.0",
+      "type": "ExternalDetector",
+      "result": "CONFIG_ERROR_UNKNOWN_fanout_request_has_failed"
+    }
+  ],
+  "direct_grpc_raise_probe": [
+    {
+      "access_point": "DetectorEx.1",
+      "result": "grpc_14_cant_resolve_reference"
+    },
+    {
+      "access_point": "hosts/Server/DetectorEx.1",
+      "result": "grpc_14_cant_resolve_reference"
+    },
+    {
+      "access_point": "hosts/Server/DetectorEx.1/EventSupplier",
+      "result": "grpc_14_cant_resolve_reference"
+    },
+    {
+      "access_point": "hosts/Server/AppDataDetector.22/EventSupplier",
+      "result": "grpc_13_bad_operation"
+    },
+    {
+      "access_point": "hosts/Server/DeviceIpint.24/TextEventSource.0",
+      "result": "grpc_14_cant_resolve_reference"
+    }
+  ],
+  "conclusion": "No reachable or creatable DetectorEx fixture was found through the tested public configuration paths."
+}

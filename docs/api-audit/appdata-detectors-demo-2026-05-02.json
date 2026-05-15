@@ -1,0 +1,441 @@
+{
+  "range": {
+    "begin": "20260502T150945.738643",
+    "end": "20260502T170945.738643"
+  },
+  "appdata_count": 15,
+  "rows": [
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "11.Person",
+      "detector_ap": "hosts/Server/AppDataDetector.11/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "MoveInZone",
+      "type_name": "Motion in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "moveInZone",
+          "name": "Object moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "moveInZoneGroup",
+          "name": "Group of objects moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 49,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "15.Multiple objects",
+      "detector_ap": "hosts/Server/AppDataDetector.15/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "LotsObjects",
+      "type_name": "Multiple objects",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "lotsObjects",
+          "name": "Multiple objects detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 1,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "16.Line crossing Left Side Road",
+      "detector_ap": "hosts/Server/AppDataDetector.16/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "CrossOneLine",
+      "type_name": "Line crossing",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "oneLine",
+          "name": "Object crossing line detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 12,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "22.Vehicle",
+      "detector_ap": "hosts/Server/AppDataDetector.22/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "MoveInZone",
+      "type_name": "Motion in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "moveInZone",
+          "name": "Object moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "moveInZoneGroup",
+          "name": "Group of objects moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 60,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "5.Loitering In Area",
+      "detector_ap": "hosts/Server/AppDataDetector.5/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "LongInZone",
+      "type_name": "Loitering in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "equalInZone",
+          "name": "Object loitering in area detected (specified time)",
+          "event_type": "ONE_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "equalInZoneGroup",
+          "name": "Group of objects loitering in area detected (specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "lessInZone",
+          "name": "Object loitering in area detected (shorter than specified time)",
+          "event_type": "ONE_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "lessInZoneGroup",
+          "name": "Group of objects loitering in area detected (shorter than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "longInZone",
+          "name": "Object loitering in area detected (longer than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "longInZoneGroup",
+          "name": "Group of objects loitering in area detected (longer than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 4,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "1.Tracker",
+      "detector_display": "6.Line crossing Right Side Road",
+      "detector_ap": "hosts/Server/AppDataDetector.6/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.1/EventSupplier",
+      "type": "CrossOneLine",
+      "type_name": "Line crossing",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "oneLine",
+          "name": "Object crossing line detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 20,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "2.Pose detection",
+      "detector_display": "2.Man Down Detection",
+      "detector_ap": "hosts/Server/AppDataDetector.2/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.34/EventSupplier",
+      "type": "RecumbentDetector",
+      "type_name": "Person down detector",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_POSE_ESTIMATION"
+      ],
+      "events": [
+        {
+          "id": "recumbent",
+          "name": "Person down detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "2.Pose detection",
+      "detector_display": "3.Sitting Person Detection",
+      "detector_ap": "hosts/Server/AppDataDetector.3/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.34/EventSupplier",
+      "type": "SitDownDetector",
+      "type_name": "Sitting person detector",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_POSE_ESTIMATION"
+      ],
+      "events": [
+        {
+          "id": "sitDown",
+          "name": "Sitting person detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "10.LPR + MMR",
+      "detector_display": "13.Vehicle_IN",
+      "detector_ap": "hosts/Server/AppDataDetector.13/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.74/EventSupplier",
+      "type": "CrossOneLine",
+      "type_name": "Line crossing",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "oneLine",
+          "name": "Object crossing line detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "10.LPR + MMR",
+      "detector_display": "14.Vehicle_OUT",
+      "detector_ap": "hosts/Server/AppDataDetector.14/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.74/EventSupplier",
+      "type": "CrossOneLine",
+      "type_name": "Line crossing",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "oneLine",
+          "name": "Object crossing line detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 18,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "43.Door",
+      "detector_display": "19.Line crossing",
+      "detector_ap": "hosts/Server/AppDataDetector.19/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.96/EventSupplier",
+      "type": "CrossOneLine",
+      "type_name": "Line crossing",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "oneLine",
+          "name": "Object crossing line detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "45.Parking Lot Occupancy",
+      "detector_display": "18.Loitering in area",
+      "detector_ap": "hosts/Server/AppDataDetector.18/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.95/EventSupplier",
+      "type": "LongInZone",
+      "type_name": "Loitering in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "equalInZone",
+          "name": "Object loitering in area detected (specified time)",
+          "event_type": "ONE_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "equalInZoneGroup",
+          "name": "Group of objects loitering in area detected (specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "lessInZone",
+          "name": "Object loitering in area detected (shorter than specified time)",
+          "event_type": "ONE_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "lessInZoneGroup",
+          "name": "Group of objects loitering in area detected (shorter than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "longInZone",
+          "name": "Object loitering in area detected (longer than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "longInZoneGroup",
+          "name": "Group of objects loitering in area detected (longer than specified time)",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "46.Cyclists",
+      "detector_display": "17.Motion in area",
+      "detector_ap": "hosts/Server/AppDataDetector.17/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.94/EventSupplier",
+      "type": "MoveInZone",
+      "type_name": "Motion in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "moveInZone",
+          "name": "Object moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "moveInZoneGroup",
+          "name": "Group of objects moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "47.Bulltet",
+      "detector_display": "20.Motion in area",
+      "detector_ap": "hosts/Server/AppDataDetector.20/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.98/EventSupplier",
+      "type": "MoveInZone",
+      "type_name": "Motion in area",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "moveInZone",
+          "name": "Object moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        },
+        {
+          "id": "moveInZoneGroup",
+          "name": "Group of objects moving in area detected",
+          "event_type": "TWO_PHASE_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    },
+    {
+      "camera_display": "47.Bulltet",
+      "detector_display": "21.Track masking",
+      "detector_ap": "hosts/Server/AppDataDetector.21/EventSupplier",
+      "parent_detector": "hosts/Server/AVDetector.98/EventSupplier",
+      "type": "MaskingObject",
+      "type_name": "Track masking",
+      "enabled": true,
+      "activated": true,
+      "groups": [
+        "DG_SITUATION_DETECTOR",
+        "DG_MASK",
+        "DG_PRIVACY_DETECTOR"
+      ],
+      "events": [
+        {
+          "id": "PrivateMask",
+          "name": "Private mask",
+          "event_type": "PERIODICAL_EVENT_TYPE"
+        }
+      ],
+      "recent_2h_count": 0,
+      "count_pages": 1,
+      "unreachable_subjects": [],
+      "error": ""
+    }
+  ]
+}

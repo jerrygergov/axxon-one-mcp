@@ -1,0 +1,119 @@
+{
+  "started_at": "2026-05-12T12:24:07.225335+00:00",
+  "finished_at": "2026-05-12T12:24:11.058557+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 4,
+    "FAIL": 0
+  },
+  "fixtures": {
+    "telemetry_count": 0,
+    "telemetry_ap_len": 0
+  },
+  "results": [
+    {
+      "group": "ptz_fixture_discovery",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "telemetry": {
+          "count": 0,
+          "access_point_lengths": [],
+          "display_name_lengths": []
+        },
+        "fixture_gap": "no telemetry/PTZ access point found"
+      }
+    },
+    {
+      "group": "control_panel_discovery",
+      "status": "WARN",
+      "elapsed_ms": 194,
+      "details": {
+        "control_panel_count": 0,
+        "shape": {
+          "type": "list",
+          "count": 0
+        },
+        "fixture_gap": "no control panels found"
+      }
+    },
+    {
+      "group": "telemetry_read_preflight",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "skipped": "no telemetry access point"
+      }
+    },
+    {
+      "group": "approval_only_mutations",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "not_executed": [
+          {
+            "rpc": "TelemetryService.AcquireSessionId",
+            "risk": "opens a PTZ control session",
+            "requirement": "non-production PTZ camera and release-session rollback"
+          },
+          {
+            "rpc": "TelemetryService.Move",
+            "risk": "moves camera continuously",
+            "requirement": "known safe scene and stop/home rollback"
+          },
+          {
+            "rpc": "TelemetryService.Zoom",
+            "risk": "changes camera zoom",
+            "requirement": "known safe scene and home preset rollback"
+          },
+          {
+            "rpc": "TelemetryService.AbsoluteMove",
+            "risk": "moves camera to absolute coordinates",
+            "requirement": "known home position and bounded coordinates"
+          },
+          {
+            "rpc": "TelemetryService.GoPreset",
+            "risk": "moves camera to a preset",
+            "requirement": "known non-production preset"
+          },
+          {
+            "rpc": "TelemetryService.SetPreset",
+            "risk": "changes preset state",
+            "requirement": "codex preset label and cleanup"
+          },
+          {
+            "rpc": "TelemetryService.PlayTour",
+            "risk": "starts a PTZ tour",
+            "requirement": "test tour and stop rollback"
+          },
+          {
+            "rpc": "TelemetryService.PerformAuxiliaryOperation",
+            "risk": "runs device-specific PTZ auxiliary operation",
+            "requirement": "operator approval for named operation"
+          },
+          {
+            "rpc": "TagAndTrackService.SetMode",
+            "risk": "changes Tag&Track mode",
+            "requirement": "capture original mode and restore"
+          },
+          {
+            "rpc": "TagAndTrackService.FollowTrack",
+            "risk": "commands PTZ tracking",
+            "requirement": "known test track and stop/restore plan"
+          },
+          {
+            "rpc": "TagAndTrackService.MoveToCoords",
+            "risk": "moves PTZ by image coordinates",
+            "requirement": "non-production camera and bounded coordinates"
+          }
+        ]
+      }
+    }
+  ]
+}

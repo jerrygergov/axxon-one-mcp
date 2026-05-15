@@ -1,0 +1,58 @@
+{
+  "started_at": "2026-05-02T17:10:18.151860+00:00",
+  "finished_at": "2026-05-02T17:10:21.164314+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "grpc_event_subscription"
+    ],
+    "duration_seconds": 20.0,
+    "max_events": 5,
+    "subjects": [
+      "hosts/Server/AppDataDetector.22/EventSupplier"
+    ],
+    "event_types": [
+      "detector"
+    ],
+    "current_node_events_only": false
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "subjects": [
+      "hosts/Server/AppDataDetector.22/EventSupplier"
+    ]
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "grpc_event_subscription",
+      "status": "PASS",
+      "elapsed_ms": 1130,
+      "details": {
+        "events": 8,
+        "first_shape": {
+          "items": {
+            "type": "list",
+            "count": 8
+          }
+        },
+        "subjects": [
+          "hosts/Server/AppDataDetector.22/EventSupplier"
+        ],
+        "event_types": [
+          "detector"
+        ]
+      }
+    }
+  ]
+}

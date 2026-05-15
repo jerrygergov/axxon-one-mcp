@@ -1,0 +1,173 @@
+{
+  "started_at": "2026-05-06T22:50:54.783063+00:00",
+  "finished_at": "2026-05-06T22:50:58.489511+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 3,
+    "WARN": 2,
+    "FAIL": 0
+  },
+  "fixtures": {
+    "node_name": "Server",
+    "selected_role_id_len": 36
+  },
+  "results": [
+    {
+      "group": "security_inventory",
+      "status": "PASS",
+      "elapsed_ms": 375,
+      "details": {
+        "roles_count": 4,
+        "users_count": 35,
+        "ldap_servers_count": 0,
+        "role_id_lengths": [
+          36,
+          36,
+          36,
+          36
+        ],
+        "user_id_lengths": [
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36
+        ],
+        "ldap_id_lengths": [],
+        "enabled_users_count": 35,
+        "ldap_linked_users_count": 0,
+        "user_assignment_count": 35,
+        "selected_role_id_len": 36
+      }
+    },
+    {
+      "group": "security_policies",
+      "status": "WARN",
+      "elapsed_ms": 504,
+      "details": {
+        "pwd_policy_count": 1,
+        "ip_filter_count": 0,
+        "trusted_ip_count": 0,
+        "system_integrity_modes_count": 1,
+        "ldap_sync_keys": [
+          "period_minutes"
+        ],
+        "ldap_state_keys": [
+          "error",
+          "unavailable"
+        ],
+        "cloud_public_key_present": false,
+        "ldap_state_status": "WARN",
+        "ldap_state_error_type": "_InactiveRpcError",
+        "ldap_state_error": "<_InactiveRpcError of RPC that terminated with:\n\tstatus = StatusCode.UNAVAILABLE\n\tdetails = \"Can't get connection channel!\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer ipv4:<demo-host>:20109 {grpc_message:\"Can\\'t get connection channel!\", grpc_status:14}\"\n>"
+      }
+    },
+    {
+      "group": "security_permissions",
+      "status": "PASS",
+      "elapsed_ms": 655,
+      "details": {
+        "role_id_len": 36,
+        "global_permission_roles": 1,
+        "group_permission_roles": 1,
+        "group_info_items": 1,
+        "object_info_items": 36,
+        "object_info_has_next_page": false,
+        "macros_permission_items": 16,
+        "macros_has_next_page": false
+      }
+    },
+    {
+      "group": "restricted_config",
+      "status": "PASS",
+      "elapsed_ms": 149,
+      "details": {
+        "current_user_present": true,
+        "current_roles_count": 1,
+        "all_roles_count": 4,
+        "all_users_count": 35,
+        "pwd_policy_count": 1,
+        "system_integrity_modes_count": 1
+      }
+    },
+    {
+      "group": "approval_only_mutations",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "not_executed": [
+          {
+            "rpc": "SecurityService.ChangeConfig",
+            "risk": "creates, edits, or removes users, roles, LDAP servers, password policies, IP filters, trusted IP lists, and cloud config",
+            "requirement": "codex-prefixed test user/role plus explicit rollback for assignments and passwords"
+          },
+          {
+            "rpc": "SecurityService.SetGlobalPermissions",
+            "risk": "changes role-wide feature permissions",
+            "requirement": "isolated role id and pre/post permission snapshot"
+          },
+          {
+            "rpc": "SecurityService.SetObjectPermissions",
+            "risk": "changes object access for cameras, archives, telemetry, plugins, and video walls",
+            "requirement": "isolated role and non-production object scope"
+          },
+          {
+            "rpc": "SecurityService.SetGroupsPermissions",
+            "risk": "changes role permissions inherited through object groups",
+            "requirement": "isolated role/group scope and rollback snapshot"
+          },
+          {
+            "rpc": "SecurityService.SetMacrosPermissions",
+            "risk": "changes macro execution visibility for a role",
+            "requirement": "isolated disabled macro and test role"
+          },
+          {
+            "rpc": "SecurityService.StartLDAPSynchronization",
+            "risk": "starts directory synchronization",
+            "requirement": "configured test LDAP server and maintenance-window approval"
+          },
+          {
+            "rpc": "SecurityService.StopLDAPSynchronization",
+            "risk": "stops directory synchronization",
+            "requirement": "only for a known test synchronization started by this workflow"
+          }
+        ]
+      }
+    }
+  ]
+}

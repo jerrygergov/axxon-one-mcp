@@ -1,0 +1,222 @@
+{
+  "started_at": "2026-05-06T18:24:21.837228+00:00",
+  "finished_at": "2026-05-06T18:24:23.218030+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 3,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "list_layouts",
+      "status": "PASS",
+      "elapsed_ms": 521,
+      "details": {
+        "current": "05f95dac-69db-4398-8825-a5709acbabf7",
+        "chosen_layout_id": "05f95dac-69db-4398-8825-a5709acbabf7",
+        "layouts": 20,
+        "slideshows": 1,
+        "special_layouts_shape": {
+          "favorite": {
+            "type": "object",
+            "keys": 1
+          },
+          "alarm": {
+            "type": "object",
+            "keys": 2
+          },
+          "dynamic": {
+            "type": "object",
+            "keys": 2
+          }
+        },
+        "map_mode_counts": [
+          [
+            "",
+            17
+          ],
+          [
+            "MAP_VIEW_MODE_MAP_AND_LAYOUT",
+            3
+          ]
+        ],
+        "layouts_with_map_id": 20,
+        "layouts_with_map_arrangement": 11,
+        "samples": [
+          {
+            "layout_id": "a7cf0082-6aa6-4c57-a46c-8fc1f3c61d2f",
+            "display_name": "New layout 20",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 2,
+            "has_map_arrangement": false,
+            "map_arrangement_keys": []
+          },
+          {
+            "layout_id": "7f4036f2-25e7-49f1-8a7e-dfb25e79ccaa",
+            "display_name": "Grundig",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 3,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "f709381f-d746-47e7-a2aa-e9883578e23a",
+            "display_name": "Traffic Monitor / Statistics",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 1,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "d97f487e-0996-44c4-abf8-2a277e378cd4",
+            "display_name": "Cyclysts counter (custom NN)",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 3,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "25d6f633-3a4b-42ad-8579-2158fdabb045",
+            "display_name": "Parking Lot Occupancy",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 2,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "c6120b2a-f240-4507-b933-19476ee85ed6",
+            "display_name": "Counter",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 1,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "b74bf4cd-6aca-4eb7-a62c-9a116e3ce3dd",
+            "display_name": "Fight detection",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 2,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "7fd904ac-4b03-4ac1-9b6b-cf115857d1b1",
+            "display_name": "Crowd VA",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "00000000-0000-0000-0000-000000000000",
+            "map_view_mode": "",
+            "cells_count": 1,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "0dc82f98-6f47-4210-82f4-b383b033bdb6",
+            "display_name": "ACFA",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "23965d15-3389-42b5-98ab-1bed739b8ab3",
+            "map_view_mode": "MAP_VIEW_MODE_MAP_AND_LAYOUT",
+            "cells_count": 3,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "is_thumbnail_3d_on",
+              "map_top_viewport_position",
+              "video_transparency_collection",
+              "zoom_position"
+            ]
+          },
+          {
+            "layout_id": "e141acc5-f45a-4c33-903c-fe08de974fcf",
+            "display_name": "Multicamera tracking",
+            "is_user_defined": true,
+            "is_for_alarm": null,
+            "map_id": "d4eb775e-e82a-4aef-9484-04ca646d36b8",
+            "map_view_mode": "MAP_VIEW_MODE_MAP_AND_LAYOUT",
+            "cells_count": 3,
+            "has_map_arrangement": true,
+            "map_arrangement_keys": [
+              "map_top_viewport_position",
+              "video_transparency_collection",
+              "zoom_position"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "group": "batch_get",
+      "status": "PASS",
+      "elapsed_ms": 118,
+      "details": {
+        "requested_layout_id": "05f95dac-69db-4398-8825-a5709acbabf7",
+        "items": 1,
+        "not_found_items": [],
+        "sample": {
+          "layout_id": "05f95dac-69db-4398-8825-a5709acbabf7",
+          "display_name": "Smart Search",
+          "is_user_defined": true,
+          "is_for_alarm": null,
+          "map_id": "00000000-0000-0000-0000-000000000000",
+          "map_view_mode": "",
+          "cells_count": 4,
+          "has_map_arrangement": false,
+          "map_arrangement_keys": []
+        }
+      }
+    },
+    {
+      "group": "list_images",
+      "status": "PASS",
+      "elapsed_ms": 139,
+      "details": {
+        "layout_id": "05f95dac-69db-4398-8825-a5709acbabf7",
+        "images": 0,
+        "sample_shape": {
+          "type": "list",
+          "count": 0
+        }
+      }
+    }
+  ]
+}

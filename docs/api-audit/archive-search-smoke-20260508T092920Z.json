@@ -1,0 +1,81 @@
+{
+  "started_at": "2026-05-08T09:29:20.071477+00:00",
+  "finished_at": "2026-05-08T09:29:23.598953+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "face",
+      "stranger"
+    ],
+    "hours": 2.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "legacy_vmda_endpoint": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+    "range": {
+      "begin": "20260508T072922.061493",
+      "end": "20260508T092922.061493"
+    }
+  },
+  "summary": {
+    "PASS": 2,
+    "WARN": 0,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "face",
+      "status": "PASS",
+      "elapsed_ms": 714,
+      "details": {
+        "kind": "face",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 200,
+        "result_content_type": "application/json; charset=utf-8",
+        "result_size": 36,
+        "result_shape": {
+          "events": {
+            "type": "list",
+            "count": 0
+          },
+          "more": {
+            "type": "bool",
+            "present": true
+          }
+        },
+        "delete_status": 204,
+        "poll_attempts": 1
+      }
+    },
+    {
+      "mode": "stranger",
+      "status": "PASS",
+      "elapsed_ms": 823,
+      "details": {
+        "kind": "stranger",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 200,
+        "result_content_type": "application/json; charset=utf-8",
+        "result_size": 19,
+        "result_shape": {
+          "events": {
+            "type": "list",
+            "count": 0
+          }
+        },
+        "delete_status": 204,
+        "poll_attempts": 1
+      }
+    }
+  ]
+}

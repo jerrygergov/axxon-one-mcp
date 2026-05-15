@@ -1,0 +1,49 @@
+{
+  "started_at": "2026-05-07T11:46:55.191907+00:00",
+  "finished_at": "2026-05-07T11:47:02.969276+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "SecurityService.ChangeConfig.add_role",
+    "SecurityService.ChangeConfig.add_user",
+    "SecurityService.ChangeConfig.assign_user_role",
+    "SecurityService.ChangeConfig.set_generated_user_password",
+    "SecurityService.ChangeConfig.remove_user_role",
+    "SecurityService.ChangeConfig.remove_user",
+    "SecurityService.ChangeConfig.remove_role"
+  ],
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "security_user_role_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 6648,
+      "details": {
+        "role_id": "519cc051-eaa1-4c34-9e11-fc39afbbcda5",
+        "user_id": "ab871b1d-7cb8-4bdd-9d24-be72beb7b4b6",
+        "role_name": "codex-role-ab871b1d7cb8",
+        "login_len": 19,
+        "before_roles": 4,
+        "before_users": 35,
+        "after_roles": 4,
+        "after_users": 35,
+        "add_response_keys": [],
+        "remove_response_keys": [],
+        "role_present_after_add": true,
+        "user_present_after_add": true,
+        "assigned_user_count": 1,
+        "role_present_after_remove": false,
+        "user_present_after_remove": false,
+        "role_count_restored": true,
+        "user_count_restored": true
+      }
+    }
+  ]
+}

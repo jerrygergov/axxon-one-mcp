@@ -1,0 +1,30 @@
+{
+  "date": "2026-05-02",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+  "tool": "arm64-docker/tools/examples/metadata_tracker_stream.py",
+  "summary": {
+    "samples": 3,
+    "config_updates": 1,
+    "heartbeats": 0,
+    "tracklets_seen": 63
+  },
+  "items": [
+    {
+      "timestamp": "20260502T175439.500000",
+      "tracklet_count": 21
+    },
+    {
+      "timestamp": "20260502T175439.667000",
+      "tracklet_count": 21
+    },
+    {
+      "timestamp": "20260502T175439.833000",
+      "tracklet_count": 21
+    }
+  ]
+}

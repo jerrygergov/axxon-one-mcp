@@ -1,0 +1,45 @@
+{
+  "started_at": "2026-05-07T11:56:04.604802+00:00",
+  "finished_at": "2026-05-07T11:56:10.471641+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "ConfigurationService.ChangeConfig.add_temp_virtual_camera",
+    "LogicService.ChangeArmState.temp_virtual_camera",
+    "ConfigurationService.ChangeConfig.remove_temp_virtual_camera"
+  ],
+  "summary": {
+    "PASS": 0,
+    "WARN": 0,
+    "FAIL": 1
+  },
+  "results": [
+    {
+      "group": "armstate_lifecycle",
+      "status": "FAIL",
+      "elapsed_ms": 4560,
+      "details": {
+        "error_type": "AttributeError",
+        "error": "Enum ECameraArmState has no value defined for name 'ARMED'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_armstate_smoke.py\", line 151, in run\n    details = self.run_lifecycle()\n              ^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_armstate_smoke.py\", line 125, in run_lifecycle\n    arm_response = self.change_arm_state()\n                   ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_armstate_smoke.py\", line 116, in change_arm_state\n    state=events_pb2.CameraArmStateEvent.ECameraArmState.ARMED,\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/google/protobuf/internal/enum_type_wrapper.py\", line 102, in __getattr__\n    raise AttributeError('Enum {} has no value defined for name {!r}'.format(\nAttributeError: Enum ECameraArmState has no value defined for name 'ARMED'\n",
+        "cleanup": [
+          {
+            "uid": "hosts/Server/DeviceIpint.9605",
+            "status": "camera_removed",
+            "body_keys": [
+              "added",
+              "added_macros",
+              "failed",
+              "failed_reason",
+              "removed_macros"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

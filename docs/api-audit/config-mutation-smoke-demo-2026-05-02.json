@@ -1,0 +1,94 @@
+{
+  "started_at": "2026-05-02T17:56:04.017538+00:00",
+  "finished_at": "2026-05-02T17:56:40.662267+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "groups": [
+      "archive",
+      "camera",
+      "av_detector",
+      "appdata_detector",
+      "appdata_visual_element"
+    ]
+  },
+  "summary": {
+    "PASS": 5,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "archive",
+      "status": "PASS",
+      "elapsed_ms": 3801,
+      "details": {
+        "added": [
+          "hosts/Server/MultimediaStorage.Gray"
+        ],
+        "changed_failed": 0,
+        "removed_failed": 0
+      }
+    },
+    {
+      "group": "camera",
+      "status": "PASS",
+      "elapsed_ms": 4421,
+      "details": {
+        "added": [
+          "hosts/Server/DeviceIpint.9608"
+        ],
+        "display_id": "9608",
+        "changed_failed": 0,
+        "removed_failed": 0
+      }
+    },
+    {
+      "group": "av_detector",
+      "status": "PASS",
+      "elapsed_ms": 13270,
+      "details": {
+        "created_and_removed": [
+          "hosts/Server/AVDetector.109",
+          "hosts/Server/AVDetector.110",
+          "hosts/Server/AVDetector.111"
+        ]
+      }
+    },
+    {
+      "group": "appdata_detector",
+      "status": "PASS",
+      "elapsed_ms": 8995,
+      "details": {
+        "added": [
+          "hosts/Server/AppDataDetector.28"
+        ],
+        "event_supplier": "hosts/Server/AppDataDetector.28/EventSupplier",
+        "readback_units": 1,
+        "event_summary": {
+          "subject": "hosts/Server/AppDataDetector.28/EventSupplier",
+          "minutes": 3.0,
+          "pages": 1,
+          "count": 25
+        }
+      }
+    },
+    {
+      "group": "appdata_visual_element",
+      "status": "PASS",
+      "elapsed_ms": 5870,
+      "details": {
+        "added": [
+          "hosts/Server/AppDataDetector.29"
+        ],
+        "visual_element_uid": "hosts/Server/AppDataDetector.29/VisualElement.73bd2531-1e52-47fe-93b6-e25a31fa94ae",
+        "changed_failed": 0,
+        "readback_points": 4
+      }
+    }
+  ]
+}

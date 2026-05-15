@@ -1,0 +1,53 @@
+{
+  "started_at": "2026-05-08T09:38:37.855540+00:00",
+  "finished_at": "2026-05-08T09:38:40.179039+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "face",
+      "face_appearance_rate"
+    ],
+    "hours": 2.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "legacy_vmda_endpoint": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+    "range": {
+      "begin": "20260508T073839.830742",
+      "end": "20260508T093839.830742"
+    }
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 1,
+    "SKIP": 1,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "face",
+      "status": "WARN",
+      "elapsed_ms": 347,
+      "details": {
+        "start_status": 400,
+        "location_received": false,
+        "content_type": ""
+      }
+    },
+    {
+      "mode": "face_appearance_rate",
+      "status": "SKIP",
+      "elapsed_ms": 0,
+      "details": {
+        "reason": "missing face detector EventSupplier"
+      }
+    }
+  ]
+}

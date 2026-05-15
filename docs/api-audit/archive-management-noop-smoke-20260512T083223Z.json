@@ -1,0 +1,70 @@
+{
+  "started_at": "2026-05-12T08:32:23.737080+00:00",
+  "finished_at": "2026-05-12T08:32:27.761140+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "fixtures": {
+    "archive_ap": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+    "fake_volume_id_prefix": "codex-nonexistent",
+    "fake_volume_id_len": 54
+  },
+  "summary": {
+    "PASS": 5,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "pre_fake_volume_state",
+      "status": "PASS",
+      "elapsed_ms": 202,
+      "details": {
+        "fake_volume_id_len": 54,
+        "volume_state_count": 0,
+        "not_found_count": 1,
+        "fake_not_found": true
+      }
+    },
+    {
+      "group": "format_fake_volume",
+      "status": "PASS",
+      "elapsed_ms": 205,
+      "details": {
+        "result_count": 1,
+        "status_code": "NOT_FOUND"
+      }
+    },
+    {
+      "group": "reindex_fake_volume",
+      "status": "PASS",
+      "elapsed_ms": 198,
+      "details": {
+        "failed_volume_count": 0,
+        "response_keys": []
+      }
+    },
+    {
+      "group": "cancel_reindex_fake_volume",
+      "status": "PASS",
+      "elapsed_ms": 203,
+      "details": {
+        "response_keys": []
+      }
+    },
+    {
+      "group": "post_fake_volume_state",
+      "status": "PASS",
+      "elapsed_ms": 201,
+      "details": {
+        "fake_volume_id_len": 54,
+        "volume_state_count": 0,
+        "not_found_count": 1,
+        "fake_not_found": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+# inventory
+{
+  "camera_uid": "hosts/Server/DeviceIpint.1",
+  "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+  "vmda_source_ap": "",
+  "detector_ex": "hosts/Server/DetectorEx.1/EventSupplier"
+}
+
+# results
+[
+  {
+    "workflow": "external_event_inject",
+    "plan_id": "plan-ec21bcc8-c27b-4e82-8002-7613b1fb570e",
+    "applied": "applied",
+    "created": [],
+    "pre_verify_still_present": [],
+    "rolled": "rolled_back",
+    "rolled_removed": [],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_appdata_detector",
+    "plan_id": "plan-5fa754c1-96de-4f7e-b038-d7ef360d2b7f",
+    "applied": "applied",
+    "created": [
+      "hosts/Server/AVDetector.122",
+      "hosts/Server/AppDataDetector.32"
+    ],
+    "pre_verify_still_present": [
+      "hosts/Server/AVDetector.122",
+      "hosts/Server/AppDataDetector.32"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "hosts/Server/AppDataDetector.32",
+      "hosts/Server/AVDetector.122"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_archive",
+    "plan_id": "plan-60d80543-2ecf-4058-9974-3bf1373481c4",
+    "applied": "applied",
+    "created": [
+      "hosts/Server/MultimediaStorage.Gray"
+    ],
+    "pre_verify_still_present": [
+      "hosts/Server/MultimediaStorage.Gray"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "hosts/Server/MultimediaStorage.Gray"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_av_detector",
+    "plan_id": "plan-48d96679-c0e8-4b43-b19c-33b5e726e8b7",
+    "applied": "applied",
+    "created": [
+      "hosts/Server/AVDetector.123"
+    ],
+    "pre_verify_still_present": [
+      "hosts/Server/AVDetector.123"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "hosts/Server/AVDetector.123"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_camera",
+    "plan_id": "plan-58ecfd62-0a31-4bd0-9c22-9bf544f0ae8e",
+    "applied": "applied",
+    "created": [
+      "hosts/Server/DeviceIpint.9875"
+    ],
+    "pre_verify_still_present": [
+      "hosts/Server/DeviceIpint.9875"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "hosts/Server/DeviceIpint.9875"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_device_template",
+    "plan_id": "plan-371519a6-e6e0-492e-985b-819c30fc7d12",
+    "applied": "applied",
+    "created": [
+      "codex-d10efc6a-ec9a-4c8c-b4cf-e01264ce64dc"
+    ],
+    "pre_verify_still_present": [
+      "codex-d10efc6a-ec9a-4c8c-b4cf-e01264ce64dc"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "codex-d10efc6a-ec9a-4c8c-b4cf-e01264ce64dc"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  },
+  {
+    "workflow": "temp_macro",
+    "plan_id": "plan-014788f3-4302-4a9c-b750-b71c5ca5b846",
+    "applied": "applied",
+    "created": [
+      "9b04f54f-f5fa-4632-8bbe-26056b80b3d0"
+    ],
+    "pre_verify_still_present": [
+      "9b04f54f-f5fa-4632-8bbe-26056b80b3d0"
+    ],
+    "rolled": "rolled_back",
+    "rolled_removed": [
+      "9b04f54f-f5fa-4632-8bbe-26056b80b3d0"
+    ],
+    "rolled_failed": [],
+    "post_verify_still_present": []
+  }
+]
+
+# audit log
+  {"action": "plan", "timestamp": "2026-05-14T15:07:39.382784+00:00", "workflow": "external_event_inject", "plan_id": "plan-ec21bcc8-c27b-4e82-8002-7613b1fb570e"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:40.290687+00:00", "plan_id": "plan-ec21bcc8-c27b-4e82-8002-7613b1fb570e", "status": "applied", "created_count": 0}
+  {"action": "rollback", "timestamp": "2026-05-14T15:07:40.290709+00:00", "plan_id": "plan-ec21bcc8-c27b-4e82-8002-7613b1fb570e", "status": "rolled_back", "removed_count": 0}
+  {"action": "plan", "timestamp": "2026-05-14T15:07:40.290767+00:00", "workflow": "temp_appdata_detector", "plan_id": "plan-5fa754c1-96de-4f7e-b038-d7ef360d2b7f"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:44.819524+00:00", "plan_id": "plan-5fa754c1-96de-4f7e-b038-d7ef360d2b7f", "status": "applied", "created_count": 2}
+  {"action": "rollback", "timestamp": "2026-05-14T15:07:48.479005+00:00", "plan_id": "plan-5fa754c1-96de-4f7e-b038-d7ef360d2b7f", "status": "rolled_back", "removed_count": 2}
+  {"action": "plan", "timestamp": "2026-05-14T15:07:48.479213+00:00", "workflow": "temp_archive", "plan_id": "plan-60d80543-2ecf-4058-9974-3bf1373481c4"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:50.048424+00:00", "plan_id": "plan-60d80543-2ecf-4058-9974-3bf1373481c4", "status": "applied", "created_count": 1}
+  {"action": "rollback", "timestamp": "2026-05-14T15:07:51.508383+00:00", "plan_id": "plan-60d80543-2ecf-4058-9974-3bf1373481c4", "status": "rolled_back", "removed_count": 1}
+  {"action": "plan", "timestamp": "2026-05-14T15:07:51.508498+00:00", "workflow": "temp_av_detector", "plan_id": "plan-48d96679-c0e8-4b43-b19c-33b5e726e8b7"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:53.194372+00:00", "plan_id": "plan-48d96679-c0e8-4b43-b19c-33b5e726e8b7", "status": "applied", "created_count": 1}
+  {"action": "rollback", "timestamp": "2026-05-14T15:07:54.875112+00:00", "plan_id": "plan-48d96679-c0e8-4b43-b19c-33b5e726e8b7", "status": "rolled_back", "removed_count": 1}
+  {"action": "plan", "timestamp": "2026-05-14T15:07:54.875278+00:00", "workflow": "temp_camera", "plan_id": "plan-58ecfd62-0a31-4bd0-9c22-9bf544f0ae8e"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:56.350283+00:00", "plan_id": "plan-58ecfd62-0a31-4bd0-9c22-9bf544f0ae8e", "status": "applied", "created_count": 1}
+  {"action": "rollback", "timestamp": "2026-05-14T15:07:58.000285+00:00", "plan_id": "plan-58ecfd62-0a31-4bd0-9c22-9bf544f0ae8e", "status": "rolled_back", "removed_count": 1}
+  {"action": "plan", "timestamp": "2026-05-14T15:07:58.000372+00:00", "workflow": "temp_device_template", "plan_id": "plan-371519a6-e6e0-492e-985b-819c30fc7d12"}
+  {"action": "apply", "timestamp": "2026-05-14T15:07:59.394459+00:00", "plan_id": "plan-371519a6-e6e0-492e-985b-819c30fc7d12", "status": "applied", "created_count": 1}
+  {"action": "rollback", "timestamp": "2026-05-14T15:08:01.837890+00:00", "plan_id": "plan-371519a6-e6e0-492e-985b-819c30fc7d12", "status": "rolled_back", "removed_count": 1}
+  {"action": "plan", "timestamp": "2026-05-14T15:08:01.837998+00:00", "workflow": "temp_macro", "plan_id": "plan-014788f3-4302-4a9c-b750-b71c5ca5b846"}
+  {"action": "apply", "timestamp": "2026-05-14T15:08:02.503706+00:00", "plan_id": "plan-014788f3-4302-4a9c-b750-b71c5ca5b846", "status": "applied", "created_count": 1}
+  {"action": "rollback", "timestamp": "2026-05-14T15:08:03.355082+00:00", "plan_id": "plan-014788f3-4302-4a9c-b750-b71c5ca5b846", "status": "rolled_back", "removed_count": 1}

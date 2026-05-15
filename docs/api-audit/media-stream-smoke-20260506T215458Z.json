@@ -1,0 +1,221 @@
+{
+  "started_at": "2026-05-06T21:54:58.996935+00:00",
+  "finished_at": "2026-05-06T21:55:15.949794+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "checks": [
+      "camera_stream_info",
+      "camera_snapshot",
+      "camera_live_mjpeg",
+      "camera_live_hls",
+      "camera_live_mp4",
+      "camera_live_rtsp_descriptor",
+      "rtsp_statistics",
+      "rtsp_playback_ffprobe",
+      "composite_rtsp_playback_ffprobe",
+      "archive_frame_by_time",
+      "archive_media_mjpeg"
+    ],
+    "timeout_seconds": 10.0,
+    "max_bytes": 1048576,
+    "auth_mode": "bearer"
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_legacy_ap": "Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "composite_sources": "Server/1/0/0+Server/2/0/0",
+    "begin": "20260505T215501.270160",
+    "end": "20260506T215501.270160",
+    "archive_interval_begin": "20260506T201358.409000",
+    "archive_interval_end": "20260506T215501.521000",
+    "archive_media_time": "20260506T215501.521000",
+    "host": "<demo-host>"
+  },
+  "summary": {
+    "PASS": 11,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "name": "camera_stream_info",
+      "method": "GET",
+      "path": "/stream-info/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "status": "PASS",
+      "elapsed_ms": 247,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 28,
+        "raw_bytes": 28,
+        "sha256": "634084bd56e0d0c23fda05597c07c6abee3ebfd44c10c7b2c0b40fd7a323be69",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_snapshot",
+      "method": "GET",
+      "path": "/live/media/snapshot/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 812,
+      "details": {
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "size": 51857,
+        "raw_bytes": 51857,
+        "sha256": "3e8ead384f93313943580a0c4e1de05139001c5a85b8f4ba9465038316df77a8",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mjpeg",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 2197,
+      "details": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "size": 1048576,
+        "raw_bytes": 1048576,
+        "sha256": "8eedcdfe4685e53dee63eb9f4ada4b90cc7ae78d435c0dfced75af51e29ef177",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_hls",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=hls",
+      "status": "PASS",
+      "elapsed_ms": 377,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 282,
+        "raw_bytes": 282,
+        "sha256": "a9585a3e9853dd0fb665a7fff7a47cc07d5c0e13caf2c48584bb400798e3c943",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mp4",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=mp4",
+      "status": "PASS",
+      "elapsed_ms": 276,
+      "details": {
+        "http_status": 200,
+        "content_type": "video/mp4",
+        "size": 32,
+        "raw_bytes": 32,
+        "sha256": "5a9341dc0695822fcf815392d3a3a05fd8e57da778967aa5e48d7bb1669342c9",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_rtsp_descriptor",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=rtsp",
+      "status": "PASS",
+      "elapsed_ms": 249,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 253,
+        "raw_bytes": 253,
+        "sha256": "7c5ff125707c3be5310acce4c8bcfd74f3f0e50458f17c8b57f796a2b0cbf7b6",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "rtsp_statistics",
+      "method": "GET",
+      "path": "/rtsp/stat",
+      "status": "PASS",
+      "elapsed_ms": 263,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 3,
+        "raw_bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "rtsp_playback_ffprobe",
+      "method": "FFPROBE",
+      "path": "rtsp://<demo-host>:554/hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "status": "PASS",
+      "elapsed_ms": 3399,
+      "details": {
+        "tool": "ffprobe",
+        "returncode": 0,
+        "rtsp_url": "rtsp://<demo-host>:554/hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "rtsp_port": "554",
+        "stream_count": 1,
+        "first_stream": {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 1280,
+          "height": 720
+        }
+      }
+    },
+    {
+      "name": "composite_rtsp_playback_ffprobe",
+      "method": "FFPROBE",
+      "path": "rtsp://<demo-host>:554/composite/Server/1/0/0+Server/2/0/0?res=640x360&fps=5&quality=4&softacceleration=1",
+      "status": "PASS",
+      "elapsed_ms": 3311,
+      "details": {
+        "tool": "ffprobe",
+        "returncode": 0,
+        "rtsp_url": "rtsp://<demo-host>:554/composite/Server/1/0/0+Server/2/0/0?res=640x360&fps=5&quality=4&softacceleration=1",
+        "stream_count": 1,
+        "first_stream": {
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 640,
+          "height": 360
+        },
+        "composite_sources": "Server/1/0/0+Server/2/0/0",
+        "source_count": 2
+      }
+    },
+    {
+      "name": "archive_frame_by_time",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260506T215501.521000?threshold=60000&w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 628,
+      "details": {
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "size": 51591,
+        "raw_bytes": 51591,
+        "sha256": "952a3cfbd78a256f7a4dfe4f6d475a16671e31fc744bf273a9b4c3077834711c",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "archive_media_mjpeg",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260506T215501.521000?w=640&h=0&speed=1",
+      "status": "PASS",
+      "elapsed_ms": 2666,
+      "details": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "size": 1048576,
+        "raw_bytes": 1048576,
+        "sha256": "f0e803e63ed0c15b47d443a9498d6e26cd1cc4f1b0a7ca7c4e0819924b79e5e7",
+        "max_bytes": 1048576
+      }
+    }
+  ]
+}

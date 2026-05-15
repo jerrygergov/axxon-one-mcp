@@ -1,0 +1,44 @@
+{
+  "started_at": "2026-05-07T11:35:40.784308+00:00",
+  "finished_at": "2026-05-07T11:36:16.756161+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "build_heatmap"
+    ],
+    "hours": 24.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "legacy_vmda_endpoint": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+    "range": {
+      "begin": "20260506T113546.732322",
+      "end": "20260507T113546.732322"
+    }
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 1,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "build_heatmap",
+      "status": "WARN",
+      "elapsed_ms": 30023,
+      "details": {
+        "error_type": "_InactiveRpcError",
+        "error": "<_InactiveRpcError of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_archive_search_smoke.py\", line 401, in invoke\n    outcome = self.run_build_heatmap()\n              ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_archive_search_smoke.py\", line 272, in run_build_heatmap\n    response = heatmap.BuildHeatmap(request, timeout=self.args.timeout)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/grpc/_channel.py\", line 1159, in __call__\n    return _end_unary_response_blocking(state, call, False, None)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/grpc/_channel.py\", line 990, in _end_unary_response_blocking\n    raise _InactiveRpcError(state)  # pytype: disable=not-instantiable\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ngrpc._channel._InactiveRpcError: <_InactiveRpcError of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>\n"
+      }
+    }
+  ]
+}

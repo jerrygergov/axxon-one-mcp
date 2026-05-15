@@ -1,0 +1,1895 @@
+{
+  "started_at": "2026-04-27T08:39:36.979790+00:00",
+  "finished_at": "2026-04-27T08:39:37.500126+00:00",
+  "target": {
+    "http_url": "http://127.0.0.1:8000",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "catalog": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/grpc-api-catalog.csv",
+    "selected_methods": 73,
+    "skipped_high_risk_read_methods": 11,
+    "timeout_seconds": 10.0,
+    "include_fixture_needed": false,
+    "include_server_streams": false
+  },
+  "summary": {
+    "PASS": 65,
+    "WARN": 8,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "fqmn": "axxonsoft.bl.acfa.AcfaService.ListUnitTypes",
+      "package": "axxonsoft.bl.acfa",
+      "service": "AcfaService",
+      "method": "ListUnitTypes",
+      "proto": "axxonsoft/bl/acfa/AcfaService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 35,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          },
+          "unavailable_nodes": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetArchiveTraits",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetArchiveTraits",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 34,
+        "shape": {
+          "traits": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetRecordingInfo",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetRecordingInfo",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 132,
+        "shape": {
+          "recording_info": {
+            "type": "object",
+            "keys": 5
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetHistory",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetHistory",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 16,
+        "shape": {
+          "intervals": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetHistory2",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetHistory2",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 32,
+        "shape": {
+          "result": {
+            "type": "str",
+            "present": true
+          },
+          "intervals": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetCalendar",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetCalendar",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 11,
+        "shape": {
+          "days": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetSize",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetSize",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 27,
+        "shape": {
+          "size": {
+            "type": "str",
+            "present": true
+          },
+          "duration": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetVolumesState",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetVolumesState",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 320,
+        "shape": {
+          "volumes_state": {
+            "type": "object",
+            "keys": 1
+          },
+          "not_found_volumes": {
+            "type": "list",
+            "count": 0
+          },
+          "is_failover_mode": {
+            "type": "bool",
+            "present": true
+          },
+          "is_temporary_storage": {
+            "type": "bool",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.archive.ArchiveService.GetDiskSpace",
+      "package": "axxonsoft.bl.archive",
+      "service": "ArchiveService",
+      "method": "GetDiskSpace",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 6,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 88,
+        "shape": {
+          "space": {
+            "type": "object",
+            "keys": 2
+          },
+          "status_code": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.auth.AuthenticationService.GetSessionInfo",
+      "package": "axxonsoft.bl.auth",
+      "service": "AuthenticationService",
+      "method": "GetSessionInfo",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.ConfigurationService.ListUnits",
+      "package": "axxonsoft.bl.config",
+      "service": "ConfigurationService",
+      "method": "ListUnits",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 2123,
+        "shape": {
+          "units": {
+            "type": "list",
+            "count": 1
+          },
+          "unreachable_objects": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_objects": {
+            "type": "list",
+            "count": 0
+          },
+          "more_data": {
+            "type": "bool",
+            "present": true
+          },
+          "extern_enum_constraints": {
+            "type": "object",
+            "keys": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.ConfigurationService.ListUnitsByAccessPoints",
+      "package": "axxonsoft.bl.config",
+      "service": "ConfigurationService",
+      "method": "ListUnitsByAccessPoints",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 113,
+        "shape": {
+          "units": {
+            "type": "list",
+            "count": 0
+          },
+          "unreachable_objects": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_objects": {
+            "type": "list",
+            "count": 1
+          },
+          "more_data": {
+            "type": "bool",
+            "present": true
+          },
+          "extern_enum_constraints": {
+            "type": "object",
+            "keys": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.ConfigurationService.ListTemplates",
+      "package": "axxonsoft.bl.config",
+      "service": "ConfigurationService",
+      "method": "ListTemplates",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 12,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.DevicesCatalog.ListVendors",
+      "package": "axxonsoft.bl.config",
+      "service": "DevicesCatalog",
+      "method": "ListVendors",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1091,
+        "shape": {
+          "vendors": {
+            "type": "list",
+            "count": 100
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.DevicesCatalog.ListDevices",
+      "package": "axxonsoft.bl.config",
+      "service": "DevicesCatalog",
+      "method": "ListDevices",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 2153,
+        "shape": {
+          "devices": {
+            "type": "list",
+            "count": 7
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.DevicesCatalog.GetDevice",
+      "package": "axxonsoft.bl.config",
+      "service": "DevicesCatalog",
+      "method": "GetDevice",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 312,
+        "shape": {
+          "device": {
+            "type": "object",
+            "keys": 5
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.FileSystemBrowser.ListDirectory",
+      "package": "axxonsoft.bl.config",
+      "service": "FileSystemBrowser",
+      "method": "ListDirectory",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1150,
+        "shape": {
+          "entries": {
+            "type": "list",
+            "count": 11
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.FileSystemBrowser.GetFileInfo",
+      "package": "axxonsoft.bl.config",
+      "service": "FileSystemBrowser",
+      "method": "GetFileInfo",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 119,
+        "shape": {
+          "file_info": {
+            "type": "object",
+            "keys": 5
+          },
+          "parent_path": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.FileSystemBrowser.GetSpace",
+      "package": "axxonsoft.bl.config",
+      "service": "FileSystemBrowser",
+      "method": "GetSpace",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 74,
+        "shape": {
+          "space_info": {
+            "type": "object",
+            "keys": 2
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.ServerSettings.GetLogLevel",
+      "package": "axxonsoft.bl.config",
+      "service": "ServerSettings",
+      "method": "GetLogLevel",
+      "proto": "axxonsoft/bl/config/ServerSettings.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.SharedKVStorageService.ListRecords",
+      "package": "axxonsoft.bl.config",
+      "service": "SharedKVStorageService",
+      "method": "ListRecords",
+      "proto": "axxonsoft/bl/config/SharedKeyValueStorage.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.config.SharedKVStorageService.BatchGetRecords",
+      "package": "axxonsoft.bl.config",
+      "service": "SharedKVStorageService",
+      "method": "BatchGetRecords",
+      "proto": "axxonsoft/bl/config/SharedKeyValueStorage.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 1,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.domain.DomainService.GetVersion",
+      "package": "axxonsoft.bl.domain",
+      "service": "DomainService",
+      "method": "GetVersion",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 1,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 22,
+        "shape": {
+          "Version": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.domain.DomainService.GetHostPlatformInfo",
+      "package": "axxonsoft.bl.domain",
+      "service": "DomainService",
+      "method": "GetHostPlatformInfo",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 430,
+        "shape": {
+          "os_sys_name": {
+            "type": "str",
+            "present": true
+          },
+          "os_release": {
+            "type": "str",
+            "present": true
+          },
+          "os_version": {
+            "type": "str",
+            "present": true
+          },
+          "os_machine": {
+            "type": "str",
+            "present": true
+          },
+          "computer_name": {
+            "type": "str",
+            "present": true
+          },
+          "server_version": {
+            "type": "str",
+            "present": true
+          },
+          "host_system_integrity_info": {
+            "type": "list",
+            "count": 0
+          },
+          "host_system_integrity_state": {
+            "type": "str",
+            "present": true
+          },
+          "vendor_info": {
+            "type": "object",
+            "keys": 2
+          },
+          "additional_info": {
+            "type": "object",
+            "keys": 2
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.domain.DomainService.GetHostTimeZone",
+      "package": "axxonsoft.bl.domain",
+      "service": "DomainService",
+      "method": "GetHostTimeZone",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 17,
+        "shape": {
+          "time_zone": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.domain.DomainService.ListNodes",
+      "package": "axxonsoft.bl.domain",
+      "service": "DomainService",
+      "method": "ListNodes",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 238,
+        "shape": {
+          "nodes": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.domain.DomainManager.EnumerateNodes",
+      "package": "axxonsoft.bl.domain",
+      "service": "DomainManager",
+      "method": "EnumerateNodes",
+      "proto": "axxonsoft/bl/domain/DomainManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 397,
+        "shape": {
+          "domain": {
+            "type": "object",
+            "keys": 3
+          },
+          "nodes": {
+            "type": "list",
+            "count": 1
+          },
+          "free_nodes": {
+            "type": "list",
+            "count": 0
+          },
+          "other_nodes": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.groups.GroupManager.ListGroups",
+      "package": "axxonsoft.bl.groups",
+      "service": "GroupManager",
+      "method": "ListGroups",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 269,
+        "shape": {
+          "groups": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.groups.GroupManager.BatchGetGroups",
+      "package": "axxonsoft.bl.groups",
+      "service": "GroupManager",
+      "method": "BatchGetGroups",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 35,
+        "shape": {
+          "groups": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_groups": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.layout.LayoutManager.ListLayouts",
+      "package": "axxonsoft.bl.layout",
+      "service": "LayoutManager",
+      "method": "ListLayouts",
+      "proto": "axxonsoft/bl/layout/LayoutManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 13,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 744,
+        "shape": {
+          "current": {
+            "type": "str",
+            "present": true
+          },
+          "items": {
+            "type": "list",
+            "count": 2
+          },
+          "special_layouts": {
+            "type": "object",
+            "keys": 3
+          },
+          "use_current_layout_as_default": {
+            "type": "bool",
+            "present": true
+          },
+          "slideshows": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.license.LicenseService.GetGlobalRestrictions",
+      "package": "axxonsoft.bl.license",
+      "service": "LicenseService",
+      "method": "GetGlobalRestrictions",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 34,
+        "shape": {
+          "constraints": {
+            "type": "object",
+            "keys": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.license.LicenseService.GetDomainLicenseKeyInfo",
+      "package": "axxonsoft.bl.license",
+      "service": "LicenseService",
+      "method": "GetDomainLicenseKeyInfo",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 351,
+        "shape": {
+          "responses": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.license.LicenseService.GetHostInfo",
+      "package": "axxonsoft.bl.license",
+      "service": "LicenseService",
+      "method": "GetHostInfo",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 1,
+      "details": {
+        "transport_error_type": "RemoteDisconnected",
+        "transport_error": "Remote end closed connection without response"
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.EventDescription.GetEventGroupingTags",
+      "package": "axxonsoft.bl.logic",
+      "service": "EventDescription",
+      "method": "GetEventGroupingTags",
+      "proto": "axxonsoft/bl/logic/EventDescription.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.ListMacros",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "ListMacros",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 33,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.BatchGetMacros",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "BatchGetMacros",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 1,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 34,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_macros": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.GetConfig",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "GetConfig",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 281,
+        "shape": {
+          "user_alert_ttl": {
+            "type": "object",
+            "keys": 1
+          },
+          "rule_alert_ttl": {
+            "type": "object",
+            "keys": 1
+          },
+          "conditional_ttl": {
+            "type": "object",
+            "keys": 1
+          },
+          "required_comment": {
+            "type": "object",
+            "keys": 3
+          },
+          "max_event_age": {
+            "type": "object",
+            "keys": 1
+          },
+          "event_cleanup_period": {
+            "type": "object",
+            "keys": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.ListCounters",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "ListCounters",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 36,
+        "shape": {
+          "counters": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.BatchGetCounters",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "BatchGetCounters",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 36,
+        "shape": {
+          "counters": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.logic.LogicService.GetUserScripts",
+      "package": "axxonsoft.bl.logic",
+      "service": "LogicService",
+      "method": "GetUserScripts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 14,
+        "shape": {
+          "scripts": {
+            "type": "object",
+            "keys": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.maintenance.ConfigurationManager.GetRevisionInfo",
+      "package": "axxonsoft.bl.maintenance",
+      "service": "ConfigurationManager",
+      "method": "GetRevisionInfo",
+      "proto": "axxonsoft/bl/maintenance/ConfigurationManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 6,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 5173,
+        "shape": {
+          "info": {
+            "type": "object",
+            "keys": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.maps.MapService.ListMaps",
+      "package": "axxonsoft.bl.maps",
+      "service": "MapService",
+      "method": "ListMaps",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 7,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 12,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.maps.MapService.BatchGetMaps",
+      "package": "axxonsoft.bl.maps",
+      "service": "MapService",
+      "method": "BatchGetMaps",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 32,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          },
+          "failed_map_ids": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.maps.MapService.GetMapsByComponent",
+      "package": "axxonsoft.bl.maps",
+      "service": "MapService",
+      "method": "GetMapsByComponent",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 12,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.maps.MapService.ListMapProviders",
+      "package": "axxonsoft.bl.maps",
+      "service": "MapService",
+      "method": "ListMapProviders",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 41,
+        "shape": {
+          "map_providers": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.node.internal.NgpNodeService.ListSceneDescription",
+      "package": "axxonsoft.bl.node.internal",
+      "service": "NgpNodeService",
+      "method": "ListSceneDescription",
+      "proto": "axxonsoft/bl/node/Node.Ancillary.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.package.InstallationPackageProvider.CheckPackageAvailability",
+      "package": "axxonsoft.bl.package",
+      "service": "InstallationPackageProvider",
+      "method": "CheckPackageAvailability",
+      "proto": "axxonsoft/bl/package/InstallationPackageProvider.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "WARN",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 500,
+        "content_type": "",
+        "size": 0,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListConfig",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListConfig",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 6,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1443,
+        "shape": {
+          "roles": {
+            "type": "list",
+            "count": 2
+          },
+          "users": {
+            "type": "list",
+            "count": 1
+          },
+          "user_assignments": {
+            "type": "list",
+            "count": 1
+          },
+          "ldap_servers": {
+            "type": "list",
+            "count": 0
+          },
+          "pwd_policy": {
+            "type": "list",
+            "count": 1
+          },
+          "ip_filters": {
+            "type": "list",
+            "count": 0
+          },
+          "trusted_ip_list": {
+            "type": "list",
+            "count": 0
+          },
+          "cloud_public_key": {
+            "type": "str",
+            "present": true
+          },
+          "ldap_synchronization": {
+            "type": "object",
+            "keys": 3
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListRoles",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListRoles",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 403,
+        "shape": {
+          "roles": {
+            "type": "list",
+            "count": 2
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListUsers",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListUsers",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 522,
+        "shape": {
+          "users": {
+            "type": "list",
+            "count": 1
+          },
+          "user_assignments": {
+            "type": "list",
+            "count": 1
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListLDAPServers",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListLDAPServers",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 40,
+        "shape": {
+          "ldap_servers": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.GetLDAPSynchronization",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "GetLDAPSynchronization",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 56,
+        "shape": {
+          "server_name": {
+            "type": "str",
+            "present": true
+          },
+          "period_minutes": {
+            "type": "int",
+            "present": true
+          },
+          "enabled": {
+            "type": "bool",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.GetPolicies",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "GetPolicies",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 479,
+        "shape": {
+          "pwd_policy": {
+            "type": "list",
+            "count": 1
+          },
+          "ip_filters": {
+            "type": "list",
+            "count": 0
+          },
+          "trusted_ip_list": {
+            "type": "list",
+            "count": 0
+          },
+          "system_integrity_reaction_modes": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.GetCloudConfig",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "GetCloudConfig",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 23,
+        "shape": {
+          "cloud_public_key": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListGlobalPermissions",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListGlobalPermissions",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 18,
+        "shape": {
+          "permissions": {
+            "type": "object",
+            "keys": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListGroupsPermissions",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListGroupsPermissions",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 40,
+        "shape": {
+          "permissions": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_groups": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListGroupsPermissionsInfo",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListGroupsPermissionsInfo",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 7,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 306,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 1
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListObjectPermissions",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListObjectPermissions",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 7,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 186,
+        "shape": {
+          "permissions": {
+            "type": "object",
+            "keys": 7
+          },
+          "unreachable_objects": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListMacrosPermissions",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListMacrosPermissions",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 6,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 20,
+        "shape": {
+          "macros_access": {
+            "type": "object",
+            "keys": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListMacrosPermissionsPaged",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListMacrosPermissionsPaged",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 41,
+        "shape": {
+          "macros_access": {
+            "type": "list",
+            "count": 0
+          },
+          "next_page_token": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.CheckLogin",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "CheckLogin",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 24,
+        "shape": {
+          "result": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.ListUserGlobalPermissions",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "ListUserGlobalPermissions",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 989,
+        "shape": {
+          "permissions": {
+            "type": "object",
+            "keys": 1
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.security.SecurityService.GetRestrictedConfig",
+      "package": "axxonsoft.bl.security",
+      "service": "SecurityService",
+      "method": "GetRestrictedConfig",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1251,
+        "shape": {
+          "current_user": {
+            "type": "object",
+            "keys": 14
+          },
+          "current_roles": {
+            "type": "list",
+            "count": 1
+          },
+          "all_roles": {
+            "type": "list",
+            "count": 2
+          },
+          "all_users": {
+            "type": "list",
+            "count": 1
+          },
+          "pwd_policy": {
+            "type": "list",
+            "count": 1
+          },
+          "system_integrity_reaction_modes": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetDataStorageSettings",
+      "package": "axxonsoft.bl.settings",
+      "service": "DomainSettingsService",
+      "method": "GetDataStorageSettings",
+      "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 8,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 92,
+        "shape": {
+          "system_logs_settings": {
+            "type": "object",
+            "keys": 2
+          },
+          "etag": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetExportSettings",
+      "package": "axxonsoft.bl.settings",
+      "service": "DomainSettingsService",
+      "method": "GetExportSettings",
+      "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1106,
+        "shape": {
+          "settings": {
+            "type": "object",
+            "keys": 5
+          },
+          "etag": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetGDPRSettings",
+      "package": "axxonsoft.bl.settings",
+      "service": "DomainSettingsService",
+      "method": "GetGDPRSettings",
+      "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 76,
+        "shape": {
+          "settings": {
+            "type": "object",
+            "keys": 1
+          },
+          "etag": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetBookmarkSettings",
+      "package": "axxonsoft.bl.settings",
+      "service": "DomainSettingsService",
+      "method": "GetBookmarkSettings",
+      "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 2,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 11,
+        "shape": {
+          "etag": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.statistics.StatisticService.GetStatistics",
+      "package": "axxonsoft.bl.statistics",
+      "service": "StatisticService",
+      "method": "GetStatistics",
+      "proto": "axxonsoft/bl/statistics/Statistics.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 23,
+        "shape": {
+          "stats": {
+            "type": "list",
+            "count": 0
+          },
+          "fails": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.tz.TimeZoneManager.ListTimeZones",
+      "package": "axxonsoft.bl.tz",
+      "service": "TimeZoneManager",
+      "method": "ListTimeZones",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 5,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 12,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.tz.TimeZoneManager.BatchGetZones",
+      "package": "axxonsoft.bl.tz",
+      "service": "TimeZoneManager",
+      "method": "BatchGetZones",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 3,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 33,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 0
+          },
+          "not_found_zones": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.tz.TimeZoneManager.GetNTP",
+      "package": "axxonsoft.bl.tz",
+      "service": "TimeZoneManager",
+      "method": "GetNTP",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 4,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 2,
+        "shape": {}
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.tz.TimeZoneManager.GetTimeZone",
+      "package": "axxonsoft.bl.tz",
+      "service": "TimeZoneManager",
+      "method": "GetTimeZone",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 47,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 26,
+        "shape": {
+          "available_timezones": {
+            "type": "list",
+            "count": 0
+          }
+        }
+      }
+    },
+    {
+      "fqmn": "axxonsoft.bl.vmda.VMDAService.EnumerateSchemes",
+      "package": "axxonsoft.bl.vmda",
+      "service": "VMDAService",
+      "method": "EnumerateSchemes",
+      "proto": "axxonsoft/bl/vmda/VMDA.proto",
+      "streaming": "none",
+      "safety": "read",
+      "status": "PASS",
+      "elapsed_ms": 8,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 61,
+        "shape": {
+          "cs_IDs": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    }
+  ]
+}

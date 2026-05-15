@@ -1,0 +1,90 @@
+{
+  "started_at": "2026-05-07T16:48:02.614068+00:00",
+  "finished_at": "2026-05-07T16:48:12.780828+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "ConfigurationService.ChangeConfig.add_temp_appdata_detector",
+    "ConfigurationService.ChangeConfig.add_temp_realtime_recognizer_external",
+    "ExternalDetectorService.RaiseOccasionalEvent.temp_detector",
+    "EventHistoryService.ReadEvents.verify_temp_event",
+    "ConfigurationService.ChangeConfig.remove_temp_external_fixture"
+  ],
+  "summary": {
+    "PASS": 0,
+    "WARN": 1,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "external_event_lifecycle",
+      "status": "WARN",
+      "elapsed_ms": 9733,
+      "details": {
+        "detector_uid": "hosts/Server/RealtimeRecognizerExternal.1",
+        "fixture_type": "RealtimeRecognizerExternal",
+        "candidate_access_points": [
+          "hosts/Server/RealtimeRecognizerExternal.1/RecognizerExternal",
+          "hosts/Server/RealtimeRecognizerExternal.1",
+          "hosts/Server/RealtimeRecognizerExternal.1/EventSupplier"
+        ],
+        "attempts": [
+          {
+            "access_point": "hosts/Server/RealtimeRecognizerExternal.1/RecognizerExternal",
+            "raise_event": {
+              "status": 503,
+              "body": {
+                "errorMessage": "Can't resolve reference to hosts/Server/RealtimeRecognizerExternal.1/RecognizerExternal",
+                "grpcErrorCode": 14
+              },
+              "event_id": "codex-external-event-20260507T164806615678Z",
+              "event_type": "Event1",
+              "timestamp": "2026-05-07T16:48:06.615766Z"
+            }
+          },
+          {
+            "access_point": "hosts/Server/RealtimeRecognizerExternal.1",
+            "raise_event": {
+              "status": 503,
+              "body": {
+                "errorMessage": "Can't resolve reference to hosts/Server/RealtimeRecognizerExternal.1",
+                "grpcErrorCode": 14
+              },
+              "event_id": "codex-external-event-20260507T164808023363Z",
+              "event_type": "Event1",
+              "timestamp": "2026-05-07T16:48:08.023469Z"
+            }
+          },
+          {
+            "access_point": "hosts/Server/RealtimeRecognizerExternal.1/EventSupplier",
+            "raise_event": {
+              "status": 503,
+              "body": {
+                "errorMessage": "Can't resolve reference to hosts/Server/RealtimeRecognizerExternal.1/EventSupplier",
+                "grpcErrorCode": 14
+              },
+              "event_id": "codex-external-event-20260507T164809464267Z",
+              "event_type": "Event1",
+              "timestamp": "2026-05-07T16:48:09.464479Z"
+            }
+          }
+        ],
+        "accepted": {},
+        "verification": {
+          "skipped": "raise response was not OK"
+        },
+        "remove_response_keys": [
+          "added",
+          "added_macros",
+          "failed",
+          "failed_reason",
+          "removed_macros"
+        ]
+      }
+    }
+  ]
+}

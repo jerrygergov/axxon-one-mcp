@@ -1,0 +1,60 @@
+{
+  "started_at": "2026-05-06T18:29:53.091644+00:00",
+  "finished_at": "2026-05-06T18:29:55.717067+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "websocket_camera_events",
+      "websocket_camera_track"
+    ],
+    "duration_seconds": 3.0,
+    "max_events": 1,
+    "subjects": [
+      "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+    ],
+    "event_types": [],
+    "current_node_events_only": false
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_device_ap": "hosts/Server/DeviceIpint.1",
+    "subjects": [
+      "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+    ]
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 2,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "websocket_camera_events",
+      "status": "WARN",
+      "elapsed_ms": 373,
+      "details": {
+        "error_type": "WebSocketConnectionClosedException",
+        "error": "Connection to remote host was lost.",
+        "stage": "receive",
+        "schema": ""
+      }
+    },
+    {
+      "mode": "websocket_camera_track",
+      "status": "WARN",
+      "elapsed_ms": 384,
+      "details": {
+        "error_type": "WebSocketConnectionClosedException",
+        "error": "Connection to remote host was lost.",
+        "stage": "receive",
+        "schema": ""
+      }
+    }
+  ]
+}

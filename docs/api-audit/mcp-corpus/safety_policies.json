@@ -1,0 +1,54 @@
+{
+  "classes": {
+    "bounded-stream": {
+      "limits": [
+        "timeout",
+        "event_count",
+        "byte_count"
+      ],
+      "requires_approval": false
+    },
+    "external-client": {
+      "limits": [
+        "fixture_preflight",
+        "state_snapshot",
+        "rollback"
+      ],
+      "requires_approval": true
+    },
+    "fixture-heavy": {
+      "limits": [
+        "fixture_preflight",
+        "timeout"
+      ],
+      "requires_approval": false
+    },
+    "mutation": {
+      "limits": [
+        "dry_run",
+        "confirmation",
+        "rollback",
+        "audit_log"
+      ],
+      "requires_approval": true
+    },
+    "safe-read": {
+      "limits": [
+        "timeout"
+      ],
+      "requires_approval": false
+    }
+  },
+  "default_mode": "read-only",
+  "redaction": [
+    "passwords",
+    "bearer_tokens",
+    "grpc_token_metadata",
+    "license_keys",
+    "serial_numbers",
+    "full_plate_values",
+    "raw_security_payloads",
+    "raw_images",
+    "raw_video"
+  ]
+}

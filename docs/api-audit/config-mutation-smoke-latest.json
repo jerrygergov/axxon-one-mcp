@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-05-07T12:14:29.801423+00:00",
+  "finished_at": "2026-05-07T12:15:00.385886+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "groups": [
+      "av_detector_parameters"
+    ]
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "av_detector_parameters",
+      "status": "PASS",
+      "elapsed_ms": 30115,
+      "details": {
+        "added": [
+          "hosts/Server/AVDetector.102"
+        ],
+        "scalar_parameter": "enabled",
+        "scalar_value_key": "value_bool",
+        "scalar_readback": false,
+        "scalar_changed_failed": 0,
+        "visual_owner_type": "AVDetector",
+        "visual_skipped": "no VisualElement child",
+        "fallback_visual_added": [
+          "hosts/Server/AppDataDetector.26"
+        ],
+        "fallback_visual_owner_type": "AppDataDetector",
+        "visual_element_uid": "hosts/Server/AppDataDetector.26/VisualElement.e0c44680-cad6-4629-b035-0b3f8957e102",
+        "visual_parameter": "polyline",
+        "visual_value_key": "value_simple_polygon",
+        "visual_readback_present": true,
+        "visual_changed_failed": 0,
+        "removed_failed": 0
+      }
+    }
+  ]
+}

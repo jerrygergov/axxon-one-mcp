@@ -1,0 +1,163 @@
+{
+  "started_at": "2026-05-11T08:08:29.090264+00:00",
+  "finished_at": "2026-05-11T08:08:33.525664+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 3,
+    "WARN": 1,
+    "FAIL": 0
+  },
+  "fixtures": {
+    "camera_ap_len": 51,
+    "archive_ap_len": 58,
+    "export_agent_count": 1
+  },
+  "results": [
+    {
+      "group": "list_sessions",
+      "status": "PASS",
+      "elapsed_ms": 208,
+      "details": {
+        "pages": 0,
+        "session_count": 0,
+        "states": {}
+      }
+    },
+    {
+      "group": "get_export_settings",
+      "status": "PASS",
+      "elapsed_ms": 198,
+      "details": {
+        "etag_len": 40,
+        "settings_shape": {
+          "options": {
+            "type": "object",
+            "keys": 11
+          },
+          "pdf_background": {
+            "type": "object",
+            "keys": 0
+          },
+          "watermark_image": {
+            "type": "object",
+            "keys": 0
+          },
+          "font_file": {
+            "type": "object",
+            "keys": 0
+          },
+          "pdf_font_file": {
+            "type": "object",
+            "keys": 0
+          }
+        },
+        "options_shape": {
+          "video_file_format": {
+            "type": "str",
+            "present": true
+          },
+          "image_file_format": {
+            "type": "str",
+            "present": true
+          },
+          "video_quality": {
+            "type": "str",
+            "present": true
+          },
+          "audio_quality": {
+            "type": "str",
+            "present": true
+          },
+          "time_lapse": {
+            "type": "object",
+            "keys": 0
+          },
+          "watermark_place": {
+            "type": "object",
+            "keys": 2
+          },
+          "pdf_snapshot_place": {
+            "type": "object",
+            "keys": 4
+          },
+          "pdf_comment_place": {
+            "type": "object",
+            "keys": 4
+          },
+          "pdf_timestamp_place": {
+            "type": "object",
+            "keys": 4
+          },
+          "font_size": {
+            "type": "float",
+            "present": true
+          },
+          "text_color": {
+            "type": "object",
+            "keys": 4
+          }
+        }
+      }
+    },
+    {
+      "group": "fixture_preflight",
+      "status": "PASS",
+      "elapsed_ms": 849,
+      "details": {
+        "export_agents": {
+          "count": 1,
+          "access_point_lengths": [
+            28
+          ],
+          "display_name_lengths": [
+            0
+          ]
+        },
+        "camera_ap_len": 51,
+        "archive_ap_len": 58,
+        "archive_interval_available": true,
+        "interval_count_sampled": 1,
+        "interval_read_status": 200
+      }
+    },
+    {
+      "group": "approval_only_mutations",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "not_executed": [
+          {
+            "rpc": "ExportService.StartSession",
+            "risk": "creates an export job and may write result files",
+            "requirement": "short archived interval, export-agent target if needed, byte limit, and cleanup plan"
+          },
+          {
+            "rpc": "ExportService.DownloadFile",
+            "risk": "downloads generated export bytes",
+            "requirement": "known file id from a codex export session and strict byte/chunk cap"
+          },
+          {
+            "rpc": "ExportService.StopSession",
+            "risk": "changes export job state",
+            "requirement": "only for a session created by this workflow"
+          },
+          {
+            "rpc": "ExportService.DestroySession",
+            "risk": "removes export session and generated results",
+            "requirement": "only for a codex session id captured by this workflow"
+          },
+          {
+            "rpc": "DomainSettingsService.UpdateExportSettings",
+            "risk": "changes domain-wide export defaults",
+            "requirement": "settings etag snapshot and explicit rollback"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "event_types": {
+    "count": 67
+  },
+  "detector_kinds": {
+    "AVDetector": [
+      "MotionDetection",
+      "NeuroTracker",
+      "SceneDescription"
+    ],
+    "AppDataDetector": [
+      "AbandonedObject",
+      "LongInZone",
+      "LostObject",
+      "MoveInZone",
+      "OneLineCrossing"
+    ]
+  },
+  "search_events": {
+    "status": "ok",
+    "count": 0
+  },
+  "vmda_ap": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+  "pull_metadata": {
+    "status": "ok",
+    "count": 1
+  },
+  "create_camera": {
+    "applied": "applied",
+    "uid": "hosts/Server/DeviceIpint.8224",
+    "plan_id": "plan-9b19decc-a2a0-4168-b7ca-6fc34ef5049d",
+    "rb_token": "CONFIRM-create_camera-rollback"
+  },
+  "set_unit_properties": {
+    "applied": "applied",
+    "failed": null
+  },
+  "create_macro": {
+    "applied": "applied",
+    "uid": "4b74bb39-c9df-4ef4-989d-0ed4d122ad50",
+    "plan_id": "plan-809d0d57-42c1-4b10-b73a-2edabf75cc01",
+    "rb_token": "CONFIRM-create_macro-rollback"
+  },
+  "create_layout": {
+    "applied": "applied",
+    "uid": "b490ee68-3942-446e-af57-9708da007dbb",
+    "failed": null,
+    "plan_id": "plan-f69d4be8-5466-4f5d-8098-b83f1f2cbfb6",
+    "rb_token": "CONFIRM-create_layout-rollback"
+  },
+  "cleanup_layout": "ok",
+  "cleanup_macro": "ok",
+  "cleanup_camera": "ok"
+}

@@ -1,0 +1,117 @@
+{
+  "started_at": "2026-05-03T09:25:59.856852+00:00",
+  "finished_at": "2026-05-03T09:26:26.346244+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "checks": [
+      "camera_snapshot",
+      "camera_live_mjpeg",
+      "camera_live_hls",
+      "camera_live_mp4",
+      "archive_frame_by_time",
+      "archive_media_mjpeg"
+    ],
+    "timeout_seconds": 10.0,
+    "max_bytes": 1048576,
+    "auth_mode": "bearer"
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_legacy_ap": "Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "begin": "20260502T092602.439122",
+    "end": "20260503T092602.439122"
+  },
+  "summary": {
+    "PASS": 4,
+    "WARN": 2,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "name": "camera_snapshot",
+      "method": "GET",
+      "path": "/live/media/snapshot/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 997,
+      "details": {
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "size": 49870,
+        "raw_bytes": 49870,
+        "sha256": "081be311f046f775974a419890b55d40ae73d3136279f7e31ac827c523dabf3c",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mjpeg",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 1658,
+      "details": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "size": 1048576,
+        "raw_bytes": 1048576,
+        "sha256": "378bd4d6fd93745a0e8daa6116896acda3483fd60260e401d382c38f56486a73",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_hls",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=hls",
+      "status": "PASS",
+      "elapsed_ms": 449,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 282,
+        "raw_bytes": 282,
+        "sha256": "f7d5f44478a4f624184d095a81932a8ac685d080397e72105e17542d78a20427",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mp4",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=mp4",
+      "status": "PASS",
+      "elapsed_ms": 313,
+      "details": {
+        "http_status": 200,
+        "content_type": "video/mp4",
+        "size": 841,
+        "raw_bytes": 841,
+        "sha256": "89f5d9e54e7c31fdf0c41e5d5d9649c444a535a4d52839594d02204b0edb63b2",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "archive_frame_by_time",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260502T092602.439122?threshold=60000&w=640&h=0",
+      "status": "WARN",
+      "elapsed_ms": 10120,
+      "details": {
+        "error_type": "TimeoutError",
+        "error": "timed out"
+      }
+    },
+    {
+      "name": "archive_media_mjpeg",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260502T092602.439122?w=640&h=0&speed=1",
+      "status": "WARN",
+      "elapsed_ms": 10368,
+      "details": {
+        "error_type": "TimeoutError",
+        "error": "timed out"
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-05-02T09:31:23.210760+00:00",
+  "finished_at": "2026-05-02T09:31:31.018295+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "heatmap"
+    ],
+    "hours": 2.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "",
+    "range": {
+      "begin": "20260502T073125.173621",
+      "end": "20260502T093125.173621"
+    }
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "heatmap",
+      "status": "PASS",
+      "elapsed_ms": 5844,
+      "details": {
+        "endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+        "pages": 3,
+        "heatmap_builder_ap": "",
+        "query_supplied": true,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    }
+  ]
+}

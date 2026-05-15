@@ -1,0 +1,131 @@
+{
+  "started_at": "2026-05-02T08:58:23.419297+00:00",
+  "finished_at": "2026-05-02T08:58:26.852331+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "groups": [
+      "templates",
+      "macros",
+      "users",
+      "maps",
+      "detectors"
+    ]
+  },
+  "summary": {
+    "PASS": 5,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "templates",
+      "status": "PASS",
+      "elapsed_ms": 177,
+      "details": {
+        "count": 0,
+        "shape": {},
+        "batch_shape": {}
+      }
+    },
+    {
+      "group": "macros",
+      "status": "PASS",
+      "elapsed_ms": 522,
+      "details": {
+        "count": 16,
+        "stream_pages": 1,
+        "stream_items": 16,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 16
+          }
+        },
+        "config_shape": {
+          "user_alert_ttl": {
+            "type": "object",
+            "keys": 1
+          },
+          "rule_alert_ttl": {
+            "type": "object",
+            "keys": 1
+          },
+          "conditional_ttl": {
+            "type": "object",
+            "keys": 0
+          },
+          "required_comment": {
+            "type": "object",
+            "keys": 3
+          },
+          "max_event_age": {
+            "type": "object",
+            "keys": 1
+          },
+          "event_cleanup_period": {
+            "type": "object",
+            "keys": 1
+          }
+        }
+      }
+    },
+    {
+      "group": "users",
+      "status": "PASS",
+      "elapsed_ms": 335,
+      "details": {
+        "roles_count": 4,
+        "users_count": 35,
+        "roles_shape": {
+          "roles": {
+            "type": "list",
+            "count": 4
+          }
+        },
+        "users_shape": {
+          "users": {
+            "type": "list",
+            "count": 35
+          },
+          "user_assignments": {
+            "type": "list",
+            "count": 35
+          }
+        }
+      }
+    },
+    {
+      "group": "maps",
+      "status": "PASS",
+      "elapsed_ms": 198,
+      "details": {
+        "count": 5,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 5
+          }
+        },
+        "batch_shape": {},
+        "image_shape": {}
+      }
+    },
+    {
+      "group": "detectors",
+      "status": "PASS",
+      "elapsed_ms": 0,
+      "details": {
+        "detector_like_components": 30,
+        "vmda_endpoints": 11,
+        "sample_shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    }
+  ]
+}

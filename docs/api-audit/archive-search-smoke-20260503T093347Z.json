@@ -1,0 +1,78 @@
+{
+  "started_at": "2026-05-03T09:33:47.534937+00:00",
+  "finished_at": "2026-05-03T09:33:51.195893+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "legacy_vmda",
+      "legacy_heatmap"
+    ],
+    "hours": 24.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "",
+    "range": {
+      "begin": "20260502T093349.656435",
+      "end": "20260503T093349.656435"
+    }
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 2,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "legacy_vmda",
+      "status": "WARN",
+      "elapsed_ms": 780,
+      "details": {
+        "kind": "vmda",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 206,
+        "result_content_type": "application/json; charset=utf-8",
+        "result_size": 22,
+        "result_shape": {
+          "intervals": {
+            "type": "list",
+            "count": 0
+          }
+        },
+        "delete_status": 204
+      }
+    },
+    {
+      "mode": "legacy_heatmap",
+      "status": "WARN",
+      "elapsed_ms": 759,
+      "details": {
+        "kind": "heatmap",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 206,
+        "result_content_type": "image/png",
+        "result_size": 0,
+        "result_shape": {
+          "raw_bytes": {
+            "type": "int",
+            "present": true
+          },
+          "sha256": {
+            "type": "str",
+            "present": true
+          }
+        },
+        "delete_status": 204
+      }
+    }
+  ]
+}

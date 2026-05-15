@@ -1,0 +1,39 @@
+{
+  "started_at": "2026-05-06T22:36:03.642826+00:00",
+  "finished_at": "2026-05-06T22:36:10.038581+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "archive_ap": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+    "range_begin": "2026-05-06T22:35:53.642826+00:00",
+    "range_end": "2026-05-06T22:36:03.642826+00:00",
+    "message_prefix": "codex-grpc-bookmark-smoke"
+  },
+  "results": [
+    {
+      "group": "grpc_bookmark_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 3023,
+      "details": {
+        "created_id_len": 36,
+        "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "archive_ap": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        "message_prefix": "codex-grpc-bookmark-smoke",
+        "created_filter_count": 1,
+        "updated_filter_count": 1,
+        "deleted_filter_count": 0,
+        "range_seconds": 10
+      }
+    }
+  ]
+}

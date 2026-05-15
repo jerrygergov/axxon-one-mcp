@@ -1,0 +1,66 @@
+{
+  "started_at": "2026-05-08T09:39:25.695358+00:00",
+  "finished_at": "2026-05-08T09:39:29.484721+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "face",
+      "face_appearance_rate"
+    ],
+    "hours": 2.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.9/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "legacy_vmda_endpoint": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+    "range": {
+      "begin": "20260508T073927.898583",
+      "end": "20260508T093927.898583"
+    }
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 1,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "face",
+      "status": "WARN",
+      "elapsed_ms": 664,
+      "details": {
+        "start_status": 400,
+        "location_received": false,
+        "content_type": ""
+      }
+    },
+    {
+      "mode": "face_appearance_rate",
+      "status": "PASS",
+      "elapsed_ms": 921,
+      "details": {
+        "detector": "hosts/Server/AVDetector.93/EventSupplier",
+        "status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "image": {
+          "path": "axxon-face-camera9-snapshot.jpg",
+          "bytes": 32902,
+          "sha256": "cf100bae9cfc711473e3426f87894a1f09a74ca357b912943e794812d5ba325d"
+        },
+        "shape": {
+          "rate": {
+            "type": "float",
+            "present": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-05-11T08:13:14.748096+00:00",
+  "finished_at": "2026-05-11T08:13:23.482688+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "hours": 2.0,
+    "waittimeout_ms": 30000,
+    "poll_attempts": 20,
+    "max_download_bytes": 262144
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_legacy_ap": "Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "archive_ap": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+    "archive_timestamp": "20260511T081318"
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "archive_frame_export_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 4867,
+      "details": {
+        "start_status": 202,
+        "location_present": true,
+        "export_id_len": 36,
+        "state": 2,
+        "progress": 1.0,
+        "file_count": 1,
+        "download": {
+          "status": 200,
+          "content_type": "image/jpeg",
+          "bytes": 72107,
+          "sha256": "098934da74d2f310aff4554c29854dd2247ac9766a09887f30fcb02810e6203d"
+        },
+        "deleted": true
+      }
+    }
+  ]
+}

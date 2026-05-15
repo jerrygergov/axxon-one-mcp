@@ -1,0 +1,141 @@
+{
+  "started_at": "2026-05-14T11:09:10.188046+00:00",
+  "finished_at": "2026-05-14T11:09:12.350785+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "host": "<demo-host>",
+    "client_http_port": 8888,
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 2,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "client_http_targets",
+      "status": "WARN",
+      "elapsed_ms": 591,
+      "details": {
+        "reachable_count": 0,
+        "checks": [
+          {
+            "host": "127.0.0.1",
+            "port": 8888,
+            "purpose": "local Axxon Client HTTP API",
+            "reachable": false,
+            "elapsed_ms": 2,
+            "error_type": "ConnectionRefusedError"
+          },
+          {
+            "host": "<demo-host>",
+            "port": 8888,
+            "purpose": "remote host Client HTTP API",
+            "reachable": false,
+            "elapsed_ms": 588,
+            "error_type": "ConnectionRefusedError"
+          }
+        ],
+        "fixture_gap": "no Axxon Client HTTP API target reachable"
+      }
+    },
+    {
+      "group": "embeddable_host",
+      "status": "PASS",
+      "elapsed_ms": 1571,
+      "details": {
+        "url": "http://<demo-host>:80",
+        "signature": {
+          "path": "/embedded.html",
+          "http_status": 200,
+          "content_type": "text/html",
+          "bytes": 856,
+          "text_prefix_len": 856,
+          "mentions_component": true,
+          "mentions_video": true,
+          "mentions_embed": true
+        },
+        "checks": [
+          {
+            "path": "/embedded.html",
+            "http_status": 200,
+            "content_type": "text/html",
+            "bytes": 856,
+            "text_prefix_len": 856,
+            "mentions_component": true,
+            "mentions_video": true,
+            "mentions_embed": true
+          },
+          {
+            "path": "/embedded.js",
+            "http_status": 200,
+            "content_type": "application/javascript",
+            "bytes": 4850,
+            "text_prefix_len": 0,
+            "mentions_component": false,
+            "mentions_video": false,
+            "mentions_embed": false
+          },
+          {
+            "path": "/",
+            "http_status": 200,
+            "content_type": "text/html",
+            "bytes": 955,
+            "text_prefix_len": 955,
+            "mentions_component": false,
+            "mentions_video": false,
+            "mentions_embed": false
+          }
+        ],
+        "both_assets_present": true,
+        "fixture_gap": ""
+      }
+    },
+    {
+      "group": "approval_only_operations",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "details": {
+        "not_executed": [
+          {
+            "operation": "ClientHTTP.SwitchLayout",
+            "risk": "changes operator display state",
+            "requirement": "capture current layout/display and restore"
+          },
+          {
+            "operation": "ClientHTTP.AddCameraToDisplay",
+            "risk": "changes operator display composition",
+            "requirement": "isolated display and remove/restore step"
+          },
+          {
+            "operation": "ClientHTTP.RemoveCameraFromDisplay",
+            "risk": "changes operator display composition",
+            "requirement": "restore original display camera set"
+          },
+          {
+            "operation": "ClientHTTP.SetArchiveMode",
+            "risk": "changes playback/live mode in client UI",
+            "requirement": "capture and restore previous mode"
+          },
+          {
+            "operation": "ClientHTTP.SetSearchMode",
+            "risk": "changes client UI search mode",
+            "requirement": "capture and restore previous mode"
+          },
+          {
+            "operation": "ClientHTTP.SetImmersionMode",
+            "risk": "changes client UI state",
+            "requirement": "capture and restore previous mode"
+          },
+          {
+            "operation": "EmbeddableComponent.BrowserRender",
+            "risk": "may expose operator/session visual data",
+            "requirement": "sanitized screenshot policy and no credential persistence"
+          }
+        ]
+      }
+    }
+  ]
+}

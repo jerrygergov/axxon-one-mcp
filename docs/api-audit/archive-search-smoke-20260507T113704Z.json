@@ -1,0 +1,205 @@
+{
+  "started_at": "2026-05-07T11:37:04.007543+00:00",
+  "finished_at": "2026-05-07T11:37:24.852604+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "lpr",
+      "face",
+      "vmda",
+      "heatmap",
+      "build_heatmap",
+      "stranger",
+      "legacy_auto",
+      "legacy_vmda",
+      "legacy_heatmap"
+    ],
+    "hours": 2.0,
+    "limit": 3
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "vmda_endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+    "legacy_vmda_endpoint": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+    "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+    "range": {
+      "begin": "20260507T093713.929761",
+      "end": "20260507T113713.929761"
+    }
+  },
+  "summary": {
+    "PASS": 7,
+    "WARN": 0,
+    "SKIP": 2,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "lpr",
+      "status": "PASS",
+      "elapsed_ms": 405,
+      "details": {
+        "items": 0,
+        "predicate_supplied": false,
+        "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "shape": {
+          "type": "list",
+          "count": 0
+        }
+      }
+    },
+    {
+      "mode": "face",
+      "status": "SKIP",
+      "elapsed_ms": 0,
+      "details": {
+        "reason": "missing --face-image fixture"
+      }
+    },
+    {
+      "mode": "vmda",
+      "status": "PASS",
+      "elapsed_ms": 378,
+      "details": {
+        "endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+        "scheme_count": 1,
+        "shape": {
+          "cs_IDs": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "mode": "heatmap",
+      "status": "PASS",
+      "elapsed_ms": 1935,
+      "details": {
+        "endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+        "pages": 3,
+        "heatmap_builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+        "query_supplied": false,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "mode": "build_heatmap",
+      "status": "PASS",
+      "elapsed_ms": 2786,
+      "details": {
+        "builder_ap": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder",
+        "endpoint": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+        "result": true,
+        "heatmap_cells": 0,
+        "image_bytes": 5842,
+        "image_sha256": "3b600129ac4e621c6e815052062a3328d7ad90a6f290faf154cec9e4fbb3ca92",
+        "query_supplied": false,
+        "mask_size": {
+          "width": 32,
+          "height": 24
+        },
+        "image_size": {
+          "width": 64,
+          "height": 48
+        },
+        "shape": {
+          "result": {
+            "type": "bool",
+            "present": true
+          },
+          "image_data": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "mode": "stranger",
+      "status": "SKIP",
+      "elapsed_ms": 0,
+      "details": {
+        "reason": "missing --face-image fixture"
+      }
+    },
+    {
+      "mode": "legacy_auto",
+      "status": "PASS",
+      "elapsed_ms": 1761,
+      "details": {
+        "kind": "auto",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 200,
+        "result_content_type": "application/json; charset=utf-8",
+        "result_size": 36,
+        "result_shape": {
+          "events": {
+            "type": "list",
+            "count": 0
+          },
+          "more": {
+            "type": "bool",
+            "present": true
+          }
+        },
+        "delete_status": 204,
+        "poll_attempts": 1
+      }
+    },
+    {
+      "mode": "legacy_vmda",
+      "status": "PASS",
+      "elapsed_ms": 1601,
+      "details": {
+        "kind": "vmda",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 200,
+        "result_content_type": "application/json; charset=utf-8",
+        "result_size": 22,
+        "result_shape": {
+          "intervals": {
+            "type": "list",
+            "count": 0
+          }
+        },
+        "delete_status": 204,
+        "poll_attempts": 1
+      }
+    },
+    {
+      "mode": "legacy_heatmap",
+      "status": "PASS",
+      "elapsed_ms": 2054,
+      "details": {
+        "kind": "heatmap",
+        "start_status": 202,
+        "location_received": true,
+        "result_status": 200,
+        "result_content_type": "image/png",
+        "result_size": 131,
+        "result_shape": {
+          "raw_bytes": {
+            "type": "int",
+            "present": true
+          },
+          "sha256": {
+            "type": "str",
+            "present": true
+          }
+        },
+        "delete_status": 204,
+        "poll_attempts": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "coverage_counts": {
+    "fixture-needed": 6,
+    "verified": 27
+  },
+  "fixture_needed": [
+    {
+      "missing_fixture": "PTZ preflight found zero telemetry/PTZ access points and zero control panels on the demo stand. Add only when a non-production PTZ fixture is present and approved.",
+      "pages": "80-87",
+      "pdf_area": "Legacy HTTP PTZ camera control",
+      "report": "api-audit/ptz-preflight-latest.md; api-audit/fixture-discovery-latest.md; api-audit/mutation-playbooks/ptz-control.md; api-audit/demo-stand-2026-05-01.md",
+      "risk": "mutation",
+      "tooling": "axxon_ptz_preflight.py; axxon_fixture_discovery.py; mutation-playbooks/ptz-control.md"
+    },
+    {
+      "missing_fixture": "gRPC PullEvents receives detector events. WebSocket /events returns HTTP 101 but closes immediately across URL Basic auth, explicit Basic header, schema/no-schema, origin variants, camera include, detector include, and device track. Resolve Web server WebSocket behavior or test through a Web server fixture with active /events streaming.",
+      "pages": "184-188",
+      "pdf_area": "HTTP WebSocket camera-event subscription",
+      "report": "api-audit/demo-websocket-subscription-2026-05-02.md; api-audit/subscription-smoke-latest.md; api-audit/websocket-compat-20260508.md",
+      "risk": "bounded-stream",
+      "tooling": "axxon_subscription_smoke.py"
+    },
+    {
+      "missing_fixture": "Focused preflight checked 127.0.0.1:8888 and <demo-host>:8888; both refused connections. Add only when an Axxon Client HTTP API target is available.",
+      "pages": "189-205",
+      "pdf_area": "Client HTTP API for layouts and videowalls",
+      "report": "api-audit/external-client-preflight-latest.md; api-audit/client-http-fixtures.md",
+      "risk": "external-client",
+      "tooling": "axxon_external_client_preflight.py; client HTTP fixture documentation"
+    },
+    {
+      "missing_fixture": "PTZ preflight confirms no control panels; fixture discovery also found no water-level devices. Add examples only after a configured control-panel or water-level device exists.",
+      "pages": "470-474",
+      "pdf_area": "gRPC control panels and water level",
+      "report": "api-audit/ptz-preflight-latest.md; api-audit/fixture-discovery-latest.md; api-audit/demo-stand-2026-05-01.md",
+      "risk": "fixture-heavy",
+      "tooling": "axxon_ptz_preflight.py; axxon_fixture_discovery.py"
+    },
+    {
+      "missing_fixture": "Tag&Track tracker reads require a telemetry/PTZ access point; none is configured. Add only after a Tag&Track fixture and safe PTZ read plan are present.",
+      "pages": "487-488",
+      "pdf_area": "gRPC Tag&Track Pro PTZ mode",
+      "report": "api-audit/ptz-preflight-latest.md; api-audit/fixture-discovery-latest.md; api-audit/mutation-playbooks/ptz-control.md; api-audit/demo-stand-2026-05-01.md",
+      "risk": "fixture-heavy",
+      "tooling": "axxon_ptz_preflight.py; axxon_fixture_discovery.py; mutation-playbooks/ptz-control.md"
+    },
+    {
+      "missing_fixture": "SecurityService exposes EnableGoogleAuth/DisableGoogleAuth (proto SecurityService.proto:1000-1002) and EEnableTFAResult/EDisableTFAResult enums. No live TFA mutation evidence on demo stand. Requires a Google Authenticator/OTP fixture and an isolated test user before live enable/disable can be exercised with rollback.",
+      "pages": "449-463",
+      "pdf_area": "gRPC TFA mutations (EnableGoogleAuth/DisableGoogleAuth)",
+      "report": "api-audit/security-mutation-smoke-latest.md; api-audit/demo-stand-2026-05-01.md",
+      "risk": "mutation",
+      "tooling": "axxon_security_mutation_smoke.py (planned TFA extension); mutation-playbooks/users-roles-security.md"
+    }
+  ],
+  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/pdf-gap-coverage-matrix.json"
+}

@@ -1,0 +1,80 @@
+{
+  "started_at": "2026-05-11T08:42:16.845645+00:00",
+  "finished_at": "2026-05-11T08:42:42.436392+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "SecurityService.ChangeConfig.add_role",
+    "SecurityService.ChangeConfig.add_user",
+    "SecurityService.ChangeConfig.assign_user_role",
+    "SecurityService.ChangeConfig.set_generated_user_password",
+    "SecurityService.SetGlobalPermissions.temp_role",
+    "SecurityService.SetObjectPermissions.temp_role",
+    "SecurityService.SetGroupsPermissions.temp_role",
+    "SecurityService.SetMacrosPermissions.temp_role",
+    "SecurityService.ChangeConfig.noop_password_policy",
+    "SecurityService.ChangeConfig.noop_ip_filters",
+    "SecurityService.ChangeConfig.add_edit_remove_temp_ldap_server",
+    "SecurityService.ChangeConfig.remove_user_role",
+    "SecurityService.ChangeConfig.remove_user",
+    "SecurityService.ChangeConfig.remove_role"
+  ],
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "security_user_role_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 17326,
+      "details": {
+        "role_id": "c07190ec-ebd3-4fed-bc83-f42641cdf553",
+        "user_id": "9ec55e3a-cf7d-493b-8ad5-8451f680eb45",
+        "role_name": "codex-role-9ec55e3acf7d",
+        "login_len": 19,
+        "before_roles": 4,
+        "before_users": 35,
+        "after_roles": 4,
+        "after_users": 35,
+        "add_response_keys": [],
+        "remove_response_keys": [],
+        "role_present_after_add": true,
+        "user_present_after_add": true,
+        "assigned_user_count": 1,
+        "role_present_after_remove": false,
+        "user_present_after_remove": false,
+        "role_count_restored": true,
+        "user_count_restored": true,
+        "permission_mutations": {
+          "global_role_present": true,
+          "object_failed_count": 0,
+          "camera_permission_ap_len": 51,
+          "archive_permission_ap_len": 58,
+          "group_permission_id_len": 36,
+          "macro_permission_id_len": 36
+        },
+        "policy_noop": {
+          "pwd_policy_count_restored": true,
+          "ip_filter_count_restored": true,
+          "trusted_ip_count_restored": true,
+          "pwd_policy_count": 1,
+          "ip_filter_count": 0,
+          "trusted_ip_count": 0
+        },
+        "ldap_lifecycle": {
+          "ldap_server_id_len": 36,
+          "before_count": 0,
+          "after_remove_count": 0,
+          "present_after_add": true,
+          "present_after_change": true,
+          "present_after_remove": false
+        }
+      }
+    }
+  ]
+}

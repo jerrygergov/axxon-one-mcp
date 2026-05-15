@@ -1,0 +1,35 @@
+{
+  "started_at": "2026-05-08T07:06:59.462906+00:00",
+  "finished_at": "2026-05-08T07:07:00.689819+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "ConfigurationService.ChangeConfig.add_temp_appdata_detector",
+    "ConfigurationService.ChangeConfig.add_temp_detector_ex",
+    "ConfigurationService.ChangeConfig.add_temp_realtime_recognizer_external",
+    "ExternalDetectorService.RaiseOccasionalEvent.temp_detector",
+    "EventHistoryService.ReadEvents.verify_temp_event",
+    "ConfigurationService.ChangeConfig.remove_temp_external_fixture"
+  ],
+  "summary": {
+    "PASS": 0,
+    "WARN": 0,
+    "FAIL": 1
+  },
+  "results": [
+    {
+      "group": "external_event_lifecycle",
+      "status": "FAIL",
+      "elapsed_ms": 317,
+      "details": {
+        "error_type": "IndexError",
+        "error": "list index out of range",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_external_event_smoke.py\", line 332, in run\n    status, details = self.run_lifecycle()\n                      ^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_external_event_smoke.py\", line 290, in run_lifecycle\n    added = self.add_temp_detector()\n            ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_external_event_smoke.py\", line 114, in add_temp_detector\n    return self.add_temp_detector_ex()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_external_event_smoke.py\", line 137, in add_temp_detector_ex\n    self.created_uid = body.get(\"added\", [\"\"])[0]\n                       ~~~~~~~~~~~~~~~~~~~~~~~^^^\nIndexError: list index out of range\n"
+      }
+    }
+  ]
+}

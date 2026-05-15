@@ -1,0 +1,144 @@
+{
+  "started_at": "2026-05-03T09:29:58.567275+00:00",
+  "finished_at": "2026-05-03T09:30:07.868702+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "checks": [
+      "camera_stream_info",
+      "camera_snapshot",
+      "camera_live_mjpeg",
+      "camera_live_hls",
+      "camera_live_mp4",
+      "archive_frame_by_time",
+      "archive_media_mjpeg"
+    ],
+    "timeout_seconds": 10.0,
+    "max_bytes": 1048576,
+    "auth_mode": "bearer"
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_legacy_ap": "Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "begin": "20260502T093000.714027",
+    "end": "20260503T093000.714027",
+    "archive_interval_begin": "20260503T074857.013000",
+    "archive_interval_end": "20260503T093000.947000",
+    "archive_media_time": "20260503T093000.947000"
+  },
+  "summary": {
+    "PASS": 7,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "name": "camera_stream_info",
+      "method": "GET",
+      "path": "/stream-info/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "status": "PASS",
+      "elapsed_ms": 269,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 28,
+        "raw_bytes": 28,
+        "sha256": "634084bd56e0d0c23fda05597c07c6abee3ebfd44c10c7b2c0b40fd7a323be69",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_snapshot",
+      "method": "GET",
+      "path": "/live/media/snapshot/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 887,
+      "details": {
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "size": 49646,
+        "raw_bytes": 49646,
+        "sha256": "897a05dd0a20992f87bf8c4fd0d8b1ffb08ca383f6bcbe1aff4eaa9d6513787e",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mjpeg",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 1979,
+      "details": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "size": 1048576,
+        "raw_bytes": 1048576,
+        "sha256": "47f8272d6b5c6ba32e5d581d22f7d35aa5c8b9e21882834e16e8cae90d10ee05",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_hls",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=hls",
+      "status": "PASS",
+      "elapsed_ms": 389,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 282,
+        "raw_bytes": 282,
+        "sha256": "3f53d28c703aa3fdc0f1a98248f7eba11aaf202bf2c92192431021dd0ec66cb6",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "camera_live_mp4",
+      "method": "GET",
+      "path": "/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=mp4",
+      "status": "PASS",
+      "elapsed_ms": 247,
+      "details": {
+        "http_status": 200,
+        "content_type": "video/mp4",
+        "size": 841,
+        "raw_bytes": 841,
+        "sha256": "b12341e9684bc4b5374f3a173f2495a76d15eff806332276cfbd7d96da65a686",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "archive_frame_by_time",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260503T093000.947000?threshold=60000&w=640&h=0",
+      "status": "PASS",
+      "elapsed_ms": 544,
+      "details": {
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "size": 49568,
+        "raw_bytes": 49568,
+        "sha256": "c4175d9777c1ae3438ee210b8930e49d46b8d3c2d70e08d80cfbd9476539d30e",
+        "max_bytes": 1048576
+      }
+    },
+    {
+      "name": "archive_media_mjpeg",
+      "method": "GET",
+      "path": "/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260503T093000.947000?w=640&h=0&speed=1",
+      "status": "PASS",
+      "elapsed_ms": 2597,
+      "details": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "size": 1048576,
+        "raw_bytes": 1048576,
+        "sha256": "9dae5533ed4f22c82354d933e355e02f89263e3a11d88f3e1a1887b9faf43d3c",
+        "max_bytes": 1048576
+      }
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "mutation_playbooks": [
+    {
+      "name": "archive-management",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/archive-management.md",
+      "title": "Mutation Playbook: Archive Management"
+    },
+    {
+      "name": "bookmarks",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/bookmarks.md",
+      "title": "Mutation Playbook: Bookmarks And Delete Video"
+    },
+    {
+      "name": "detector-parameters",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/detector-parameters.md",
+      "title": "Mutation Playbook: Detector Parameters"
+    },
+    {
+      "name": "device-templates",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/device-templates.md",
+      "title": "Mutation Playbook: Device Templates"
+    },
+    {
+      "name": "export",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/export.md",
+      "title": "Mutation Playbook: Export"
+    },
+    {
+      "name": "external-events",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/external-events.md",
+      "title": "Mutation Playbook: External Events And Virtual Trigger"
+    },
+    {
+      "name": "macros",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/macros.md",
+      "title": "Mutation Playbook: Macros"
+    },
+    {
+      "name": "maps-markers",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/maps-markers.md",
+      "title": "Mutation Playbook: Maps And Markers"
+    },
+    {
+      "name": "ptz-control",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/ptz-control.md",
+      "title": "Mutation Playbook: PTZ Control"
+    },
+    {
+      "name": "users-roles-security",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/mutation-playbooks/users-roles-security.md",
+      "title": "Mutation Playbook: Users, Roles, And Security Policy"
+    }
+  ],
+  "recipes": [
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Prefer the reusable local client for new Python tooling:\n- `arm64-docker/tools/axxon_api_client.py`\n- Usage examples: `arm64-docker/docs/api-audit/client-sdk-usage.md`\n- Runnable examples: `arm64-docker/tools/examples/`\nIt handles local Docker TLS, gRPC auth metadata, HTTP `/grpc` Basic-to-Bearer auth, `/v1` requests, response parsing, sanitizing, and common inventory/archive fixtures.\nThe comprehensive probe, read-only sweep, event-search CLI, HTTP sweeps, and example scripts now share this client path. Keep new integration code on this path unless there is a specific reason to test raw trans",
+      "task": "Baseline Client Pattern"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Use these reports before choosing APIs for a plugin:\n- `grpc-api-catalog.md`: full proto-derived method catalog.\n- `http-endpoints-catalog.md`: full annotated `/v1/...` endpoint catalog.\n- `live-readonly-sweep-latest.md`: direct-gRPC read behavior.\n- `http-grpc-sweep-latest.md`: HTTP `/grpc` wrapper parity for direct-pass unary reads.\n- `http-v1-sweep-latest.md`: safe annotated `/v1` GET plus read-like POST endpoint behavior.\n- `mutating-fixture-sweep-latest.md`: controlled write/rollback behavior.\n- `fixture-discovery-latest.md`: current availability of PTZ, control-panel, water-level, export",
+      "task": "Audit Tooling"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `DomainService.GetVersion`\n- `DomainService.GetHostPlatformInfo`\n- `DomainService.ListNodes`\n- `DomainService.ListCameras`\n- `DomainService.BatchGetCameras`\n- `DomainService.ListArchives`\n- `DomainService.ListComponents`\n- `ConfigurationService.ListUnits`\n- `ConfigurationService.ListUnitsByAccessPoints`\nUse this for:\n- VMS inventory sync.\n- Camera and archive selection UIs.\n- Plugin bootstrap and health pages.\n- Mapping camera access points to configuration units.\nLocal findings:\n- Current local lab has one node, two cameras, three archives, and 22 components.\n- The external de",
+      "task": "Inventory And Discovery"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `EventHistoryService.ReadEvents`\n- `EventHistoryService.ReadCount`\n- `EventHistoryService.ReadLprEvents`\n- `EventHistoryService.ReadTextEvents`\n- `EventHistoryService.ReadAlerts`\n- `EventHistoryService.FindByPrompt`\n- `EventHistoryService.FindSimilarObjects`\n- `EventHistoryService.FindStrangers`\nUse this for:\n- Telegram or incident-notification bots.\n- LPR event search.\n- Alarm dashboards.\n- Vertical event correlation.\n- Operator audit/troubleshooting views.\nLocal findings:\n- Recent local history is dominated by detector line-crossing events.\n- `ReadLprEvents` works but current",
+      "task": "Events And Search"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `MetadataService.PullMetadata`\n- `DomainService.ListComponents`\n- `DomainService.GetCamerasByComponents`\nUse this for:\n- Live object tracking.\n- Detector health validation.\n- Analytics-to-camera mapping.\n- Future vertical integrations that need tracklets, object IDs, or detector samples.\nLocal findings:\n- `PullMetadata` against the VMDA endpoint is the best proof that object tracking is actually producing data.\n- In this ARM Docker lab, the object tracker should use CPU decoder mode.\n- On the demo stand, generic first-candidate VMDA selection can choose an endpoint with no samp",
+      "task": "Metadata And Analytics"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `ArchiveService.GetArchiveTraits`\n- `ArchiveService.GetVolumesState`\n- `ArchiveService.GetDiskSpace`\n- `ArchiveService.GetHistory2`\n- `ArchiveService.GetCalendar`\n- `ArchiveService.GetSize`\nUse this for:\n- Archive health checks.\n- Timeline availability.\n- Retention dashboards.\n- Storage utilization reports.\nLocal findings:\n- Archive APIs need real archive and source access points. Empty/default requests correctly return fixture-needed errors.\n- Prefer the AliceBlue archive AP in this lab.\n- Embedded storage APs may appear in inventory but are not always valid for archive servic",
+      "task": "Archive And Video Availability"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `ExportService.ListSessions`\n- `ExportService.StartSession`\n- `ExportService.GetSessionState`\n- `ExportService.DownloadFile`\n- `ExportService.StopSession`\n- `ExportService.DestroySession`\n- `MediaService.Stream`\n- `MediaService.RequestConnection`\n- `MediaService.AwaitConnection`\n- `MediaService.ConnectEndpoint`\nUse this for:\n- Export status dashboards.\n- Clip retrieval workflows.\n- Live video or media tunnel integrations.\nCurrent strategy:\n- Keep media streaming and file-download tests out of the generic read sweep.\n- Use `axxon_export_smoke.py` for gRPC export lifecycle proof:",
+      "task": "Media And Export"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `ConfigurationService.ListUnits`\n- `ConfigurationService.ListTemplates`\n- `DevicesCatalog.ListVendors`\n- `DevicesCatalog.ListDevices`\n- `DevicesCatalog.GetDevice`\n- `FileSystemBrowser.ListDirectory`\n- `FileSystemBrowser.GetFileInfo`\n- `FileSystemBrowser.GetSpace`\nUse this for:\n- Device onboarding assistants.\n- Deployment validators.\n- Archive folder and filesystem checks.\n- Configuration browsers.\nLocal findings:\n- Virtual camera creation on this image uses `vendor=Virtual`, `model=Virtual`.\n- `vendor=axxonsoft`, `model=Virtual` failed on this image.\n- `/data` is the useful mou",
+      "task": "Configuration And Device Catalog"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `LayoutManager.ListLayouts`\n- `MapService.ListMaps`\n- `MapService.BatchGetMaps`\n- `MapService.GetMapsByComponent`\n- `MapService.ListMapProviders`\nUse this for:\n- Web dashboards.\n- Operator workspace export.\n- Map-aware vertical integrations.\nCurrent lab state:\n- Layout listing works and returns local layouts.\n- Map reads work, but image/provider lookup needs valid IDs and permissions.\n- The demo stand has 20 layouts, one slideshow, five maps, and two map providers, making it the preferred fixture for UI/workspace examples.",
+      "task": "Layouts, Maps, And Visual UI"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `SecurityService.ListRoles`\n- `SecurityService.ListUsers`\n- `SecurityService.GetRestrictedConfig`\n- `SecurityService.ListGlobalPermissions`\n- `SecurityService.ListObjectPermissions`\n- `SecurityService.ListUserGlobalPermissions`\nUse this for:\n- Role-aware plugin behavior.\n- Current-user capability checks.\n- Integration setup validation.\nSecurity rules:\n- Do not log passwords, bearer tokens, license keys, serial numbers, or full security payloads.\n- Reports should store counts and response shapes, not full user/role contents.\n- Password, login, TFA, permission-set, and config-cha",
+      "task": "Security And Permissions"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `TelemetryService.IsSessionAvailable`\n- `TelemetryService.GetPositionInformation`\n- `TelemetryService.GetPresetsInfo`\n- `TelemetryService.GetAuxiliaryOperations`\n- `TagAndTrackService.ListTrackers`\nUse this for:\n- PTZ capability checks.\n- Preset/tour discovery.\n- Tag-and-track integrations.\nCurrent lab state:\n- The local virtual cameras are not PTZ fixtures.\n- PTZ read methods generally need a valid telemetry component access point.\n- Movement/session methods are not safe for generic sweeps.",
+      "task": "PTZ And Telemetry"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "Primary APIs:\n- `grpc.health.v1.Health.Check`\n- `StatisticService.GetStatistics`\n- `LicenseService.LicenseKeyInfo`\n- `LicenseService.GetGlobalRestrictions`\n- `LicenseService.GetNodeRestrictions`\n- `LicenseService.IsPossibleToLaunch`\nUse this for:\n- Integration readiness checks.\n- License-gated feature validation.\n- Node resource monitoring.\nLocal findings:\n- Health check returns `SERVING`.\n- Statistics, license info, restrictions, and launch feasibility are verified in the comprehensive probe.",
+      "task": "Health And Operations"
+    },
+    {
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md",
+      "summary": "1. Implement authentication and TLS handling.\n2. Implement inventory sync with DomainService.\n3. Add event search with EventHistoryService.\n4. Add metadata or archive APIs only after inventory mapping is correct.\n5. Add HTTP `/grpc` parity only where required by the integration runtime.\n6. Add mutating APIs last, with fixtures and rollback.",
+      "task": "Recommended Build Order For Plugins"
+    }
+  ],
+  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/integration-playbooks.md"
+}

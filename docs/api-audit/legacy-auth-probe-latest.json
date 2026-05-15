@@ -1,0 +1,531 @@
+{
+  "started_at": "2026-05-02T22:28:47.002622+00:00",
+  "finished_at": "2026-05-02T22:28:52.757653+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "groups": [
+      "server",
+      "macros"
+    ],
+    "auth_modes": [
+      "anonymous",
+      "basic",
+      "bearer"
+    ]
+  },
+  "summary": {
+    "PASS": 13,
+    "WARN": 8,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "server",
+      "name": "hosts",
+      "auth_mode": "anonymous",
+      "path": "/hosts/",
+      "status": "PASS",
+      "elapsed_ms": 233,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 17,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "hosts",
+      "auth_mode": "basic",
+      "path": "/hosts/",
+      "status": "PASS",
+      "elapsed_ms": 279,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 17,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "hosts",
+      "auth_mode": "bearer",
+      "path": "/hosts/",
+      "status": "PASS",
+      "elapsed_ms": 228,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 17,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "product_version",
+      "auth_mode": "anonymous",
+      "path": "/product/version",
+      "status": "WARN",
+      "elapsed_ms": 293,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "product_version",
+      "auth_mode": "basic",
+      "path": "/product/version",
+      "status": "WARN",
+      "elapsed_ms": 236,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "product_version",
+      "auth_mode": "bearer",
+      "path": "/product/version",
+      "status": "PASS",
+      "elapsed_ms": 296,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 133,
+        "shape": {
+          "DetectorPackVersion": {
+            "type": "str",
+            "present": true
+          },
+          "DriverPackVersion": {
+            "type": "str",
+            "present": true
+          },
+          "httpSdk": {
+            "type": "str",
+            "present": true
+          },
+          "version": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "webserver_statistics",
+      "auth_mode": "anonymous",
+      "path": "/statistics/webserver",
+      "status": "PASS",
+      "elapsed_ms": 233,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 169,
+        "shape": {
+          "now": {
+            "type": "str",
+            "present": true
+          },
+          "requests": {
+            "type": "int",
+            "present": true
+          },
+          "requestsPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOut": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOutPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "streams": {
+            "type": "int",
+            "present": true
+          },
+          "uptime": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "webserver_statistics",
+      "auth_mode": "basic",
+      "path": "/statistics/webserver",
+      "status": "PASS",
+      "elapsed_ms": 283,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 169,
+        "shape": {
+          "now": {
+            "type": "str",
+            "present": true
+          },
+          "requests": {
+            "type": "int",
+            "present": true
+          },
+          "requestsPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOut": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOutPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "streams": {
+            "type": "int",
+            "present": true
+          },
+          "uptime": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "webserver_statistics",
+      "auth_mode": "bearer",
+      "path": "/statistics/webserver",
+      "status": "PASS",
+      "elapsed_ms": 230,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 169,
+        "shape": {
+          "now": {
+            "type": "str",
+            "present": true
+          },
+          "requests": {
+            "type": "int",
+            "present": true
+          },
+          "requestsPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOut": {
+            "type": "int",
+            "present": true
+          },
+          "bytesOutPerSecond": {
+            "type": "int",
+            "present": true
+          },
+          "streams": {
+            "type": "int",
+            "present": true
+          },
+          "uptime": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "hardware_statistics",
+      "auth_mode": "anonymous",
+      "path": "/statistics/hardware",
+      "status": "PASS",
+      "elapsed_ms": 294,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 434,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "hardware_statistics",
+      "auth_mode": "basic",
+      "path": "/statistics/hardware",
+      "status": "PASS",
+      "elapsed_ms": 227,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 434,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "server",
+      "name": "hardware_statistics",
+      "auth_mode": "bearer",
+      "path": "/statistics/hardware",
+      "status": "PASS",
+      "elapsed_ms": 368,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 324,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list",
+      "auth_mode": "anonymous",
+      "path": "/macro/list/",
+      "status": "WARN",
+      "elapsed_ms": 235,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list",
+      "auth_mode": "basic",
+      "path": "/macro/list/",
+      "status": "WARN",
+      "elapsed_ms": 226,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list",
+      "auth_mode": "bearer",
+      "path": "/macro/list/",
+      "status": "PASS",
+      "elapsed_ms": 237,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 1577,
+        "shape": {
+          "macroCommands": {
+            "type": "list",
+            "count": 16
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list_exclude_auto",
+      "auth_mode": "anonymous",
+      "path": "/macro/list/?exclude_auto",
+      "status": "WARN",
+      "elapsed_ms": 275,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list_exclude_auto",
+      "auth_mode": "basic",
+      "path": "/macro/list/?exclude_auto",
+      "status": "WARN",
+      "elapsed_ms": 232,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "legacy_macro_list_exclude_auto",
+      "auth_mode": "bearer",
+      "path": "/macro/list/?exclude_auto",
+      "status": "PASS",
+      "elapsed_ms": 297,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 715,
+        "shape": {
+          "macroCommands": {
+            "type": "list",
+            "count": 8
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "v1_logic_macros",
+      "auth_mode": "anonymous",
+      "path": "/v1/logic_service/macros",
+      "status": "WARN",
+      "elapsed_ms": 226,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "v1_logic_macros",
+      "auth_mode": "basic",
+      "path": "/v1/logic_service/macros",
+      "status": "WARN",
+      "elapsed_ms": 290,
+      "details": {
+        "http_status": 401,
+        "content_type": "application/json; charset=utf-8",
+        "size": 66,
+        "shape": {
+          "errorMessage": {
+            "type": "str",
+            "present": true
+          },
+          "grpcErrorCode": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "macros",
+      "name": "v1_logic_macros",
+      "auth_mode": "bearer",
+      "path": "/v1/logic_service/macros",
+      "status": "PASS",
+      "elapsed_ms": 238,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 4059,
+        "shape": {
+          "items": {
+            "type": "list",
+            "count": 16
+          },
+          "next_page_token": "<redacted>"
+        }
+      }
+    }
+  ]
+}

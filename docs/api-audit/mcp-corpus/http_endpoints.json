@@ -1,0 +1,1995 @@
+{
+  "endpoint_count": 221,
+  "endpoints": [
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.ClearInterval",
+      "live_status": "pending",
+      "path": "/v1/archive/action:clearInterval",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.CreateReaderEndpoint",
+      "live_status": "pending",
+      "path": "/v1/archive/action:createEndpoint",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.ChangeBookmarks",
+      "live_status": "pending",
+      "path": "/v1/archive/action:makeUserComment",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.Resize",
+      "live_status": "pending",
+      "path": "/v1/archive/action:resize",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.Seek",
+      "live_status": "pending",
+      "path": "/v1/archive/action:seek",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetCalendar",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/calendar",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetHistory",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/history",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetHistory2",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/history2",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetHistoryStream",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/historyStream",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetRecordingInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/recordingInfo",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetSize",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/size",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetArchiveTraits",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/traits",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.CancelReindex",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/archive/volumes/cancel_reindex",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetDiskSpace",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/volumes/diskSpace",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.FormatVolumes",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/archive/volumes/format",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.Reindex",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/archive/volumes/reindex",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveService.GetVolumesState",
+      "live_status": "tested-pass",
+      "path": "/v1/archive/volumes/state",
+      "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.archive.ArchiveVolumeService.ProbeVolume",
+      "live_status": "pending",
+      "path": "/v1/archive/volumes:probe",
+      "proto": "axxonsoft/bl/archive/ArchiveVolumeService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectArchiveViewingEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectArchiveViewingEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectCameraViewingEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectCameraViewingEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectClientAppOptionEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectClientAppOptionEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectLdapSetupEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectLdapSetupEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectMMExportEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectMMExportEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectNgpJournalExportEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectNgpJournalExportEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.audit.AuditEventInjector.InjectPtzControlEvent",
+      "live_status": "pending",
+      "path": "/v1/audit/injectPtzControlEvent",
+      "proto": "axxonsoft/bl/audit/Audit.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.Authenticate",
+      "live_status": "pending",
+      "path": "/v1/authentication/authenticate",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.Authenticate2",
+      "live_status": "pending",
+      "path": "/v1/authentication/authenticate2",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx",
+      "live_status": "pending",
+      "path": "/v1/authentication/authenticate_ex",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2",
+      "live_status": "tested-pass",
+      "path": "/v1/authentication/authenticate_ex2",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.CloseSession",
+      "live_status": "pending",
+      "path": "/v1/authentication/close",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.RenewSession",
+      "live_status": "pending",
+      "path": "/v1/authentication/renew",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.RenewSession2",
+      "live_status": "pending",
+      "path": "/v1/authentication/renew2",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.ApproveAuthentication",
+      "live_status": "pending",
+      "path": "/v1/authentication:approve",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.auth.AuthenticationService.DeclineAuthentication",
+      "live_status": "pending",
+      "path": "/v1/authentication:decline",
+      "proto": "axxonsoft/bl/auth/Authentication.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.CreateBookmark",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:create",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.DeleteBookmark",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:delete",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.GetBookmark",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:get",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.ListBookmarks",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:list",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.RenderTrack",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:renderTrack",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.SetExportedTime",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:setExportedTime",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.bookmarks.BookmarkService.UpdateBookmark",
+      "live_status": "pending",
+      "path": "/v1/bookmarks:update",
+      "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.cloud.CloudService.Bind",
+      "live_status": "pending",
+      "path": "/v1/cloud/bind",
+      "proto": "axxonsoft/bl/cloud/Cloud.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.cloud.CloudService.GetBindingConfiguration",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/cloud/config",
+      "proto": "axxonsoft/bl/cloud/Cloud.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.cloud.CloudService.ChangeBindingConfiguration",
+      "live_status": "pending",
+      "path": "/v1/cloud/config:change",
+      "proto": "axxonsoft/bl/cloud/Cloud.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.cloud.CloudService.Unbind",
+      "live_status": "pending",
+      "path": "/v1/cloud/unbind",
+      "proto": "axxonsoft/bl/cloud/Cloud.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.SetTemplateAssignments",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/configurator/assignments",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.DynamicParametersService.AcquireDeviceAdditionalData",
+      "live_status": "pending",
+      "path": "/v1/configurator/device-additional-data:acquire",
+      "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.DevicesCatalog.GetDevice",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/devices_catalog/device",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.DevicesCatalog.ListDevices",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/devices_catalog/devices",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.DevicesCatalog.ListVendors",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/devices_catalog/vendors",
+      "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.DynamicParametersService.AcquireDynamicParameters",
+      "live_status": "pending",
+      "path": "/v1/configurator/dynamic-parameters:acquire",
+      "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.BatchGetFactories",
+      "live_status": "pending",
+      "path": "/v1/configurator/factories:batchGet",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ListUnitsByAccessPoints",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/get",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ListUnits",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/list",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ListTemplates",
+      "live_status": "tested-pass",
+      "path": "/v1/configurator/templates",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.BatchGetTemplates",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/configurator/templates:batchGet",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ChangeTemplates",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/configurator/templates:change",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ListSimilarUnits",
+      "live_status": "pending",
+      "path": "/v1/configurator/units:listSimilar",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.ConfigurationService.ChangeConfig",
+      "live_status": "pending",
+      "path": "/v1/configurator:change",
+      "proto": "axxonsoft/bl/config/ConfigurationService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.detectors.ExternalDetectorService.RaiseOccasionalEvent",
+      "live_status": "pending",
+      "path": "/v1/detectors/external:raiseOccasionalEvent",
+      "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.detectors.ExternalDetectorService.RaisePeriodicalEvent",
+      "live_status": "pending",
+      "path": "/v1/detectors/external:raisePeriodicalEvent",
+      "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.ListArchives",
+      "live_status": "tested-pass",
+      "path": "/v1/domain/archives",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.BatchGetArchives",
+      "live_status": "pending",
+      "path": "/v1/domain/archives:batchGet",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.ListCameras",
+      "live_status": "tested-pass",
+      "path": "/v1/domain/cameras",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.BatchGetCameras",
+      "live_status": "tested-pass",
+      "path": "/v1/domain/cameras:batchGet",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.GetCamerasByComponents",
+      "live_status": "pending",
+      "path": "/v1/domain/cameras:getByComponents",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.SearchMaps",
+      "live_status": "pending",
+      "path": "/v1/domain/maps:search",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainService.ListNodes",
+      "live_status": "tested-pass",
+      "path": "/v1/domain/nodes",
+      "proto": "axxonsoft/bl/domain/Domain.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainManager.AddNode",
+      "live_status": "pending",
+      "path": "/v1/domain/nodes:add",
+      "proto": "axxonsoft/bl/domain/DomainManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainManager.DropNode",
+      "live_status": "pending",
+      "path": "/v1/domain/nodes:drop",
+      "proto": "axxonsoft/bl/domain/DomainManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainManager.EnumerateNodes",
+      "live_status": "tested-pass",
+      "path": "/v1/domain/nodes:enumerate",
+      "proto": "axxonsoft/bl/domain/DomainManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.TextEventSupportService.GetTextEvent",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/domain/textEvent",
+      "proto": "axxonsoft/bl/domain/TextEventSourceSupport.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.domain.DomainManager.ProclaimDomain",
+      "live_status": "pending",
+      "path": "/v1/domain:proclaim",
+      "proto": "axxonsoft/bl/domain/DomainManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.heatmap.HeatMapService.BuildEventsHeatmap",
+      "live_status": "pending",
+      "path": "/v1/events-heatmap:build",
+      "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.heatmap.HeatMapService.BuildFloorHeatmap",
+      "live_status": "pending",
+      "path": "/v1/floor-heatmap:build",
+      "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.FileSystemBrowser.GetFileInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/fs/file",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.FileSystemBrowser.ListDirectory",
+      "live_status": "tested-pass",
+      "path": "/v1/fs/list",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.config.FileSystemBrowser.GetSpace",
+      "live_status": "tested-pass",
+      "path": "/v1/fs/space",
+      "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.groups.GroupManager.ListGroups",
+      "live_status": "tested-pass",
+      "path": "/v1/groups/list",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.groups.GroupManager.SetObjectsMembership",
+      "live_status": "pending",
+      "path": "/v1/groups/membership",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.groups.GroupManager.BatchGetGroups",
+      "live_status": "tested-pass",
+      "path": "/v1/groups:batchGet",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.groups.GroupManager.ChangeGroups",
+      "live_status": "pending",
+      "path": "/v1/groups:change",
+      "proto": "axxonsoft/bl/groups/GroupManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.heatmap.HeatMapService.BuildHeatmap",
+      "live_status": "pending",
+      "path": "/v1/heatmap:build",
+      "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.heatmap.HeatMapService.BuildHeatmapTyped",
+      "live_status": "pending",
+      "path": "/v1/heatmap:buildTyped",
+      "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.layout.LayoutManager.ListLayouts",
+      "live_status": "tested-pass",
+      "path": "/v1/layouts",
+      "proto": "axxonsoft/bl/layout/LayoutManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.layout.LayoutManager.BatchGetLayouts",
+      "live_status": "pending",
+      "path": "/v1/layouts:batchGet",
+      "proto": "axxonsoft/bl/layout/LayoutManager.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.layout.LayoutManager.Update",
+      "live_status": "pending",
+      "path": "/v1/layouts:update",
+      "proto": "axxonsoft/bl/layout/LayoutManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.LicenseKey",
+      "live_status": "pending",
+      "path": "/v1/license",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.GetDomainLicenseKeyInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/license/domain",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.GetGlobalRestrictions",
+      "live_status": "tested-pass",
+      "path": "/v1/license/globalRestrictions",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.GetNodeRestrictions",
+      "live_status": "tested-pass",
+      "path": "/v1/license/nodeRestrictions",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.Restrictions",
+      "live_status": "pending",
+      "path": "/v1/license/restrictions",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.DistributeLicenseKey",
+      "live_status": "pending",
+      "path": "/v1/license:distribute",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.DropLicenseKey",
+      "live_status": "pending",
+      "path": "/v1/license:drop",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.LicenseKeyInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/license:info",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.license.LicenseService.IsPossibleToLaunch",
+      "live_status": "tested-pass",
+      "path": "/v1/license:verifyLaunchPossibility",
+      "proto": "axxonsoft/bl/license/LicenseService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ChangeArmState",
+      "live_status": "pending",
+      "path": "/v1/logic_service/armstate",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchBeginAlertsReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchbeginalertsreview",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchCancelAlertsReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchcancelalertsreview",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchCompleteAlertsReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchcompletealertsreview",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchContinueAlertsRewiew",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchcontinuealertsreview",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchEscalateAlerts",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchescalatealerts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchFilterActiveAlerts",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchfilteractivealerts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchGetActiveAlerts",
+      "live_status": "pending",
+      "path": "/v1/logic_service/batchgetactivealerts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BeginAlertReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/beginalert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.CancelAlertReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/cancelalert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.CompleteAlertReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/completealert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ChangeConfig",
+      "live_status": "pending",
+      "path": "/v1/logic_service/config",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "PUT"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.GetConfig",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/config",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ContinueAlertReview",
+      "live_status": "pending",
+      "path": "/v1/logic_service/continuealert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ListCounters",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/counters",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.CounterAction",
+      "live_status": "pending",
+      "path": "/v1/logic_service/counters:action",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchGetCounters",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/counters:batchGet",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ChangeCounters",
+      "live_status": "pending",
+      "path": "/v1/logic_service/counters:change",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.GetCounterGroupState",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/logic_service/counters:getGroupState",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.GetCounterState",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/logic_service/counters:getState",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.EscalateAlert",
+      "live_status": "pending",
+      "path": "/v1/logic_service/escalatealert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.GetActiveAlerts",
+      "live_status": "pending",
+      "path": "/v1/logic_service/getactivealerts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ListMacros",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/macros",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.BatchGetMacros",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/macros:batchGet",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.ChangeMacros",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/logic_service/macros:change",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.LaunchMacro",
+      "live_status": "pending",
+      "path": "/v1/logic_service/macros:launch",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.RaiseAlert",
+      "live_status": "pending",
+      "path": "/v1/logic_service/raisealert",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.logic.LogicService.GetUserScripts",
+      "live_status": "tested-pass",
+      "path": "/v1/logic_service/user_scripts",
+      "proto": "axxonsoft/bl/logic/LogicService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.GetMapImage",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/maps/image",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.ListMaps",
+      "live_status": "tested-pass",
+      "path": "/v1/maps/list",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.GetMarkers",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/maps/markers",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.UpdateMarkers",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/maps/markers:update",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.GetMapProvider",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/maps/provider",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.ConfigureMapProviders",
+      "live_status": "pending",
+      "path": "/v1/maps/providers",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.ListMapProviders",
+      "live_status": "tested-pass",
+      "path": "/v1/maps/providers",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.BatchGetMaps",
+      "live_status": "tested-pass",
+      "path": "/v1/maps:batchGet",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.ChangeMaps",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/maps:change",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.maps.MapService.GetMapsByComponent",
+      "live_status": "tested-pass",
+      "path": "/v1/maps:getByComponent",
+      "proto": "axxonsoft/bl/maps/MapService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.NodeNotifier.PullEvents",
+      "live_status": "pending",
+      "path": "/v1/node-notifier/subscriptions",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.NodeNotifier.DisconnectEventChannel",
+      "live_status": "pending",
+      "path": "/v1/node-notifier/subscriptions:disconnect",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.NodeNotifier.PullDetailedEvents",
+      "live_status": "pending",
+      "path": "/v1/node-notifier/subscriptions:pull",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.NodeNotifier.UpdateSubscription",
+      "live_status": "pending",
+      "path": "/v1/node-notifier/subscriptions:update",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.notifications.EMailNotifier.GetActionState",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/notifier/email/actionstate",
+      "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.notifications.EMailNotifier.GetSendMode",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/notifier/email/sendmode",
+      "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.notifications.EMailNotifier.SendEMail",
+      "live_status": "pending",
+      "path": "/v1/notifier/email:send",
+      "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.notifications.GSMNotifier.GetActionStateGSM",
+      "live_status": "pending",
+      "path": "/v1/notifier/sms/actionstate",
+      "proto": "axxonsoft/bl/notifications/GSMNotifier.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.notifications.GSMNotifier.SendSMS",
+      "live_status": "pending",
+      "path": "/v1/notifier/sms:send",
+      "proto": "axxonsoft/bl/notifications/GSMNotifier.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.DomainNotifier.PullEvents",
+      "live_status": "pending",
+      "path": "/v1/notifier/subscriptions",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.DomainNotifier.DisconnectEventChannel",
+      "live_status": "pending",
+      "path": "/v1/notifier/subscriptions:disconnect",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.DomainNotifier.PullDetailedEvents",
+      "live_status": "pending",
+      "path": "/v1/notifier/subscriptions:pull",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.events.DomainNotifier.UpdateSubscription",
+      "live_status": "pending",
+      "path": "/v1/notifier/subscriptions:update",
+      "proto": "axxonsoft/bl/events/Notification.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.CheckLogin",
+      "live_status": "tested-pass",
+      "path": "/v1/security/checklogin",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.CheckPassword",
+      "live_status": "pending",
+      "path": "/v1/security/checkpass",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.GetCloudConfig",
+      "live_status": "tested-pass",
+      "path": "/v1/security/cloud/config",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListConfig",
+      "live_status": "tested-pass",
+      "path": "/v1/security/config",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.GetRestrictedConfig",
+      "live_status": "tested-pass",
+      "path": "/v1/security/config/user",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ChangeConfig",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/security/config:change",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SearchLDAPGroups",
+      "live_status": "pending",
+      "path": "/v1/security/ldap/groups:search",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SearchLDAP2",
+      "live_status": "pending",
+      "path": "/v1/security/ldap:search",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.TestLDAPConnection",
+      "live_status": "pending",
+      "path": "/v1/security/ldap:testConnection",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListLDAPServers",
+      "live_status": "tested-pass",
+      "path": "/v1/security/ldapservers",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.GetLDAPSynchronization",
+      "live_status": "tested-pass",
+      "path": "/v1/security/ldapsynchronization",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.GetLDAPSynchronizationState",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/security/ldapsynchronization/state",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.StartLDAPSynchronization",
+      "live_status": "pending",
+      "path": "/v1/security/ldapsynchronization:start",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.StopLDAPSynchronization",
+      "live_status": "pending",
+      "path": "/v1/security/ldapsynchronization:stop",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ChangeLogin",
+      "live_status": "pending",
+      "path": "/v1/security/login:change",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ChangePassword",
+      "live_status": "pending",
+      "path": "/v1/security/password:change",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListGlobalPermissions",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/global",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListUserGlobalPermissions",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/global/user",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SetGlobalPermissions",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/security/permissions/global:update",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListGroupsPermissions",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/groups",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SetGroupsPermissions",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/security/permissions/groups:update",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListGroupsPermissionsInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/groupsInfo",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListMacrosPermissions",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/macros",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SetMacrosPermissions",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/security/permissions/macros:update",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListMacrosPermissionsPaged",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/macrosPaged",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListObjectPermissions",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/objects",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.SetObjectPermissions",
+      "live_status": "tested-pass-safe-record",
+      "path": "/v1/security/permissions/objects:update",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListObjectsPermissionsInfo",
+      "live_status": "tested-pass",
+      "path": "/v1/security/permissions/objectsInfo",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.GetPolicies",
+      "live_status": "tested-pass",
+      "path": "/v1/security/policies",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListRoles",
+      "live_status": "tested-pass",
+      "path": "/v1/security/roles",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.security.SecurityService.ListUsers",
+      "live_status": "tested-pass",
+      "path": "/v1/security/users",
+      "proto": "axxonsoft/bl/security/SecurityService.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TagAndTrackService.FollowTrack",
+      "live_status": "pending",
+      "path": "/v1/tag_and_track/action:follow",
+      "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TagAndTrackService.SetMode",
+      "live_status": "pending",
+      "path": "/v1/tag_and_track/action:mode",
+      "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TagAndTrackService.MoveToCoords",
+      "live_status": "pending",
+      "path": "/v1/tag_and_track/action:move",
+      "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TagAndTrackService.ListTrackers",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/tag_and_track/trackers",
+      "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetAuxiliaryOperations",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/operations",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformation",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/position",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformationNormalized",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/position_n",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetPresetsInfo",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/presets",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GoPreset",
+      "live_status": "pending",
+      "path": "/v1/telemetry/presets:go",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.RemovePreset",
+      "live_status": "pending",
+      "path": "/v1/telemetry/presets:remove",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.SetPreset",
+      "live_status": "pending",
+      "path": "/v1/telemetry/presets:set",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.SetPreset2",
+      "live_status": "pending",
+      "path": "/v1/telemetry/presets:set2",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.AcquireSessionId",
+      "live_status": "pending",
+      "path": "/v1/telemetry/sessions",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.IsSessionAvailable",
+      "live_status": "pending",
+      "path": "/v1/telemetry/sessions:checkAvailability",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "review",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.KeepAlive",
+      "live_status": "pending",
+      "path": "/v1/telemetry/sessions:keepAlive",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.ReleaseSessionId",
+      "live_status": "pending",
+      "path": "/v1/telemetry/sessions:release",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetTours",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/tours",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.GetTourPoints",
+      "live_status": "tested-warn-fixture-needed",
+      "path": "/v1/telemetry/tours/points",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.PlayTour",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:play",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.RemoveTour",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:remove",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.SetTourPoint",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:setPoint",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.StartFillTour",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:startFill",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.StopTour",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:stop",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.StopFillTour",
+      "live_status": "pending",
+      "path": "/v1/telemetry/tours:stopFill",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMove",
+      "live_status": "pending",
+      "path": "/v1/telemetry:absoluteMove",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMoveNormalized",
+      "live_status": "pending",
+      "path": "/v1/telemetry:absoluteMoveN",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.AreaZoom",
+      "live_status": "pending",
+      "path": "/v1/telemetry:areaZoom",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.ConfigurePreset",
+      "live_status": "pending",
+      "path": "/v1/telemetry:configure",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.Focus",
+      "live_status": "pending",
+      "path": "/v1/telemetry:focus",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.FocusAuto",
+      "live_status": "pending",
+      "path": "/v1/telemetry:focusAuto",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.Iris",
+      "live_status": "pending",
+      "path": "/v1/telemetry:iris",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.IrisAuto",
+      "live_status": "pending",
+      "path": "/v1/telemetry:irisAuto",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.Move",
+      "live_status": "pending",
+      "path": "/v1/telemetry:move",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.PerformAuxiliaryOperation",
+      "live_status": "pending",
+      "path": "/v1/telemetry:performOperations",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.PointMove",
+      "live_status": "pending",
+      "path": "/v1/telemetry:pointMove",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.ptz.TelemetryService.Zoom",
+      "live_status": "pending",
+      "path": "/v1/telemetry:zoom",
+      "proto": "axxonsoft/bl/ptz/Telemetry.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.GetNTP",
+      "live_status": "tested-pass",
+      "path": "/v1/time_sync/ntp_server",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.SetNTP",
+      "live_status": "pending",
+      "path": "/v1/time_sync/ntp_server:update",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.GetTimeZone",
+      "live_status": "tested-pass",
+      "path": "/v1/time_zone",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.SetTimeZone",
+      "live_status": "pending",
+      "path": "/v1/time_zone:set",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.ListTimeZones",
+      "live_status": "tested-pass",
+      "path": "/v1/time_zones",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.BatchGetZones",
+      "live_status": "tested-pass",
+      "path": "/v1/time_zones:batchGet",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "read",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "GET"
+    },
+    {
+      "grpc_method": "axxonsoft.bl.tz.TimeZoneManager.ChangeTimeZones",
+      "live_status": "pending",
+      "path": "/v1/time_zones:change",
+      "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
+      "safety_class": "mutating",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "verb": "POST"
+    }
+  ],
+  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md"
+}

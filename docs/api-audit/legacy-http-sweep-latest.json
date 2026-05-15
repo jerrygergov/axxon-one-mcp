@@ -1,0 +1,165 @@
+{
+  "started_at": "2026-05-06T22:31:21.101730+00:00",
+  "finished_at": "2026-05-06T22:31:25.397730+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "groups": [
+      "archive_read"
+    ],
+    "timeout_seconds": 10.0,
+    "hours": 24.0,
+    "auth_mode": "bearer"
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_legacy_ap": "Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+    "camera_device": "Server/DeviceIpint.1",
+    "host_name": "Server",
+    "archive_ap": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+    "begin": "20260505T223123.868018",
+    "end": "20260506T223123.868018"
+  },
+  "summary": {
+    "PASS": 6,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "archive_read",
+      "name": "archive_list",
+      "method": "GET",
+      "path": "/archive/list/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "status": "PASS",
+      "elapsed_ms": 245,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 128,
+        "shape": {
+          "archives": {
+            "type": "list",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "group": "archive_read",
+      "name": "archive_intervals",
+      "method": "GET",
+      "path": "/archive/contents/intervals/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260506T223123.868018/20260505T223123.868018",
+      "status": "PASS",
+      "elapsed_ms": 244,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 141,
+        "shape": {
+          "intervals": {
+            "type": "list",
+            "count": 1
+          },
+          "more": {
+            "type": "bool",
+            "present": true
+          },
+          "result": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "archive_read",
+      "name": "archive_frames",
+      "method": "GET",
+      "path": "/archive/contents/frames/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260506T223123.868018/20260505T223123.868018?limit=3",
+      "status": "PASS",
+      "elapsed_ms": 273,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 42,
+        "shape": {
+          "frames": {
+            "type": "list",
+            "count": 0
+          },
+          "more": {
+            "type": "bool",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "archive_read",
+      "name": "archive_depth",
+      "method": "GET",
+      "path": "/archive/statistics/depth/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "status": "PASS",
+      "elapsed_ms": 244,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 76,
+        "shape": {
+          "start": {
+            "type": "str",
+            "present": true
+          },
+          "end": {
+            "type": "str",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "archive_read",
+      "name": "archive_capacity",
+      "method": "GET",
+      "path": "/archive/statistics/capacity/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260506T223123.868018/20260505T223123.868018",
+      "status": "PASS",
+      "elapsed_ms": 277,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 46,
+        "shape": {
+          "size": {
+            "type": "int",
+            "present": true
+          },
+          "duration": {
+            "type": "int",
+            "present": true
+          }
+        }
+      }
+    },
+    {
+      "group": "archive_read",
+      "name": "archive_calendar",
+      "method": "GET",
+      "path": "/archive/calendar/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260505T223123.868018/20260506T223123.868018",
+      "status": "PASS",
+      "elapsed_ms": 243,
+      "details": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "size": 19,
+        "shape": {
+          "type": "list",
+          "count": 1
+        }
+      }
+    }
+  ]
+}

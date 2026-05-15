@@ -1,0 +1,72 @@
+{
+  "started_at": "2026-05-08T09:14:43.122109+00:00",
+  "finished_at": "2026-05-08T09:14:46.720692+00:00",
+  "target": {
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>:80",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "approval_only_operations": [
+    "ConfigurationService.ChangeConfig.add_temp_appdata_detector",
+    "ConfigurationService.ChangeConfig.add_temp_detector_ex",
+    "ConfigurationService.ChangeConfig.add_temp_realtime_recognizer_external",
+    "ExternalDetectorService.RaiseOccasionalEvent.temp_detector",
+    "ExternalDetectorService.RaiseOccasionalEvent.explicit_access_point_probe",
+    "EventHistoryService.ReadEvents.verify_temp_event",
+    "ConfigurationService.ChangeConfig.remove_temp_external_fixture"
+  ],
+  "summary": {
+    "PASS": 1,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "external_event_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 3350,
+      "details": {
+        "detector_uid": "",
+        "fixture_type": "access_point_probe",
+        "candidate_access_points": [
+          "hosts/Server/DetectorEx.1/EventSupplier"
+        ],
+        "attempts": [
+          {
+            "access_point": "hosts/Server/DetectorEx.1/EventSupplier",
+            "raise_event": {
+              "status": 200,
+              "body": {
+                "error": "OK"
+              },
+              "event_id": "codex-external-event-20260508T091443370541Z",
+              "event_type": "Event1",
+              "timestamp": "2026-05-08T09:14:43.370603Z"
+            }
+          }
+        ],
+        "accepted": {
+          "access_point": "hosts/Server/DetectorEx.1/EventSupplier",
+          "event_id": "codex-external-event-20260508T091443370541Z"
+        },
+        "verification": {
+          "pages": 1,
+          "matches": 1,
+          "unreachable_subjects": [],
+          "samples": [
+            {
+              "event_type": null,
+              "state": null,
+              "detector_ref": null,
+              "keys": []
+            }
+          ]
+        },
+        "remove_response_keys": [
+          "skipped"
+        ]
+      }
+    }
+  ]
+}

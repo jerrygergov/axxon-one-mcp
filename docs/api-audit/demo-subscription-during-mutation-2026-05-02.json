@@ -1,0 +1,37 @@
+{
+  "started_at": "2026-05-02T09:16:01.211539+00:00",
+  "finished_at": "2026-05-02T09:16:29.282424+00:00",
+  "target": {
+    "http_url": "http://<demo-host>:80",
+    "grpc_target": "<demo-host>:20109",
+    "username": "root",
+    "password": "<redacted>"
+  },
+  "selection": {
+    "modes": [
+      "grpc_event_subscription"
+    ],
+    "duration_seconds": 25.0,
+    "max_events": 5
+  },
+  "fixtures": {
+    "camera_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+  },
+  "summary": {
+    "PASS": 0,
+    "WARN": 1,
+    "SKIP": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "mode": "grpc_event_subscription",
+      "status": "WARN",
+      "elapsed_ms": 25678,
+      "details": {
+        "reason": "no events before deadline",
+        "events": 0
+      }
+    }
+  ]
+}
