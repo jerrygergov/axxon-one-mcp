@@ -36,6 +36,7 @@ def create_server(
     docs: AxxonMcpDocs | Any | None = None,
     live: Any | None = None,
     operator: Any | None = None,
+    generator: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -93,7 +94,90 @@ def create_server(
     if operator is not None:
         register_operator_tools(server, operator)
 
+    if generator is not None:
+        register_generator_tools(server, generator)
+
     return server
+
+
+def register_generator_tools(server: Any, generator: Any) -> None:
+    import os
+    from dataclasses import asdict
+
+    from axxon_mcp_generator import (
+        GenerationRequest,
+        GeneratedBundle,
+        GenerationRefusal,
+        Verifier,
+        allow_in_repo_write,
+    )
+
+    verifier = Verifier()
+
+    def _serialize(result: Any) -> dict[str, Any]:
+        if isinstance(result, GenerationRefusal):
+            return {"status": "refused", **asdict(result)}
+        if isinstance(result, GeneratedBundle):
+            return {"status": "ok", **asdict(result)}
+        return {"status": "unknown"}
+
+    @server.tool(name="list_integration_templates")
+    def list_integration_templates() -> dict[str, Any]:
+        """List integration templates the generator can produce."""
+        return {"templates": generator.list_templates()}
+
+    @server.tool(name="plan_integration")
+    def plan_integration(
+        template: str,
+        params: dict[str, Any] | None = None,
+        allow_mutation: bool = False,
+        allow_large: bool = False,
+    ) -> dict[str, Any]:
+        """Build a generation plan without writing files."""
+        req = GenerationRequest(
+            template=template,
+            params=params or {},
+            allow_mutation=allow_mutation,
+            allow_large=allow_large,
+        )
+        return _serialize(generator.plan(req))
+
+    @server.tool(name="generate_integration")
+    def generate_integration(
+        template: str,
+        output_dir: str,
+        params: dict[str, Any] | None = None,
+        allow_mutation: bool = False,
+        allow_large: bool = False,
+    ) -> dict[str, Any]:
+        """Generate an integration bundle to a chosen directory."""
+        target = Path(output_dir).expanduser().resolve()
+        allow_in_repo = os.environ.get("AXXON_GENERATOR_ALLOW_IN_REPO") == "1"
+        if not allow_in_repo_write(target, allow=allow_in_repo):
+            return {
+                "status": "refused",
+                "reason": "in_repo_write_blocked",
+                "detail": f"{target} is inside the repo; set AXXON_GENERATOR_ALLOW_IN_REPO=1 to override",
+            }
+        req = GenerationRequest(
+            template=template,
+            params=params or {},
+            allow_mutation=allow_mutation,
+            allow_large=allow_large,
+        )
+        result = generator.generate(req)
+        if isinstance(result, GenerationRefusal):
+            return _serialize(result)
+        target.mkdir(parents=True, exist_ok=True)
+        for name, content in result.files.items():
+            (target / name).write_text(content, encoding="utf-8")
+        return {"status": "ok", "output_dir": str(target), **asdict(result)}
+
+    @server.tool(name="verify_integration")
+    def verify_integration(output_dir: str) -> dict[str, Any]:
+        """Statically verify a generated bundle."""
+        result = verifier.verify_dir(Path(output_dir).expanduser().resolve())
+        return {"ok": result.ok, "errors": result.errors}
 
 
 def register_operator_tools(server: Any, operator: Any) -> None:
@@ -237,6 +321,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable controlled operator mutation tools (plan/apply/verify/rollback). Requires AXXON_OPERATOR_APPROVE=1.",
     )
+    parser.add_argument(
+        "--enable-generator",
+        action="store_true",
+        help="Enable integration generator tools (list/plan/generate/verify_integration).",
+    )
     return parser
 
 
@@ -262,7 +351,17 @@ def main() -> int:
             host=f"hosts/{config.tls_cn}",
             enabled=explicit,
         )
-    server = create_server(corpus_dir=args.corpus_dir, live=live, operator=operator)
+    generator = None
+    if args.enable_generator:
+        from axxon_mcp_generator import Generator
+
+        generator = Generator(corpus_dir=args.corpus_dir)
+    server = create_server(
+        corpus_dir=args.corpus_dir,
+        live=live,
+        operator=operator,
+        generator=generator,
+    )
     server.run(transport=args.transport)
     return 0
 

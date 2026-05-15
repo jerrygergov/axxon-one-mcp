@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Generated external event producer for $ACCESS_POINT ($EVENT_TYPE)."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = $DURATION
+BYTE_CAP = $BYTE_CAP
+ACCESS_POINT = "$ACCESS_POINT"
+EVENT_TYPE = "$EVENT_TYPE"
+
+REQUIRED_ENV = ("AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    import requests
+
+    base = os.environ["AXXON_HTTP_URL"].rstrip("/")
+    auth = (os.environ["AXXON_USERNAME"], os.environ["AXXON_PASSWORD"])
+    logging.info("user=%s password=%s base=%s ap=%s type=%s", auth[0], redact(auth[1]), base, ACCESS_POINT, EVENT_TYPE)
+
+    units_url = base + "/v1/configuration/units"
+    units_resp = requests.get(units_url, auth=auth, params={"access_point": ACCESS_POINT}, timeout=DURATION_SECONDS)
+    if units_resp.status_code != 200:
+        logging.error("preflight failed: %s", units_resp.status_code)
+        return 3
+    payload = units_resp.json()
+    detector = ""
+    for unit in payload.get("units", []):
+        if unit.get("access_point", "").startswith(ACCESS_POINT.rsplit("/", 1)[0]):
+            detector = unit.get("detector", "")
+            break
+    if detector != "ExternalDetector":
+        logging.error("ap=%s is not ExternalDetector (got %s)", ACCESS_POINT, detector)
+        return 4
+
+    if EVENT_TYPE == "TargetList":
+        endpoint = "/v1/detectors/external:raisePeriodicalEvent"
+        body = {"access_point": ACCESS_POINT, "event_type": EVENT_TYPE, "target_list": {"targets": []}}
+    else:
+        endpoint = "/v1/detectors/external:raiseOccasionalEvent"
+        body = {"access_point": ACCESS_POINT, "event_type": EVENT_TYPE}
+
+    response = requests.post(base + endpoint, auth=auth, json=body, timeout=DURATION_SECONDS)
+    logging.info("raise status=%s bytes=%d", response.status_code, len(response.content[:BYTE_CAP]))
+    print(json.dumps({"access_point": ACCESS_POINT, "event_type": EVENT_TYPE, "status": response.status_code}))
+    return 0 if response.ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

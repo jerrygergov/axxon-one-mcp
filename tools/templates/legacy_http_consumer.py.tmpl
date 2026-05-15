@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Generated legacy HTTP consumer for $VERB $PATH (auth=$AUTH_MODE)."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = $DURATION
+BYTE_CAP = $BYTE_CAP
+PATH = "$PATH"
+VERB = "$VERB"
+AUTH_MODE = "$AUTH_MODE"
+
+REQUIRED_ENV = ("AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    import requests
+
+    base = os.environ["AXXON_HTTP_URL"].rstrip("/")
+    user = os.environ["AXXON_USERNAME"]
+    password = os.environ["AXXON_PASSWORD"]
+    logging.info("user=%s password=%s base=%s path=%s", user, redact(password), base, PATH)
+
+    headers: dict[str, str] = {}
+    if AUTH_MODE == "bearer":
+        token_resp = requests.post(base + "/grpc", auth=(user, password), timeout=DURATION_SECONDS)
+        token_resp.raise_for_status()
+        bearer = token_resp.json().get("access_token") or token_resp.json().get("token")
+        headers["Authorization"] = "Bearer " + bearer
+        auth = None
+    else:
+        auth = (user, password)
+
+    response = requests.request(VERB, base + PATH, headers=headers, auth=auth, timeout=DURATION_SECONDS)
+    body = response.content[:BYTE_CAP]
+    logging.info("status=%s bytes=%d", response.status_code, len(body))
+    print(json.dumps({"path": PATH, "status": response.status_code, "bytes": len(body)}))
+    return 0 if response.ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

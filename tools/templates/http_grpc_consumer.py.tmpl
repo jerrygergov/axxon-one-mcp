@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Generated HTTP /grpc consumer for $FQMN."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = $DURATION
+BYTE_CAP = $BYTE_CAP
+FQMN = "$FQMN"
+SERVICE_PATH = "$SERVICE_PATH"
+METHOD = "$METHOD"
+
+REQUIRED_ENV = ("AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    import requests
+
+    base = os.environ["AXXON_HTTP_URL"].rstrip("/")
+    auth = (os.environ["AXXON_USERNAME"], os.environ["AXXON_PASSWORD"])
+    logging.info("user=%s password=%s base=%s", auth[0], redact(auth[1]), base)
+    token_resp = requests.post(base + "/grpc", auth=auth, timeout=DURATION_SECONDS)
+    token_resp.raise_for_status()
+    bearer = token_resp.json().get("access_token") or token_resp.json().get("token")
+    if not bearer:
+        logging.error("no bearer token in /grpc response")
+        return 3
+    url = base + "/grpc/" + SERVICE_PATH + "/" + METHOD
+    response = requests.post(
+        url,
+        headers={"Authorization": "Bearer " + bearer, "Content-Type": "application/json"},
+        json={},
+        timeout=DURATION_SECONDS,
+    )
+    body = response.content[:BYTE_CAP]
+    logging.info("status=%s bytes=%d", response.status_code, len(body))
+    print(json.dumps({"fqmn": FQMN, "status": response.status_code, "bytes": len(body)}))
+    return 0 if response.ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

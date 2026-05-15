@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Generated archive export job for $CAMERA_AP ($BEGIN..$END, $FORMAT)."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import time
+import uuid
+
+DURATION_SECONDS = 60
+BYTE_CAP = $BYTE_CAP
+WINDOW_SECONDS = $WINDOW
+CAMERA_AP = "$CAMERA_AP"
+BEGIN = "$BEGIN"
+END = "$END"
+FORMAT = "$FORMAT"
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.security.Authentication_pb2 import AuthenticateEx2Request
+    from axxonsoft.bl.security.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.archive.Archive_pb2 import (
+        StartSessionRequest,
+        GetSessionStateRequest,
+        DownloadFileRequest,
+        StopSessionRequest,
+        DestroySessionRequest,
+    )
+    from axxonsoft.bl.archive.Archive_pb2_grpc import ExportServiceStub
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    logging.info("user=%s password=%s host=%s camera=%s window=%ds", user, redact(os.environ["AXXON_PASSWORD"]), host, CAMERA_AP, WINDOW_SECONDS)
+
+    creds = grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+    session_id = "codex-export-" + uuid.uuid4().hex[:8]
+    with grpc.secure_channel(host, creds, options=options) as channel:
+        auth = AuthenticationServiceStub(channel)
+        token = auth.AuthenticateEx2(
+            AuthenticateEx2Request(username=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=DURATION_SECONDS,
+        ).access_token
+        metadata = (("authorization", "Bearer " + token),)
+        export = ExportServiceStub(channel)
+        started = False
+        downloaded_bytes = 0
+        try:
+            export.StartSession(
+                StartSessionRequest(session_id=session_id, camera_ap=CAMERA_AP, begin=BEGIN, end=END, format=FORMAT),
+                timeout=DURATION_SECONDS,
+                metadata=metadata,
+            )
+            started = True
+            deadline = time.time() + DURATION_SECONDS
+            while time.time() < deadline:
+                state = export.GetSessionState(
+                    GetSessionStateRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
+                )
+                if state.state == "S_COMPLETED":
+                    break
+                time.sleep(2)
+            for chunk in export.DownloadFile(
+                DownloadFileRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
+            ):
+                downloaded_bytes += len(chunk.payload)
+                if downloaded_bytes >= BYTE_CAP:
+                    break
+        finally:
+            if started:
+                try:
+                    export.StopSession(
+                        StopSessionRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
+                    )
+                except grpc.RpcError as exc:
+                    logging.warning("stop failed: %s", exc.code())
+                try:
+                    export.DestroySession(
+                        DestroySessionRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
+                    )
+                except grpc.RpcError as exc:
+                    logging.warning("destroy failed: %s", exc.code())
+        print(json.dumps({"session_id": session_id, "downloaded": downloaded_bytes, "byte_cap": BYTE_CAP}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
