@@ -363,7 +363,7 @@ class Generator:
                 "SUBJECT": subject,
                 "DURATION": str(duration),
                 "COUNT": str(count),
-                "APPDATA_HINT": "true" if notes else "false",
+                "APPDATA_HINT": "True" if notes else "False",
             },
         )
         return GeneratedBundle(

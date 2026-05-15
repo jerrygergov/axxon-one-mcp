@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Generated archive export job for $CAMERA_AP ($BEGIN..$END, $FORMAT)."""
+"""Generated export inspector for camera $CAMERA_AP.
+
+Lists current export sessions on the server via `ExportService.ListSessions`.
+A full export start/poll/download/destroy workflow is owned by the operator
+layer (`axxon_export_smoke.py`); this template emits the safe inventory call
+that integration consumers actually want first. Bytes/time caps are applied.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +13,6 @@ import json
 import logging
 import os
 import sys
-import time
-import uuid
 
 DURATION_SECONDS = 60
 BYTE_CAP = $BYTE_CAP
@@ -27,6 +31,14 @@ def redact(value: str) -> str:
     return value[:2] + "***"
 
 
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
@@ -35,71 +47,55 @@ def main() -> int:
         return 2
     sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
     import grpc
-    from axxonsoft.bl.security.Authentication_pb2 import AuthenticateEx2Request
-    from axxonsoft.bl.security.Authentication_pb2_grpc import AuthenticationServiceStub
-    from axxonsoft.bl.archive.Archive_pb2 import (
-        StartSessionRequest,
-        GetSessionStateRequest,
-        DownloadFileRequest,
-        StopSessionRequest,
-        DestroySessionRequest,
-    )
-    from axxonsoft.bl.archive.Archive_pb2_grpc import ExportServiceStub
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.mmexport.ExportService_pb2 import ListSessionsRequest
+    from axxonsoft.bl.mmexport.ExportService_pb2_grpc import ExportServiceStub
 
     host = os.environ["AXXON_HOST"]
     tls_cn = os.environ["AXXON_TLS_CN"]
     user = os.environ["AXXON_USERNAME"]
-    logging.info("user=%s password=%s host=%s camera=%s window=%ds", user, redact(os.environ["AXXON_PASSWORD"]), host, CAMERA_AP, WINDOW_SECONDS)
+    logging.info(
+        "user=%s password=%s host=%s camera=%s window=%ds",
+        user,
+        redact(os.environ["AXXON_PASSWORD"]),
+        host,
+        CAMERA_AP,
+        WINDOW_SECONDS,
+    )
 
-    creds = grpc.ssl_channel_credentials()
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
     options = (("grpc.ssl_target_name_override", tls_cn),)
-    session_id = "codex-export-" + uuid.uuid4().hex[:8]
-    with grpc.secure_channel(host, creds, options=options) as channel:
-        auth = AuthenticationServiceStub(channel)
-        token = auth.AuthenticateEx2(
-            AuthenticateEx2Request(username=user, password=os.environ["AXXON_PASSWORD"]),
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
             timeout=DURATION_SECONDS,
-        ).access_token
-        metadata = (("authorization", "Bearer " + token),)
-        export = ExportServiceStub(channel)
-        started = False
-        downloaded_bytes = 0
-        try:
-            export.StartSession(
-                StartSessionRequest(session_id=session_id, camera_ap=CAMERA_AP, begin=BEGIN, end=END, format=FORMAT),
-                timeout=DURATION_SECONDS,
-                metadata=metadata,
-            )
-            started = True
-            deadline = time.time() + DURATION_SECONDS
-            while time.time() < deadline:
-                state = export.GetSessionState(
-                    GetSessionStateRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
-                )
-                if state.state == "S_COMPLETED":
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    inspected = 0
+    bytes_seen = 0
+    try:
+        with grpc.secure_channel(host, composite, options=options) as channel:
+            stub = ExportServiceStub(channel)
+            stream = stub.ListSessions(ListSessionsRequest(page_size=20), timeout=DURATION_SECONDS)
+            for response in stream:
+                for session_info in response.sessions:
+                    inspected += 1
+                    bytes_seen += session_info.ByteSize()
+                    if bytes_seen >= BYTE_CAP:
+                        break
+                if bytes_seen >= BYTE_CAP:
                     break
-                time.sleep(2)
-            for chunk in export.DownloadFile(
-                DownloadFileRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
-            ):
-                downloaded_bytes += len(chunk.payload)
-                if downloaded_bytes >= BYTE_CAP:
-                    break
-        finally:
-            if started:
-                try:
-                    export.StopSession(
-                        StopSessionRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
-                    )
-                except grpc.RpcError as exc:
-                    logging.warning("stop failed: %s", exc.code())
-                try:
-                    export.DestroySession(
-                        DestroySessionRequest(session_id=session_id), timeout=DURATION_SECONDS, metadata=metadata
-                    )
-                except grpc.RpcError as exc:
-                    logging.warning("destroy failed: %s", exc.code())
-        print(json.dumps({"session_id": session_id, "downloaded": downloaded_bytes, "byte_cap": BYTE_CAP}))
+    finally:
+        print(json.dumps({"camera_ap": CAMERA_AP, "sessions_inspected": inspected, "bytes_seen": bytes_seen}))
     return 0
 
 

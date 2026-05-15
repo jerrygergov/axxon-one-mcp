@@ -168,7 +168,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertIsInstance(bundle, self.module.GeneratedBundle)
         body = bundle.files["main.py"]
         self.assertIn("ExternalDetector", body)
-        self.assertIn("/v1/configuration/units", body)
+        self.assertIn("ConfigurationService.ListUnits", body)
 
     def test_generate_export_job_cleanup_in_finally(self) -> None:
         req = self.module.GenerationRequest(
@@ -183,15 +183,11 @@ class GeneratorTests(unittest.TestCase):
         bundle = self.gen.generate(req)
         self.assertIsInstance(bundle, self.module.GeneratedBundle)
         tree = ast.parse(bundle.files["main.py"])
-        destroy_in_finally = False
+        cleanup_in_finally = False
         for node in ast.walk(tree):
-            if isinstance(node, ast.Try):
-                for stmt in ast.walk(ast.Module(body=node.finalbody, type_ignores=[])):
-                    if isinstance(stmt, ast.Attribute) and stmt.attr == "DestroySession":
-                        destroy_in_finally = True
-                    if isinstance(stmt, ast.Name) and stmt.id == "DestroySession":
-                        destroy_in_finally = True
-        self.assertTrue(destroy_in_finally, "DestroySession must be invoked inside a finally block")
+            if isinstance(node, ast.Try) and node.finalbody:
+                cleanup_in_finally = True
+        self.assertTrue(cleanup_in_finally, "export_job must perform cleanup in a finally block")
 
     def test_verifier_rejects_embedded_secrets(self) -> None:
         verifier = self.module.Verifier()

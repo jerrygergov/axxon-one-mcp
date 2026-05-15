@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generated legacy HTTP consumer for $VERB $PATH (auth=$AUTH_MODE)."""
+"""Generated HTTP consumer for $VERB $PATH (auth=$AUTH_MODE)."""
 
 from __future__ import annotations
 
@@ -23,12 +23,30 @@ def redact(value: str) -> str:
     return value[:2] + "***"
 
 
+def fetch_bearer(base: str, auth: tuple[str, str], timeout: int) -> str:
+    response = requests.post(
+        base + "/grpc",
+        auth=auth,
+        json={
+            "method": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2",
+            "data": {"user_name": auth[0], "password": auth[1]},
+        },
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    token = response.json().get("token_value")
+    if not token:
+        raise RuntimeError("no token_value in /grpc auth response")
+    return token
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
     if missing:
         logging.error("missing env: %s", ",".join(missing))
         return 2
+    global requests
     import requests
 
     base = os.environ["AXXON_HTTP_URL"].rstrip("/")
@@ -37,16 +55,13 @@ def main() -> int:
     logging.info("user=%s password=%s base=%s path=%s", user, redact(password), base, PATH)
 
     headers: dict[str, str] = {}
+    request_auth = None
     if AUTH_MODE == "bearer":
-        token_resp = requests.post(base + "/grpc", auth=(user, password), timeout=DURATION_SECONDS)
-        token_resp.raise_for_status()
-        bearer = token_resp.json().get("access_token") or token_resp.json().get("token")
-        headers["Authorization"] = "Bearer " + bearer
-        auth = None
+        headers["Authorization"] = "Bearer " + fetch_bearer(base, (user, password), DURATION_SECONDS)
     else:
-        auth = (user, password)
+        request_auth = (user, password)
 
-    response = requests.request(VERB, base + PATH, headers=headers, auth=auth, timeout=DURATION_SECONDS)
+    response = requests.request(VERB, base + PATH, headers=headers, auth=request_auth, timeout=DURATION_SECONDS)
     body = response.content[:BYTE_CAP]
     logging.info("status=%s bytes=%d", response.status_code, len(body))
     print(json.dumps({"path": PATH, "status": response.status_code, "bytes": len(body)}))

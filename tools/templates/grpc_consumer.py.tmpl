@@ -39,6 +39,14 @@ def banner() -> None:
     )
 
 
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
@@ -48,8 +56,8 @@ def main() -> int:
     banner()
     sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
     import grpc
-    from axxonsoft.bl.security.Authentication_pb2 import AuthenticateEx2Request
-    from axxonsoft.bl.security.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
 
     proto_module_path = PROTO.replace("/", ".").rsplit(".proto", 1)[0]
     request_module_name = proto_module_path + "_pb2"
@@ -61,23 +69,30 @@ def main() -> int:
 
     host = os.environ["AXXON_HOST"]
     tls_cn = os.environ["AXXON_TLS_CN"]
-    creds = grpc.ssl_channel_credentials()
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
     options = (("grpc.ssl_target_name_override", tls_cn),)
-    with grpc.secure_channel(host, creds, options=options) as channel:
+    with grpc.secure_channel(host, base_creds, options=options) as channel:
         auth = AuthenticationServiceStub(channel)
         token_response = auth.AuthenticateEx2(
-            AuthenticateEx2Request(
-                username=os.environ["AXXON_USERNAME"],
+            AuthenticateRequest(
+                user_name=os.environ["AXXON_USERNAME"],
                 password=os.environ["AXXON_PASSWORD"],
             ),
             timeout=DURATION_SECONDS,
         )
-        metadata = (("authorization", "Bearer " + token_response.access_token),)
+        if token_response.error_code != 0:
+            logging.error("auth failed error_code=%s", token_response.error_code)
+            return 3
+        metadata = ((token_response.token_name, token_response.token_value),)
+        auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata, None))
+        composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+    with grpc.secure_channel(host, composite, options=options) as channel:
         stub = stub_cls(channel)
-        response = getattr(stub, METHOD)(request_cls(), timeout=DURATION_SECONDS, metadata=metadata)
+        response = getattr(stub, METHOD)(request_cls(), timeout=DURATION_SECONDS)
         printable = str(response)[:4000]
         logging.info("response_chars=%d", len(printable))
-        print(json.dumps({"fqmn": FQMN, "preview": printable}))
+        print(json.dumps({"fqmn": FQMN, "preview_chars": len(printable)}))
     return 0
 
 

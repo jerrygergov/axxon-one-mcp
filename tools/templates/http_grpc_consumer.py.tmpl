@@ -11,8 +11,6 @@ import sys
 DURATION_SECONDS = $DURATION
 BYTE_CAP = $BYTE_CAP
 FQMN = "$FQMN"
-SERVICE_PATH = "$SERVICE_PATH"
-METHOD = "$METHOD"
 
 REQUIRED_ENV = ("AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD")
 
@@ -34,17 +32,25 @@ def main() -> int:
     base = os.environ["AXXON_HTTP_URL"].rstrip("/")
     auth = (os.environ["AXXON_USERNAME"], os.environ["AXXON_PASSWORD"])
     logging.info("user=%s password=%s base=%s", auth[0], redact(auth[1]), base)
-    token_resp = requests.post(base + "/grpc", auth=auth, timeout=DURATION_SECONDS)
+
+    token_resp = requests.post(
+        base + "/grpc",
+        auth=auth,
+        json={
+            "method": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2",
+            "data": {"user_name": auth[0], "password": auth[1]},
+        },
+        timeout=DURATION_SECONDS,
+    )
     token_resp.raise_for_status()
-    bearer = token_resp.json().get("access_token") or token_resp.json().get("token")
+    bearer = token_resp.json().get("token_value")
     if not bearer:
-        logging.error("no bearer token in /grpc response")
+        logging.error("no token_value in /grpc auth response")
         return 3
-    url = base + "/grpc/" + SERVICE_PATH + "/" + METHOD
     response = requests.post(
-        url,
-        headers={"Authorization": "Bearer " + bearer, "Content-Type": "application/json"},
-        json={},
+        base + "/grpc",
+        headers={"Authorization": "Bearer " + bearer},
+        json={"method": FQMN, "data": {}},
         timeout=DURATION_SECONDS,
     )
     body = response.content[:BYTE_CAP]
