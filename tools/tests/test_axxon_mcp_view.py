@@ -65,8 +65,16 @@ class AxxonMcpViewTests(unittest.TestCase):
         )
         profile = view.connect_axxon_profile("env")
         self.assertTrue(profile["connected"])
+        self.assertEqual(profile["profile_name"], "env")
+        self.assertEqual(profile["mode"], "read-only")
         self.assertTrue(profile["profile"]["password_present"])
         self.assertNotIn("secret", str(profile))
+        self.assertNotIn("SHOULD_NOT_LEAK", str(profile))
+
+        rejected = view.connect_axxon_profile("other")
+        self.assertFalse(rejected["connected"])
+        self.assertEqual(rejected["profile_name"], "other")
+        self.assertEqual(rejected["status"], "gap")
 
 
 if __name__ == "__main__":

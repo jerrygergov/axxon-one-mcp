@@ -7,7 +7,7 @@ directly with the Bearer token issued by AxxonApiClient.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import quote
@@ -54,7 +54,7 @@ class AxxonMcpView:
     config_factory: Callable[[], AxxonClientConfig] = default_config_factory
     client: Any | None = None
     profile_name: str | None = None
-    _inventory: dict[str, Any] | None = field(default=None, repr=False)
+    _inventory: dict[str, Any] | None = None
 
     def connect_axxon_profile(self, profile: str = "env") -> dict[str, Any]:
         if profile != "env":
@@ -62,6 +62,7 @@ class AxxonMcpView:
                 "connected": False,
                 "status": "gap",
                 "message": "Only the env profile is supported.",
+                "profile_name": profile,
             }
         config = self.config_factory()
         self.client = self.client_factory(config)
@@ -69,7 +70,9 @@ class AxxonMcpView:
         self._inventory = None
         return {
             "connected": True,
+            "profile_name": profile,
             "profile": public_config_summary(config),
+            "mode": "read-only",
         }
 
     def _ensure_inventory(self) -> dict[str, Any]:
