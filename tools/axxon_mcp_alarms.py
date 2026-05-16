@@ -65,6 +65,29 @@ def public_config_summary(config: Any) -> dict[str, Any]:
     }
 
 
+def normalize_alarm(raw: dict[str, Any]) -> dict[str, Any]:
+    """Map an Axxon active-alarm dict to a stable MCP-side schema.
+
+    Source fields verified against ``GetActiveAlerts`` responses on the demo stand:
+    ``guid``, ``timestamp``, ``node_info.name``, ``camera.access_point``,
+    ``camera.friendly_name``, ``archive.access_point``, ``required_comment``,
+    ``severity``.
+    """
+    camera = raw.get("camera") or {}
+    archive = raw.get("archive") or {}
+    node = raw.get("node_info") or {}
+    return {
+        "alert_id": raw.get("guid") or raw.get("alert_id") or "",
+        "severity": raw.get("severity"),
+        "camera_access_point": camera.get("access_point"),
+        "camera_friendly_name": camera.get("friendly_name"),
+        "archive_access_point": archive.get("access_point"),
+        "node_name": node.get("name"),
+        "timestamp": raw.get("timestamp"),
+        "required_comment": raw.get("required_comment"),
+    }
+
+
 @dataclass
 class AxxonMcpAlarms:
     """Read-only alarm tools + bounded alarm subscription."""
@@ -100,3 +123,64 @@ class AxxonMcpAlarms:
         if self._inventory is None:
             self._inventory = self.client.load_inventory()
         return self._inventory
+
+    def _camera_index(self, inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        return {
+            cam.get("access_point", ""): cam
+            for cam in inventory.get("cameras", [])
+            if cam.get("access_point")
+        }
+
+    def _host(self) -> str:
+        return f"hosts/{self.client.config.tls_cn}"
+
+    def list_active_alerts(
+        self,
+        camera_access_point: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        if camera_access_point is not None:
+            inv = self._ensure_inventory()
+            if camera_access_point not in self._camera_index(inv):
+                return {
+                    "status": "gap",
+                    "tool": "list_active_alerts",
+                    "message": f"Camera not in inventory: {camera_access_point}",
+                }
+            resp = self.client.get_active_alerts(camera_access_point)
+            body = resp.get("body") if isinstance(resp, dict) else {}
+            raw_items = (body or {}).get("alerts") or []
+            items = [normalize_alarm(a) for a in raw_items][:applied_limit]
+            return {
+                "status": "ok",
+                "tool": "list_active_alerts",
+                "count": len(items),
+                "applied_limit": applied_limit,
+                "items": items,
+            }
+        # Node-wide
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        resp = self.client.batch_get_active_alerts([self._host()])
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        pages = (body or {}).get("event_stream_items") or []
+        flat: list[dict[str, Any]] = []
+        unreachable_per_page: list[list[str]] = []
+        for page in pages:
+            flat.extend(page.get("alerts") or [])
+            unreachable_per_page.append(list(page.get("unreachable_nodes") or []))
+        # Only surface "unreachable" when every page agrees.
+        if unreachable_per_page and all(u for u in unreachable_per_page):
+            unreachable_intersection = sorted(set.intersection(*[set(u) for u in unreachable_per_page]))
+        else:
+            unreachable_intersection = []
+        items = [normalize_alarm(a) for a in flat][:applied_limit]
+        return {
+            "status": "ok",
+            "tool": "list_active_alerts",
+            "count": len(items),
+            "applied_limit": applied_limit,
+            "items": items,
+            "unreachable_nodes": unreachable_intersection,
+        }
