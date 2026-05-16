@@ -81,3 +81,62 @@ class AxxonMcpView:
         if self._inventory is None:
             self._inventory = self.client.load_inventory()
         return self._inventory
+
+    _SUPPORTED_LIVE_FORMATS = ("mjpeg", "hls", "mp4", "rtsp")
+
+    def _legacy_ap(self, access_point: str) -> str:
+        return access_point.removeprefix("hosts/")
+
+    def _camera_index(self, inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        return {cam.get("access_point", ""): cam for cam in inventory.get("cameras", []) if cam.get("access_point")}
+
+    def _auth(self) -> dict[str, str]:
+        return {"header": "Authorization", "scheme": "Bearer"}
+
+    def live_view(
+        self,
+        camera_access_point: str,
+        duration_s: int = DEFAULT_DURATION_S,
+        fps: int = DEFAULT_FPS,
+        width: int = DEFAULT_SNAPSHOT_WIDTH,
+        format: str = "mjpeg",
+    ) -> dict[str, Any]:
+        if format not in self._SUPPORTED_LIVE_FORMATS:
+            return {
+                "status": "gap",
+                "tool": "live_view",
+                "message": f"Unsupported format '{format}'. Supported: {self._SUPPORTED_LIVE_FORMATS}",
+            }
+        inventory = self._ensure_inventory()
+        cameras = self._camera_index(inventory)
+        if camera_access_point not in cameras:
+            return {
+                "status": "gap",
+                "tool": "live_view",
+                "message": f"Camera not found in inventory: {camera_access_point}",
+            }
+        applied_duration = min(max(duration_s, 1), DEFAULT_DURATION_S)
+        applied_fps = min(max(fps, 1), DEFAULT_FPS)
+        applied_width = min(max(width, 64), 1920)
+        legacy = self._legacy_ap(camera_access_point)
+        base = self.client.config.http_url.rstrip("/")
+        if format == "mjpeg":
+            url = f"{base}/live/media/{legacy}?w={applied_width}&h=0&fps={applied_fps}"
+        elif format == "hls":
+            url = f"{base}/live/media/{legacy}?format=hls"
+        elif format == "mp4":
+            url = f"{base}/live/media/{legacy}?format=mp4"
+        else:  # rtsp
+            url = f"{base}/live/media/{legacy}?format=rtsp"
+        return {
+            "status": "ok",
+            "tool": "live_view",
+            "camera": camera_access_point,
+            "url": url,
+            "auth": self._auth(),
+            "caps": {
+                "bytes": DEFAULT_MAX_BYTES,
+                "time_s": applied_duration,
+                "fps": applied_fps,
+            },
+        }

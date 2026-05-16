@@ -77,5 +77,50 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertEqual(rejected["status"], "gap")
 
 
+    def test_live_view_returns_url_with_caps_for_known_camera(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.live_view(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            duration_s=999,
+            fps=999,
+            format="mjpeg",
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "live_view")
+        self.assertIn("/live/media/", result["url"])
+        self.assertIn("Server/DeviceIpint.1/SourceEndpoint.video:0:0", result["url"])
+        self.assertEqual(result["caps"]["time_s"], module.DEFAULT_DURATION_S)
+        self.assertEqual(result["caps"]["fps"], module.DEFAULT_FPS)
+        self.assertEqual(result["auth"], {"header": "Authorization", "scheme": "Bearer"})
+        self.assertNotIn("secret", str(result))
+
+    def test_live_view_unknown_camera_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.live_view("hosts/Server/NotACamera", format="mjpeg")
+        self.assertEqual(result["status"], "gap")
+        self.assertIn("NotACamera", result["message"])
+
+    def test_live_view_rejects_unknown_format(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.live_view(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            format="webp",
+        )
+        self.assertEqual(result["status"], "gap")
+        self.assertIn("format", result["message"])
+
+
 if __name__ == "__main__":
     unittest.main()
