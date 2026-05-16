@@ -396,6 +396,43 @@ class AxxonApiClient:
         )
         return self.message_to_dict(response)
 
+    def archive_calendar(self, source_access_point: str, archive_access_point: str) -> dict[str, Any]:
+        """Return ArchiveService.GetCalendar response over HTTP /grpc for a source/archive pair."""
+        response = self.http_grpc(
+            "axxonsoft.bl.archive.ArchiveService.GetCalendar",
+            {"access_point": source_access_point, "archive_access_point": archive_access_point},
+        )
+        return response.get("body", {}) if isinstance(response, dict) else {}
+
+    def archive_intervals(
+        self,
+        camera_legacy_access_point: str,
+        begin: str,
+        end: str,
+        archive_ap: str | None = None,
+        max_count: int = 32,
+        min_gap_ms: int = 1000,
+    ) -> list[dict[str, str]]:
+        """Return bounded archive intervals via legacy /archive/contents/intervals."""
+        path = f"/archive/contents/intervals/{camera_legacy_access_point}/{begin}/{end}"
+        if archive_ap:
+            path += "?archive=" + archive_ap
+        response = self.http_request("GET", path, bearer=True, max_items=max_count)
+        body = response.get("body") if isinstance(response, dict) else None
+        if isinstance(body, list):
+            return body[:max_count]
+        if isinstance(body, dict):
+            return body.get("intervals", [])[:max_count]
+        return []
+
+    def http_get_json(self, path: str, max_items: int = 32) -> dict[str, Any]:
+        """GET a legacy HTTP JSON endpoint with Bearer auth and return the parsed body."""
+        response = self.http_request("GET", path, bearer=True, max_items=max_items)
+        body = response.get("body") if isinstance(response, dict) else None
+        if isinstance(body, dict):
+            return body
+        return {"body": body}
+
     def pull_events_bounded(
         self,
         *,
