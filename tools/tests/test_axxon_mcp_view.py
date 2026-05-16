@@ -157,5 +157,26 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertEqual(result["caps"]["time_s"], 3)
 
 
+    def test_snapshot_batch_returns_one_url_per_known_camera_and_caps_count(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        # Pass a 10-camera list; only 2 exist in fixture and SNAPSHOT_BATCH_LIMIT clamps to 8.
+        aps = [f"hosts/Server/DeviceIpint.{i}/SourceEndpoint.video:0:0" for i in range(1, 11)]
+        result = view.snapshot_batch(aps)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "snapshot_batch")
+        self.assertLessEqual(len(result["items"]), module.SNAPSHOT_BATCH_LIMIT)
+        ok_items = [item for item in result["items"] if item["status"] == "ok"]
+        gap_items = [item for item in result["items"] if item["status"] == "gap"]
+        self.assertEqual(len(ok_items), 2)
+        self.assertGreaterEqual(len(gap_items), 1)
+        for item in ok_items:
+            self.assertIn("/live/media/snapshot/", item["url"])
+            self.assertEqual(item["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
+
+
 if __name__ == "__main__":
     unittest.main()

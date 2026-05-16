@@ -146,3 +146,42 @@ class AxxonMcpView:
             "format": format,
             "caps": caps,
         }
+
+    def snapshot_batch(
+        self,
+        camera_access_points: list[str],
+        ts: str = "now",
+        width: int = DEFAULT_SNAPSHOT_WIDTH,
+    ) -> dict[str, Any]:
+        inventory = self._ensure_inventory()
+        cameras = self._camera_index(inventory)
+        clamped = list(camera_access_points)[:SNAPSHOT_BATCH_LIMIT]
+        applied_width = min(max(width, 64), 1920)
+        base = self.client.config.http_url.rstrip("/")
+        items: list[dict[str, Any]] = []
+        for ap in clamped:
+            if ap not in cameras:
+                items.append({"status": "gap", "camera": ap, "message": "not in inventory"})
+                continue
+            legacy = self._legacy_ap(ap)
+            if ts == "now":
+                url = f"{base}/live/media/snapshot/{legacy}?w={applied_width}&h=0"
+            else:
+                ts_q = quote(ts, safe="")
+                url = f"{base}/archive/media/{legacy}/{ts_q}?threshold={ARCHIVE_FRAME_THRESHOLD_MS}&w={applied_width}&h=0"
+            items.append(
+                {
+                    "status": "ok",
+                    "camera": ap,
+                    "url": url,
+                    "auth": self._auth(),
+                    "caps": {"bytes": DEFAULT_MAX_BYTES, "time_s": None, "fps": None},
+                }
+            )
+        return {
+            "status": "ok",
+            "tool": "snapshot_batch",
+            "ts": ts,
+            "items": items,
+            "applied_limit": SNAPSHOT_BATCH_LIMIT,
+        }
