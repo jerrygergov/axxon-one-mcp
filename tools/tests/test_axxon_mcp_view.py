@@ -65,6 +65,13 @@ class FakeClient:
     def archive_time_range_legacy(self, hours: int = 1) -> tuple[str, str]:
         return ("2026-05-16T09:00:00.000000Z", "2026-05-16T10:00:00.000000Z")
 
+    def http_get_json(self, path: str) -> dict[str, Any]:
+        if path.startswith("/statistics/"):
+            return {"bitrate": 1234, "fps": 10, "width": 640, "height": 360, "mediaType": "video", "streamType": "live"}
+        if path == "/rtsp/stat":
+            return {"sessions": []}
+        return {}
+
 
 class AxxonMcpViewTests(unittest.TestCase):
     def test_module_loads_and_connect_reports_profile(self) -> None:
@@ -246,6 +253,18 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertEqual(result["caps"]["bytes"], module.ARCHIVE_MJPEG_BYTE_CAP)
         self.assertLessEqual(result["caps"]["fps"], module.DEFAULT_FPS)
         self.assertLessEqual(result["caps"]["speed"], 8)
+
+    def test_stream_health_returns_statistics_and_rtsp_summary(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.stream_health("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["statistics"]["bitrate"], 1234)
+        self.assertEqual(result["rtsp"]["sessions"], [])
+        self.assertNotIn("password", str(result))
 
 
 if __name__ == "__main__":

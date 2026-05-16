@@ -295,3 +295,18 @@ class AxxonMcpView:
                 "width": applied_width,
             },
         }
+
+    def stream_health(self, camera_access_point: str) -> dict[str, Any]:
+        inventory = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inventory):
+            return {"status": "gap", "tool": "stream_health", "message": "camera not in inventory"}
+        legacy = self._legacy_ap(camera_access_point)
+        statistics = self.client.http_get_json(f"/statistics/{legacy}")
+        rtsp = self.client.http_get_json("/rtsp/stat")
+        return {
+            "status": "ok",
+            "tool": "stream_health",
+            "camera": camera_access_point,
+            "statistics": statistics,
+            "rtsp": rtsp,
+        }
