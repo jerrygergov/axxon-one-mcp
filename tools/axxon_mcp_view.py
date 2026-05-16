@@ -128,15 +128,21 @@ class AxxonMcpView:
             url = f"{base}/live/media/{legacy}?format=mp4"
         else:  # rtsp
             url = f"{base}/live/media/{legacy}?format=rtsp"
+        if format == "mjpeg":
+            caps = {
+                "bytes": DEFAULT_MAX_BYTES,
+                "time_s": applied_duration,
+                "fps": applied_fps,
+                "width": applied_width,
+            }
+        else:
+            caps = {"bytes": DEFAULT_MAX_BYTES, "time_s": applied_duration}
         return {
             "status": "ok",
             "tool": "live_view",
             "camera": camera_access_point,
             "url": url,
             "auth": self._auth(),
-            "caps": {
-                "bytes": DEFAULT_MAX_BYTES,
-                "time_s": applied_duration,
-                "fps": applied_fps,
-            },
+            "format": format,
+            "caps": caps,
         }

@@ -122,5 +122,40 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertIn("format", result["message"])
 
 
+    def test_live_view_hls_omits_fps_and_width_from_caps_and_url(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.live_view(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            fps=999,
+            width=320,
+            format="hls",
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["format"], "hls")
+        self.assertIn("?format=hls", result["url"])
+        self.assertNotIn("fps=", result["url"])
+        self.assertNotIn("w=", result["url"])
+        self.assertNotIn("fps", result["caps"])
+        self.assertNotIn("width", result["caps"])
+
+    def test_live_view_below_default_duration_is_not_floored(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.live_view(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            duration_s=3,
+            format="mjpeg",
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["caps"]["time_s"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()
