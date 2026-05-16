@@ -175,7 +175,7 @@ class AxxonMcpView:
                     "camera": ap,
                     "url": url,
                     "auth": self._auth(),
-                    "caps": {"bytes": DEFAULT_MAX_BYTES, "time_s": None, "fps": None},
+                    "caps": {"bytes": DEFAULT_MAX_BYTES},
                 }
             )
         return {
