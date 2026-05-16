@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 import sys
+from typing import Any
 import unittest
 
 
@@ -54,6 +55,15 @@ class FakeClient:
         if isinstance(value, list):
             return [self.sanitize(v) for v in value]
         return value
+
+    def archive_calendar(self, source_ap: str, archive_ap: str) -> dict[str, Any]:
+        return {"days": ["2026-05-15", "2026-05-16"], "source": source_ap, "archive": archive_ap}
+
+    def archive_intervals(self, camera_legacy_ap: str, begin: str, end: str, archive_ap: str | None = None) -> list[dict[str, str]]:
+        return [{"begin": "2026-05-16T10:00:00.000000Z", "end": "2026-05-16T10:00:05.000000Z"}]
+
+    def archive_time_range_legacy(self, hours: int = 1) -> tuple[str, str]:
+        return ("2026-05-16T09:00:00.000000Z", "2026-05-16T10:00:00.000000Z")
 
 
 class AxxonMcpViewTests(unittest.TestCase):
@@ -176,6 +186,33 @@ class AxxonMcpViewTests(unittest.TestCase):
         for item in ok_items:
             self.assertIn("/live/media/snapshot/", item["url"])
             self.assertEqual(item["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
+
+
+    def test_archive_scrub_combines_calendar_intervals_and_frame_probe(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.archive_scrub(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            hours=2,
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "archive_scrub")
+        self.assertIn("days", result["calendar"])
+        self.assertEqual(len(result["intervals"]), 1)
+        self.assertIn("/archive/media/", result["sample_frame_url"])
+        self.assertEqual(result["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
+
+    def test_archive_scrub_unknown_camera_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.archive_scrub("hosts/Server/NotACamera")
+        self.assertEqual(result["status"], "gap")
 
 
 if __name__ == "__main__":

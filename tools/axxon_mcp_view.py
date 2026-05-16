@@ -185,3 +185,52 @@ class AxxonMcpView:
             "items": items,
             "applied_limit": SNAPSHOT_BATCH_LIMIT,
         }
+
+    def _default_archive_ap(self, inventory: dict[str, Any]) -> str | None:
+        for arc in inventory.get("archives", []):
+            ap = arc.get("access_point")
+            if ap:
+                return ap
+        return None
+
+    def archive_scrub(
+        self,
+        camera_access_point: str,
+        hours: int = 1,
+        archive_access_point: str | None = None,
+    ) -> dict[str, Any]:
+        inventory = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inventory):
+            return {
+                "status": "gap",
+                "tool": "archive_scrub",
+                "message": f"Camera not found in inventory: {camera_access_point}",
+            }
+        archive_ap = archive_access_point or self._default_archive_ap(inventory)
+        if archive_ap is None:
+            return {
+                "status": "fixture-needed",
+                "tool": "archive_scrub",
+                "message": "No archive access point in inventory.",
+                "fixture": {"required": ["MultimediaStorage.*/MultimediaStorage"], "missing": ["archive"]},
+            }
+        applied_hours = min(max(hours, 1), 24)
+        begin, end = self.client.archive_time_range_legacy(hours=applied_hours)
+        legacy = self._legacy_ap(camera_access_point)
+        calendar = self.client.archive_calendar(camera_access_point, archive_ap)
+        intervals = self.client.archive_intervals(legacy, begin, end, archive_ap=archive_ap)
+        sample_ts = (intervals[-1].get("end") if intervals else end)
+        sample_ts_q = quote(sample_ts, safe="")
+        base = self.client.config.http_url.rstrip("/")
+        sample_url = f"{base}/archive/media/{legacy}/{sample_ts_q}?threshold={ARCHIVE_FRAME_THRESHOLD_MS}&w={DEFAULT_SNAPSHOT_WIDTH}&h=0"
+        return {
+            "status": "ok",
+            "tool": "archive_scrub",
+            "camera": camera_access_point,
+            "archive": archive_ap,
+            "calendar": calendar,
+            "intervals": intervals,
+            "sample_frame_url": sample_url,
+            "auth": self._auth(),
+            "caps": {"bytes": DEFAULT_MAX_BYTES, "hours": applied_hours},
+        }
