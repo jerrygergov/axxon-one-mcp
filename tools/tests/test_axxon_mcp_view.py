@@ -214,6 +214,21 @@ class AxxonMcpViewTests(unittest.TestCase):
         result = view.archive_scrub("hosts/Server/NotACamera")
         self.assertEqual(result["status"], "gap")
 
+    def test_archive_frame_returns_url_with_threshold(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.archive_frame(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            ts="2026-05-16T10:00:00.000000Z",
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("/archive/media/", result["url"])
+        self.assertIn("threshold=", result["url"])
+        self.assertEqual(result["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
+
 
 if __name__ == "__main__":
     unittest.main()

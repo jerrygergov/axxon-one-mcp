@@ -234,3 +234,28 @@ class AxxonMcpView:
             "auth": self._auth(),
             "caps": {"bytes": DEFAULT_MAX_BYTES, "hours": applied_hours},
         }
+
+    def archive_frame(
+        self,
+        camera_access_point: str,
+        ts: str,
+        width: int = DEFAULT_SNAPSHOT_WIDTH,
+        threshold_ms: int = ARCHIVE_FRAME_THRESHOLD_MS,
+    ) -> dict[str, Any]:
+        inventory = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inventory):
+            return {"status": "gap", "tool": "archive_frame", "message": "camera not in inventory"}
+        applied_width = min(max(width, 64), 1920)
+        applied_threshold = min(max(threshold_ms, 1_000), 600_000)
+        legacy = self._legacy_ap(camera_access_point)
+        ts_q = quote(ts, safe="")
+        base = self.client.config.http_url.rstrip("/")
+        url = f"{base}/archive/media/{legacy}/{ts_q}?threshold={applied_threshold}&w={applied_width}&h=0"
+        return {
+            "status": "ok",
+            "tool": "archive_frame",
+            "camera": camera_access_point,
+            "url": url,
+            "auth": self._auth(),
+            "caps": {"bytes": DEFAULT_MAX_BYTES, "threshold_ms": applied_threshold, "width": applied_width},
+        }
