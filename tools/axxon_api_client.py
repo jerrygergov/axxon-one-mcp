@@ -480,6 +480,81 @@ class AxxonApiClient:
                 pass
         return collected[:max_events]
 
+    def get_active_alerts(self, camera_ap: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.GetActiveAlerts",
+            {"camera_ap": camera_ap},
+        )
+
+    def batch_get_active_alerts(self, nodes: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.BatchGetActiveAlerts",
+            {"nodes": list(nodes)},
+        )
+
+    def batch_filter_active_alerts(self, nodes: list[str], filter: dict[str, Any] | None = None) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.BatchFilterActiveAlerts",
+            {"nodes": list(nodes), "filter": dict(filter or {})},
+        )
+
+    def raise_alert(self, camera_ap: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.RaiseAlert",
+            {"camera_ap": camera_ap},
+        )
+
+    def begin_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.BeginAlertReview",
+            {"camera_ap": camera_ap, "alert_id": alert_id},
+        )
+
+    def continue_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.ContinueAlertReview",
+            {"camera_ap": camera_ap, "alert_id": alert_id},
+        )
+
+    def cancel_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.CancelAlertReview",
+            {"camera_ap": camera_ap, "alert_id": alert_id},
+        )
+
+    def complete_alert_review(
+        self, camera_ap: str, alert_id: str, *, severity: str, bookmark_message: str
+    ) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.CompleteAlertReview",
+            {
+                "camera_ap": camera_ap,
+                "alert_id": alert_id,
+                "severity": severity,
+                "bookmark": {"message": bookmark_message},
+            },
+        )
+
+    def escalate_alert(
+        self,
+        camera_ap: str,
+        alert_id: str,
+        *,
+        priority: str,
+        user_roles: list[str],
+        comment: str,
+    ) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.logic.LogicService.EscalateAlert",
+            {
+                "camera_ap": camera_ap,
+                "alert_id": alert_id,
+                "priority": priority,
+                "user_roles": list(user_roles),
+                "comment": comment,
+            },
+        )
+
     def http_request(
         self,
         method: str,
