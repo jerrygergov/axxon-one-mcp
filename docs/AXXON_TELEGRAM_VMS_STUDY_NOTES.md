@@ -3,7 +3,7 @@
 Source studied:
 
 ```text
-/Users/jerrygergov/Documents/GitHub/axxon-telegram-vms
+<external-reference-repo>/axxon-telegram-vms
 ```
 
 ## Purpose

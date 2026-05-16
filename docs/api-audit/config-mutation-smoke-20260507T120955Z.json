@@ -25,7 +25,7 @@
       "details": {
         "error_type": "RuntimeError",
         "error": "no VisualElement child found for hosts/Server/AVDetector.100",
-        "traceback": "Traceback (most recent call last):\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_config_mutation_smoke.py\", line 395, in invoke\n    details = getattr(self, f\"run_{group}\")()\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_config_mutation_smoke.py\", line 228, in run_av_detector_parameters\n    visual_before = self.visual_element_child(uid)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools/axxon_config_mutation_smoke.py\", line 347, in visual_element_child\n    raise RuntimeError(f\"no VisualElement child found for {uid}\")\nRuntimeError: no VisualElement child found for hosts/Server/AVDetector.100\n"
+        "traceback": "Traceback (most recent call last):\n  File \"tools/axxon_config_mutation_smoke.py\", line 395, in invoke\n    details = getattr(self, f\"run_{group}\")()\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"tools/axxon_config_mutation_smoke.py\", line 228, in run_av_detector_parameters\n    visual_before = self.visual_element_child(uid)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"tools/axxon_config_mutation_smoke.py\", line 347, in visual_element_child\n    raise RuntimeError(f\"no VisualElement child found for {uid}\")\nRuntimeError: no VisualElement child found for hosts/Server/AVDetector.100\n"
       }
     }
   ]

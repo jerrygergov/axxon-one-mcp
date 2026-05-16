@@ -27,7 +27,7 @@ Latest event-search notes:
 - `EventHistoryService.ReadEvents` works for broad history, camera-scoped history, event-type filters, text filters, and value filters.
 - `EventHistoryService.ReadCount` works for general event counts.
 - `EventHistoryService.ReadLprEvents` works as an API call but currently returns no LPR rows on the local test server.
-- The Telegram bot repo at `/Users/jerrygergov/Documents/GitHub/axxon-telegram-vms` is a useful reference for event normalization, LPR plate extraction, HTTP `/grpc` response parsing, and subscription filter shaping.
+- The Telegram bot repo at `<external-reference-repo>/axxon-telegram-vms` is a useful reference for event normalization, LPR plate extraction, HTTP `/grpc` response parsing, and subscription filter shaping.
 
 ## Sources
 

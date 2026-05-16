@@ -106,6 +106,8 @@ class GeneratorTests(unittest.TestCase):
                     "event_consumer",
                     "external_event_producer",
                     "export_job",
+                    "webhook_bridge",
+                    "inventory_sync",
                 ]
             ),
         )
@@ -188,6 +190,35 @@ class GeneratorTests(unittest.TestCase):
             if isinstance(node, ast.Try) and node.finalbody:
                 cleanup_in_finally = True
         self.assertTrue(cleanup_in_finally, "export_job must perform cleanup in a finally block")
+
+    def test_generate_webhook_bridge_emits_caps_and_no_url_logging(self) -> None:
+        req = self.module.GenerationRequest(
+            template="webhook_bridge",
+            params={"subject": "hosts/Server/AppDataDetector.27/EventSupplier"},
+        )
+        bundle = self.gen.generate(req)
+        self.assertIsInstance(bundle, self.module.GeneratedBundle)
+        body = bundle.files["main.py"]
+        self.assertIn("DURATION_SECONDS = 30", body)
+        self.assertIn("COUNT_CAP = 500", body)
+        self.assertIn("WEBHOOK_URL", body)
+        # WEBHOOK_URL must not be passed directly to a log statement; only the host
+        # part is logged via webhook_host.
+        for line in body.splitlines():
+            if "logging." in line and "WEBHOOK_URL" in line and "split" not in line:
+                self.fail(f"raw WEBHOOK_URL logged: {line!r}")
+
+    def test_generate_inventory_sync_writes_snapshot(self) -> None:
+        req = self.module.GenerationRequest(
+            template="inventory_sync",
+            params={"output_path": "~/axxon-inventory.json"},
+        )
+        bundle = self.gen.generate(req)
+        self.assertIsInstance(bundle, self.module.GeneratedBundle)
+        body = bundle.files["main.py"]
+        self.assertIn("ListCameras", body)
+        self.assertIn("ListUnits", body)
+        self.assertIn("axxon-inventory.json", body)
 
     def test_verifier_rejects_embedded_secrets(self) -> None:
         verifier = self.module.Verifier()

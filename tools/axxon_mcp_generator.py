@@ -44,6 +44,7 @@ ALLOWED_IMPORTS = {
     "re",
     "uuid",
     "axxonsoft",
+    "google",
     "__future__",
 }
 
@@ -130,6 +131,20 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         summary="Archive export job (start/poll/download/destroy) with cleanup.",
         required_params=["camera_ap", "begin", "end"],
         required_fixtures=["mm-export-agent"],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+    ),
+    TemplateInfo(
+        name="webhook_bridge",
+        summary="Forward bounded detector events to an external webhook URL.",
+        required_params=["subject"],
+        required_fixtures=["event-supplier-subject"],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD", "WEBHOOK_URL"],
+    ),
+    TemplateInfo(
+        name="inventory_sync",
+        summary="One-shot inventory snapshot (ListCameras + ListUnits) to a JSON file.",
+        required_params=["output_path"],
+        required_fixtures=[],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
     ),
 ]
@@ -234,6 +249,10 @@ class Generator:
             return self._build_external_event_producer(request, info)
         if request.template == "export_job":
             return self._build_export_job(request, info)
+        if request.template == "webhook_bridge":
+            return self._build_webhook_bridge(request, info)
+        if request.template == "inventory_sync":
+            return self._build_inventory_sync(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -437,6 +456,54 @@ class Generator:
             },
             required_env=info.required_env,
             required_fixtures=info.required_fixtures,
+        )
+
+    def _build_webhook_bridge(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        subject = request.params["subject"]
+        duration = int(request.params.get("duration", DEFAULT_DURATION_SECONDS))
+        count = int(request.params.get("count", DEFAULT_EVENT_COUNT))
+        if duration > DEFAULT_DURATION_SECONDS or count > DEFAULT_EVENT_COUNT:
+            return GenerationRefusal(
+                request.template,
+                "cap_exceeded",
+                f"duration<= {DEFAULT_DURATION_SECONDS}s, count<= {DEFAULT_EVENT_COUNT}",
+            )
+        body = _render(
+            _read_template("webhook_bridge"),
+            {
+                "SUBJECT": subject,
+                "DURATION": str(duration),
+                "COUNT": str(count),
+            },
+        )
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "webhook_bridge"}),
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\nrequests>=2.31\n",
+            },
+            required_env=info.required_env,
+            required_fixtures=info.required_fixtures,
+        )
+
+    def _build_inventory_sync(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        output_path = request.params["output_path"]
+        body = _render(
+            _read_template("inventory_sync"),
+            {
+                "OUTPUT_PATH": output_path,
+                "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
+            },
+        )
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "inventory_sync"}),
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
         )
 
 

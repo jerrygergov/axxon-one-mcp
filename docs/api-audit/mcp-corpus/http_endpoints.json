@@ -7,7 +7,7 @@
       "path": "/v1/archive/action:clearInterval",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -16,7 +16,7 @@
       "path": "/v1/archive/action:createEndpoint",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -25,7 +25,7 @@
       "path": "/v1/archive/action:makeUserComment",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -34,7 +34,7 @@
       "path": "/v1/archive/action:resize",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -43,7 +43,7 @@
       "path": "/v1/archive/action:seek",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -52,7 +52,7 @@
       "path": "/v1/archive/calendar",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -61,7 +61,7 @@
       "path": "/v1/archive/history",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -70,7 +70,7 @@
       "path": "/v1/archive/history2",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -79,7 +79,7 @@
       "path": "/v1/archive/historyStream",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -88,7 +88,7 @@
       "path": "/v1/archive/recordingInfo",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -97,7 +97,7 @@
       "path": "/v1/archive/size",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -106,7 +106,7 @@
       "path": "/v1/archive/traits",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -115,7 +115,7 @@
       "path": "/v1/archive/volumes/cancel_reindex",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -124,7 +124,7 @@
       "path": "/v1/archive/volumes/diskSpace",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -133,7 +133,7 @@
       "path": "/v1/archive/volumes/format",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -142,7 +142,7 @@
       "path": "/v1/archive/volumes/reindex",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -151,7 +151,7 @@
       "path": "/v1/archive/volumes/state",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -160,7 +160,7 @@
       "path": "/v1/archive/volumes:probe",
       "proto": "axxonsoft/bl/archive/ArchiveVolumeService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -169,7 +169,7 @@
       "path": "/v1/audit/injectArchiveViewingEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -178,7 +178,7 @@
       "path": "/v1/audit/injectCameraViewingEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -187,7 +187,7 @@
       "path": "/v1/audit/injectClientAppOptionEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -196,7 +196,7 @@
       "path": "/v1/audit/injectLdapSetupEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -205,7 +205,7 @@
       "path": "/v1/audit/injectMMExportEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -214,7 +214,7 @@
       "path": "/v1/audit/injectNgpJournalExportEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -223,7 +223,7 @@
       "path": "/v1/audit/injectPtzControlEvent",
       "proto": "axxonsoft/bl/audit/Audit.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -232,7 +232,7 @@
       "path": "/v1/authentication/authenticate",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -241,7 +241,7 @@
       "path": "/v1/authentication/authenticate2",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -250,7 +250,7 @@
       "path": "/v1/authentication/authenticate_ex",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -259,7 +259,7 @@
       "path": "/v1/authentication/authenticate_ex2",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -268,7 +268,7 @@
       "path": "/v1/authentication/close",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -277,7 +277,7 @@
       "path": "/v1/authentication/renew",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -286,7 +286,7 @@
       "path": "/v1/authentication/renew2",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -295,7 +295,7 @@
       "path": "/v1/authentication:approve",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -304,7 +304,7 @@
       "path": "/v1/authentication:decline",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -313,7 +313,7 @@
       "path": "/v1/bookmarks:create",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -322,7 +322,7 @@
       "path": "/v1/bookmarks:delete",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -331,7 +331,7 @@
       "path": "/v1/bookmarks:get",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -340,7 +340,7 @@
       "path": "/v1/bookmarks:list",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -349,7 +349,7 @@
       "path": "/v1/bookmarks:renderTrack",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -358,7 +358,7 @@
       "path": "/v1/bookmarks:setExportedTime",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -367,7 +367,7 @@
       "path": "/v1/bookmarks:update",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -376,7 +376,7 @@
       "path": "/v1/cloud/bind",
       "proto": "axxonsoft/bl/cloud/Cloud.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -385,7 +385,7 @@
       "path": "/v1/cloud/config",
       "proto": "axxonsoft/bl/cloud/Cloud.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -394,7 +394,7 @@
       "path": "/v1/cloud/config:change",
       "proto": "axxonsoft/bl/cloud/Cloud.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -403,7 +403,7 @@
       "path": "/v1/cloud/unbind",
       "proto": "axxonsoft/bl/cloud/Cloud.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -412,7 +412,7 @@
       "path": "/v1/configurator/assignments",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -421,7 +421,7 @@
       "path": "/v1/configurator/device-additional-data:acquire",
       "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -430,7 +430,7 @@
       "path": "/v1/configurator/devices_catalog/device",
       "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -439,7 +439,7 @@
       "path": "/v1/configurator/devices_catalog/devices",
       "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -448,7 +448,7 @@
       "path": "/v1/configurator/devices_catalog/vendors",
       "proto": "axxonsoft/bl/config/DevicesCatalog.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -457,7 +457,7 @@
       "path": "/v1/configurator/dynamic-parameters:acquire",
       "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -466,7 +466,7 @@
       "path": "/v1/configurator/factories:batchGet",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -475,7 +475,7 @@
       "path": "/v1/configurator/get",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -484,7 +484,7 @@
       "path": "/v1/configurator/list",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -493,7 +493,7 @@
       "path": "/v1/configurator/templates",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -502,7 +502,7 @@
       "path": "/v1/configurator/templates:batchGet",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -511,7 +511,7 @@
       "path": "/v1/configurator/templates:change",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -520,7 +520,7 @@
       "path": "/v1/configurator/units:listSimilar",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -529,7 +529,7 @@
       "path": "/v1/configurator:change",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -538,7 +538,7 @@
       "path": "/v1/detectors/external:raiseOccasionalEvent",
       "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -547,7 +547,7 @@
       "path": "/v1/detectors/external:raisePeriodicalEvent",
       "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -556,7 +556,7 @@
       "path": "/v1/domain/archives",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -565,7 +565,7 @@
       "path": "/v1/domain/archives:batchGet",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -574,7 +574,7 @@
       "path": "/v1/domain/cameras",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -583,7 +583,7 @@
       "path": "/v1/domain/cameras:batchGet",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -592,7 +592,7 @@
       "path": "/v1/domain/cameras:getByComponents",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -601,7 +601,7 @@
       "path": "/v1/domain/maps:search",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -610,7 +610,7 @@
       "path": "/v1/domain/nodes",
       "proto": "axxonsoft/bl/domain/Domain.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -619,7 +619,7 @@
       "path": "/v1/domain/nodes:add",
       "proto": "axxonsoft/bl/domain/DomainManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -628,7 +628,7 @@
       "path": "/v1/domain/nodes:drop",
       "proto": "axxonsoft/bl/domain/DomainManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -637,7 +637,7 @@
       "path": "/v1/domain/nodes:enumerate",
       "proto": "axxonsoft/bl/domain/DomainManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -646,7 +646,7 @@
       "path": "/v1/domain/textEvent",
       "proto": "axxonsoft/bl/domain/TextEventSourceSupport.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -655,7 +655,7 @@
       "path": "/v1/domain:proclaim",
       "proto": "axxonsoft/bl/domain/DomainManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -664,7 +664,7 @@
       "path": "/v1/events-heatmap:build",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -673,7 +673,7 @@
       "path": "/v1/floor-heatmap:build",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -682,7 +682,7 @@
       "path": "/v1/fs/file",
       "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -691,7 +691,7 @@
       "path": "/v1/fs/list",
       "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -700,7 +700,7 @@
       "path": "/v1/fs/space",
       "proto": "axxonsoft/bl/config/FileSystemBrowser.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -709,7 +709,7 @@
       "path": "/v1/groups/list",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -718,7 +718,7 @@
       "path": "/v1/groups/membership",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -727,7 +727,7 @@
       "path": "/v1/groups:batchGet",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -736,7 +736,7 @@
       "path": "/v1/groups:change",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -745,7 +745,7 @@
       "path": "/v1/heatmap:build",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -754,7 +754,7 @@
       "path": "/v1/heatmap:buildTyped",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -763,7 +763,7 @@
       "path": "/v1/layouts",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -772,7 +772,7 @@
       "path": "/v1/layouts:batchGet",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -781,7 +781,7 @@
       "path": "/v1/layouts:update",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -790,7 +790,7 @@
       "path": "/v1/license",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -799,7 +799,7 @@
       "path": "/v1/license/domain",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -808,7 +808,7 @@
       "path": "/v1/license/globalRestrictions",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -817,7 +817,7 @@
       "path": "/v1/license/nodeRestrictions",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -826,7 +826,7 @@
       "path": "/v1/license/restrictions",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -835,7 +835,7 @@
       "path": "/v1/license:distribute",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -844,7 +844,7 @@
       "path": "/v1/license:drop",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -853,7 +853,7 @@
       "path": "/v1/license:info",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -862,7 +862,7 @@
       "path": "/v1/license:verifyLaunchPossibility",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -871,7 +871,7 @@
       "path": "/v1/logic_service/armstate",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -880,7 +880,7 @@
       "path": "/v1/logic_service/batchbeginalertsreview",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -889,7 +889,7 @@
       "path": "/v1/logic_service/batchcancelalertsreview",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -898,7 +898,7 @@
       "path": "/v1/logic_service/batchcompletealertsreview",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -907,7 +907,7 @@
       "path": "/v1/logic_service/batchcontinuealertsreview",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -916,7 +916,7 @@
       "path": "/v1/logic_service/batchescalatealerts",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -925,7 +925,7 @@
       "path": "/v1/logic_service/batchfilteractivealerts",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -934,7 +934,7 @@
       "path": "/v1/logic_service/batchgetactivealerts",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -943,7 +943,7 @@
       "path": "/v1/logic_service/beginalert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -952,7 +952,7 @@
       "path": "/v1/logic_service/cancelalert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -961,7 +961,7 @@
       "path": "/v1/logic_service/completealert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -970,7 +970,7 @@
       "path": "/v1/logic_service/config",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "PUT"
     },
     {
@@ -979,7 +979,7 @@
       "path": "/v1/logic_service/config",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -988,7 +988,7 @@
       "path": "/v1/logic_service/continuealert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -997,7 +997,7 @@
       "path": "/v1/logic_service/counters",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1006,7 +1006,7 @@
       "path": "/v1/logic_service/counters:action",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1015,7 +1015,7 @@
       "path": "/v1/logic_service/counters:batchGet",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1024,7 +1024,7 @@
       "path": "/v1/logic_service/counters:change",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1033,7 +1033,7 @@
       "path": "/v1/logic_service/counters:getGroupState",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1042,7 +1042,7 @@
       "path": "/v1/logic_service/counters:getState",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1051,7 +1051,7 @@
       "path": "/v1/logic_service/escalatealert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1060,7 +1060,7 @@
       "path": "/v1/logic_service/getactivealerts",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1069,7 +1069,7 @@
       "path": "/v1/logic_service/macros",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1078,7 +1078,7 @@
       "path": "/v1/logic_service/macros:batchGet",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1087,7 +1087,7 @@
       "path": "/v1/logic_service/macros:change",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1096,7 +1096,7 @@
       "path": "/v1/logic_service/macros:launch",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1105,7 +1105,7 @@
       "path": "/v1/logic_service/raisealert",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1114,7 +1114,7 @@
       "path": "/v1/logic_service/user_scripts",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1123,7 +1123,7 @@
       "path": "/v1/maps/image",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1132,7 +1132,7 @@
       "path": "/v1/maps/list",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1141,7 +1141,7 @@
       "path": "/v1/maps/markers",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1150,7 +1150,7 @@
       "path": "/v1/maps/markers:update",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1159,7 +1159,7 @@
       "path": "/v1/maps/provider",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1168,7 +1168,7 @@
       "path": "/v1/maps/providers",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1177,7 +1177,7 @@
       "path": "/v1/maps/providers",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1186,7 +1186,7 @@
       "path": "/v1/maps:batchGet",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1195,7 +1195,7 @@
       "path": "/v1/maps:change",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1204,7 +1204,7 @@
       "path": "/v1/maps:getByComponent",
       "proto": "axxonsoft/bl/maps/MapService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1213,7 +1213,7 @@
       "path": "/v1/node-notifier/subscriptions",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1222,7 +1222,7 @@
       "path": "/v1/node-notifier/subscriptions:disconnect",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1231,7 +1231,7 @@
       "path": "/v1/node-notifier/subscriptions:pull",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1240,7 +1240,7 @@
       "path": "/v1/node-notifier/subscriptions:update",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1249,7 +1249,7 @@
       "path": "/v1/notifier/email/actionstate",
       "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1258,7 +1258,7 @@
       "path": "/v1/notifier/email/sendmode",
       "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1267,7 +1267,7 @@
       "path": "/v1/notifier/email:send",
       "proto": "axxonsoft/bl/notifications/EMailNotifier.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1276,7 +1276,7 @@
       "path": "/v1/notifier/sms/actionstate",
       "proto": "axxonsoft/bl/notifications/GSMNotifier.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1285,7 +1285,7 @@
       "path": "/v1/notifier/sms:send",
       "proto": "axxonsoft/bl/notifications/GSMNotifier.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1294,7 +1294,7 @@
       "path": "/v1/notifier/subscriptions",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1303,7 +1303,7 @@
       "path": "/v1/notifier/subscriptions:disconnect",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1312,7 +1312,7 @@
       "path": "/v1/notifier/subscriptions:pull",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1321,7 +1321,7 @@
       "path": "/v1/notifier/subscriptions:update",
       "proto": "axxonsoft/bl/events/Notification.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1330,7 +1330,7 @@
       "path": "/v1/security/checklogin",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1339,7 +1339,7 @@
       "path": "/v1/security/checkpass",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1348,7 +1348,7 @@
       "path": "/v1/security/cloud/config",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1357,7 +1357,7 @@
       "path": "/v1/security/config",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1366,7 +1366,7 @@
       "path": "/v1/security/config/user",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1375,7 +1375,7 @@
       "path": "/v1/security/config:change",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1384,7 +1384,7 @@
       "path": "/v1/security/ldap/groups:search",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1393,7 +1393,7 @@
       "path": "/v1/security/ldap:search",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1402,7 +1402,7 @@
       "path": "/v1/security/ldap:testConnection",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1411,7 +1411,7 @@
       "path": "/v1/security/ldapservers",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1420,7 +1420,7 @@
       "path": "/v1/security/ldapsynchronization",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1429,7 +1429,7 @@
       "path": "/v1/security/ldapsynchronization/state",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1438,7 +1438,7 @@
       "path": "/v1/security/ldapsynchronization:start",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1447,7 +1447,7 @@
       "path": "/v1/security/ldapsynchronization:stop",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1456,7 +1456,7 @@
       "path": "/v1/security/login:change",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1465,7 +1465,7 @@
       "path": "/v1/security/password:change",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1474,7 +1474,7 @@
       "path": "/v1/security/permissions/global",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1483,7 +1483,7 @@
       "path": "/v1/security/permissions/global/user",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1492,7 +1492,7 @@
       "path": "/v1/security/permissions/global:update",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1501,7 +1501,7 @@
       "path": "/v1/security/permissions/groups",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1510,7 +1510,7 @@
       "path": "/v1/security/permissions/groups:update",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1519,7 +1519,7 @@
       "path": "/v1/security/permissions/groupsInfo",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1528,7 +1528,7 @@
       "path": "/v1/security/permissions/macros",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1537,7 +1537,7 @@
       "path": "/v1/security/permissions/macros:update",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1546,7 +1546,7 @@
       "path": "/v1/security/permissions/macrosPaged",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1555,7 +1555,7 @@
       "path": "/v1/security/permissions/objects",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1564,7 +1564,7 @@
       "path": "/v1/security/permissions/objects:update",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1573,7 +1573,7 @@
       "path": "/v1/security/permissions/objectsInfo",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1582,7 +1582,7 @@
       "path": "/v1/security/policies",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1591,7 +1591,7 @@
       "path": "/v1/security/roles",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1600,7 +1600,7 @@
       "path": "/v1/security/users",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1609,7 +1609,7 @@
       "path": "/v1/tag_and_track/action:follow",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1618,7 +1618,7 @@
       "path": "/v1/tag_and_track/action:mode",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1627,7 +1627,7 @@
       "path": "/v1/tag_and_track/action:move",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1636,7 +1636,7 @@
       "path": "/v1/tag_and_track/trackers",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1645,7 +1645,7 @@
       "path": "/v1/telemetry/operations",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1654,7 +1654,7 @@
       "path": "/v1/telemetry/position",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1663,7 +1663,7 @@
       "path": "/v1/telemetry/position_n",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1672,7 +1672,7 @@
       "path": "/v1/telemetry/presets",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1681,7 +1681,7 @@
       "path": "/v1/telemetry/presets:go",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1690,7 +1690,7 @@
       "path": "/v1/telemetry/presets:remove",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1699,7 +1699,7 @@
       "path": "/v1/telemetry/presets:set",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1708,7 +1708,7 @@
       "path": "/v1/telemetry/presets:set2",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1717,7 +1717,7 @@
       "path": "/v1/telemetry/sessions",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1726,7 +1726,7 @@
       "path": "/v1/telemetry/sessions:checkAvailability",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "review",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1735,7 +1735,7 @@
       "path": "/v1/telemetry/sessions:keepAlive",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1744,7 +1744,7 @@
       "path": "/v1/telemetry/sessions:release",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1753,7 +1753,7 @@
       "path": "/v1/telemetry/tours",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1762,7 +1762,7 @@
       "path": "/v1/telemetry/tours/points",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1771,7 +1771,7 @@
       "path": "/v1/telemetry/tours:play",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1780,7 +1780,7 @@
       "path": "/v1/telemetry/tours:remove",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1789,7 +1789,7 @@
       "path": "/v1/telemetry/tours:setPoint",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1798,7 +1798,7 @@
       "path": "/v1/telemetry/tours:startFill",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1807,7 +1807,7 @@
       "path": "/v1/telemetry/tours:stop",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1816,7 +1816,7 @@
       "path": "/v1/telemetry/tours:stopFill",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1825,7 +1825,7 @@
       "path": "/v1/telemetry:absoluteMove",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1834,7 +1834,7 @@
       "path": "/v1/telemetry:absoluteMoveN",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1843,7 +1843,7 @@
       "path": "/v1/telemetry:areaZoom",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1852,7 +1852,7 @@
       "path": "/v1/telemetry:configure",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1861,7 +1861,7 @@
       "path": "/v1/telemetry:focus",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1870,7 +1870,7 @@
       "path": "/v1/telemetry:focusAuto",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1879,7 +1879,7 @@
       "path": "/v1/telemetry:iris",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1888,7 +1888,7 @@
       "path": "/v1/telemetry:irisAuto",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1897,7 +1897,7 @@
       "path": "/v1/telemetry:move",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1906,7 +1906,7 @@
       "path": "/v1/telemetry:performOperations",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1915,7 +1915,7 @@
       "path": "/v1/telemetry:pointMove",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1924,7 +1924,7 @@
       "path": "/v1/telemetry:zoom",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1933,7 +1933,7 @@
       "path": "/v1/time_sync/ntp_server",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1942,7 +1942,7 @@
       "path": "/v1/time_sync/ntp_server:update",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1951,7 +1951,7 @@
       "path": "/v1/time_zone",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1960,7 +1960,7 @@
       "path": "/v1/time_zone:set",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     },
     {
@@ -1969,7 +1969,7 @@
       "path": "/v1/time_zones",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1978,7 +1978,7 @@
       "path": "/v1/time_zones:batchGet",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "read",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "GET"
     },
     {
@@ -1987,9 +1987,9 @@
       "path": "/v1/time_zones:change",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
       "safety_class": "mutating",
-      "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md",
+      "source": "docs/api-audit/http-endpoints-catalog.md",
       "verb": "POST"
     }
   ],
-  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/http-endpoints-catalog.md"
+  "source": "docs/api-audit/http-endpoints-catalog.md"
 }

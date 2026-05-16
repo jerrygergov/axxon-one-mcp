@@ -4695,5 +4695,5 @@
       "streaming": "server"
     }
   ],
-  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/grpc-api-catalog.csv"
+  "source": "docs/api-audit/grpc-api-catalog.csv"
 }

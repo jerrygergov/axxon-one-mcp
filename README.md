@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **172 / 172** unit tests passing.
+- **174 / 174** unit tests passing.
 - **33** PDF gap-coverage matrix rows. 27 verified, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
@@ -13,10 +13,12 @@ coverage matrix for Axxon One VMS.
   plan / apply / verify / rollback safety.
 - **15** MCP live tools covering inventory, events, metadata, archive,
   detector discovery, and bounded subscriptions.
-- **6** integration generator templates (grpc_consumer, http_grpc_consumer,
-  legacy_http_consumer, event_consumer, external_event_producer, export_job)
-  with a static verifier that rejects embedded secrets, disallowed imports,
-  and missing safety caps.
+- **8** integration generator templates (grpc_consumer, http_grpc_consumer,
+  legacy_http_consumer, event_consumer, external_event_producer, export_job,
+  webhook_bridge, inventory_sync) with a static verifier that rejects embedded
+  secrets, disallowed imports, and missing safety caps. All 8 verified
+  end-to-end against the demo stand
+  (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`).
 
 See `docs/api-audit/pdf-gap-coverage-matrix.md` for the canonical coverage matrix.
 
@@ -98,7 +100,7 @@ require a confirmation token before apply; rollback uses a separate token.
 `list_integration_templates`, `plan_integration`, `generate_integration`,
 `verify_integration`. Templates: `grpc_consumer`, `http_grpc_consumer`,
 `legacy_http_consumer`, `event_consumer`, `external_event_producer`,
-`export_job`. Generated bundles read credentials only from environment, apply
+`export_job`, `webhook_bridge`, `inventory_sync`. Generated bundles read credentials only from environment, apply
 duration/byte/count caps, and refuse `output_dir` paths inside this repo
 unless `AXXON_GENERATOR_ALLOW_IN_REPO=1`. See
 `docs/plans/2026-05-15-mcp-phase-4-integration-generation.md` and the static

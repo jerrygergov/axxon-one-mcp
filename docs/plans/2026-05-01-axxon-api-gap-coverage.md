@@ -33,7 +33,7 @@ Use the demo stand for broad read coverage, and the local Docker stand for destr
 
 ## Execution Rules
 
-- Run from `/Users/jerrygergov/Documents/GitHub/axxonnext.docker`.
+- Run from `<axxonnext-docker-repo>`.
 - Use `/tmp/axxon-grpc-venv/bin/python`.
 - Use `AXXON_PASSWORD='<password>'` in docs and commands.
 - Write raw exploratory reports to `/tmp` first.

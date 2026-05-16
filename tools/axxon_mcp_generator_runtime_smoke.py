@@ -13,10 +13,13 @@ import datetime as dt
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parent
@@ -55,12 +58,46 @@ CASES = [
             "format": "jpeg",
         },
     },
+    {
+        "template": "webhook_bridge",
+        "params": {"subject": "hosts/Server/AppDataDetector.27/EventSupplier", "duration": 10, "count": 20},
+        "needs_webhook": True,
+    },
+    {
+        "template": "inventory_sync",
+        "params": {"output_path": "{tmp}/inventory.json"},
+        "needs_tmp_path": True,
+    },
 ]
 
 
 HOST_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b")
 CN_ENV_RE = re.compile(r"AXXON_TLS_CN=\S+")
 CN_LOG_RE = re.compile(r"tls_cn=\S+")
+
+
+class WebhookReceiver(BaseHTTPRequestHandler):
+    counter = 0
+
+    def do_POST(self):
+        WebhookReceiver.counter += 1
+        length = int(self.headers.get("Content-Length", "0"))
+        self.rfile.read(length)
+        self.send_response(204)
+        self.end_headers()
+
+    def log_message(self, *args, **kwargs):
+        return
+
+
+def start_webhook_server() -> tuple[HTTPServer, str]:
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    server = HTTPServer(("127.0.0.1", port), WebhookReceiver)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, f"http://127.0.0.1:{port}/hook"
 
 
 def sanitize(text: str) -> str:
@@ -87,48 +124,6 @@ def run_bundle(bundle_dir: Path, env: dict[str, str], timeout: int) -> dict:
     }
 
 
-def resolve_export_window(env: dict[str, str]) -> tuple[str, str] | None:
-    """Use AxxonApiClient to find a recent archive interval for camera 1."""
-    sys.path.insert(0, "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/tools")
-    try:
-        from axxon_api_client import AxxonApiClient, AxxonClientConfig
-    except ImportError:
-        return None
-    bare_env = dict(env)
-    host = bare_env.get("AXXON_HOST", "")
-    if ":" in host:
-        bare_env["AXXON_HOST"], bare_env["AXXON_GRPC_PORT"] = host.split(":", 1)
-    saved = {k: os.environ.get(k) for k in ("AXXON_HOST", "AXXON_GRPC_PORT")}
-    os.environ["AXXON_HOST"] = bare_env["AXXON_HOST"]
-    if "AXXON_GRPC_PORT" in bare_env:
-        os.environ["AXXON_GRPC_PORT"] = bare_env["AXXON_GRPC_PORT"]
-    try:
-        cfg = AxxonClientConfig.from_env(repo_root=Path("/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker"))
-    finally:
-        for k, v in saved.items():
-            if v is None:
-                os.environ.pop(k, None)
-            else:
-                os.environ[k] = v
-    client = AxxonApiClient(cfg)
-    try:
-        client.authenticate_grpc()
-        history = client.get_archive_history(
-            access_point="hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
-            begin_time=0,
-            end_time=int(time.time() * 1000) * 10000,
-            max_count=8,
-        )
-        intervals = history.get("intervals", [])
-        if not intervals:
-            return None
-        last = intervals[-1]
-        return last.get("begin_time"), last.get("end_time")
-    except Exception as exc:  # noqa: BLE001
-        print(f"window resolve failed: {exc}", file=sys.stderr)
-    return None
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -150,40 +145,49 @@ def main() -> int:
     env.setdefault("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py")
     gen = Generator()
 
-    # Window pre-resolution is unused now that export_job is read-only.
     rows: list[dict] = []
     overall_ok = True
 
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_root = Path(tmp)
-        for case in CASES:
-            template = case["template"]
-            if template in args.skip:
-                rows.append({"template": template, "status": "skipped"})
-                continue
-            params = dict(case["params"])
-            req = GenerationRequest(template=template, params=params)
-            result = gen.generate(req)
-            if isinstance(result, GenerationRefusal):
-                rows.append({"template": template, "status": "refused", "reason": result.reason, "detail": result.detail})
-                overall_ok = False
-                continue
-            assert isinstance(result, GeneratedBundle)
-            bundle_dir = tmp_root / template
-            bundle_dir.mkdir()
-            for name, content in result.files.items():
-                (bundle_dir / name).write_text(content, encoding="utf-8")
-            try:
-                outcome = run_bundle(bundle_dir, env, args.timeout)
-            except subprocess.TimeoutExpired:
-                outcome = {"exit": 124, "elapsed": args.timeout, "stdout": "", "stderr": "timeout"}
-            rows.append({
-                "template": template,
-                "status": "ok" if outcome["exit"] == 0 else "fail",
-                **outcome,
-            })
-            if outcome["exit"] != 0:
-                overall_ok = False
+    webhook_server, webhook_url = start_webhook_server()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            for case in CASES:
+                template = case["template"]
+                if template in args.skip:
+                    rows.append({"template": template, "status": "skipped"})
+                    continue
+                params = dict(case["params"])
+                if case.get("needs_tmp_path"):
+                    params = {k: v.format(tmp=str(tmp_root)) if isinstance(v, str) else v for k, v in params.items()}
+                case_env = env.copy()
+                if case.get("needs_webhook"):
+                    case_env["WEBHOOK_URL"] = webhook_url
+                req = GenerationRequest(template=template, params=params)
+                result = gen.generate(req)
+                if isinstance(result, GenerationRefusal):
+                    rows.append({"template": template, "status": "refused", "reason": result.reason, "detail": result.detail})
+                    overall_ok = False
+                    continue
+                assert isinstance(result, GeneratedBundle)
+                bundle_dir = tmp_root / template
+                bundle_dir.mkdir()
+                for name, content in result.files.items():
+                    (bundle_dir / name).write_text(content, encoding="utf-8")
+                try:
+                    outcome = run_bundle(bundle_dir, case_env, args.timeout)
+                except subprocess.TimeoutExpired:
+                    outcome = {"exit": 124, "elapsed": args.timeout, "stdout": "", "stderr": "timeout"}
+                rows.append({
+                    "template": template,
+                    "status": "ok" if outcome["exit"] == 0 else "fail",
+                    **outcome,
+                })
+                if outcome["exit"] != 0:
+                    overall_ok = False
+    finally:
+        webhook_server.shutdown()
+        webhook_server.server_close()
 
     timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     md = [

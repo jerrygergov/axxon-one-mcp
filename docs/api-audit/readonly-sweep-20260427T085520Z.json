@@ -9,7 +9,7 @@
     "password": "<redacted>"
   },
   "selection": {
-    "catalog": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/grpc-api-catalog.csv",
+    "catalog": "docs/api-audit/grpc-api-catalog.csv",
     "selected_methods": 1,
     "skipped_high_risk_read_methods": 11,
     "timeout_seconds": 10.0,

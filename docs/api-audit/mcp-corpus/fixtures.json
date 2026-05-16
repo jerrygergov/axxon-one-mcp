@@ -53,5 +53,5 @@
       "tooling": "axxon_security_mutation_smoke.py (planned TFA extension); mutation-playbooks/users-roles-security.md"
     }
   ],
-  "source": "/Users/jerrygergov/Documents/GitHub/axxonnext.docker/arm64-docker/docs/api-audit/pdf-gap-coverage-matrix.json"
+  "source": "docs/api-audit/pdf-gap-coverage-matrix.json"
 }
