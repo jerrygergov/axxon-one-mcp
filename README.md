@@ -72,6 +72,11 @@ python tools/axxon_mcp_server.py --enable-live --enable-operator --transport std
 
 # + integration code generator (list/plan/generate/verify_integration)
 python tools/axxon_mcp_server.py --enable-generator --transport stdio
+
+# + live + archive viewing tools (Phase 5A)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-view --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -105,6 +110,18 @@ duration/byte/count caps, and refuse `output_dir` paths inside this repo
 unless `AXXON_GENERATOR_ALLOW_IN_REPO=1`. See
 `docs/plans/2026-05-15-mcp-phase-4-integration-generation.md` and the static
 smoke evidence at `docs/api-audit/mcp-generation-smoke-latest.md`.
+
+### View tools (Phase 5A)
+
+`view_connect_axxon_profile`, `live_view`, `snapshot_batch`, `archive_scrub`,
+`archive_frame`, `archive_mjpeg_bounded`, `stream_health`. URL-only — callers
+fetch media with the Bearer token from `view_connect_axxon_profile`. Every
+tool clamps inputs against module constants (`DEFAULT_MAX_BYTES = 1 MiB`,
+`DEFAULT_DURATION_S = 10`, `DEFAULT_FPS = 5`, `SNAPSHOT_BATCH_LIMIT = 8`,
+`ARCHIVE_MJPEG_BYTE_CAP = 4 MiB`, `ARCHIVE_FRAME_THRESHOLD_MS = 60_000`) and
+reports the applied value back in `caps`. The MCP never proxies media bytes.
+See `docs/superpowers/plans/2026-05-16-phase-5a-live-archive-viewing.md` and
+the offline + live evidence at `docs/api-audit/phase-5a-view-smoke-latest.md`.
 
 ## Verification
 
