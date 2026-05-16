@@ -37,6 +37,7 @@ def create_server(
     live: Any | None = None,
     operator: Any | None = None,
     generator: Any | None = None,
+    view: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -97,7 +98,72 @@ def create_server(
     if generator is not None:
         register_generator_tools(server, generator)
 
+    if view is not None:
+        register_view_tools(server, view)
+
     return server
+
+
+def register_view_tools(server: Any, view: Any) -> None:
+    @server.tool(name="view_connect_axxon_profile")
+    def view_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the view layer to an Axxon profile (read-only, env-backed)."""
+        return view.connect_axxon_profile(profile)
+
+    @server.tool(name="live_view")
+    def live_view(
+        camera_access_point: str,
+        duration_s: int = 10,
+        fps: int = 5,
+        width: int = 640,
+        format: str = "mjpeg",
+    ) -> dict[str, Any]:
+        """Return a capped URL for a live media stream (mjpeg/hls/mp4/rtsp)."""
+        return view.live_view(camera_access_point, duration_s=duration_s, fps=fps, width=width, format=format)
+
+    @server.tool(name="snapshot_batch")
+    def snapshot_batch(
+        camera_access_points: list[str],
+        ts: str = "now",
+        width: int = 640,
+    ) -> dict[str, Any]:
+        """Return one snapshot URL per camera with a per-request count cap."""
+        return view.snapshot_batch(camera_access_points, ts=ts, width=width)
+
+    @server.tool(name="archive_scrub")
+    def archive_scrub(
+        camera_access_point: str,
+        hours: int = 1,
+        archive_access_point: str | None = None,
+    ) -> dict[str, Any]:
+        """Return archive calendar + intervals + sample-frame URL for a camera."""
+        return view.archive_scrub(camera_access_point, hours=hours, archive_access_point=archive_access_point)
+
+    @server.tool(name="archive_frame")
+    def archive_frame(
+        camera_access_point: str,
+        ts: str,
+        width: int = 640,
+        threshold_ms: int = 60_000,
+    ) -> dict[str, Any]:
+        """Return a single archive-frame URL with bounded threshold and width."""
+        return view.archive_frame(camera_access_point, ts=ts, width=width, threshold_ms=threshold_ms)
+
+    @server.tool(name="archive_mjpeg_bounded")
+    def archive_mjpeg_bounded(
+        camera_access_point: str,
+        begin_ts: str,
+        speed: int = 1,
+        fps: int = 5,
+        width: int = 640,
+    ) -> dict[str, Any]:
+        """Return a bounded archive MJPEG URL with speed/fps/byte caps applied."""
+        return view.archive_mjpeg_bounded(camera_access_point, begin_ts=begin_ts, speed=speed, fps=fps, width=width)
+
+    @server.tool(name="stream_health")
+    def stream_health(camera_access_point: str) -> dict[str, Any]:
+        """Return /statistics and /rtsp/stat summary for a camera access point."""
+        return view.stream_health(camera_access_point)
 
 
 def register_generator_tools(server: Any, generator: Any) -> None:
@@ -326,6 +392,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable integration generator tools (list/plan/generate/verify_integration).",
     )
+    parser.add_argument(
+        "--enable-view",
+        action="store_true",
+        help="Enable Phase 5A live/archive viewing tools (URL-only, byte/time/fps caps).",
+    )
     return parser
 
 
@@ -356,11 +427,17 @@ def main() -> int:
         from axxon_mcp_generator import Generator
 
         generator = Generator(corpus_dir=args.corpus_dir)
+    view = None
+    if args.enable_view:
+        from axxon_mcp_view import AxxonMcpView
+
+        view = AxxonMcpView()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
         operator=operator,
         generator=generator,
+        view=view,
     )
     server.run(transport=args.transport)
     return 0

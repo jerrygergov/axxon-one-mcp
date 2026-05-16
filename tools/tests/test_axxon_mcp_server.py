@@ -188,6 +188,62 @@ class AxxonMcpServerTests(unittest.TestCase):
         audit = server.resources["axxon://operator/audit-log"]()
         self.assertEqual(audit["entries"][0]["action"], "plan")
 
+    def test_create_server_registers_view_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in ("live_view", "snapshot_batch", "archive_scrub", "archive_frame", "archive_mjpeg_bounded", "stream_health"):
+            self.assertNotIn(name, docs_only.tools)
+
+        class StubView:
+            def connect_axxon_profile(self, profile: str = "env"):
+                return {"connected": True, "profile_name": profile}
+
+            def live_view(self, camera_access_point, **kwargs):
+                return {"status": "ok", "tool": "live_view", "camera": camera_access_point, **kwargs}
+
+            def snapshot_batch(self, camera_access_points, **kwargs):
+                return {"status": "ok", "tool": "snapshot_batch", "n": len(camera_access_points), **kwargs}
+
+            def archive_scrub(self, camera_access_point, **kwargs):
+                return {"status": "ok", "tool": "archive_scrub", "camera": camera_access_point, **kwargs}
+
+            def archive_frame(self, camera_access_point, ts, **kwargs):
+                return {"status": "ok", "tool": "archive_frame", "camera": camera_access_point, "ts": ts, **kwargs}
+
+            def archive_mjpeg_bounded(self, camera_access_point, begin_ts, **kwargs):
+                return {"status": "ok", "tool": "archive_mjpeg_bounded", "camera": camera_access_point, "begin_ts": begin_ts, **kwargs}
+
+            def stream_health(self, camera_access_point):
+                return {"status": "ok", "tool": "stream_health", "camera": camera_access_point}
+
+        server = module.create_server(docs=StubDocs(), view=StubView(), fastmcp_factory=FakeFastMCP)
+        for name in (
+            "view_connect_axxon_profile",
+            "live_view",
+            "snapshot_batch",
+            "archive_scrub",
+            "archive_frame",
+            "archive_mjpeg_bounded",
+            "stream_health",
+        ):
+            self.assertIn(name, server.tools)
+
+        self.assertEqual(server.tools["view_connect_axxon_profile"]("env"), {"connected": True, "profile_name": "env"})
+        live = server.tools["live_view"]("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+        self.assertEqual(live["status"], "ok")
+        self.assertEqual(live["camera"], "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+        batch = server.tools["snapshot_batch"](["a", "b"])
+        self.assertEqual(batch["n"], 2)
+        scrub = server.tools["archive_scrub"]("cam", 3)
+        self.assertEqual(scrub["hours"], 3)
+        frame = server.tools["archive_frame"]("cam", "2026-05-16T10:00:00Z")
+        self.assertEqual(frame["ts"], "2026-05-16T10:00:00Z")
+        mjpeg = server.tools["archive_mjpeg_bounded"]("cam", "2026-05-16T10:00:00Z", 2, 4, 320)
+        self.assertEqual(mjpeg["speed"], 2)
+        self.assertEqual(mjpeg["fps"], 4)
+        health = server.tools["stream_health"]("cam")
+        self.assertEqual(health["camera"], "cam")
+
 
 if __name__ == "__main__":
     unittest.main()
