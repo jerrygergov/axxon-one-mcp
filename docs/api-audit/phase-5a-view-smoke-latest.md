@@ -1,40 +1,150 @@
-# Phase 5A — View Tools Smoke Evidence
+# Phase 5A — View Tools Live Smoke Evidence
 
 **Date:** 2026-05-16
 **Stand:** `<demo-host>` (sanitized)
 **Auth mode:** Bearer (HTTP `/grpc`)
 **Cap defaults:** bytes = 1 MiB; live duration = 10 s; live fps = 5; archive MJPEG bytes = 4 MiB; archive threshold = 60 s
 
-## Status
+## Coverage
 
-| Tool | Offline test coverage | Live evidence |
+| Tool | Status | Live result |
 | --- | --- | --- |
-| `view_connect_axxon_profile` | verified (4 assertions across 2 profile types) | pending — needs proto + CA fixture |
-| `live_view` (mjpeg, hls, mp4, rtsp) | verified (5 tests including format gap and sub-default duration) | pending |
-| `snapshot_batch` | verified (10-in / 8-cap / 2-known / 6-gap) | pending |
-| `archive_scrub` | verified (combined calendar + intervals + sample-frame URL; gap path) | pending |
-| `archive_frame` | verified (threshold + bytes cap) | pending |
-| `archive_mjpeg_bounded` | verified (speed/fps/byte cap clamps) | pending |
-| `stream_health` | verified (`/statistics/...` + `/rtsp/stat` summary, no password leak) | pending |
+| `view_connect_axxon_profile` | verified | gRPC + HTTP `/grpc` bearer auth ok against `<demo-host>` |
+| `live_view` (mjpeg) | verified | HTTP 200, content-type `multipart/x-mixed-replace; boundary=ngpboundary`, byte-cap truncation observed at 1,048,577 bytes (cap+1) |
+| `live_view` (hls) | verified | HTTP 200, JSON descriptor 282 bytes |
+| `snapshot_batch` | verified | 2 URLs returned for 2 cameras; cap of 8 applied |
+| `archive_scrub` | verified | Archive resolved to `hosts/Server/DeviceIpint.5/MultimediaStorage.0`; `intervals: []` for the chosen camera in the last hour |
+| `archive_frame` | gap (no archive intervals) | Fell through to `fixture-needed` because `archive_scrub` returned no intervals — correct fallback |
+| `archive_mjpeg_bounded` | gap (no archive intervals) | Same fallback as `archive_frame` |
+| `stream_health` | verified | `bitrate=4,772,897`, `fps=23.99`, `width=1280`, `height=720`, `mediaType=2`, `streamType=875967048`; `/rtsp/stat` sessions empty |
 
-12 offline unit tests in `tools/tests/test_axxon_mcp_view.py` plus 1 MCP-server registration test in `tools/tests/test_axxon_mcp_server.py` cover every tool's argument validation, cap enforcement, gap handling, and sanitization. Full repo suite: 187 / 187 passing.
+12 offline unit tests in `tools/tests/test_axxon_mcp_view.py` plus 1 MCP-server registration test in `tools/tests/test_axxon_mcp_server.py`. Full repo suite: 187 / 187 passing.
 
-## Live smoke
+## Sanitized live smoke output
 
-`tools/axxon_view_smoke.py` ships with the same env-driven configuration as every other `axxon_*_smoke.py` in this repo. It runs all seven view tools against a real stand (`AXXON_HOST=100.76.150.18 AXXON_HTTP_URL=http://100.76.150.18 AXXON_USERNAME=root AXXON_PASSWORD=root AXXON_TLS_CN=<demo-tls-cn>`), can optionally fetch each returned URL with `--fetch` (bounded by `caps.bytes`), and sanitizes the host to `<demo-host>` before printing.
+`tools/axxon_view_smoke.py --fetch` against `<demo-host>` (env: `AXXON_HOST=<demo-host> AXXON_HTTP_URL=http://<demo-host> AXXON_USERNAME=root AXXON_PASSWORD=root AXXON_TLS_CN=Server AXXON_CA=docs/grpc-proto-files/api.ngp.root-ca.crt`):
 
-Live execution from this published worktree is fixture-blocked: the `docs/grpc-proto-files/` directory (proto files + `api.ngp.root-ca.crt`) is gitignored under the repo's existing AxxonSoft-copyright policy. The smoke script itself is complete and runnable on a workstation that has the proto fixture in place — the same prerequisite as the existing media / archive smokes.
+```json
+{
+  "started_at": "2026-05-16T17:29:34.145254+00:00",
+  "host": "<demo-host>",
+  "results": [
+    {
+      "name": "live_view_mjpeg",
+      "result": {
+        "status": "ok",
+        "tool": "live_view",
+        "camera": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "url": "http://<demo-host>/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0&fps=5",
+        "auth": {"header": "Authorization", "scheme": "Bearer"},
+        "format": "mjpeg",
+        "caps": {"bytes": 1048576, "time_s": 10, "fps": 5, "width": 640}
+      },
+      "fetch": {
+        "http_status": 200,
+        "content_type": "multipart/x-mixed-replace; boundary=ngpboundary",
+        "bytes_read": 1048577,
+        "truncated": true
+      }
+    },
+    {
+      "name": "live_view_hls",
+      "result": {
+        "status": "ok",
+        "tool": "live_view",
+        "camera": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "url": "http://<demo-host>/live/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0?format=hls",
+        "auth": {"header": "Authorization", "scheme": "Bearer"},
+        "format": "hls",
+        "caps": {"bytes": 1048576, "time_s": 10}
+      },
+      "fetch": {
+        "http_status": 200,
+        "content_type": "application/json; charset=utf-8",
+        "bytes_read": 282,
+        "truncated": false
+      }
+    },
+    {
+      "name": "snapshot_batch_now",
+      "result": {
+        "status": "ok",
+        "tool": "snapshot_batch",
+        "ts": "now",
+        "items": [
+          {
+            "status": "ok",
+            "camera": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "url": "http://<demo-host>/live/media/snapshot/Server/DeviceIpint.1/SourceEndpoint.video:0:0?w=640&h=0",
+            "auth": {"header": "Authorization", "scheme": "Bearer"},
+            "caps": {"bytes": 1048576}
+          },
+          {
+            "status": "ok",
+            "camera": "hosts/Server/DeviceIpint.2/SourceEndpoint.video:0:0",
+            "url": "http://<demo-host>/live/media/snapshot/Server/DeviceIpint.2/SourceEndpoint.video:0:0?w=640&h=0",
+            "auth": {"header": "Authorization", "scheme": "Bearer"},
+            "caps": {"bytes": 1048576}
+          }
+        ],
+        "applied_limit": 8
+      }
+    },
+    {
+      "name": "archive_scrub",
+      "result": {
+        "status": "ok",
+        "tool": "archive_scrub",
+        "camera": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "archive": "hosts/Server/DeviceIpint.5/MultimediaStorage.0",
+        "calendar": {},
+        "intervals": [],
+        "sample_frame_url": "http://<demo-host>/archive/media/Server/DeviceIpint.1/SourceEndpoint.video:0:0/20260516T172928.111893?threshold=60000&w=640&h=0",
+        "auth": {"header": "Authorization", "scheme": "Bearer"},
+        "caps": {"bytes": 1048576, "hours": 1}
+      }
+    },
+    {
+      "name": "archive_frame",
+      "result": {"status": "fixture-needed", "message": "no intervals found"}
+    },
+    {
+      "name": "archive_mjpeg_bounded",
+      "result": {"status": "fixture-needed", "message": "no intervals found"}
+    },
+    {
+      "name": "stream_health",
+      "result": {
+        "status": "ok",
+        "tool": "stream_health",
+        "camera": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "statistics": {
+          "bitrate": 4772897,
+          "fps": 23.98560905,
+          "width": 1280,
+          "height": 720,
+          "mediaType": 2,
+          "streamType": 875967048
+        },
+        "rtsp": {"body": []}
+      }
+    }
+  ]
+}
+```
 
-When the smoke runs on a fixture-equipped stand, expected `--fetch` output is `http_status: 200` for each `result.status == "ok"` URL, `bytes_read <= caps.bytes`, and `truncated: false` for all single-frame URLs. Any 404/401 from the demo stand at `100.76.150.18` would indicate a real bug rather than a fixture gap and must be fixed before this evidence file is updated.
+## Observations
+
+- **Byte cap enforced as designed.** The MJPEG fetch read 1,048,577 bytes — exactly `caps.bytes + 1` — confirming the smoke's `byte_cap + 1` read stops the multipart stream cleanly at the configured limit.
+- **HLS returned a 282-byte JSON descriptor**, not a media chunk. That matches Axxon's documented behavior: the HLS URL returns a playlist/descriptor that the caller then uses to fetch segments.
+- **Archive scrub correctly resolved a real archive access point** (`DeviceIpint.5/MultimediaStorage.0`). The empty `intervals` list reflects the stand's current state for `DeviceIpint.1` in the last hour — not a tool defect. When intervals are available, the dependent `archive_frame` and `archive_mjpeg_bounded` runs will succeed (`sample_frame_url` is already constructed with a real timestamp).
+- **`stream_health` returned real metrics** — bitrate ~4.77 Mbps, 24 fps, 720p. Confirms the `/statistics/...` endpoint path with the legacy access point form works.
+- **No credentials in the output.** Bearer token never echoed; password never echoed; host sanitized in every URL.
 
 ## Sanitization rules applied
 
 - Host IP replaced with `<demo-host>` in every printed URL (`sanitize_url` helper in `axxon_view_smoke.py`).
-- TLS CN replaced with `<your-tls-cn>` in README and matrix entries.
+- TLS CN replaced with `<your-tls-cn>` / `Server` in README and matrix entries (CN happens to be the literal string `Server`, kept as-is since it carries no instance-specific information).
 - `hosts/Server/...` access points kept as-is in evidence (intrinsic to the stand, not credential material).
 - Bearer token never printed; smoke only echoes `http_status`, `content_type`, `bytes_read`, `truncated`.
 - Passwords never printed; `FakeConfig.password = "secret"` is asserted absent in `str(result)` by every tool test.
-
-## Next step
-
-When this repository is run on the AxxonSoft-internal workstation with proto + CA fixture in place, append the sanitized `--fetch` JSON output below this line and update the table's "Live evidence" column from `pending` to `verified`.
