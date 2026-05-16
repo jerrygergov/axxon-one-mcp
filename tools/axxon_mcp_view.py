@@ -259,3 +259,39 @@ class AxxonMcpView:
             "auth": self._auth(),
             "caps": {"bytes": DEFAULT_MAX_BYTES, "threshold_ms": applied_threshold, "width": applied_width},
         }
+
+    def archive_mjpeg_bounded(
+        self,
+        camera_access_point: str,
+        begin_ts: str,
+        speed: int = 1,
+        fps: int = DEFAULT_FPS,
+        width: int = DEFAULT_SNAPSHOT_WIDTH,
+    ) -> dict[str, Any]:
+        inventory = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inventory):
+            return {"status": "gap", "tool": "archive_mjpeg_bounded", "message": "camera not in inventory"}
+        applied_speed = min(max(speed, 1), 8)
+        applied_fps = min(max(fps, 1), DEFAULT_FPS)
+        applied_width = min(max(width, 64), 1920)
+        legacy = self._legacy_ap(camera_access_point)
+        ts_q = quote(begin_ts, safe="")
+        base = self.client.config.http_url.rstrip("/")
+        url = (
+            f"{base}/archive/media/{legacy}/{ts_q}"
+            f"?w={applied_width}&h=0&speed={applied_speed}&fps={applied_fps}"
+        )
+        return {
+            "status": "ok",
+            "tool": "archive_mjpeg_bounded",
+            "camera": camera_access_point,
+            "url": url,
+            "auth": self._auth(),
+            "caps": {
+                "bytes": ARCHIVE_MJPEG_BYTE_CAP,
+                "time_s": DEFAULT_DURATION_S,
+                "fps": applied_fps,
+                "speed": applied_speed,
+                "width": applied_width,
+            },
+        }

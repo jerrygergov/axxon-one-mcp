@@ -229,6 +229,24 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertIn("threshold=", result["url"])
         self.assertEqual(result["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
 
+    def test_archive_mjpeg_bounded_returns_capped_url(self) -> None:
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.archive_mjpeg_bounded(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            begin_ts="2026-05-16T10:00:00.000000Z",
+            speed=99,
+            fps=99,
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("/archive/media/", result["url"])
+        self.assertEqual(result["caps"]["bytes"], module.ARCHIVE_MJPEG_BYTE_CAP)
+        self.assertLessEqual(result["caps"]["fps"], module.DEFAULT_FPS)
+        self.assertLessEqual(result["caps"]["speed"], 8)
+
 
 if __name__ == "__main__":
     unittest.main()
