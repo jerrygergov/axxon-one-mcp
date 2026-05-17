@@ -287,7 +287,7 @@ class AxxonMcpAlarms:
         applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
         if self.client is None:
             self.connect_axxon_profile("env")
-        result = self.client.search_events(
+        result = self._search_events(
             subjects=[self._host()] if camera is None else [camera],
             event_types=list(ALARM_EVENT_TYPES),
             hours=applied_hours,
@@ -320,9 +320,32 @@ class AxxonMcpAlarms:
     def list_alarm_event_types(self) -> dict[str, Any]:
         if self.client is None:
             self.connect_axxon_profile("env")
-        result = self.client.list_event_types()
+        result = self._list_event_types()
         items = [it for it in (result.get("items") or []) if it.get("name") in ALARM_EVENT_TYPES]
         return {"status": "ok", "tool": "list_alarm_event_types", "count": len(items), "items": items}
+
+    def _search_events(self, **kwargs: Any) -> dict[str, Any]:
+        if hasattr(self.client, "search_events"):
+            return self.client.search_events(**kwargs)
+        # Real AxxonApiClient lacks search_events; delegate to AxxonMcpLive.
+        from axxon_mcp_live import AxxonMcpLive
+        live = AxxonMcpLive(
+            client_factory=lambda _cfg: self.client,
+            config_factory=lambda: self.client.config,
+        )
+        live.client = self.client
+        return live.search_events(**kwargs)
+
+    def _list_event_types(self) -> dict[str, Any]:
+        if hasattr(self.client, "list_event_types"):
+            return self.client.list_event_types()
+        from axxon_mcp_live import AxxonMcpLive
+        live = AxxonMcpLive(
+            client_factory=lambda _cfg: self.client,
+            config_factory=lambda: self.client.config,
+        )
+        live.client = self.client
+        return live.list_event_types()
 
     def alarm_subscribe(
         self,
