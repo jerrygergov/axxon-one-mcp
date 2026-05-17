@@ -372,3 +372,96 @@ class AxxonMcpAlarms:
             "count": len(kept),
             "items": kept,
         }
+
+
+@dataclass
+class AxxonAlarmMutator:
+    """Alarm lifecycle mutations gated by token + AXXON_ALARMS_APPROVE env."""
+
+    client_factory: Callable[[AxxonClientConfig], Any] = default_client_factory
+    config_factory: Callable[[], AxxonClientConfig] = default_config_factory
+    approve_env: str = "AXXON_ALARMS_APPROVE"
+    env_getter: Callable[[str], str | None] = field(default=lambda k: os.environ.get(k))
+    client: Any | None = None
+    audit: list[dict[str, Any]] = field(default_factory=list)
+    _inventory: dict[str, Any] | None = None
+
+    def _ensure_client(self) -> Any:
+        if self.client is None:
+            config = self.config_factory()
+            self.client = self.client_factory(config)
+        return self.client
+
+    def _ensure_inventory(self) -> dict[str, Any]:
+        self._ensure_client()
+        if self._inventory is None:
+            self._inventory = self.client.load_inventory()
+        return self._inventory
+
+    def _camera_index(self, inventory: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        return {
+            cam.get("access_point", ""): cam
+            for cam in inventory.get("cameras", [])
+            if cam.get("access_point")
+        }
+
+    def _gate(self, action: str, confirmation: str) -> dict[str, Any] | None:
+        if self.env_getter(self.approve_env) != "1":
+            return {"status": "refused", "reason": "approval_env_not_set"}
+        expected = CONFIRMATION_TOKENS[action]
+        if confirmation != expected:
+            return {"status": "refused", "reason": "bad_token", "expected": expected}
+        return None
+
+    def _audit(self, action: str, result_status: str, **fields: Any) -> dict[str, Any]:
+        entry = {
+            "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "action": action,
+            "result_status": result_status,
+            **fields,
+        }
+        self.audit.append(entry)
+        return entry
+
+    def audit_log(self) -> list[dict[str, Any]]:
+        return list(self.audit)
+
+    def raise_alert(self, camera_access_point: str, confirmation: str) -> dict[str, Any]:
+        refusal = self._gate("raise_alert", confirmation)
+        if refusal is not None:
+            return refusal
+        inv = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inv):
+            self._audit("raise_alert", "gap", camera_access_point=camera_access_point)
+            return {
+                "status": "gap",
+                "tool": "raise_alert",
+                "message": f"Camera not in inventory: {camera_access_point}",
+            }
+        try:
+            resp = self.client.raise_alert(camera_access_point)
+        except Exception as exc:
+            self._audit(
+                "raise_alert", "error",
+                camera_access_point=camera_access_point,
+                error_type=type(exc).__name__,
+            )
+            return {
+                "status": "error",
+                "tool": "raise_alert",
+                "error_type": type(exc).__name__,
+                "message": str(exc)[:200],
+            }
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        alert_id = (body or {}).get("alert_id", "")
+        self._audit(
+            "raise_alert", "ok",
+            camera_access_point=camera_access_point,
+            alert_id=alert_id,
+        )
+        return {
+            "status": "ok",
+            "tool": "raise_alert",
+            "camera_access_point": camera_access_point,
+            "alert_id": alert_id,
+        }

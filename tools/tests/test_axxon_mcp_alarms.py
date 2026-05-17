@@ -155,6 +155,32 @@ class FakeClient:
         ]
         return events[:max_events]
 
+    def raise_alert(self, camera_ap: str) -> dict[str, Any]:
+        self.calls.append(("raise_alert", (camera_ap,), {}))
+        return {"status": 200, "body": {"result": True, "alert_id": "new-alert-id"}}
+
+    def begin_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        self.calls.append(("begin_alert_review", (camera_ap, alert_id), {}))
+        return {"status": 200, "body": {"result": True}}
+
+    def continue_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        self.calls.append(("continue_alert_review", (camera_ap, alert_id), {}))
+        return {"status": 200, "body": {"result": True}}
+
+    def cancel_alert_review(self, camera_ap: str, alert_id: str) -> dict[str, Any]:
+        self.calls.append(("cancel_alert_review", (camera_ap, alert_id), {}))
+        return {"status": 200, "body": {"result": True}}
+
+    def complete_alert_review(self, camera_ap, alert_id, *, severity, bookmark_message):
+        self.calls.append(("complete_alert_review", (camera_ap, alert_id),
+                          {"severity": severity, "bookmark_message": bookmark_message}))
+        return {"status": 200, "body": {"result": True}}
+
+    def escalate_alert(self, camera_ap, alert_id, *, priority, user_roles, comment):
+        self.calls.append(("escalate_alert", (camera_ap, alert_id),
+                          {"priority": priority, "user_roles": list(user_roles), "comment": comment}))
+        return {"status": 200, "body": {"result": True}}
+
 
 def _sample_alert(guid: str = "a1", camera: str = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0") -> dict[str, Any]:
     return {
@@ -462,6 +488,49 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         r = alarms.alarm_subscribe(state="bogus", duration_s=5, limit=10)
         self.assertEqual(r["status"], "gap")
         self.assertIn("bogus", r["message"])
+
+    def _mutator(self, env_value: str | None = "1", fake_client: "FakeClient | None" = None):
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = fake_client or FakeClient()
+        return module, fake, module.AxxonAlarmMutator(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+            env_getter=lambda _k: env_value,
+        )
+
+    def test_mutator_refuses_without_approval_env(self) -> None:
+        _, _, m = self._mutator(env_value=None)
+        r = m.raise_alert("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", confirmation="CONFIRM-raise-alert")
+        self.assertEqual(r["status"], "refused")
+        self.assertEqual(r["reason"], "approval_env_not_set")
+
+    def test_mutator_refuses_bad_token(self) -> None:
+        _, _, m = self._mutator()
+        r = m.raise_alert("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", confirmation="wrong")
+        self.assertEqual(r["status"], "refused")
+        self.assertEqual(r["reason"], "bad_token")
+        self.assertEqual(r["expected"], "CONFIRM-raise-alert")
+
+    def test_raise_alert_unknown_camera_returns_gap(self) -> None:
+        _, _, m = self._mutator()
+        r = m.raise_alert("hosts/Server/NotACamera", confirmation="CONFIRM-raise-alert")
+        self.assertEqual(r["status"], "gap")
+
+    def test_raise_alert_ok_path_calls_client_and_audits(self) -> None:
+        module, fake, m = self._mutator()
+        r = m.raise_alert(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            confirmation="CONFIRM-raise-alert",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["alert_id"], "new-alert-id")
+        self.assertEqual(fake.calls[-1][0], "raise_alert")
+        self.assertEqual(len(m.audit), 1)
+        entry = m.audit[0]
+        self.assertEqual(entry["action"], "raise_alert")
+        self.assertEqual(entry["result_status"], "ok")
+        self.assertEqual(entry["camera_access_point"], "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+        self.assertIn("timestamp", entry)
 
 
 if __name__ == "__main__":
