@@ -77,6 +77,17 @@ python tools/axxon_mcp_server.py --enable-generator --transport stdio
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
 python tools/axxon_mcp_server.py --enable-view --transport stdio
+
+# + alarm read tools (Phase 5C)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-alarms --transport stdio
+
+# + alarm lifecycle mutations (Phase 5C) — requires per-call confirmation tokens
+AXXON_ALARMS_APPROVE=1 \
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -122,6 +133,24 @@ tool clamps inputs against module constants (`DEFAULT_MAX_BYTES = 1 MiB`,
 reports the applied value back in `caps`. The MCP never proxies media bytes.
 See `docs/superpowers/plans/2026-05-16-phase-5a-live-archive-viewing.md` and
 the offline + live evidence at `docs/api-audit/phase-5a-view-smoke-latest.md`.
+
+### Alarm tools (Phase 5C)
+
+Reads (`--enable-alarms`): `alarms_connect_axxon_profile`, `list_active_alerts`,
+`get_active_alert`, `filter_active_alerts`, `list_alarm_history`,
+`list_alarm_event_types`, `alarm_subscribe` (bounded by 30 s / 100 events).
+
+Mutations (`--enable-alarms-mutation` + `AXXON_ALARMS_APPROVE=1`):
+`raise_alert`, `alarm_begin_review`, `alarm_continue_review`,
+`alarm_cancel_review`, `alarm_complete_review` (requires `severity` in
+`confirmed_alarm|suspicious_situation|false_alarm` and a non-empty bookmark
+message), `alarm_escalate` (requires `priority` in
+`AP_MINIMUM|AP_LOW|AP_MEDIUM|AP_HIGH`, non-empty `user_roles`, non-empty
+`comment`). Every mutation requires a per-call `CONFIRM-...` token and writes
+one audit entry; the audit log is exposed via the
+`axxon://alarms/audit-log` resource. See
+`docs/superpowers/plans/2026-05-16-phase-5c-alarms.md` and the live evidence
+at `docs/api-audit/phase-5c-alarms-smoke-latest.md`.
 
 ## Verification
 
