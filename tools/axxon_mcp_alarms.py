@@ -465,3 +465,68 @@ class AxxonAlarmMutator:
             "camera_access_point": camera_access_point,
             "alert_id": alert_id,
         }
+
+    def _simple_lifecycle_call(
+        self,
+        action: str,
+        client_method_name: str,
+        camera_access_point: str,
+        alert_id: str,
+        confirmation: str,
+    ) -> dict[str, Any]:
+        refusal = self._gate(action, confirmation)
+        if refusal is not None:
+            return refusal
+        inv = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inv):
+            self._audit(action, "gap", camera_access_point=camera_access_point, alert_id=alert_id)
+            return {
+                "status": "gap",
+                "tool": action,
+                "message": f"Camera not in inventory: {camera_access_point}",
+            }
+        try:
+            method = getattr(self.client, client_method_name)
+            resp = method(camera_access_point, alert_id)
+        except Exception as exc:
+            self._audit(
+                action, "error",
+                camera_access_point=camera_access_point, alert_id=alert_id,
+                error_type=type(exc).__name__,
+            )
+            return {
+                "status": "error",
+                "tool": action,
+                "error_type": type(exc).__name__,
+                "message": str(exc)[:200],
+            }
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        self._audit(
+            action, "ok",
+            camera_access_point=camera_access_point, alert_id=alert_id,
+        )
+        return {
+            "status": "ok",
+            "tool": action,
+            "camera_access_point": camera_access_point,
+            "alert_id": alert_id,
+            "result": (body or {}).get("result"),
+        }
+
+    def alarm_begin_review(self, camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        return self._simple_lifecycle_call(
+            "alarm_begin_review", "begin_alert_review",
+            camera_access_point, alert_id, confirmation,
+        )
+
+    def alarm_continue_review(self, camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        return self._simple_lifecycle_call(
+            "alarm_continue_review", "continue_alert_review",
+            camera_access_point, alert_id, confirmation,
+        )
+
+    def alarm_cancel_review(self, camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        return self._simple_lifecycle_call(
+            "alarm_cancel_review", "cancel_alert_review",
+            camera_access_point, alert_id, confirmation,
+        )

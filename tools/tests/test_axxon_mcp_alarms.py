@@ -532,6 +532,39 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         self.assertEqual(entry["camera_access_point"], "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
         self.assertIn("timestamp", entry)
 
+    def test_begin_review_ok_path(self) -> None:
+        _, fake, m = self._mutator()
+        r = m.alarm_begin_review(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "alert-x",
+            confirmation="CONFIRM-alarm-begin",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(fake.calls[-1][0], "begin_alert_review")
+        self.assertEqual(fake.calls[-1][1], (
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "alert-x"
+        ))
+        self.assertEqual(m.audit[-1]["action"], "alarm_begin_review")
+        self.assertEqual(m.audit[-1]["alert_id"], "alert-x")
+
+    def test_continue_review_bad_token_refused(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_continue_review("cam", "a", confirmation="nope")
+        self.assertEqual(r["status"], "refused")
+        self.assertEqual(r["reason"], "bad_token")
+        self.assertEqual(r["expected"], "CONFIRM-alarm-continue")
+
+    def test_cancel_review_ok_path_calls_client(self) -> None:
+        _, fake, m = self._mutator()
+        r = m.alarm_cancel_review(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "alert-x",
+            confirmation="CONFIRM-alarm-cancel",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(fake.calls[-1][0], "cancel_alert_review")
+        self.assertEqual(m.audit[-1]["action"], "alarm_cancel_review")
+
 
 if __name__ == "__main__":
     unittest.main()
