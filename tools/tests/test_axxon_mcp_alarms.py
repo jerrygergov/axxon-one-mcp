@@ -71,6 +71,41 @@ class FakeClient:
             },
         }
 
+    def search_events(
+        self,
+        *,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        hours: float = 1.0,
+        limit: int = 100,
+        descending: bool = True,
+    ) -> dict[str, Any]:
+        self.calls.append(("search_events", (), {
+            "subjects": tuple(subjects or []),
+            "event_types": tuple(event_types or []),
+            "hours": hours, "limit": limit, "descending": descending,
+        }))
+        return {
+            "status": "ok",
+            "items": [{
+                "type": "ET_Alert",
+                "guid": "hist-1",
+                "timestamp": "20260516T170000.000000",
+                "camera": {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
+            }],
+        }
+
+    def list_event_types(self) -> dict[str, Any]:
+        self.calls.append(("list_event_types", (), {}))
+        return {
+            "status": "ok",
+            "items": [
+                {"name": "ET_DetectorEvent", "value": 1},
+                {"name": "ET_Alert", "value": 15},
+                {"name": "ET_AlertState", "value": 16},
+            ],
+        }
+
 
 def _sample_alert(guid: str = "a1", camera: str = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0") -> dict[str, Any]:
     return {
@@ -238,6 +273,35 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         r = alarms.get_active_alert("hosts/Server/NotACamera", "any")
         self.assertEqual(r["status"], "gap")
         self.assertIn("NotACamera", r["message"])
+
+    def test_list_alarm_history_clamps_hours_and_filters_types(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.list_alarm_history(hours=999, limit=999)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 1)
+        # Hours clamped to HISTORY_HOURS_CAP, limit clamped to LIST_LIMIT_CAP.
+        kw = fake.calls[-1][2]
+        self.assertEqual(kw["hours"], module.HISTORY_HOURS_CAP)
+        self.assertEqual(kw["limit"], module.LIST_LIMIT_CAP)
+        # Only alarm event types were requested.
+        self.assertEqual(set(kw["event_types"]), set(module.ALARM_EVENT_TYPES))
+
+    def test_list_alarm_event_types_returns_only_alarm_subset(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.list_alarm_event_types()
+        self.assertEqual(r["status"], "ok")
+        names = {it["name"] for it in r["items"]}
+        self.assertEqual(names, set(module.ALARM_EVENT_TYPES))
 
 
 if __name__ == "__main__":

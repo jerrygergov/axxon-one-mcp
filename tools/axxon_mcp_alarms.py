@@ -247,3 +247,40 @@ class AxxonMcpAlarms:
             "applied_filters": {"severity_min": severity_min, "camera": camera, "state": state},
             "items": kept,
         }
+
+    def list_alarm_history(
+        self,
+        hours: float = 1.0,
+        limit: int = 100,
+        camera: str | None = None,
+        severity_min: int | None = None,
+    ) -> dict[str, Any]:
+        applied_hours = min(max(float(hours), 0.05), float(HISTORY_HOURS_CAP))
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        result = self.client.search_events(
+            subjects=[self._host()] if camera is None else [camera],
+            event_types=list(ALARM_EVENT_TYPES),
+            hours=applied_hours,
+            limit=applied_limit,
+            descending=True,
+        )
+        items = list(result.get("items") or [])
+        if severity_min is not None:
+            items = [it for it in items if (it.get("severity") or 0) >= severity_min]
+        return {
+            "status": "ok",
+            "tool": "list_alarm_history",
+            "count": len(items),
+            "applied_hours": applied_hours,
+            "applied_limit": applied_limit,
+            "items": items,
+        }
+
+    def list_alarm_event_types(self) -> dict[str, Any]:
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        result = self.client.list_event_types()
+        items = [it for it in (result.get("items") or []) if it.get("name") in ALARM_EVENT_TYPES]
+        return {"status": "ok", "tool": "list_alarm_event_types", "items": items}
