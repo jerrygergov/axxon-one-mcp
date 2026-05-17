@@ -266,15 +266,26 @@ class AxxonMcpAlarms:
             limit=applied_limit,
             descending=True,
         )
-        items = list(result.get("items") or [])
+        # AxxonMcpLive.search_events returns key "events"; some test stubs may return "items".
+        raw_items = result.get("events")
+        if raw_items is None:
+            raw_items = result.get("items") or []
+        items = list(raw_items)
         if severity_min is not None:
-            items = [it for it in items if (it.get("severity") or 0) >= severity_min]
+            kept = []
+            for it in items:
+                sev = it.get("severity")
+                if sev is None or sev < severity_min:
+                    continue
+                kept.append(it)
+            items = kept
         return {
             "status": "ok",
             "tool": "list_alarm_history",
             "count": len(items),
             "applied_hours": applied_hours,
             "applied_limit": applied_limit,
+            "applied_filters": {"camera": camera, "severity_min": severity_min},
             "items": items,
         }
 
@@ -283,4 +294,4 @@ class AxxonMcpAlarms:
             self.connect_axxon_profile("env")
         result = self.client.list_event_types()
         items = [it for it in (result.get("items") or []) if it.get("name") in ALARM_EVENT_TYPES]
-        return {"status": "ok", "tool": "list_alarm_event_types", "items": items}
+        return {"status": "ok", "tool": "list_alarm_event_types", "count": len(items), "items": items}

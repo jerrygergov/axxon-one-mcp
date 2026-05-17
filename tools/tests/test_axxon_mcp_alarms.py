@@ -85,26 +85,32 @@ class FakeClient:
             "event_types": tuple(event_types or []),
             "hours": hours, "limit": limit, "descending": descending,
         }))
-        return {
-            "status": "ok",
-            "items": [{
+        events = getattr(self, "history_events", None)
+        if events is None:
+            events = [{
                 "type": "ET_Alert",
                 "guid": "hist-1",
                 "timestamp": "20260516T170000.000000",
                 "camera": {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
-            }],
+            }]
+        return {
+            "status": "ok",
+            "subjects": list(subjects or []),
+            "event_types": list(event_types or []),
+            "hours": hours,
+            "limit": limit,
+            "count": len(events),
+            "events": list(events),
         }
 
     def list_event_types(self) -> dict[str, Any]:
         self.calls.append(("list_event_types", (), {}))
-        return {
-            "status": "ok",
-            "items": [
-                {"name": "ET_DetectorEvent", "value": 1},
-                {"name": "ET_Alert", "value": 15},
-                {"name": "ET_AlertState", "value": 16},
-            ],
-        }
+        items = [
+            {"name": "ET_DetectorEvent", "value": 1},
+            {"name": "ET_Alert", "value": 15},
+            {"name": "ET_AlertState", "value": 16},
+        ]
+        return {"status": "ok", "count": len(items), "items": items}
 
 
 def _sample_alert(guid: str = "a1", camera: str = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0") -> dict[str, Any]:
@@ -300,8 +306,41 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         )
         r = alarms.list_alarm_event_types()
         self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 2)
         names = {it["name"] for it in r["items"]}
         self.assertEqual(names, set(module.ALARM_EVENT_TYPES))
+
+
+    def test_list_alarm_history_severity_min_filters_in_process(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        fake.history_events = [
+            {"type": "ET_Alert", "guid": "lo", "severity": 2},
+            {"type": "ET_Alert", "guid": "hi", "severity": 6},
+            {"type": "ET_AlertState", "guid": "none-sev"},  # missing severity, must be rejected
+        ]
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.list_alarm_history(hours=1, limit=50, severity_min=5)
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["guid"], "hi")
+        self.assertEqual(r["applied_filters"]["severity_min"], 5)
+
+    def test_list_alarm_history_camera_substitutes_subjects(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        cam = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+        r = alarms.list_alarm_history(hours=1, limit=10, camera=cam)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["applied_filters"]["camera"], cam)
+        kw = fake.calls[-1][2]
+        self.assertEqual(kw["subjects"], (cam,))
 
 
 if __name__ == "__main__":
