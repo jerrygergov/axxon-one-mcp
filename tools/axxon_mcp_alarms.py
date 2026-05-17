@@ -88,6 +88,34 @@ def normalize_alarm(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_TRANSITION_BY_STATE = {
+    "active": "raised",
+    "reviewing": "begun_review",
+    "completed": "completed",
+    "cancelled": "cancelled",
+    "escalated": "escalated",
+}
+
+
+def normalize_alarm_event(raw: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a raw event from ``pull_events_bounded`` with type ``ET_Alert``/``ET_AlertState``.
+
+    Adds a ``transition`` field derived from the event's ``state``; keeps the
+    original event payload under ``raw`` for callers who need it.
+    """
+    state = raw.get("state")
+    return {
+        "alert_id": raw.get("alert_id") or raw.get("guid") or "",
+        "event_type": raw.get("event_type"),
+        "transition": _TRANSITION_BY_STATE.get(state, state or "unknown"),
+        "state": state,
+        "severity": raw.get("severity"),
+        "camera_access_point": (raw.get("camera") or {}).get("access_point"),
+        "timestamp": raw.get("timestamp"),
+        "raw": raw,
+    }
+
+
 @dataclass
 class AxxonMcpAlarms:
     """Read-only alarm tools + bounded alarm subscription."""
@@ -295,3 +323,44 @@ class AxxonMcpAlarms:
         result = self.client.list_event_types()
         items = [it for it in (result.get("items") or []) if it.get("name") in ALARM_EVENT_TYPES]
         return {"status": "ok", "tool": "list_alarm_event_types", "count": len(items), "items": items}
+
+    def alarm_subscribe(
+        self,
+        severity_min: int | None = None,
+        camera_access_point: str | None = None,
+        state: str = "all",
+        duration_s: int = 10,
+        limit: int = 25,
+    ) -> dict[str, Any]:
+        applied_duration = min(max(int(duration_s), 1), SUBSCRIBE_DURATION_CAP_S)
+        applied_limit = min(max(int(limit), 1), SUBSCRIBE_LIMIT_CAP)
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        raw_events = self.client.pull_events_bounded(
+            subjects=[self._host()],
+            event_types=list(ALARM_EVENT_TYPES),
+            timeout=float(applied_duration),
+            max_events=applied_limit,
+        )
+        normalized = [normalize_alarm_event(e) for e in raw_events]
+        kept: list[dict[str, Any]] = []
+        for item in normalized:
+            if severity_min is not None and (item.get("severity") or 0) < severity_min:
+                continue
+            if camera_access_point is not None and item.get("camera_access_point") != camera_access_point:
+                continue
+            if state != "all" and item.get("transition") != _TRANSITION_BY_STATE.get(state, state):
+                continue
+            kept.append(item)
+        partial = len(raw_events) >= applied_limit
+        reason = "limit_cap" if partial else "ok"
+        return {
+            "status": "ok",
+            "tool": "alarm_subscribe",
+            "applied_duration_s": applied_duration,
+            "applied_limit": applied_limit,
+            "partial": partial,
+            "reason": reason,
+            "count": len(kept),
+            "items": kept,
+        }

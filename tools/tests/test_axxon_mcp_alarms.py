@@ -112,6 +112,49 @@ class FakeClient:
         ]
         return {"status": "ok", "count": len(items), "items": items}
 
+    def pull_events_bounded(
+        self,
+        *,
+        subjects: list[str],
+        event_types: list[str],
+        timeout: float,
+        max_events: int,
+    ) -> list[dict[str, Any]]:
+        self.calls.append(("pull_events_bounded", (), {
+            "subjects": tuple(subjects), "event_types": tuple(event_types),
+            "timeout": timeout, "max_events": max_events,
+        }))
+        events = [
+            {
+                "event_type": "ET_Alert",
+                "guid": "ev-1",
+                "alert_id": "a1",
+                "timestamp": "20260516T180000.000000",
+                "camera": {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
+                "severity": 4,
+                "state": "active",
+            },
+            {
+                "event_type": "ET_AlertState",
+                "guid": "ev-2",
+                "alert_id": "a1",
+                "timestamp": "20260516T180005.000000",
+                "camera": {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
+                "severity": 4,
+                "state": "reviewing",
+            },
+            {
+                "event_type": "ET_AlertState",
+                "guid": "ev-3",
+                "alert_id": "a1",
+                "timestamp": "20260516T180010.000000",
+                "camera": {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
+                "severity": 4,
+                "state": "cancelled",
+            },
+        ]
+        return events[:max_events]
+
 
 def _sample_alert(guid: str = "a1", camera: str = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0") -> dict[str, Any]:
     return {
@@ -341,6 +384,62 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         self.assertEqual(r["applied_filters"]["camera"], cam)
         kw = fake.calls[-1][2]
         self.assertEqual(kw["subjects"], (cam,))
+
+
+    def test_alarm_subscribe_caps_duration_and_limit(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(duration_s=999, limit=999)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["applied_duration_s"], module.SUBSCRIBE_DURATION_CAP_S)
+        self.assertEqual(r["applied_limit"], module.SUBSCRIBE_LIMIT_CAP)
+        kw = fake.calls[-1][2]
+        self.assertEqual(kw["timeout"], module.SUBSCRIBE_DURATION_CAP_S)
+        self.assertEqual(kw["max_events"], module.SUBSCRIBE_LIMIT_CAP)
+        self.assertEqual(set(kw["event_types"]), set(module.ALARM_EVENT_TYPES))
+
+    def test_alarm_subscribe_returns_normalized_events_with_transition(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(duration_s=5, limit=10)
+        self.assertEqual(r["count"], 3)
+        names = [it["transition"] for it in r["items"]]
+        self.assertEqual(names, ["raised", "begun_review", "cancelled"])
+        self.assertEqual(r["items"][0]["alert_id"], "a1")
+        self.assertFalse(r["partial"])
+        self.assertEqual(r["reason"], "ok")
+
+    def test_alarm_subscribe_limit_cap_flags_partial(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(duration_s=5, limit=1)
+        self.assertTrue(r["partial"])
+        self.assertEqual(r["reason"], "limit_cap")
+        self.assertEqual(r["count"], 1)
+
+    def test_alarm_subscribe_filters_by_camera_and_severity(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(severity_min=5, duration_s=5, limit=10)
+        self.assertEqual(r["count"], 0)
+        r2 = alarms.alarm_subscribe(camera_access_point="hosts/Server/NotACamera", duration_s=5, limit=10)
+        self.assertEqual(r2["count"], 0)
 
 
 if __name__ == "__main__":
