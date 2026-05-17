@@ -244,6 +244,86 @@ class AxxonMcpServerTests(unittest.TestCase):
         health = server.tools["stream_health"]("cam")
         self.assertEqual(health["camera"], "cam")
 
+    def test_create_server_registers_alarm_read_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in ("list_active_alerts", "get_active_alert", "filter_active_alerts",
+                     "list_alarm_history", "list_alarm_event_types", "alarm_subscribe"):
+            self.assertNotIn(name, docs_only.tools)
+
+        class StubAlarms:
+            def connect_axxon_profile(self, profile="env"):
+                return {"connected": True, "profile_name": profile, "mode": "read-only"}
+            def list_active_alerts(self, camera_access_point=None, limit=50):
+                return {"status": "ok", "tool": "list_active_alerts",
+                        "camera": camera_access_point, "limit": limit}
+            def get_active_alert(self, camera_access_point, alert_id):
+                return {"status": "ok", "tool": "get_active_alert",
+                        "camera": camera_access_point, "alert_id": alert_id}
+            def filter_active_alerts(self, severity_min=None, camera=None, state="all", limit=50):
+                return {"status": "ok", "tool": "filter_active_alerts",
+                        "severity_min": severity_min, "camera": camera, "state": state, "limit": limit}
+            def list_alarm_history(self, hours=1, limit=100, camera=None, severity_min=None):
+                return {"status": "ok", "tool": "list_alarm_history",
+                        "hours": hours, "limit": limit}
+            def list_alarm_event_types(self):
+                return {"status": "ok", "tool": "list_alarm_event_types"}
+            def alarm_subscribe(self, severity_min=None, camera_access_point=None,
+                                state="all", duration_s=10, limit=25):
+                return {"status": "ok", "tool": "alarm_subscribe",
+                        "duration_s": duration_s, "limit": limit}
+
+        server = module.create_server(docs=StubDocs(), alarms=StubAlarms(), fastmcp_factory=FakeFastMCP)
+        for name in ("alarms_connect_axxon_profile", "list_active_alerts", "get_active_alert",
+                     "filter_active_alerts", "list_alarm_history",
+                     "list_alarm_event_types", "alarm_subscribe"):
+            self.assertIn(name, server.tools)
+        self.assertEqual(server.tools["alarms_connect_axxon_profile"]("env")["connected"], True)
+        self.assertEqual(server.tools["list_active_alerts"]("cam", 7)["limit"], 7)
+        self.assertEqual(server.tools["alarm_subscribe"](None, None, "all", 3, 2)["limit"], 2)
+
+    def test_create_server_registers_alarm_mutation_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in ("raise_alert", "alarm_begin_review", "alarm_continue_review",
+                     "alarm_cancel_review", "alarm_complete_review", "alarm_escalate"):
+            self.assertNotIn(name, docs_only.tools)
+
+        class StubMutator:
+            audit = []
+            def raise_alert(self, camera_access_point, confirmation):
+                return {"status": "ok", "tool": "raise_alert",
+                        "camera": camera_access_point, "confirmation": confirmation}
+            def alarm_begin_review(self, camera_access_point, alert_id, confirmation):
+                return {"status": "ok", "tool": "alarm_begin_review",
+                        "camera": camera_access_point, "alert_id": alert_id}
+            def alarm_continue_review(self, camera_access_point, alert_id, confirmation):
+                return {"status": "ok", "tool": "alarm_continue_review"}
+            def alarm_cancel_review(self, camera_access_point, alert_id, confirmation):
+                return {"status": "ok", "tool": "alarm_cancel_review"}
+            def alarm_complete_review(self, camera_access_point, alert_id, severity, bookmark_message, confirmation):
+                return {"status": "ok", "tool": "alarm_complete_review",
+                        "severity": severity, "bookmark_message": bookmark_message}
+            def alarm_escalate(self, camera_access_point, alert_id, priority, user_roles, comment, confirmation):
+                return {"status": "ok", "tool": "alarm_escalate",
+                        "priority": priority, "user_roles": user_roles, "comment": comment}
+            def audit_log(self):
+                return self.audit
+
+        server = module.create_server(docs=StubDocs(), alarm_mutator=StubMutator(), fastmcp_factory=FakeFastMCP)
+        for name in ("raise_alert", "alarm_begin_review", "alarm_continue_review",
+                     "alarm_cancel_review", "alarm_complete_review", "alarm_escalate"):
+            self.assertIn(name, server.tools)
+        self.assertIn("axxon://alarms/audit-log", server.resources)
+        self.assertEqual(
+            server.tools["raise_alert"]("cam", "CONFIRM-raise-alert")["confirmation"],
+            "CONFIRM-raise-alert",
+        )
+        self.assertEqual(
+            server.tools["alarm_complete_review"]("cam", "a", "confirmed_alarm", "msg", "CONFIRM-alarm-complete")["severity"],
+            "confirmed_alarm",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
