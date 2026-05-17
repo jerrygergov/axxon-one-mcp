@@ -61,6 +61,16 @@ class FakeClient:
             },
         }
 
+    def batch_filter_active_alerts(self, nodes: list[str], filter: dict[str, Any] | None = None) -> dict[str, Any]:
+        self.calls.append(("batch_filter_active_alerts", (tuple(nodes),), dict(filter or {})))
+        return {
+            "status": 200,
+            "body": {
+                "event_stream_items": list(self.batch_alert_pages),
+                "event_stream_count": len(self.batch_alert_pages),
+            },
+        }
+
 
 def _sample_alert(guid: str = "a1", camera: str = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0") -> dict[str, Any]:
     return {
@@ -155,6 +165,57 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         r = alarms.list_active_alerts(camera_access_point="hosts/Server/NotACamera")
         self.assertEqual(r["status"], "gap")
         self.assertIn("NotACamera", r["message"])
+
+    def test_get_active_alert_returns_matching_alarm(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        fake.per_camera_alerts = [_sample_alert("a1"), _sample_alert("a2")]
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.get_active_alert(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "a2",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["item"]["alert_id"], "a2")
+
+    def test_get_active_alert_missing_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        fake.per_camera_alerts = [_sample_alert("a1")]
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.get_active_alert(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "missing",
+        )
+        self.assertEqual(r["status"], "gap")
+
+    def test_filter_active_alerts_applies_severity_min_and_camera(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        low = _sample_alert("low"); low["severity"] = 1
+        high = _sample_alert("high", camera="hosts/Server/DeviceIpint.2/SourceEndpoint.video:0:0")
+        high["severity"] = 5
+        fake.batch_alert_pages = [{"alerts": [low, high], "unreachable_nodes": []}]
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.filter_active_alerts(severity_min=3, limit=10)
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["alert_id"], "high")
+
+        r2 = alarms.filter_active_alerts(
+            camera="hosts/Server/DeviceIpint.2/SourceEndpoint.video:0:0",
+            limit=10,
+        )
+        self.assertEqual(r2["count"], 1)
+        self.assertEqual(r2["items"][0]["alert_id"], "high")
 
 
 if __name__ == "__main__":

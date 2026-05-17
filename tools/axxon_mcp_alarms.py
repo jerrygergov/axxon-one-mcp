@@ -184,3 +184,66 @@ class AxxonMcpAlarms:
             "items": items,
             "unreachable_nodes": unreachable_intersection,
         }
+
+    def get_active_alert(self, camera_access_point: str, alert_id: str) -> dict[str, Any]:
+        inv = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inv):
+            return {
+                "status": "gap",
+                "tool": "get_active_alert",
+                "message": f"Camera not in inventory: {camera_access_point}",
+            }
+        resp = self.client.get_active_alerts(camera_access_point)
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        for raw in (body or {}).get("alerts") or []:
+            if (raw.get("guid") or raw.get("alert_id")) == alert_id:
+                return {"status": "ok", "tool": "get_active_alert", "item": normalize_alarm(raw)}
+        return {
+            "status": "gap",
+            "tool": "get_active_alert",
+            "message": f"Alert id not active on this camera: {alert_id}",
+        }
+
+    def filter_active_alerts(
+        self,
+        severity_min: int | None = None,
+        camera: str | None = None,
+        state: str = "all",
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        resp = self.client.batch_filter_active_alerts([self._host()], filter={})
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        pages = (body or {}).get("event_stream_items") or []
+        flat: list[dict[str, Any]] = []
+        for page in pages:
+            flat.extend(page.get("alerts") or [])
+        normalized = [normalize_alarm(a) for a in flat]
+        kept: list[dict[str, Any]] = []
+        for item in normalized:
+            if severity_min is not None:
+                sev = item.get("severity")
+                if sev is None or sev < severity_min:
+                    continue
+            if camera is not None and item.get("camera_access_point") != camera:
+                continue
+            # `state` is reserved for when AlertState becomes available on the stream.
+            if state not in ("all", "active", "reviewing", "completed", "cancelled", "escalated"):
+                return {
+                    "status": "gap",
+                    "tool": "filter_active_alerts",
+                    "message": f"Unknown state filter: {state}",
+                }
+            kept.append(item)
+            if len(kept) >= applied_limit:
+                break
+        return {
+            "status": "ok",
+            "tool": "filter_active_alerts",
+            "count": len(kept),
+            "applied_limit": applied_limit,
+            "applied_filters": {"severity_min": severity_min, "camera": camera, "state": state},
+            "items": kept,
+        }
