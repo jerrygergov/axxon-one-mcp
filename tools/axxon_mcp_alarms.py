@@ -530,3 +530,130 @@ class AxxonAlarmMutator:
             "alarm_cancel_review", "cancel_alert_review",
             camera_access_point, alert_id, confirmation,
         )
+
+    def alarm_complete_review(
+        self,
+        camera_access_point: str,
+        alert_id: str,
+        severity: str,
+        bookmark_message: str,
+        confirmation: str,
+    ) -> dict[str, Any]:
+        refusal = self._gate("alarm_complete_review", confirmation)
+        if refusal is not None:
+            return refusal
+        if severity not in SEVERITY_CHOICES:
+            return {
+                "status": "gap",
+                "tool": "alarm_complete_review",
+                "message": f"severity must be one of {SEVERITY_CHOICES}, got {severity!r}",
+            }
+        if not bookmark_message:
+            return {
+                "status": "gap",
+                "tool": "alarm_complete_review",
+                "message": "bookmark message is required by the stand's required_comment policy",
+            }
+        inv = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inv):
+            self._audit("alarm_complete_review", "gap",
+                        camera_access_point=camera_access_point, alert_id=alert_id)
+            return {
+                "status": "gap",
+                "tool": "alarm_complete_review",
+                "message": f"Camera not in inventory: {camera_access_point}",
+            }
+        try:
+            resp = self.client.complete_alert_review(
+                camera_access_point, alert_id,
+                severity=severity, bookmark_message=bookmark_message,
+            )
+        except Exception as exc:
+            self._audit("alarm_complete_review", "error",
+                        camera_access_point=camera_access_point, alert_id=alert_id,
+                        severity=severity, error_type=type(exc).__name__)
+            return {
+                "status": "error",
+                "tool": "alarm_complete_review",
+                "error_type": type(exc).__name__,
+                "message": str(exc)[:200],
+            }
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        self._audit("alarm_complete_review", "ok",
+                    camera_access_point=camera_access_point, alert_id=alert_id,
+                    severity=severity, bookmark_message=bookmark_message)
+        return {
+            "status": "ok",
+            "tool": "alarm_complete_review",
+            "camera_access_point": camera_access_point,
+            "alert_id": alert_id,
+            "severity": severity,
+            "result": (body or {}).get("result"),
+        }
+
+    def alarm_escalate(
+        self,
+        camera_access_point: str,
+        alert_id: str,
+        priority: str,
+        user_roles: list[str],
+        comment: str,
+        confirmation: str,
+    ) -> dict[str, Any]:
+        refusal = self._gate("alarm_escalate", confirmation)
+        if refusal is not None:
+            return refusal
+        if priority not in PRIORITY_CHOICES:
+            return {
+                "status": "gap",
+                "tool": "alarm_escalate",
+                "message": f"priority must be one of {PRIORITY_CHOICES}, got {priority!r}",
+            }
+        if not user_roles:
+            return {
+                "status": "gap",
+                "tool": "alarm_escalate",
+                "message": "user_roles must contain at least one role identifier",
+            }
+        if not comment:
+            return {
+                "status": "gap",
+                "tool": "alarm_escalate",
+                "message": "comment is required for escalate",
+            }
+        inv = self._ensure_inventory()
+        if camera_access_point not in self._camera_index(inv):
+            self._audit("alarm_escalate", "gap",
+                        camera_access_point=camera_access_point, alert_id=alert_id)
+            return {
+                "status": "gap",
+                "tool": "alarm_escalate",
+                "message": f"Camera not in inventory: {camera_access_point}",
+            }
+        try:
+            resp = self.client.escalate_alert(
+                camera_access_point, alert_id,
+                priority=priority, user_roles=list(user_roles), comment=comment,
+            )
+        except Exception as exc:
+            self._audit("alarm_escalate", "error",
+                        camera_access_point=camera_access_point, alert_id=alert_id,
+                        priority=priority, error_type=type(exc).__name__)
+            return {
+                "status": "error",
+                "tool": "alarm_escalate",
+                "error_type": type(exc).__name__,
+                "message": str(exc)[:200],
+            }
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        self._audit("alarm_escalate", "ok",
+                    camera_access_point=camera_access_point, alert_id=alert_id,
+                    priority=priority, user_roles=list(user_roles), comment=comment)
+        return {
+            "status": "ok",
+            "tool": "alarm_escalate",
+            "camera_access_point": camera_access_point,
+            "alert_id": alert_id,
+            "priority": priority,
+            "result": (body or {}).get("result"),
+        }

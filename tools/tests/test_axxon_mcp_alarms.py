@@ -565,6 +565,82 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         self.assertEqual(fake.calls[-1][0], "cancel_alert_review")
         self.assertEqual(m.audit[-1]["action"], "alarm_cancel_review")
 
+    def test_complete_review_rejects_unknown_severity(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_complete_review(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
+            severity="banana", bookmark_message="ok", confirmation="CONFIRM-alarm-complete",
+        )
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("severity", r["message"])
+
+    def test_complete_review_rejects_empty_bookmark(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_complete_review(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
+            severity="confirmed_alarm", bookmark_message="", confirmation="CONFIRM-alarm-complete",
+        )
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("bookmark", r["message"])
+
+    def test_complete_review_ok_path(self) -> None:
+        _, fake, m = self._mutator()
+        r = m.alarm_complete_review(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "alert-x",
+            severity="confirmed_alarm", bookmark_message="real incident",
+            confirmation="CONFIRM-alarm-complete",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(fake.calls[-1][0], "complete_alert_review")
+        self.assertEqual(fake.calls[-1][2]["severity"], "confirmed_alarm")
+        self.assertEqual(fake.calls[-1][2]["bookmark_message"], "real incident")
+        self.assertEqual(m.audit[-1]["action"], "alarm_complete_review")
+        self.assertEqual(m.audit[-1]["severity"], "confirmed_alarm")
+
+    def test_escalate_rejects_unknown_priority(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_escalate(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
+            priority="HOT", user_roles=["role-a"], comment="esc",
+            confirmation="CONFIRM-alarm-escalate",
+        )
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("priority", r["message"])
+
+    def test_escalate_rejects_empty_user_roles(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_escalate(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
+            priority="AP_HIGH", user_roles=[], comment="esc",
+            confirmation="CONFIRM-alarm-escalate",
+        )
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("user_roles", r["message"])
+
+    def test_escalate_rejects_empty_comment(self) -> None:
+        _, _, m = self._mutator()
+        r = m.alarm_escalate(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
+            priority="AP_HIGH", user_roles=["role-a"], comment="",
+            confirmation="CONFIRM-alarm-escalate",
+        )
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("comment", r["message"])
+
+    def test_escalate_ok_path(self) -> None:
+        _, fake, m = self._mutator()
+        r = m.alarm_escalate(
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "alert-x",
+            priority="AP_HIGH", user_roles=["role-a"], comment="please review",
+            confirmation="CONFIRM-alarm-escalate",
+        )
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(fake.calls[-1][0], "escalate_alert")
+        self.assertEqual(fake.calls[-1][2]["priority"], "AP_HIGH")
+        self.assertEqual(fake.calls[-1][2]["user_roles"], ["role-a"])
+        self.assertEqual(m.audit[-1]["action"], "alarm_escalate")
+        self.assertEqual(m.audit[-1]["priority"], "AP_HIGH")
+
 
 if __name__ == "__main__":
     unittest.main()
