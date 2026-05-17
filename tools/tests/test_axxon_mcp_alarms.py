@@ -441,6 +441,28 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         r2 = alarms.alarm_subscribe(camera_access_point="hosts/Server/NotACamera", duration_s=5, limit=10)
         self.assertEqual(r2["count"], 0)
 
+    def test_alarm_subscribe_filters_by_state_keeps_only_matching_transition(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(state="active", duration_s=5, limit=10)
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["transition"], "raised")
+
+    def test_alarm_subscribe_unknown_state_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.alarm_subscribe(state="bogus", duration_s=5, limit=10)
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("bogus", r["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

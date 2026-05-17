@@ -332,6 +332,12 @@ class AxxonMcpAlarms:
         duration_s: int = 10,
         limit: int = 25,
     ) -> dict[str, Any]:
+        if state != "all" and state not in _TRANSITION_BY_STATE:
+            return {
+                "status": "gap",
+                "tool": "alarm_subscribe",
+                "message": f"Unknown state filter: {state}",
+            }
         applied_duration = min(max(int(duration_s), 1), SUBSCRIBE_DURATION_CAP_S)
         applied_limit = min(max(int(limit), 1), SUBSCRIBE_LIMIT_CAP)
         if self.client is None:
@@ -345,8 +351,10 @@ class AxxonMcpAlarms:
         normalized = [normalize_alarm_event(e) for e in raw_events]
         kept: list[dict[str, Any]] = []
         for item in normalized:
-            if severity_min is not None and (item.get("severity") or 0) < severity_min:
-                continue
+            if severity_min is not None:
+                sev = item.get("severity")
+                if sev is None or sev < severity_min:
+                    continue
             if camera_access_point is not None and item.get("camera_access_point") != camera_access_point:
                 continue
             if state != "all" and item.get("transition") != _TRANSITION_BY_STATE.get(state, state):
