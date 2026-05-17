@@ -217,6 +217,28 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         self.assertEqual(r2["count"], 1)
         self.assertEqual(r2["items"][0]["alert_id"], "high")
 
+    def test_filter_active_alerts_bad_state_returns_gap_even_when_empty(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        fake = FakeClient()
+        fake.batch_alert_pages = []  # no items at all
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.filter_active_alerts(state="not_a_real_state")
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("not_a_real_state", r["message"])
+
+    def test_get_active_alert_unknown_camera_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_alarms")
+        alarms = module.AxxonMcpAlarms(
+            client_factory=lambda _cfg: FakeClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        r = alarms.get_active_alert("hosts/Server/NotACamera", "any")
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("NotACamera", r["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

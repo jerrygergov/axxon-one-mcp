@@ -211,6 +211,13 @@ class AxxonMcpAlarms:
         state: str = "all",
         limit: int = 50,
     ) -> dict[str, Any]:
+        # `state` is reserved for when AlertState becomes available on the stream.
+        if state not in ("all", "active", "reviewing", "completed", "cancelled", "escalated"):
+            return {
+                "status": "gap",
+                "tool": "filter_active_alerts",
+                "message": f"Unknown state filter: {state}",
+            }
         applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
         if self.client is None:
             self.connect_axxon_profile("env")
@@ -229,13 +236,6 @@ class AxxonMcpAlarms:
                     continue
             if camera is not None and item.get("camera_access_point") != camera:
                 continue
-            # `state` is reserved for when AlertState becomes available on the stream.
-            if state not in ("all", "active", "reviewing", "completed", "cancelled", "escalated"):
-                return {
-                    "status": "gap",
-                    "tool": "filter_active_alerts",
-                    "message": f"Unknown state filter: {state}",
-                }
             kept.append(item)
             if len(kept) >= applied_limit:
                 break
