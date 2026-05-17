@@ -72,6 +72,22 @@ python tools/axxon_mcp_server.py --enable-live --enable-operator --transport std
 
 # + integration code generator (list/plan/generate/verify_integration)
 python tools/axxon_mcp_server.py --enable-generator --transport stdio
+
+# + live + archive viewing tools (Phase 5A)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-view --transport stdio
+
+# + alarm read tools (Phase 5C)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-alarms --transport stdio
+
+# + alarm lifecycle mutations (Phase 5C) — requires per-call confirmation tokens
+AXXON_ALARMS_APPROVE=1 \
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -105,6 +121,36 @@ duration/byte/count caps, and refuse `output_dir` paths inside this repo
 unless `AXXON_GENERATOR_ALLOW_IN_REPO=1`. See
 `docs/plans/2026-05-15-mcp-phase-4-integration-generation.md` and the static
 smoke evidence at `docs/api-audit/mcp-generation-smoke-latest.md`.
+
+### View tools (Phase 5A)
+
+`view_connect_axxon_profile`, `live_view`, `snapshot_batch`, `archive_scrub`,
+`archive_frame`, `archive_mjpeg_bounded`, `stream_health`. URL-only — callers
+fetch media with the Bearer token from `view_connect_axxon_profile`. Every
+tool clamps inputs against module constants (`DEFAULT_MAX_BYTES = 1 MiB`,
+`DEFAULT_DURATION_S = 10`, `DEFAULT_FPS = 5`, `SNAPSHOT_BATCH_LIMIT = 8`,
+`ARCHIVE_MJPEG_BYTE_CAP = 4 MiB`, `ARCHIVE_FRAME_THRESHOLD_MS = 60_000`) and
+reports the applied value back in `caps`. The MCP never proxies media bytes.
+See `docs/superpowers/plans/2026-05-16-phase-5a-live-archive-viewing.md` and
+the offline + live evidence at `docs/api-audit/phase-5a-view-smoke-latest.md`.
+
+### Alarm tools (Phase 5C)
+
+Reads (`--enable-alarms`): `alarms_connect_axxon_profile`, `list_active_alerts`,
+`get_active_alert`, `filter_active_alerts`, `list_alarm_history`,
+`list_alarm_event_types`, `alarm_subscribe` (bounded by 30 s / 100 events).
+
+Mutations (`--enable-alarms-mutation` + `AXXON_ALARMS_APPROVE=1`):
+`raise_alert`, `alarm_begin_review`, `alarm_continue_review`,
+`alarm_cancel_review`, `alarm_complete_review` (requires `severity` in
+`confirmed_alarm|suspicious_situation|false_alarm` and a non-empty bookmark
+message), `alarm_escalate` (requires `priority` in
+`AP_MINIMUM|AP_LOW|AP_MEDIUM|AP_HIGH`, non-empty `user_roles`, non-empty
+`comment`). Every mutation requires a per-call `CONFIRM-...` token and writes
+one audit entry; the audit log is exposed via the
+`axxon://alarms/audit-log` resource. See
+`docs/superpowers/plans/2026-05-16-phase-5c-alarms.md` and the live evidence
+at `docs/api-audit/phase-5c-alarms-smoke-latest.md`.
 
 ## Verification
 

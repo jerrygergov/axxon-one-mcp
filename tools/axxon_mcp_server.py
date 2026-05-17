@@ -37,6 +37,9 @@ def create_server(
     live: Any | None = None,
     operator: Any | None = None,
     generator: Any | None = None,
+    view: Any | None = None,
+    alarms: Any | None = None,
+    alarm_mutator: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -97,7 +100,187 @@ def create_server(
     if generator is not None:
         register_generator_tools(server, generator)
 
+    if view is not None:
+        register_view_tools(server, view)
+
+    if alarms is not None:
+        register_alarm_read_tools(server, alarms)
+
+    if alarm_mutator is not None:
+        register_alarm_mutation_tools(server, alarm_mutator)
+
     return server
+
+
+def register_view_tools(server: Any, view: Any) -> None:
+    @server.tool(name="view_connect_axxon_profile")
+    def view_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the view layer to an Axxon profile (read-only, env-backed)."""
+        return view.connect_axxon_profile(profile)
+
+    @server.tool(name="live_view")
+    def live_view(
+        camera_access_point: str,
+        duration_s: int = 10,
+        fps: int = 5,
+        width: int = 640,
+        format: str = "mjpeg",
+    ) -> dict[str, Any]:
+        """Return a capped URL for a live media stream (mjpeg/hls/mp4/rtsp)."""
+        return view.live_view(camera_access_point, duration_s=duration_s, fps=fps, width=width, format=format)
+
+    @server.tool(name="snapshot_batch")
+    def snapshot_batch(
+        camera_access_points: list[str],
+        ts: str = "now",
+        width: int = 640,
+    ) -> dict[str, Any]:
+        """Return one snapshot URL per camera with a per-request count cap."""
+        return view.snapshot_batch(camera_access_points, ts=ts, width=width)
+
+    @server.tool(name="archive_scrub")
+    def archive_scrub(
+        camera_access_point: str,
+        hours: int = 1,
+        archive_access_point: str | None = None,
+    ) -> dict[str, Any]:
+        """Return archive calendar + intervals + sample-frame URL for a camera."""
+        return view.archive_scrub(camera_access_point, hours=hours, archive_access_point=archive_access_point)
+
+    @server.tool(name="archive_frame")
+    def archive_frame(
+        camera_access_point: str,
+        ts: str,
+        width: int = 640,
+        threshold_ms: int = 60_000,
+    ) -> dict[str, Any]:
+        """Return a single archive-frame URL with bounded threshold and width."""
+        return view.archive_frame(camera_access_point, ts=ts, width=width, threshold_ms=threshold_ms)
+
+    @server.tool(name="archive_mjpeg_bounded")
+    def archive_mjpeg_bounded(
+        camera_access_point: str,
+        begin_ts: str,
+        speed: int = 1,
+        fps: int = 5,
+        width: int = 640,
+    ) -> dict[str, Any]:
+        """Return a bounded archive MJPEG URL with speed/fps/byte caps applied."""
+        return view.archive_mjpeg_bounded(camera_access_point, begin_ts=begin_ts, speed=speed, fps=fps, width=width)
+
+    @server.tool(name="stream_health")
+    def stream_health(camera_access_point: str) -> dict[str, Any]:
+        """Return /statistics and /rtsp/stat summary for a camera access point."""
+        return view.stream_health(camera_access_point)
+
+
+def register_alarm_read_tools(server: Any, alarms: Any) -> None:
+    @server.tool(name="alarms_connect_axxon_profile")
+    def alarms_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the alarms layer to an Axxon profile (read-only, env-backed)."""
+        return alarms.connect_axxon_profile(profile)
+
+    @server.tool(name="list_active_alerts")
+    def list_active_alerts(camera_access_point: str | None = None, limit: int = 50) -> dict[str, Any]:
+        """List active alarms node-wide or for a specific camera."""
+        return alarms.list_active_alerts(camera_access_point=camera_access_point, limit=limit)
+
+    @server.tool(name="get_active_alert")
+    def get_active_alert(camera_access_point: str, alert_id: str) -> dict[str, Any]:
+        """Return a single active alarm by camera+alert_id."""
+        return alarms.get_active_alert(camera_access_point, alert_id)
+
+    @server.tool(name="filter_active_alerts")
+    def filter_active_alerts(
+        severity_min: int | None = None,
+        camera: str | None = None,
+        state: str = "all",
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        """Filter active alarms by severity/camera/state."""
+        return alarms.filter_active_alerts(severity_min=severity_min, camera=camera, state=state, limit=limit)
+
+    @server.tool(name="list_alarm_history")
+    def list_alarm_history(
+        hours: float = 1.0,
+        limit: int = 100,
+        camera: str | None = None,
+        severity_min: int | None = None,
+    ) -> dict[str, Any]:
+        """List historical alarm events via EventHistoryService.ReadEvents."""
+        return alarms.list_alarm_history(hours=hours, limit=limit, camera=camera, severity_min=severity_min)
+
+    @server.tool(name="list_alarm_event_types")
+    def list_alarm_event_types() -> dict[str, Any]:
+        """Return the alarm-related subset of the EEventType enum."""
+        return alarms.list_alarm_event_types()
+
+    @server.tool(name="alarm_subscribe")
+    def alarm_subscribe(
+        severity_min: int | None = None,
+        camera_access_point: str | None = None,
+        state: str = "all",
+        duration_s: int = 10,
+        limit: int = 25,
+    ) -> dict[str, Any]:
+        """Bounded alarm event subscription with normalized transition field."""
+        return alarms.alarm_subscribe(
+            severity_min=severity_min,
+            camera_access_point=camera_access_point,
+            state=state,
+            duration_s=duration_s,
+            limit=limit,
+        )
+
+
+def register_alarm_mutation_tools(server: Any, mutator: Any) -> None:
+    @server.tool(name="raise_alert")
+    def raise_alert(camera_access_point: str, confirmation: str) -> dict[str, Any]:
+        """Raise an alarm on a camera. Requires CONFIRM-raise-alert."""
+        return mutator.raise_alert(camera_access_point, confirmation)
+
+    @server.tool(name="alarm_begin_review")
+    def alarm_begin_review(camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        """Begin reviewing an active alarm. Requires CONFIRM-alarm-begin."""
+        return mutator.alarm_begin_review(camera_access_point, alert_id, confirmation)
+
+    @server.tool(name="alarm_continue_review")
+    def alarm_continue_review(camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        """Continue reviewing an alarm in review. Requires CONFIRM-alarm-continue."""
+        return mutator.alarm_continue_review(camera_access_point, alert_id, confirmation)
+
+    @server.tool(name="alarm_cancel_review")
+    def alarm_cancel_review(camera_access_point: str, alert_id: str, confirmation: str) -> dict[str, Any]:
+        """Cancel reviewing an alarm. Requires CONFIRM-alarm-cancel."""
+        return mutator.alarm_cancel_review(camera_access_point, alert_id, confirmation)
+
+    @server.tool(name="alarm_complete_review")
+    def alarm_complete_review(
+        camera_access_point: str,
+        alert_id: str,
+        severity: str,
+        bookmark_message: str,
+        confirmation: str,
+    ) -> dict[str, Any]:
+        """Complete an alarm review with a severity tag and bookmark. Requires CONFIRM-alarm-complete."""
+        return mutator.alarm_complete_review(camera_access_point, alert_id, severity, bookmark_message, confirmation)
+
+    @server.tool(name="alarm_escalate")
+    def alarm_escalate(
+        camera_access_point: str,
+        alert_id: str,
+        priority: str,
+        user_roles: list[str],
+        comment: str,
+        confirmation: str,
+    ) -> dict[str, Any]:
+        """Escalate an alarm to a set of user roles with priority + comment. Requires CONFIRM-alarm-escalate."""
+        return mutator.alarm_escalate(camera_access_point, alert_id, priority, user_roles, comment, confirmation)
+
+    @server.resource("axxon://alarms/audit-log")
+    def read_alarms_audit_log() -> dict[str, Any]:
+        """Read the in-memory audit log for this alarm-mutator session."""
+        return {"entries": mutator.audit_log()}
 
 
 def register_generator_tools(server: Any, generator: Any) -> None:
@@ -326,6 +509,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable integration generator tools (list/plan/generate/verify_integration).",
     )
+    parser.add_argument(
+        "--enable-view",
+        action="store_true",
+        help="Enable Phase 5A live/archive viewing tools (URL-only, byte/time/fps caps).",
+    )
+    parser.add_argument(
+        "--enable-alarms",
+        action="store_true",
+        help="Enable Phase 5C alarm read tools (list/filter/history/subscribe).",
+    )
+    parser.add_argument(
+        "--enable-alarms-mutation",
+        action="store_true",
+        help="Enable Phase 5C alarm lifecycle mutations. Requires AXXON_ALARMS_APPROVE=1.",
+    )
     return parser
 
 
@@ -356,11 +554,29 @@ def main() -> int:
         from axxon_mcp_generator import Generator
 
         generator = Generator(corpus_dir=args.corpus_dir)
+    view = None
+    if args.enable_view:
+        from axxon_mcp_view import AxxonMcpView
+
+        view = AxxonMcpView()
+    alarms = None
+    if args.enable_alarms:
+        from axxon_mcp_alarms import AxxonMcpAlarms
+
+        alarms = AxxonMcpAlarms()
+    alarm_mutator = None
+    if args.enable_alarms_mutation:
+        from axxon_mcp_alarms import AxxonAlarmMutator
+
+        alarm_mutator = AxxonAlarmMutator()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
         operator=operator,
         generator=generator,
+        view=view,
+        alarms=alarms,
+        alarm_mutator=alarm_mutator,
     )
     server.run(transport=args.transport)
     return 0
