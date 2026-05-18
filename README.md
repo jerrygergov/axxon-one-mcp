@@ -5,14 +5,22 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **174 / 174** unit tests passing.
-- **33** PDF gap-coverage matrix rows. 27 verified, 6 fixture-blocked
+- **229 / 229** unit tests passing on `main`.
+- **35** PDF gap-coverage matrix rows. 29 verified, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
 - **11** MCP operator workflows (7 ephemeral, 4 persistent) with
   plan / apply / verify / rollback safety.
-- **15** MCP live tools covering inventory, events, metadata, archive,
-  detector discovery, and bounded subscriptions.
+- **15** Phase 2 read-only live tools covering inventory, events, metadata,
+  archive, detector discovery, and bounded subscriptions.
+- **6** Phase 5A view tools: `live_view`, `snapshot_batch`, `archive_scrub`,
+  `archive_frame`, `archive_mjpeg_bounded`, `stream_health` (URL-only, byte
+  and time capped). Live-verified — see `docs/api-audit/phase-5a-view-smoke-latest.md`.
+- **7 reads + 6 mutations** Phase 5C alarm tools (`list_active_alerts`,
+  `get_active_alert`, `filter_active_alerts`, `list_alarm_history`,
+  `list_alarm_event_types`, `alarm_subscribe`, plus `raise_alert` and the
+  full review lifecycle). Live-verified — see
+  `docs/api-audit/phase-5c-alarms-smoke-latest.md`.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -20,7 +28,24 @@ coverage matrix for Axxon One VMS.
   end-to-end against the demo stand
   (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`).
 
-See `docs/api-audit/pdf-gap-coverage-matrix.md` for the canonical coverage matrix.
+See `docs/api-audit/pdf-gap-coverage-matrix.md` for the canonical coverage matrix
+and [`STATUS.md`](STATUS.md) for the current handoff document and remaining roadmap.
+
+### Roadmap snapshot
+
+| Phase | Status |
+| --- | --- |
+| 5A — Live + archive viewing | ✅ shipped |
+| 5B — PTZ + Tag&Track | ⏸ deferred (no PTZ fixture) |
+| 5C — Alarms | ✅ shipped |
+| 5D — Videowall / layouts / maps | 📄 designed + planned, code not started |
+| 5E — Detector depth + archive policies | ❌ not started |
+| 5F — Security / users / system health + schedules | ❌ not started |
+| 6A — Authoring kit expansion (Python + Node) | ❌ not started |
+| 6B — Partner SDK kit + distribution | ❌ not started |
+| 7 — NL → plan translator | ❌ not started |
+
+Full plan: [`docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md).
 
 ## Layout
 
