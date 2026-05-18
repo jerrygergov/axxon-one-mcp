@@ -461,6 +461,23 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertIn("disabled", result["message"].lower())
         self.assertEqual(client.calls, [])
 
+    def test_operator_client_change_maps_dispatches(self) -> None:
+        from axxon_mcp_operator import AxxonOperatorClient
+
+        class FakeApi:
+            def __init__(self):
+                self.calls: list[tuple[str, dict]] = []
+
+            def change_maps(self, payload):
+                self.calls.append(("change_maps", payload))
+                return {"status": 200, "body": {"result": True}}
+
+        api = FakeApi()
+        c = AxxonOperatorClient(api)
+        out = c.change_maps_via_api({"added": [{"meta": {"name": "x"}}]})
+        self.assertEqual(out["status"], 200)
+        self.assertEqual(api.calls[0][0], "change_maps")
+
 
 if __name__ == "__main__":
     unittest.main()

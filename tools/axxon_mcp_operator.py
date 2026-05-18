@@ -718,6 +718,41 @@ class AxxonOperatorClient:
         response = self._layout_stub().BatchGetLayouts(request, timeout=self._client.config.timeout)
         return self._client.message_to_dict(response)
 
+    # --- Phase 5D transport extensions ---
+
+    def change_maps_via_api(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._client.change_maps(payload)
+
+    def update_markers_via_api(self, map_id: str, markers: list[dict[str, Any]]) -> dict[str, Any]:
+        return self._client.update_markers(map_id, markers)
+
+    def register_wall_via_api(self, **kwargs) -> dict[str, Any]:
+        return self._client.register_wall(**kwargs)
+
+    def change_wall_via_api(self, *, cookie: str, data_bytes: bytes, seq_number: int) -> dict[str, Any]:
+        return self._client.change_wall(cookie=cookie, data_bytes=data_bytes, seq_number=seq_number)
+
+    def set_control_data_via_api(self, *, wall_id: str, seq_number: int, data_bytes: bytes) -> dict[str, Any]:
+        return self._client.set_control_data(wall_id=wall_id, seq_number=seq_number, data_bytes=data_bytes)
+
+    def unregister_wall_via_api(self, cookie: str) -> dict[str, Any]:
+        return self._client.unregister_wall(cookie)
+
+    def update_layout_via_api(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._client.http_grpc(
+            "axxonsoft.bl.layout.LayoutManager.Update",
+            payload,
+        )
+
+    def batch_get_maps_via_api(self, map_ids: list[str]) -> dict[str, Any]:
+        return self._client.batch_get_maps(map_ids)
+
+    def batch_get_layouts_via_api(self, items: list[dict[str, str]]) -> dict[str, Any]:
+        return self._client.batch_get_layouts(items)
+
+    def get_markers_via_api(self, map_id: str) -> dict[str, Any]:
+        return self._client.get_markers(map_id)
+
     def http_post_bearer(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
         self._client.authenticate_http_grpc()
         return self._client.http_request("POST", path, body, bearer=True)
