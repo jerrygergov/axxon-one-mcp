@@ -11,6 +11,7 @@ shapes from ``axxon_config_mutation_smoke.py``.
 from __future__ import annotations
 
 import datetime as dt
+import os as _os
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -582,6 +583,158 @@ def _build_set_unit_properties_plan(host_uid: str, params: dict[str, Any]) -> di
     }
 
 
+def _build_temp_wall_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Ephemeral videowall registration with explicit unregister rollback."""
+    name = str(params.get("name") or f"codex-wall-{uuid.uuid4().hex[:8]}")
+    display_name = str(params.get("display_name") or name)
+    host_name = str(params.get("host_name") or f"codex-host-{uuid.uuid4().hex[:6]}")
+    pid = int(params.get("pid") or _os.getpid())
+    ppid = int(params.get("ppid") or 1)
+    data_b64 = str(params.get("data_b64") or "")
+    return {
+        "workflow": "temp_wall",
+        "persistent": False,
+        "risk": "mutation",
+        "intent": f"register ephemeral videowall {name} ({display_name})",
+        "steps": [
+            {
+                "operation": "register_wall",
+                "params": {
+                    "host_name": host_name,
+                    "pid": pid,
+                    "ppid": ppid,
+                    "name": name,
+                    "display_name": display_name,
+                    "data_b64": data_b64,
+                },
+            }
+        ],
+        "rollback": {"strategy": "unregister_wall", "description": "Calls UnregisterWall(cookie)."},
+        "expected": {"name": name, "display_name": display_name},
+        "confirmation_token": "CONFIRM-temp_wall",
+        "rollback_confirmation_token": "CONFIRM-temp_wall-rollback",
+    }
+
+
+def _build_videowall_register_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Persistent videowall registration; caller retains cookie."""
+    name = str(params.get("name") or "").strip()
+    if not name:
+        return {
+            "status": "gap",
+            "workflow": "videowall_register",
+            "message": "videowall_register requires params.name",
+        }
+    display_name = str(params.get("display_name") or name)
+    host_name = str(params.get("host_name") or f"codex-host-{uuid.uuid4().hex[:6]}")
+    pid = int(params.get("pid") or _os.getpid())
+    ppid = int(params.get("ppid") or 1)
+    data_b64 = str(params.get("data_b64") or "")
+    return {
+        "workflow": "videowall_register",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"register persistent videowall {name} ({display_name})",
+        "steps": [
+            {
+                "operation": "register_wall",
+                "params": {
+                    "host_name": host_name,
+                    "pid": pid,
+                    "ppid": ppid,
+                    "name": name,
+                    "display_name": display_name,
+                    "data_b64": data_b64,
+                },
+            }
+        ],
+        "rollback": {
+            "strategy": "unregister_wall",
+            "description": "Persistent: caller invokes rollback to unregister.",
+        },
+        "expected": {"name": name, "display_name": display_name},
+        "confirmation_token": "CONFIRM-videowall_register",
+        "rollback_confirmation_token": "CONFIRM-videowall_register-rollback",
+    }
+
+
+def _build_videowall_change_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    cookie = str(params.get("cookie") or "").strip()
+    if not cookie:
+        return {
+            "status": "gap",
+            "workflow": "videowall_change",
+            "message": "videowall_change requires params.cookie",
+        }
+    data_b64 = str(params.get("data_b64") or "")
+    seq_number = int(params.get("seq_number") or 0)
+    return {
+        "workflow": "videowall_change",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"change videowall data (cookie={cookie[:8]}..., seq={seq_number})",
+        "steps": [
+            {
+                "operation": "change_wall",
+                "params": {"cookie": cookie, "data_b64": data_b64, "seq_number": seq_number},
+            }
+        ],
+        "rollback": {"strategy": "noop", "description": "ChangeWall is a state push; no auto-revert."},
+        "expected": {"cookie_prefix": cookie[:8], "seq_number": seq_number},
+        "confirmation_token": "CONFIRM-videowall_change",
+        "rollback_confirmation_token": "CONFIRM-videowall_change-rollback",
+    }
+
+
+def _build_videowall_set_control_data_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    wall_id = str(params.get("wall_id") or "").strip()
+    if not wall_id:
+        return {
+            "status": "gap",
+            "workflow": "videowall_set_control_data",
+            "message": "videowall_set_control_data requires params.wall_id",
+        }
+    data_b64 = str(params.get("data_b64") or "")
+    seq_number = int(params.get("seq_number") or 0)
+    return {
+        "workflow": "videowall_set_control_data",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"push control data to wall {wall_id} (seq={seq_number})",
+        "steps": [
+            {
+                "operation": "set_control_data",
+                "params": {"wall_id": wall_id, "data_b64": data_b64, "seq_number": seq_number},
+            }
+        ],
+        "rollback": {"strategy": "noop", "description": "Control data is a push; no auto-revert."},
+        "expected": {"wall_id": wall_id, "seq_number": seq_number},
+        "confirmation_token": "CONFIRM-videowall_set_control_data",
+        "rollback_confirmation_token": "CONFIRM-videowall_set_control_data-rollback",
+    }
+
+
+def _build_videowall_unregister_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    cookie = str(params.get("cookie") or "").strip()
+    if not cookie:
+        return {
+            "status": "gap",
+            "workflow": "videowall_unregister",
+            "message": "videowall_unregister requires params.cookie",
+        }
+    return {
+        "workflow": "videowall_unregister",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"unregister wall (cookie={cookie[:8]}...)",
+        "steps": [{"operation": "unregister_wall", "params": {"cookie": cookie}}],
+        "rollback": {"strategy": "noop", "description": "Unregister is terminal."},
+        "expected": {"cookie_prefix": cookie[:8]},
+        "confirmation_token": "CONFIRM-videowall_unregister",
+        "rollback_confirmation_token": "CONFIRM-videowall_unregister-rollback",
+    }
+
+
 WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "temp_camera": _build_temp_camera_plan,
     "temp_archive": _build_temp_archive_plan,
@@ -594,6 +747,11 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "create_macro": _build_create_macro_plan,
     "create_layout": _build_create_layout_plan,
     "set_unit_properties": _build_set_unit_properties_plan,
+    "temp_wall": _build_temp_wall_plan,
+    "videowall_register": _build_videowall_register_plan,
+    "videowall_change": _build_videowall_change_plan,
+    "videowall_set_control_data": _build_videowall_set_control_data_plan,
+    "videowall_unregister": _build_videowall_unregister_plan,
 }
 
 

@@ -478,6 +478,57 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(out["status"], 200)
         self.assertEqual(api.calls[0][0], "change_maps")
 
+    def test_temp_wall_plan_includes_register_step(self) -> None:
+        from axxon_mcp_operator import _build_temp_wall_plan
+
+        plan = _build_temp_wall_plan("hosts/Server", {"name": "codex-w", "display_name": "Codex Wall"})
+        self.assertEqual(plan["workflow"], "temp_wall")
+        self.assertEqual(plan["risk"], "mutation")
+        self.assertFalse(plan["persistent"])
+        self.assertEqual(plan["steps"][0]["operation"], "register_wall")
+        self.assertEqual(plan["steps"][0]["params"]["name"], "codex-w")
+        self.assertEqual(plan["confirmation_token"], "CONFIRM-temp_wall")
+        self.assertEqual(plan["rollback_confirmation_token"], "CONFIRM-temp_wall-rollback")
+
+    def test_videowall_register_persistent_no_auto_rollback(self) -> None:
+        from axxon_mcp_operator import _build_videowall_register_plan
+
+        plan = _build_videowall_register_plan("hosts/Server", {"name": "perm", "display_name": "Perm"})
+        self.assertEqual(plan["workflow"], "videowall_register")
+        self.assertTrue(plan["persistent"])
+        self.assertEqual(plan["rollback"]["strategy"], "unregister_wall")
+
+    def test_videowall_change_requires_cookie(self) -> None:
+        from axxon_mcp_operator import _build_videowall_change_plan
+
+        gap = _build_videowall_change_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        self.assertIn("cookie", gap["message"])
+        plan = _build_videowall_change_plan("hosts/Server", {"cookie": "ck", "data_b64": "AAA=", "seq_number": 2})
+        self.assertEqual(plan["steps"][0]["operation"], "change_wall")
+        self.assertEqual(plan["steps"][0]["params"]["cookie"], "ck")
+        self.assertEqual(plan["steps"][0]["params"]["seq_number"], 2)
+
+    def test_videowall_set_control_data_requires_wall_id(self) -> None:
+        from axxon_mcp_operator import _build_videowall_set_control_data_plan
+
+        gap = _build_videowall_set_control_data_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_videowall_set_control_data_plan(
+            "hosts/Server",
+            {"wall_id": "w-1", "data_b64": "AAA=", "seq_number": 1},
+        )
+        self.assertEqual(plan["steps"][0]["operation"], "set_control_data")
+        self.assertEqual(plan["steps"][0]["params"]["wall_id"], "w-1")
+
+    def test_videowall_unregister_requires_cookie(self) -> None:
+        from axxon_mcp_operator import _build_videowall_unregister_plan
+
+        gap = _build_videowall_unregister_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_videowall_unregister_plan("hosts/Server", {"cookie": "ck"})
+        self.assertEqual(plan["steps"][0]["operation"], "unregister_wall")
+
 
 if __name__ == "__main__":
     unittest.main()
