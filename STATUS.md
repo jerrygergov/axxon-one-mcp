@@ -1,7 +1,7 @@
 # Axxon One MCP — Project Status & Handoff
 
 **Last updated:** 2026-05-18
-**Branch state:** `main` at `12c9283 merge: Phase 5A (live + archive viewing) and Phase 5C (alarms)`. Worktree branch `claude/amazing-zhukovsky-5ad3d8` is ahead by the 5D design and plan docs only — no 5D code.
+**Branch state:** `main` at `12c9283 merge: Phase 5A (live + archive viewing) and Phase 5C (alarms)`. Worktree branch `codex/phase-5d-layouts-maps-videowalls` contains the Phase 5D implementation and docs; not merged to `main` yet.
 
 This file is the single point of entry for any agent (Claude, Codex, human) continuing this project. Read it first, then jump into the linked roadmap and the next-phase plan.
 
@@ -10,12 +10,12 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 ## TL;DR
 
 - The MCP is real and live-verified against a stand at `100.76.150.18` (root/root, gRPC `20109`, HTTP `80`, CA at `docs/grpc-proto-files/api.ngp.root-ca.crt`, TLS CN `Server`).
-- Four phases ship in `main`: docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms.
+- The shipped baseline in `main` includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, and Phase 5C alarms.
 - Phase 5B (PTZ) is deferred — no PTZ camera on the demo stand.
-- Phase 5D (videowall / layouts / maps) is **designed and planned, code not started**. Schedules moved to Phase 5F.
+- Phase 5D (videowall / layouts / maps) is **implemented on branch** with 11 read tools, 11 operator workflows, live map/videowall smoke evidence, and sanitized docs. Schedules moved to Phase 5F.
 - Phases 5E, 5F, 6A, 6B, 7 are not yet started.
 
-Test suite: 229 / 229 passing on `main`.
+Test suite: 281 / 281 passing on the Phase 5D branch.
 
 ---
 
@@ -24,12 +24,12 @@ Test suite: 229 / 229 passing on `main`.
 1. **Read these three files in order:**
    1. `STATUS.md` (this file).
    2. `docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md` — the full 7-phase plan with current status table.
-   3. The next-phase plan: `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` (if doing 5D).
+   3. The next-phase design/spec (default next work: Phase 5E detector + analytics depth, archive policies).
 2. **Confirm the toolchain is ready:**
    ```bash
    cd /Users/jerrygergov/Documents/GitHub/axxon-one-mcp
    python3.12 -m unittest discover -s tools/tests 2>&1 | tail -3
-   # expect: Ran 229 tests OK
+   # expect on this branch: Ran 281 tests OK
    ```
 3. **Set demo-stand env for any live verification:**
    ```bash
@@ -40,7 +40,7 @@ Test suite: 229 / 229 passing on `main`.
    export AXXON_TLS_CN=Server
    export AXXON_CA=/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/grpc-proto-files/api.ngp.root-ca.crt
    ```
-4. **Pick the next phase** (default: 5D) and follow that plan task-by-task. Plans are written as bite-sized TDD steps; an agent should execute them via the subagent-driven-development approach (or whatever equivalent the runtime provides). Each task: failing test → minimal code → passing test → commit.
+4. **Pick the next phase** (default: 5E) and follow the resulting plan task-by-task. Plans are written as bite-sized TDD steps; an agent should execute them via the subagent-driven-development approach (or whatever equivalent the runtime provides). Each task: failing test → minimal code → passing test → commit.
 5. **Live-verify mutations** on the demo stand. Sanitize evidence before committing (replace `100.76.150.18` with `<demo-host>`, never commit bearer tokens or passwords).
 
 ---
@@ -56,7 +56,7 @@ Test suite: 229 / 229 passing on `main`.
 | 5A — Viewing | ✅ shipped | 6 (live_view, snapshot_batch, archive_scrub, archive_frame, archive_mjpeg_bounded, stream_health) | `docs/api-audit/phase-5a-view-smoke-latest.md` |
 | 5B — PTZ | ⏸ deferred (no fixture) | — | — |
 | 5C — Alarms | ✅ shipped | 7 reads + 6 mutations | `docs/api-audit/phase-5c-alarms-smoke-latest.md` |
-| **5D — Videowall/layouts/maps** | **📄 designed, not coded** | 11 reads + 10 operator workflows (planned) | `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` |
+| **5D — Videowall/layouts/maps** | **✅ implemented on branch** | 11 reads + 11 operator workflows | `docs/api-audit/phase-5d-view-objects-smoke-latest.md` |
 | 5E — Detector depth + archive policies | ❌ not started | — | — |
 | 5F — Security / users / system health + schedules | ❌ not started | — | — |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
@@ -69,12 +69,11 @@ Test suite: 229 / 229 passing on `main`.
 
 See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The remaining work, in dependency order:
 
-1. **Phase 5D — Videowall, layouts, maps.** Design and full implementation plan exist. ~22 TDD tasks. Estimated suite growth: 229 → 270.
-2. **Phase 5E — Detector + analytics depth, archive policies.** Not yet brainstormed. Closes the last large pending block in `LogicService`-adjacent and `ArchiveService` config surfaces.
-3. **Phase 5F — Security, users, roles, system health, schedules.** Schedule authoring was moved here during 5D scoping.
-4. **Phase 6A — Authoring kit expansion.** Add Node/TypeScript templates and 6 new template kinds (alarm responder, PTZ controller, ML-detector bridge, scheduled exporter, dashboard backend, plugin scaffold).
-5. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
-6. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
+1. **Phase 5E — Detector + analytics depth, archive policies.** Not yet brainstormed. Closes the last large pending block in `LogicService`-adjacent and `ArchiveService` config surfaces.
+2. **Phase 5F — Security, users, roles, system health, schedules.** Schedule authoring was moved here during 5D scoping.
+3. **Phase 6A — Authoring kit expansion.** Add Node/TypeScript templates and 6 new template kinds (alarm responder, PTZ controller, ML-detector bridge, scheduled exporter, dashboard backend, plugin scaffold).
+4. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
+5. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
 
 ---
 
@@ -111,6 +110,6 @@ These were learned during 5A and 5C and apply to every future phase:
 
 You can hand this project to Codex (or any other agent) with the following one-liner:
 
-> Read `STATUS.md` at the repo root, then continue from the "Next concrete step" listed in `docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`. Default next step is Phase 5D, whose plan is at `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md`. Follow that plan task-by-task with TDD discipline; commit after every task. Live-verify mutations against the stand at `100.76.150.18`. Sanitize evidence before commit. Test runner: `python3.12 -m unittest discover -s tools/tests`.
+> Read `STATUS.md` at the repo root, then continue from the "Next concrete step" listed in `docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`. Phase 5D is implemented on `codex/phase-5d-layouts-maps-videowalls`; default next step is Phase 5E (detector + analytics depth, archive policies) brainstorming/spec. Follow future plans task-by-task with TDD discipline; commit after every task. Live-verify mutations against the demo stand. Sanitize evidence before commit. Test runner: `python3.12 -m unittest discover -s tools/tests`.
 
 That single sentence plus this file gives a fresh session everything it needs.

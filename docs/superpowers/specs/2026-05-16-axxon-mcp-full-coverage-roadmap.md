@@ -27,7 +27,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5A** Live + archive viewing | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_view.py`, `tools/axxon_view_smoke.py`, `docs/api-audit/phase-5a-view-smoke-latest.md` |
 | **5B** PTZ + Tag&Track + control panels | ⏸ deferred (no PTZ fixture) | n/a | none |
 | **5C** Alarms (lifecycle + subscription) | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_alarms.py`, `tools/axxon_alarms_smoke.py`, `docs/api-audit/phase-5c-alarms-smoke-latest.md`, design + plan under `docs/superpowers/specs/` and `docs/superpowers/plans/` |
-| **5D** Videowall / layouts / maps | 📄 design + plan written, **code not started** | no | `docs/superpowers/specs/2026-05-17-phase-5d-layouts-maps-videowalls-design.md`, `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` |
+| **5D** Videowall / layouts / maps | ✅ implemented on branch | no | `tools/axxon_mcp_view_objects.py`, `tools/axxon_view_objects_smoke.py`, `docs/api-audit/phase-5d-view-objects-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5E** Detector depth + archive policies | ❌ not started | no | none |
 | **5F** Security / users / system health | ❌ not started | no | none |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
@@ -36,7 +36,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
-**Next concrete step:** execute the Phase 5D implementation plan (`docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md`).
+**Next concrete step:** brainstorm and write the Phase 5E design/spec (Detector + analytics depth, archive policies).
 
 ---
 
@@ -49,7 +49,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | Axxon One product docs | https://docs.axxonsoft.com/confluence/spaces/ONE2025/pages/314535799/Documentation | Public product documentation — used for capability mapping, not embedded in repo. |
 | Integration APIs 3.0 PDF | `docs/integration-apis-3.0/` (local; gitignored) | AxxonSoft-copyrighted. Excluded from the public repo. Drives `api_methods.json` / `http_endpoints.json`. |
 | gRPC proto files | `docs/grpc-proto-files/` (local; gitignored) | AxxonSoft-copyrighted. Source for the 361-method catalog. |
-| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 33 rows, 27 verified, 6 fixture-blocked. |
+| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 36 rows, 30 verified, 6 fixture-blocked. |
 | Structured MCP corpus | `docs/api-audit/mcp-corpus/` | 7 JSON files (api_methods, http_endpoints, task_recipes, fixtures, safety_policies, known_behaviors, README). |
 
 ### 2.2 Demo / testing stand
