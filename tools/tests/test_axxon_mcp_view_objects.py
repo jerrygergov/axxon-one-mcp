@@ -29,6 +29,45 @@ class FakeClient:
     def __init__(self) -> None:
         self.inventory: dict[str, Any] = {"cameras": [], "archives": []}
         self.calls: list[tuple[str, tuple, dict]] = []
+        self.map_pages: list[dict[str, Any]] = [
+            {
+                "meta": {
+                    "id": "m-1",
+                    "access": "MAP_ACCESS_FULL",
+                    "sharing": {"owner": "u-1", "kind": "SHARING_KIND_ANY", "shared_roles": []},
+                    "name": "Office plan",
+                    "type": "MAP_TYPE_RASTER",
+                    "etag": "e1",
+                    "image_etag": "ie1",
+                }
+            },
+            {
+                "meta": {
+                    "id": "m-2",
+                    "access": "MAP_ACCESS_FULL",
+                    "sharing": {"owner": "u-2", "kind": "SHARING_KIND_ANY", "shared_roles": []},
+                    "name": "Floor 1",
+                    "type": "MAP_TYPE_RASTER",
+                    "etag": "e2",
+                    "image_etag": "ie2",
+                }
+            },
+        ]
+        self.map_image_bytes: dict[str, bytes] = {"m-1": b"X" * 10, "m-big": b"Y" * 5_000_000}
+        self.map_markers: dict[str, list[dict[str, Any]]] = {
+            "m-1": [
+                {
+                    "id": "mk-1",
+                    "access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+                    "position": {"x": 0.5, "y": 0.2},
+                    "marker_type": "MARKER_TYPE_CAMERA",
+                }
+            ],
+        }
+        self.providers: list[dict[str, Any]] = [
+            {"id": "bitmap-id", "name": "Bitmap or vector image", "etag": "bp1"},
+            {"id": "google-id", "name": "Google Map", "etag": "gp1"},
+        ]
 
     def load_inventory(self) -> dict[str, Any]:
         return self.inventory
@@ -117,6 +156,41 @@ class FakeClient:
         if layout_id == "lid-unknown":
             return {"status": 500, "body": {}}
         return {"status": 200, "body": {"images": [{"id": "img-1", "etag": "ie-1"}]}}
+
+    def list_maps(self) -> dict[str, Any]:
+        self.calls.append(("list_maps", (), {}))
+        return {"status": 200, "body": {"items": list(self.map_pages)}}
+
+    def batch_get_maps(self, map_ids: list[str]) -> dict[str, Any]:
+        self.calls.append(("batch_get_maps", (tuple(map_ids),), {}))
+        items = [m for m in self.map_pages if m["meta"]["id"] in map_ids]
+        not_found = [mid for mid in map_ids if mid not in {m["meta"]["id"] for m in self.map_pages}]
+        return {"status": 200, "body": {"items": items, "not_found": not_found}}
+
+    def get_map_image(self, map_id: str) -> dict[str, Any]:
+        self.calls.append(("get_map_image", (map_id,), {}))
+        if map_id not in self.map_image_bytes:
+            return {"status": 500, "body": {}}
+        import base64
+
+        raw = self.map_image_bytes[map_id]
+        return {
+            "status": 200,
+            "body": {
+                "etag": f"img-etag-{map_id}",
+                "total_size_bytes": len(raw),
+                "content_type": "image/png",
+                "data": base64.b64encode(raw).decode("ascii"),
+            },
+        }
+
+    def get_markers(self, map_id: str) -> dict[str, Any]:
+        self.calls.append(("get_markers", (map_id,), {}))
+        return {"status": 200, "body": {"markers": list(self.map_markers.get(map_id, []))}}
+
+    def list_map_providers(self) -> dict[str, Any]:
+        self.calls.append(("list_map_providers", (), {}))
+        return {"status": 200, "body": {"map_providers": list(self.providers)}}
 
 
 class AxxonMcpViewObjectsTests(unittest.TestCase):
@@ -289,6 +363,75 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
         r = vo.list_layout_images("lid-unknown")
         self.assertEqual(r["status"], "gap")
+
+    def test_list_maps_returns_normalized_items(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_maps(limit=999)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 2)
+        self.assertEqual(r["applied_limit"], module.LIST_LIMIT_CAP)
+        self.assertEqual(r["items"][0]["map_id"], "m-1")
+        self.assertEqual(r["items"][0]["type"], "MAP_TYPE_RASTER")
+
+    def test_get_map_returns_normalized_item(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_map("m-1")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["item"]["map_id"], "m-1")
+
+    def test_get_map_unknown_id_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
+        r = vo.get_map("m-missing")
+        self.assertEqual(r["status"], "gap")
+
+    def test_get_map_image_small_returns_metadata_no_raw_bytes(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_map_image("m-1")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["bytes_returned"], 10)
+        self.assertFalse(r["truncated"])
+        self.assertEqual(r["content_type"], "image/png")
+        self.assertNotIn("data", r)
+
+    def test_get_map_image_truncates_at_cap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_map_image("m-big", max_bytes=1000)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["bytes_returned"], 1000)
+        self.assertTrue(r["truncated"])
+
+    def test_get_map_image_unknown_id_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
+        r = vo.get_map_image("m-missing")
+        self.assertEqual(r["status"], "gap")
+
+    def test_get_markers_returns_normalized_list(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_markers("m-1")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["marker_id"], "mk-1")
+
+    def test_list_map_providers_returns_provider_list(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_map_providers()
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 2)
+        self.assertIn("Google", r["items"][1]["name"])
 
 
 if __name__ == "__main__":

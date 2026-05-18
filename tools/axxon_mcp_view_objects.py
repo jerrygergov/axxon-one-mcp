@@ -201,3 +201,85 @@ class AxxonMcpViewObjects:
             "count": len(items),
             "items": items,
         }
+
+    def list_maps(self, limit: int = 50) -> dict[str, Any]:
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        client = self._ensure_client()
+        resp = client.list_maps()
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        items = [normalize_map(it) for it in (body or {}).get("items", [])][:applied_limit]
+        return {
+            "status": "ok",
+            "tool": "list_maps",
+            "count": len(items),
+            "applied_limit": applied_limit,
+            "items": items,
+        }
+
+    def get_map(self, map_id: str) -> dict[str, Any]:
+        client = self._ensure_client()
+        resp = client.batch_get_maps([map_id])
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        items = (body or {}).get("items", [])
+        if not items:
+            return {
+                "status": "gap",
+                "tool": "get_map",
+                "message": f"Map not found: {map_id}",
+            }
+        return {"status": "ok", "tool": "get_map", "item": normalize_map(items[0])}
+
+    def get_map_image(self, map_id: str, max_bytes: int = MAP_IMAGE_BYTES_CAP) -> dict[str, Any]:
+        applied_cap = min(max(int(max_bytes), 1), MAP_IMAGE_BYTES_CAP)
+        client = self._ensure_client()
+        resp = client.get_map_image(map_id)
+        if not isinstance(resp, dict) or resp.get("status") != 200:
+            return {
+                "status": "gap",
+                "tool": "get_map_image",
+                "message": f"Map image not available: {map_id}",
+            }
+        body = resp.get("body") or {}
+        data_b64 = body.get("data", "")
+        try:
+            raw = base64.b64decode(data_b64) if data_b64 else b""
+        except Exception:
+            raw = b""
+        total = int(body.get("total_size_bytes") or len(raw))
+        truncated = total > applied_cap or len(raw) > applied_cap
+        bytes_returned = min(total, applied_cap)
+        return {
+            "status": "ok",
+            "tool": "get_map_image",
+            "map_id": map_id,
+            "etag": body.get("etag", ""),
+            "content_type": body.get("content_type", ""),
+            "bytes_returned": bytes_returned,
+            "truncated": truncated,
+            "applied_cap": applied_cap,
+        }
+
+    def get_markers(self, map_id: str) -> dict[str, Any]:
+        client = self._ensure_client()
+        resp = client.get_markers(map_id)
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        items = [normalize_marker(marker) for marker in (body or {}).get("markers", [])]
+        return {
+            "status": "ok",
+            "tool": "get_markers",
+            "map_id": map_id,
+            "count": len(items),
+            "items": items,
+        }
+
+    def list_map_providers(self) -> dict[str, Any]:
+        client = self._ensure_client()
+        resp = client.list_map_providers()
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        items = list((body or {}).get("map_providers", []))
+        return {
+            "status": "ok",
+            "tool": "list_map_providers",
+            "count": len(items),
+            "items": items,
+        }
