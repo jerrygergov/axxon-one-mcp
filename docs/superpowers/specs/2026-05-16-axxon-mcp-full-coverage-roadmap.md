@@ -20,6 +20,26 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 ---
 
+## 1b. Current phase status (updated 2026-05-18)
+
+| Phase | State | Merged to main? | Artifacts |
+| --- | --- | --- | --- |
+| **5A** Live + archive viewing | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_view.py`, `tools/axxon_view_smoke.py`, `docs/api-audit/phase-5a-view-smoke-latest.md` |
+| **5B** PTZ + Tag&Track + control panels | ⏸ deferred (no PTZ fixture) | n/a | none |
+| **5C** Alarms (lifecycle + subscription) | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_alarms.py`, `tools/axxon_alarms_smoke.py`, `docs/api-audit/phase-5c-alarms-smoke-latest.md`, design + plan under `docs/superpowers/specs/` and `docs/superpowers/plans/` |
+| **5D** Videowall / layouts / maps | 📄 design + plan written, **code not started** | no | `docs/superpowers/specs/2026-05-17-phase-5d-layouts-maps-videowalls-design.md`, `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` |
+| **5E** Detector depth + archive policies | ❌ not started | no | none |
+| **5F** Security / users / system health | ❌ not started | no | none |
+| **6A** Authoring kit expansion | ❌ not started | no | none |
+| **6B** Partner SDK kit + distribution | ❌ not started | no | none |
+| **7** NL → plan translator | ❌ not started | no | none |
+
+**Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
+
+**Next concrete step:** execute the Phase 5D implementation plan (`docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md`).
+
+---
+
 ## 2. Source material and ground truth
 
 ### 2.1 Inputs to this roadmap
