@@ -8,6 +8,7 @@ and only metadata is echoed in tool responses.
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -20,6 +21,69 @@ MAP_IMAGE_BYTES_CAP = 4_194_304
 LAYOUT_VIEW_MODES = ("meta", "full")
 LAYOUT_VIEW_MAP = {"meta": "VIEW_MODE_ONLY_META", "full": "VIEW_MODE_FULL"}
 MAP_TYPE_CHOICES = ("MAP_TYPE_RASTER", "MAP_TYPE_GOOGLE", "MAP_TYPE_OSM")
+
+
+def normalize_layout(raw: dict[str, Any]) -> dict[str, Any]:
+    """Flatten LayoutFull or LayoutMeta to a stable schema."""
+    meta = raw.get("meta") or {}
+    body = raw.get("body") or {}
+    cells = body.get("cells")
+    return {
+        "layout_id": meta.get("layout_id") or body.get("id") or "",
+        "display_name": body.get("display_name"),
+        "is_user_defined": body.get("is_user_defined"),
+        "is_for_alarm": body.get("is_for_alarm"),
+        "owned_by_user": bool(meta.get("owned_by_user")),
+        "etag": meta.get("etag", ""),
+        "has_write_access": bool(meta.get("has_write_access")),
+        "cells_count": len(cells) if isinstance(cells, dict) else None,
+        "map_id": body.get("map_id"),
+    }
+
+
+def normalize_map(raw: dict[str, Any]) -> dict[str, Any]:
+    """Flatten Map with meta to a stable schema."""
+    meta = raw.get("meta") or {}
+    sharing = meta.get("sharing") or {}
+    return {
+        "map_id": meta.get("id") or "",
+        "name": meta.get("name", ""),
+        "type": meta.get("type", ""),
+        "access": meta.get("access", ""),
+        "owner": sharing.get("owner", ""),
+        "sharing_kind": sharing.get("kind", ""),
+        "etag": meta.get("etag", ""),
+        "image_etag": meta.get("image_etag", ""),
+    }
+
+
+def normalize_wall(raw: dict[str, Any]) -> dict[str, Any]:
+    """Flatten WallInfo to a stable schema; never echoes the data blob."""
+    data_b64 = (raw.get("data") or {}).get("data") or ""
+    try:
+        data_size = len(base64.b64decode(data_b64)) if data_b64 else 0
+    except Exception:
+        data_size = 0
+    return {
+        "wall_id": raw.get("wall_id", ""),
+        "host_name": raw.get("host_name", ""),
+        "pid": int(raw.get("pid") or 0),
+        "ppid": int(raw.get("ppid") or 0),
+        "name": raw.get("name", ""),
+        "display_name": raw.get("display_name", ""),
+        "seq_number": int(raw.get("seq_number") or 0),
+        "data_size": data_size,
+    }
+
+
+def normalize_marker(raw: dict[str, Any]) -> dict[str, Any]:
+    """Flatten a marker entry to a stable schema."""
+    return {
+        "marker_id": raw.get("id") or raw.get("marker_id") or "",
+        "access_point": raw.get("access_point") or raw.get("ap") or "",
+        "position": raw.get("position") or {},
+        "marker_type": raw.get("marker_type") or raw.get("type") or "",
+    }
 
 
 def default_config_factory() -> AxxonClientConfig:
