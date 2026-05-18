@@ -555,6 +555,138 @@ class AxxonApiClient:
             },
         )
 
+    def list_layouts(self, view: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.layout.LayoutManager.ListLayouts",
+            {"view": view},
+        )
+
+    def batch_get_layouts(self, items: list[dict[str, str]]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.layout.LayoutManager.BatchGetLayouts",
+            {"items": [dict(it) for it in items]},
+        )
+
+    def layouts_on_view(self, layouts: list[dict[str, str]]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.layout.LayoutManager.LayoutsOnView",
+            {"layouts": [dict(layout) for layout in layouts]},
+        )
+
+    def list_layout_images(self, layout_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.layout.LayoutImagesManager.ListLayoutImages",
+            {"layout_id": layout_id},
+        )
+
+    def remove_layout_images(self, layout_id: str, images_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.layout.LayoutImagesManager.RemoveLayoutImages",
+            {"layout_id": layout_id, "images_ids": list(images_ids)},
+        )
+
+    def list_maps(self) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.ListMaps",
+            {},
+        )
+
+    def batch_get_maps(self, map_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.BatchGetMaps",
+            {"map_ids": list(map_ids)},
+        )
+
+    def get_map_image(self, map_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.GetMapImage",
+            {"map_id": map_id},
+        )
+
+    def get_markers(self, map_id: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.GetMarkers",
+            {"map_id": map_id},
+        )
+
+    def list_map_providers(self) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.ListMapProviders",
+            {},
+        )
+
+    def update_markers(self, map_id: str, markers: list[dict[str, Any]]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.UpdateMarkers",
+            {"map_id": map_id, "markers": list(markers)},
+        )
+
+    def change_maps(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.maps.MapService.ChangeMaps",
+            dict(payload),
+        )
+
+    def list_walls(self) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.ListWalls",
+            {},
+        )
+
+    def register_wall(
+        self,
+        *,
+        host_name: str,
+        pid: int,
+        ppid: int,
+        name: str,
+        display_name: str,
+        data_bytes: bytes,
+    ) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.RegisterWall",
+            {
+                "host_name": host_name,
+                "pid": pid,
+                "ppid": ppid,
+                "name": name,
+                "display_name": display_name,
+                "data": {"data": base64.b64encode(data_bytes).decode("ascii")},
+            },
+        )
+
+    def change_wall(self, *, cookie: str, data_bytes: bytes, seq_number: int) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.ChangeWall",
+            {
+                "cookie": cookie,
+                "data": {"data": base64.b64encode(data_bytes).decode("ascii")},
+                "seq_number": seq_number,
+            },
+        )
+
+    def set_control_data(self, *, wall_id: str, seq_number: int, data_bytes: bytes) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.SetControlData",
+            {
+                "wall_id": wall_id,
+                "seq_number": seq_number,
+                "data": {"data": base64.b64encode(data_bytes).decode("ascii")},
+            },
+        )
+
+    def unregister_wall(self, cookie: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.UnregisterWall",
+            {"cookie": cookie},
+        )
+
+    def get_my_control_data(self, cookie: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.videowall.VideowallService.GetMyControlData",
+            {"cookie": cookie},
+        )
+
     def http_request(
         self,
         method: str,
