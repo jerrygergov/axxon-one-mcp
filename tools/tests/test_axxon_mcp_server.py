@@ -324,6 +324,79 @@ class AxxonMcpServerTests(unittest.TestCase):
             "confirmed_alarm",
         )
 
+    def test_create_server_registers_view_objects_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in (
+            "list_layouts",
+            "get_layout",
+            "layouts_on_view",
+            "list_layout_images",
+            "list_maps",
+            "get_map",
+            "get_map_image",
+            "get_markers",
+            "list_map_providers",
+            "list_walls",
+        ):
+            self.assertNotIn(name, docs_only.tools)
+
+        class StubViewObjects:
+            def connect_axxon_profile(self, profile="env"):
+                return {"connected": True, "profile_name": profile, "mode": "read-only"}
+
+            def list_layouts(self, view="meta", limit=50):
+                return {"status": "ok", "view": view, "limit": limit}
+
+            def get_layout(self, layout_id, etag=None):
+                return {"status": "ok", "id": layout_id}
+
+            def layouts_on_view(self, layouts):
+                return {"status": "ok", "pushed": len(layouts)}
+
+            def list_layout_images(self, layout_id):
+                return {"status": "ok"}
+
+            def list_maps(self, limit=50):
+                return {"status": "ok", "limit": limit}
+
+            def get_map(self, map_id):
+                return {"status": "ok", "id": map_id}
+
+            def get_map_image(self, map_id, max_bytes=4_194_304):
+                return {"status": "ok", "id": map_id, "max_bytes": max_bytes}
+
+            def get_markers(self, map_id):
+                return {"status": "ok"}
+
+            def list_map_providers(self):
+                return {"status": "ok"}
+
+            def list_walls(self, limit=50):
+                return {"status": "ok"}
+
+        server = module.create_server(
+            docs=StubDocs(),
+            view_objects=StubViewObjects(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        for name in (
+            "view_objects_connect_axxon_profile",
+            "list_layouts",
+            "get_layout",
+            "layouts_on_view",
+            "list_layout_images",
+            "list_maps",
+            "get_map",
+            "get_map_image",
+            "get_markers",
+            "list_map_providers",
+            "list_walls",
+        ):
+            self.assertIn(name, server.tools)
+        self.assertEqual(server.tools["list_maps"](7)["limit"], 7)
+        self.assertEqual(server.tools["get_map_image"]("m-1", 1024)["max_bytes"], 1024)
+
 
 if __name__ == "__main__":
     unittest.main()

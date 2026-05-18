@@ -40,6 +40,7 @@ def create_server(
     view: Any | None = None,
     alarms: Any | None = None,
     alarm_mutator: Any | None = None,
+    view_objects: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -108,6 +109,9 @@ def create_server(
 
     if alarm_mutator is not None:
         register_alarm_mutation_tools(server, alarm_mutator)
+
+    if view_objects is not None:
+        register_view_objects_tools(server, view_objects)
 
     return server
 
@@ -281,6 +285,63 @@ def register_alarm_mutation_tools(server: Any, mutator: Any) -> None:
     def read_alarms_audit_log() -> dict[str, Any]:
         """Read the in-memory audit log for this alarm-mutator session."""
         return {"entries": mutator.audit_log()}
+
+
+def register_view_objects_tools(server: Any, view_objects: Any) -> None:
+    @server.tool(name="view_objects_connect_axxon_profile")
+    def view_objects_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the view-objects layer to an Axxon profile (read-only, env-backed)."""
+        return view_objects.connect_axxon_profile(profile)
+
+    @server.tool(name="list_layouts")
+    def list_layouts(view: str = "meta", limit: int = 50) -> dict[str, Any]:
+        """List layout metadata or full layout bodies."""
+        return view_objects.list_layouts(view=view, limit=limit)
+
+    @server.tool(name="get_layout")
+    def get_layout(layout_id: str, etag: str | None = None) -> dict[str, Any]:
+        """Return one layout by id."""
+        return view_objects.get_layout(layout_id, etag=etag)
+
+    @server.tool(name="layouts_on_view")
+    def layouts_on_view(layouts: list[dict[str, str]]) -> dict[str, Any]:
+        """Push a layout list to the current view context."""
+        return view_objects.layouts_on_view(layouts)
+
+    @server.tool(name="list_layout_images")
+    def list_layout_images(layout_id: str) -> dict[str, Any]:
+        """List image metadata for one layout."""
+        return view_objects.list_layout_images(layout_id)
+
+    @server.tool(name="list_maps")
+    def list_maps(limit: int = 50) -> dict[str, Any]:
+        """List maps with normalized metadata."""
+        return view_objects.list_maps(limit=limit)
+
+    @server.tool(name="get_map")
+    def get_map(map_id: str) -> dict[str, Any]:
+        """Return one map by id."""
+        return view_objects.get_map(map_id)
+
+    @server.tool(name="get_map_image")
+    def get_map_image(map_id: str, max_bytes: int = 4_194_304) -> dict[str, Any]:
+        """Return map image metadata only, capped by byte budget."""
+        return view_objects.get_map_image(map_id, max_bytes=max_bytes)
+
+    @server.tool(name="get_markers")
+    def get_markers(map_id: str) -> dict[str, Any]:
+        """List normalized map markers."""
+        return view_objects.get_markers(map_id)
+
+    @server.tool(name="list_map_providers")
+    def list_map_providers() -> dict[str, Any]:
+        """List configured map providers."""
+        return view_objects.list_map_providers()
+
+    @server.tool(name="list_walls")
+    def list_walls(limit: int = 50) -> dict[str, Any]:
+        """List videowalls from the paginated wall stream."""
+        return view_objects.list_walls(limit=limit)
 
 
 def register_generator_tools(server: Any, generator: Any) -> None:
@@ -524,6 +585,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5C alarm lifecycle mutations. Requires AXXON_ALARMS_APPROVE=1.",
     )
+    parser.add_argument(
+        "--enable-view-objects",
+        action="store_true",
+        help="Enable Phase 5D read tools for layouts, maps, and videowalls.",
+    )
     return parser
 
 
@@ -569,6 +635,11 @@ def main() -> int:
         from axxon_mcp_alarms import AxxonAlarmMutator
 
         alarm_mutator = AxxonAlarmMutator()
+    view_objects = None
+    if args.enable_view_objects:
+        from axxon_mcp_view_objects import AxxonMcpViewObjects
+
+        view_objects = AxxonMcpViewObjects()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -577,6 +648,7 @@ def main() -> int:
         view=view,
         alarms=alarms,
         alarm_mutator=alarm_mutator,
+        view_objects=view_objects,
     )
     server.run(transport=args.transport)
     return 0
