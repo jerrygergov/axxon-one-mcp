@@ -5,11 +5,12 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **229 / 229** unit tests passing on `main`.
-- **35** PDF gap-coverage matrix rows. 29 verified, 6 fixture-blocked
+- **281 / 281** unit tests passing on the Phase 5D branch.
+- **36** PDF gap-coverage matrix rows. 30 verified, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
-- **11** MCP operator workflows (7 ephemeral, 4 persistent) with
+- **22** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
+  workflows, with
   plan / apply / verify / rollback safety.
 - **15** Phase 2 read-only live tools covering inventory, events, metadata,
   archive, detector discovery, and bounded subscriptions.
@@ -21,6 +22,10 @@ coverage matrix for Axxon One VMS.
   `list_alarm_event_types`, `alarm_subscribe`, plus `raise_alert` and the
   full review lifecycle). Live-verified — see
   `docs/api-audit/phase-5c-alarms-smoke-latest.md`.
+- **11 reads + 11 workflows** Phase 5D view-object coverage for layouts, maps,
+  markers, and videowalls. Live-verified for map/videowall round-trips and
+  read inventory; layout-image live fixture is absent on the demo stand — see
+  `docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -38,7 +43,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5A — Live + archive viewing | ✅ shipped |
 | 5B — PTZ + Tag&Track | ⏸ deferred (no PTZ fixture) |
 | 5C — Alarms | ✅ shipped |
-| 5D — Videowall / layouts / maps | 📄 designed + planned, code not started |
+| 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ❌ not started |
 | 5F — Security / users / system health + schedules | ❌ not started |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
@@ -58,6 +63,8 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_mcp_operator_smoke.py — live smoke harness for all operator workflows
   axxon_mcp_generator.py     — phase-4 integration code generator
   axxon_mcp_generator_smoke.py — static smoke that generates+verifies all templates
+  axxon_mcp_view_objects.py  — phase-5D layouts/maps/videowalls read tools
+  axxon_view_objects_smoke.py — phase-5D live read + mutation smoke
   templates/                 — phase-4 string templates for generated bundles
   axxon_aux_topics_smoke.py  — aux topic coverage smoke (statistics, groups, alerts, ...)
   axxon_api_client.py        — gRPC + HTTP /grpc + legacy HTTP transport
@@ -78,7 +85,7 @@ docs/
 
 ## MCP server
 
-The MCP server has three optional transports:
+The MCP server has optional capability sets:
 
 ```bash
 # docs-only (no live connection)
@@ -113,6 +120,11 @@ AXXON_ALARMS_APPROVE=1 \
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
 python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio
+
+# + layouts/maps/videowalls read tools (Phase 5D)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-view-objects --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -127,10 +139,13 @@ python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --tran
 
 Ephemeral (auto-rollback): `temp_camera`, `temp_archive`, `temp_av_detector`,
 `temp_appdata_detector`, `temp_device_template`, `external_event_inject`,
-`temp_macro`.
+`temp_macro`, `temp_wall`.
 
 Persistent (caller owns lifecycle): `create_camera`, `create_macro`,
-`create_layout`, `set_unit_properties`.
+`create_layout`, `set_unit_properties`, `update_layout`, `delete_layout`,
+`videowall_register`, `videowall_change`, `videowall_set_control_data`,
+`videowall_unregister`, `create_map`, `update_map`, `delete_map`,
+`update_markers`.
 
 All workflows expose: `list_operator_workflows`, `plan_operator_workflow`,
 `apply_operator_plan`, `verify_operator_plan`, `rollback_operator_plan`. Plans
@@ -176,6 +191,27 @@ one audit entry; the audit log is exposed via the
 `axxon://alarms/audit-log` resource. See
 `docs/superpowers/plans/2026-05-16-phase-5c-alarms.md` and the live evidence
 at `docs/api-audit/phase-5c-alarms-smoke-latest.md`.
+
+### View-object tools (Phase 5D)
+
+Reads (`--enable-view-objects`): `view_objects_connect_axxon_profile`,
+`list_layouts`, `get_layout`, `layouts_on_view`, `list_layout_images`,
+`list_maps`, `get_map`, `get_map_image` (4 MiB byte cap; returns metadata only,
+never raw image bytes), `get_markers`, `list_map_providers`, `list_walls`.
+
+Operator workflows (under `--enable-operator` + `AXXON_OPERATOR_APPROVE=1`):
+`temp_wall`, `videowall_register`, `videowall_change`,
+`videowall_set_control_data`, `videowall_unregister`, `create_map`,
+`update_map`, `delete_map`, `update_markers`, `update_layout`,
+`delete_layout`. Synthetic wall and map round-trips are live-verified; layout
+mutations are offline-tested and intentionally not run against shared demo
+layouts. `list_layout_images` dispatch is offline-tested, but the demo stand
+has no readable layout-image fixture and reports `status: gap`.
+
+Schedules are deferred to Phase 5F. See
+`docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` and
+the live evidence at
+`docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
 
 ## Verification
 
