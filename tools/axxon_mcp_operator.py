@@ -549,6 +549,7 @@ def _build_create_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str
     return {
         "workflow": "create_layout",
         "persistent": True,
+        "caller_owns_lifecycle": True,
         "risk": "mutation",
         "intent": f"create a persistent layout {name} ({grid_rows}x{grid_cols}, {len(cells_payload)} cells)",
         "steps": [{"operation": "add_layout", "unit_type": "Layout", "payload": payload, "layout_id": layout_id}],
@@ -556,6 +557,57 @@ def _build_create_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str
         "expected": {"layout_id": layout_id, "name": name, "cell_count": len(cells_payload)},
         "confirmation_token": "CONFIRM-create_layout",
         "rollback_confirmation_token": "CONFIRM-create_layout-rollback",
+    }
+
+
+def _build_update_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    layout_id = str(params.get("layout_id") or "").strip()
+    if not layout_id:
+        return {
+            "status": "gap",
+            "workflow": "update_layout",
+            "message": "update_layout requires params.layout_id",
+        }
+    etag = str(params.get("etag") or "")
+    body = dict(params.get("body") or {})
+    updated_entry: dict[str, Any] = {"meta": {"layout_id": layout_id, "etag": etag}, "body": body}
+    return {
+        "workflow": "update_layout",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"update layout {layout_id} (etag={etag[:8] or 'none'})",
+        "steps": [{"operation": "update_layout", "payload": {"updated": [updated_entry]}, "layout_id": layout_id}],
+        "rollback": {
+            "strategy": "restore_layout_snapshot",
+            "description": "Pre-apply snapshot captured via BatchGetLayouts; rollback re-applies.",
+        },
+        "expected": {"layout_id": layout_id, "body_keys": sorted(body.keys())},
+        "confirmation_token": "CONFIRM-update_layout",
+        "rollback_confirmation_token": "CONFIRM-update_layout-rollback",
+    }
+
+
+def _build_delete_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    layout_id = str(params.get("layout_id") or "").strip()
+    if not layout_id:
+        return {
+            "status": "gap",
+            "workflow": "delete_layout",
+            "message": "delete_layout requires params.layout_id",
+        }
+    return {
+        "workflow": "delete_layout",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"delete layout {layout_id}",
+        "steps": [{"operation": "update_layout", "payload": {"removed_layouts": [layout_id]}, "layout_id": layout_id}],
+        "rollback": {
+            "strategy": "restore_layout_snapshot",
+            "description": "Pre-apply snapshot re-adds via created[].",
+        },
+        "expected": {"layout_id": layout_id},
+        "confirmation_token": "CONFIRM-delete_layout",
+        "rollback_confirmation_token": "CONFIRM-delete_layout-rollback",
     }
 
 
@@ -843,6 +895,8 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "create_camera": _build_create_camera_plan,
     "create_macro": _build_create_macro_plan,
     "create_layout": _build_create_layout_plan,
+    "update_layout": _build_update_layout_plan,
+    "delete_layout": _build_delete_layout_plan,
     "set_unit_properties": _build_set_unit_properties_plan,
     "temp_wall": _build_temp_wall_plan,
     "videowall_register": _build_videowall_register_plan,

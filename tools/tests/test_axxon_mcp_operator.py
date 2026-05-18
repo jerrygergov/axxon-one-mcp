@@ -442,6 +442,7 @@ class OperatorPlanTests(unittest.TestCase):
             "rows": 1,
             "cols": 1,
         })
+        self.assertTrue(plan["caller_owns_lifecycle"])
         applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
         self.assertEqual(applied["status"], "applied")
         layout_id = applied["created_uids"][0]
@@ -574,6 +575,31 @@ class OperatorPlanTests(unittest.TestCase):
         )
         self.assertEqual(plan["steps"][0]["operation"], "update_markers")
         self.assertEqual(plan["steps"][0]["params"]["map_id"], "m-1")
+
+    def test_update_layout_requires_layout_id(self) -> None:
+        from axxon_mcp_operator import _build_update_layout_plan
+
+        gap = _build_update_layout_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_update_layout_plan(
+            "hosts/Server",
+            {"layout_id": "lid-1", "etag": "e", "body": {"display_name": "Renamed"}},
+        )
+        self.assertEqual(plan["workflow"], "update_layout")
+        self.assertEqual(plan["steps"][0]["operation"], "update_layout")
+        updated = plan["steps"][0]["payload"]["updated"]
+        self.assertEqual(updated[0]["meta"]["layout_id"], "lid-1")
+        self.assertEqual(updated[0]["meta"]["etag"], "e")
+        self.assertEqual(updated[0]["body"]["display_name"], "Renamed")
+
+    def test_delete_layout_requires_layout_id(self) -> None:
+        from axxon_mcp_operator import _build_delete_layout_plan
+
+        gap = _build_delete_layout_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_delete_layout_plan("hosts/Server", {"layout_id": "lid-1"})
+        self.assertEqual(plan["steps"][0]["payload"]["removed_layouts"], ["lid-1"])
+        self.assertEqual(plan["rollback"]["strategy"], "restore_layout_snapshot")
 
 
 if __name__ == "__main__":
