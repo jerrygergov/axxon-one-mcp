@@ -10,6 +10,7 @@ shapes from ``axxon_config_mutation_smoke.py``.
 
 from __future__ import annotations
 
+import base64
 import datetime as dt
 import os as _os
 import uuid
@@ -1141,6 +1142,7 @@ class OperatorRegistry:
         created_uids: list[str] = []
         created_kinds: list[str] = []  # parallel to created_uids: "unit", "template", or "macro"
         step_results: list[list[str]] = []  # uids created by each step (for inter-step dependency resolution)
+        wall_cookies: list[str] = []
         for step in plan.get("steps", []):
             op = step.get("operation")
             if op == "add":
@@ -1241,10 +1243,86 @@ class OperatorRegistry:
                         "plan_id": plan_id,
                     }
                 step_results.append([])
+            elif op == "register_wall":
+                p = step["params"]
+                data_bytes = base64.b64decode(p.get("data_b64") or "") if p.get("data_b64") else b""
+                response = client.register_wall_via_api(
+                    host_name=p["host_name"],
+                    pid=p["pid"],
+                    ppid=p["ppid"],
+                    name=p["name"],
+                    display_name=p["display_name"],
+                    data_bytes=data_bytes,
+                )
+                body = response.get("body") if isinstance(response, dict) else {}
+                cookie = (body or {}).get("cookie") or ""
+                wall_id = (body or {}).get("wall_id") or ""
+                if response.get("status") != 200 or not cookie:
+                    self._record("apply", plan_id=plan_id, status="error", reason="register_wall_failed")
+                    return {"status": "error", "message": "RegisterWall failed", "plan_id": plan_id}
+                step_results.append([cookie, wall_id])
+                if wall_id:
+                    created_uids.append(wall_id)
+                    created_kinds.append("wall")
+                wall_cookies.append(cookie)
+            elif op == "change_wall":
+                p = step["params"]
+                response = client.change_wall_via_api(
+                    cookie=p["cookie"],
+                    data_bytes=base64.b64decode(p.get("data_b64") or ""),
+                    seq_number=p["seq_number"],
+                )
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="change_wall_failed")
+                    return {"status": "error", "message": "ChangeWall failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "set_control_data":
+                p = step["params"]
+                response = client.set_control_data_via_api(
+                    wall_id=p["wall_id"],
+                    seq_number=p["seq_number"],
+                    data_bytes=base64.b64decode(p.get("data_b64") or ""),
+                )
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="set_control_data_failed")
+                    return {"status": "error", "message": "SetControlData failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "unregister_wall":
+                p = step["params"]
+                response = client.unregister_wall_via_api(p["cookie"])
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="unregister_wall_failed")
+                    return {"status": "error", "message": "UnregisterWall failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "change_maps":
+                response = client.change_maps_via_api(step["payload"])
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="change_maps_failed")
+                    return {"status": "error", "message": "ChangeMaps failed", "plan_id": plan_id}
+                map_id = step.get("map_id") or ""
+                if "added" in step["payload"] and map_id:
+                    created_uids.append(map_id)
+                    created_kinds.append("map")
+                step_results.append([map_id] if map_id else [])
+            elif op == "update_markers":
+                p = step["params"]
+                response = client.update_markers_via_api(p["map_id"], p["markers"])
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="update_markers_failed")
+                    return {"status": "error", "message": "UpdateMarkers failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "update_layout":
+                response = client.update_layout_via_api(step["payload"])
+                if response.get("status") != 200:
+                    self._record("apply", plan_id=plan_id, status="error", reason="update_layout_failed")
+                    return {"status": "error", "message": "LayoutManager.Update failed", "plan_id": plan_id}
+                layout_id = step.get("layout_id") or ""
+                step_results.append([layout_id] if layout_id else [])
         self._state[plan_id] = {
             "status": "applied",
             "created_uids": list(created_uids),
             "created_kinds": list(created_kinds),
+            "wall_cookies": list(wall_cookies),
         }
         self._record("apply", plan_id=plan_id, status="applied", created_count=len(created_uids))
         return {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
@@ -1307,6 +1385,8 @@ class OperatorRegistry:
         state = self._state.get(plan_id, {})
         created_uids = list(state.get("created_uids", []))
         created_kinds = list(state.get("created_kinds", ["unit"] * len(created_uids)))
+        wall_uids = [uid for uid, kind in zip(created_uids, created_kinds) if kind == "wall"]
+        wall_cookie_by_uid = dict(zip(wall_uids, state.get("wall_cookies", [])))
         removed: list[str] = []
         failed: list[dict[str, Any]] = []
         for uid, kind in reversed(list(zip(created_uids, created_kinds))):
@@ -1316,6 +1396,11 @@ class OperatorRegistry:
                 response = client.change_macros({"removed_macros": [uid]})
             elif kind == "layout":
                 response = client.change_layouts({"removed": [uid]})
+            elif kind == "map":
+                response = client.change_maps_via_api({"removed": [uid]})
+            elif kind == "wall":
+                cookie = wall_cookie_by_uid.get(uid, "")
+                response = client.unregister_wall_via_api(cookie) if cookie else {"failed": True, "failed_reason": ["missing_cookie"]}
             else:
                 response = client.change_config({"removed": [{"uid": uid}]})
             if response.get("failed"):

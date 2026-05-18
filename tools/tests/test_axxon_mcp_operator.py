@@ -601,6 +601,85 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(plan["steps"][0]["payload"]["removed_layouts"], ["lid-1"])
         self.assertEqual(plan["rollback"]["strategy"], "restore_layout_snapshot")
 
+    def test_apply_dispatches_register_wall_and_records_cookie(self) -> None:
+        import importlib
+
+        ao = importlib.import_module("axxon_mcp_operator")
+
+        class FakeClient:
+            def __init__(self):
+                self.calls = []
+
+            def register_wall_via_api(self, **kwargs):
+                self.calls.append(("register_wall", kwargs))
+                return {"status": 200, "body": {"cookie": "ck-1", "wall_id": "w-1", "seq_number": 1}}
+
+            def unregister_wall_via_api(self, cookie):
+                self.calls.append(("unregister_wall", cookie))
+                return {"status": 200, "body": {}}
+
+        fake = FakeClient()
+        registry = ao.OperatorRegistry(client_factory=lambda: fake, host="hosts/Server", enabled=True)
+        plan = registry.plan("temp_wall", {"name": "codex-test"})
+        self.assertEqual(plan["workflow"], "temp_wall")
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertIn("w-1", applied.get("created_uids", []))
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(fake.calls[-1][0], "unregister_wall")
+
+    def test_apply_dispatches_create_map_and_rolls_back_with_change_maps_removed(self) -> None:
+        import importlib
+
+        ao = importlib.import_module("axxon_mcp_operator")
+
+        class FakeClient:
+            def __init__(self):
+                self.calls = []
+
+            def change_maps_via_api(self, payload):
+                self.calls.append(("change_maps", payload))
+                return {"status": 200, "body": {}}
+
+        fake = FakeClient()
+        registry = ao.OperatorRegistry(client_factory=lambda: fake, host="hosts/Server", enabled=True)
+        plan = registry.plan("create_map", {"name": "codex-map", "map_id": "m-created"})
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["created_uids"], ["m-created"])
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(fake.calls[-1], ("change_maps", {"removed": ["m-created"]}))
+
+    def test_apply_dispatches_update_markers_and_update_layout(self) -> None:
+        import importlib
+
+        ao = importlib.import_module("axxon_mcp_operator")
+
+        class FakeClient:
+            def __init__(self):
+                self.calls = []
+
+            def update_markers_via_api(self, map_id, markers):
+                self.calls.append(("update_markers", map_id, markers))
+                return {"status": 200, "body": {}}
+
+            def update_layout_via_api(self, payload):
+                self.calls.append(("update_layout", payload))
+                return {"status": 200, "body": {}}
+
+        fake = FakeClient()
+        registry = ao.OperatorRegistry(client_factory=lambda: fake, host="hosts/Server", enabled=True)
+        markers = registry.plan("update_markers", {"map_id": "m-1", "markers": [{"id": "mk"}]})
+        markers_applied = registry.apply(markers["plan_id"], markers["confirmation_token"])
+        self.assertEqual(markers_applied["status"], "applied")
+        layout = registry.plan("update_layout", {"layout_id": "lid-1", "body": {"display_name": "Renamed"}})
+        layout_applied = registry.apply(layout["plan_id"], layout["confirmation_token"])
+        self.assertEqual(layout_applied["status"], "applied")
+        self.assertEqual(fake.calls[0][0], "update_markers")
+        self.assertEqual(fake.calls[1][0], "update_layout")
+
 
 if __name__ == "__main__":
     unittest.main()
