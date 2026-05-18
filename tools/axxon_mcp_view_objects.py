@@ -141,3 +141,63 @@ class AxxonMcpViewObjects:
         if self.client is None:
             self.connect_axxon_profile("env")
         return self.client
+
+    def list_layouts(self, view: str = "meta", limit: int = 50) -> dict[str, Any]:
+        if view not in LAYOUT_VIEW_MODES:
+            return {
+                "status": "gap",
+                "tool": "list_layouts",
+                "message": f"view must be one of {LAYOUT_VIEW_MODES}, got {view!r}",
+            }
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        applied_view = LAYOUT_VIEW_MAP[view]
+        client = self._ensure_client()
+        resp = client.list_layouts(view=applied_view)
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        items = [normalize_layout(it) for it in (body or {}).get("items", [])][:applied_limit]
+        return {
+            "status": "ok",
+            "tool": "list_layouts",
+            "count": len(items),
+            "applied_view": applied_view,
+            "applied_limit": applied_limit,
+            "current": (body or {}).get("current", ""),
+            "items": items,
+        }
+
+    def get_layout(self, layout_id: str, etag: str | None = None) -> dict[str, Any]:
+        client = self._ensure_client()
+        resp = client.batch_get_layouts([{"layout_id": layout_id, "etag": etag or ""}])
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        for raw in (body or {}).get("items", []):
+            if (raw.get("meta") or {}).get("layout_id") == layout_id:
+                return {"status": "ok", "tool": "get_layout", "item": normalize_layout(raw)}
+        return {
+            "status": "gap",
+            "tool": "get_layout",
+            "message": f"Layout not found: {layout_id}",
+        }
+
+    def layouts_on_view(self, layouts: list[dict[str, str]]) -> dict[str, Any]:
+        client = self._ensure_client()
+        client.layouts_on_view(layouts)
+        return {"status": "ok", "tool": "layouts_on_view", "pushed": len(layouts)}
+
+    def list_layout_images(self, layout_id: str) -> dict[str, Any]:
+        client = self._ensure_client()
+        resp = client.list_layout_images(layout_id)
+        if not isinstance(resp, dict) or resp.get("status") != 200:
+            return {
+                "status": "gap",
+                "tool": "list_layout_images",
+                "message": f"Layout not found or unreadable: {layout_id}",
+            }
+        body = resp.get("body") or {}
+        items = list(body.get("images", []))
+        return {
+            "status": "ok",
+            "tool": "list_layout_images",
+            "layout_id": layout_id,
+            "count": len(items),
+            "items": items,
+        }

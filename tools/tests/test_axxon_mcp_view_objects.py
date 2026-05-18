@@ -36,6 +36,88 @@ class FakeClient:
     def sanitize(self, value):
         return value
 
+    def list_layouts(self, view: str) -> dict[str, Any]:
+        self.calls.append(("list_layouts", (view,), {}))
+        return {
+            "status": 200,
+            "body": {
+                "current": "lid-1",
+                "items": [
+                    {
+                        "meta": {
+                            "layout_id": "lid-1",
+                            "owned_by_user": True,
+                            "etag": "e1",
+                            "has_write_access": True,
+                        },
+                        "body": {
+                            "id": "lid-1",
+                            "display_name": "First",
+                            "is_user_defined": True,
+                            "is_for_alarm": False,
+                            "cells": {"1": {}, "2": {}},
+                            "map_id": "",
+                        },
+                    },
+                    {
+                        "meta": {
+                            "layout_id": "lid-2",
+                            "owned_by_user": False,
+                            "etag": "e2",
+                            "has_write_access": False,
+                        },
+                        "body": {
+                            "id": "lid-2",
+                            "display_name": "Second",
+                            "is_user_defined": False,
+                            "is_for_alarm": True,
+                            "cells": {"1": {}},
+                            "map_id": "m-1",
+                        },
+                    },
+                ],
+            },
+        }
+
+    def batch_get_layouts(self, items: list[dict[str, str]]) -> dict[str, Any]:
+        self.calls.append(("batch_get_layouts", (tuple(items[0].items()) if items else (),), {}))
+        ids = [it["layout_id"] for it in items]
+        out_items = []
+        not_found = []
+        for layout_id in ids:
+            if layout_id == "lid-1":
+                out_items.append(
+                    {
+                        "meta": {
+                            "layout_id": "lid-1",
+                            "owned_by_user": True,
+                            "etag": "e1",
+                            "has_write_access": True,
+                        },
+                        "body": {
+                            "id": "lid-1",
+                            "display_name": "First",
+                            "is_user_defined": True,
+                            "is_for_alarm": False,
+                            "cells": {"1": {}, "2": {}},
+                            "map_id": "",
+                        },
+                    }
+                )
+            else:
+                not_found.append(layout_id)
+        return {"status": 200, "body": {"items": out_items, "not_found_items": not_found}}
+
+    def layouts_on_view(self, layouts: list[dict[str, str]]) -> dict[str, Any]:
+        self.calls.append(("layouts_on_view", (), {"layouts": list(layouts)}))
+        return {"status": 200, "body": {}}
+
+    def list_layout_images(self, layout_id: str) -> dict[str, Any]:
+        self.calls.append(("list_layout_images", (layout_id,), {}))
+        if layout_id == "lid-unknown":
+            return {"status": 500, "body": {}}
+        return {"status": 200, "body": {"images": [{"id": "img-1", "etag": "ie-1"}]}}
+
 
 class AxxonMcpViewObjectsTests(unittest.TestCase):
     def test_module_loads_and_connect_reports_profile(self) -> None:
@@ -149,6 +231,64 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(out["access_point"], "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
         self.assertEqual(out["position"], {"x": 0.5, "y": 0.2})
         self.assertEqual(out["marker_type"], "MARKER_TYPE_CAMERA")
+
+    def test_list_layouts_meta_returns_normalized_items(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_layouts(view="meta", limit=999)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 2)
+        self.assertEqual(r["applied_view"], "VIEW_MODE_ONLY_META")
+        self.assertEqual(r["applied_limit"], module.LIST_LIMIT_CAP)
+        self.assertEqual(r["items"][0]["layout_id"], "lid-1")
+
+    def test_list_layouts_unknown_view_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
+        r = vo.list_layouts(view="banana", limit=10)
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("view", r["message"])
+
+    def test_get_layout_returns_normalized_item(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_layout("lid-1", etag=None)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["item"]["layout_id"], "lid-1")
+        self.assertEqual(r["item"]["display_name"], "First")
+
+    def test_get_layout_unknown_id_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
+        r = vo.get_layout("lid-missing")
+        self.assertEqual(r["status"], "gap")
+        self.assertIn("lid-missing", r["message"])
+
+    def test_layouts_on_view_returns_pushed_count(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.layouts_on_view([{"layout_id": "lid-1", "layout_display_name": "First"}])
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["pushed"], 1)
+
+    def test_list_layout_images_returns_meta(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_layout_images("lid-1")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["id"], "img-1")
+
+    def test_list_layout_images_unknown_layout_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_layout_images("lid-unknown")
+        self.assertEqual(r["status"], "gap")
 
 
 if __name__ == "__main__":
