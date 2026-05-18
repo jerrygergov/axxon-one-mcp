@@ -192,6 +192,33 @@ class FakeClient:
         self.calls.append(("list_map_providers", (), {}))
         return {"status": 200, "body": {"map_providers": list(self.providers)}}
 
+    def list_walls(self) -> dict[str, Any]:
+        self.calls.append(("list_walls", (), {}))
+        return {
+            "status": 200,
+            "body": {
+                "event_stream_items": [
+                    {"walls": [], "unreachable_objects": ["transient"]},
+                    {
+                        "walls": [
+                            {
+                                "wall_id": "w-1",
+                                "host_name": "h",
+                                "pid": 100,
+                                "ppid": 1,
+                                "name": "wall-name",
+                                "display_name": "Main Wall",
+                                "seq_number": 5,
+                                "data": {"data": "VGVzdEJ5dGVz"},
+                            }
+                        ],
+                        "unreachable_objects": [],
+                    },
+                ],
+                "event_stream_count": 2,
+            },
+        }
+
 
 class AxxonMcpViewObjectsTests(unittest.TestCase):
     def test_module_loads_and_connect_reports_profile(self) -> None:
@@ -432,6 +459,32 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(r["status"], "ok")
         self.assertEqual(r["count"], 2)
         self.assertIn("Google", r["items"][1]["name"])
+
+    def test_list_walls_flattens_pages_and_drops_transient_unreachable(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_walls(limit=10)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["wall_id"], "w-1")
+        self.assertEqual(r["items"][0]["data_size"], 9)
+        self.assertEqual(r.get("unreachable_objects", []), [])
+
+    def test_list_walls_returns_empty_list_not_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        fake.list_walls = lambda: {
+            "status": 200,
+            "body": {
+                "event_stream_items": [{"walls": [], "unreachable_objects": []}],
+                "event_stream_count": 1,
+            },
+        }
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.list_walls()
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 0)
 
 
 if __name__ == "__main__":

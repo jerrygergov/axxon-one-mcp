@@ -283,3 +283,28 @@ class AxxonMcpViewObjects:
             "count": len(items),
             "items": items,
         }
+
+    def list_walls(self, limit: int = 50) -> dict[str, Any]:
+        applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
+        client = self._ensure_client()
+        resp = client.list_walls()
+        body = resp.get("body") if isinstance(resp, dict) else {}
+        pages = (body or {}).get("event_stream_items") or []
+        flat: list[dict[str, Any]] = []
+        unreachable_per_page: list[list[str]] = []
+        for page in pages:
+            flat.extend(page.get("walls") or [])
+            unreachable_per_page.append(list(page.get("unreachable_objects") or []))
+        if unreachable_per_page and all(unreachable for unreachable in unreachable_per_page):
+            unreachable = sorted(set.intersection(*[set(unreachable) for unreachable in unreachable_per_page]))
+        else:
+            unreachable = []
+        items = [normalize_wall(wall) for wall in flat][:applied_limit]
+        return {
+            "status": "ok",
+            "tool": "list_walls",
+            "count": len(items),
+            "applied_limit": applied_limit,
+            "items": items,
+            "unreachable_objects": unreachable,
+        }
