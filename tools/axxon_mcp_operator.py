@@ -37,6 +37,31 @@ def _short_stamp() -> str:
     return dt.datetime.now(dt.UTC).strftime("%H%M%S%f")[:-3]
 
 
+PNG_1X1_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+PNG_1X1_SIZE = len(base64.b64decode(PNG_1X1_B64))
+
+
+def _normalize_map_marker(raw: dict[str, Any]) -> dict[str, Any]:
+    marker = dict(raw)
+    component_name = str(
+        marker.pop("component_name", "")
+        or marker.pop("access_point", "")
+        or marker.pop("ap", "")
+        or marker.pop("marker_id", "")
+        or marker.pop("id", "")
+    )
+    marker.pop("marker_type", None)
+    marker.pop("type", None)
+    if component_name:
+        marker["component_name"] = component_name
+    marker.setdefault("position", {"x": 0.5, "y": 0.5})
+    marker.setdefault("display_title", False)
+    if not any(key.endswith("_marker") for key in marker):
+        marker["camera_marker"] = {"video_on": False}
+    marker.setdefault("icon_scale", 1.0)
+    return marker
+
+
 def _build_temp_camera_payload(host_uid: str, display_name: str, display_id: str) -> dict[str, Any]:
     return {
         "added": [
@@ -794,22 +819,36 @@ def _build_create_map_plan(host_uid: str, params: dict[str, Any]) -> dict[str, A
         return {"status": "gap", "workflow": "create_map", "message": "create_map requires params.name"}
     map_type = str(params.get("type") or "MAP_TYPE_RASTER")
     map_id = str(params.get("map_id") or uuid.uuid4())
-    new_map = {
-        "meta": {
-            "id": map_id,
-            "name": name,
-            "type": map_type,
-            "access": "MAP_ACCESS_FULL",
-            "sharing": {"kind": "SHARING_KIND_OWNER", "shared_roles": []},
+    map_body = dict(params.get("map") or {})
+    map_body.setdefault("name", name)
+    map_body.setdefault("type", map_type)
+    map_body.setdefault("position", {"x": 0.0, "y": 0.0})
+    map_body.setdefault("zoom", int(params.get("zoom") or 1))
+    map_body.setdefault(
+        "image_meta",
+        {
+            "file_name": "codex-map.png",
+            "mime_type": "image/png",
+            "size": {"width": 1.0, "height": 1.0},
+            "name": "codex-map.png",
+            "size_bytes": PNG_1X1_SIZE,
         },
+    )
+    new_map = {
+        "id": map_id,
+        "map": map_body,
+        "image_data": str(params.get("image_data_b64") or PNG_1X1_B64),
     }
+    markers = [_normalize_map_marker(marker) for marker in list(params.get("markers") or [])]
+    if markers:
+        new_map["markers"] = markers
     return {
         "workflow": "create_map",
         "persistent": True,
         "caller_owns_lifecycle": True,
         "risk": "mutation",
         "intent": f"create persistent map {name} (type={map_type})",
-        "steps": [{"operation": "change_maps", "payload": {"added": [new_map]}, "map_id": map_id}],
+        "steps": [{"operation": "change_maps", "payload": {"created": [new_map]}, "map_id": map_id}],
         "rollback": {"strategy": "change_maps_removed", "description": "Rollback removes the added map by id."},
         "expected": {"map_id": map_id, "name": name, "type": map_type},
         "confirmation_token": "CONFIRM-create_map",
@@ -822,14 +861,13 @@ def _build_update_map_plan(host_uid: str, params: dict[str, Any]) -> dict[str, A
     if not map_id:
         return {"status": "gap", "workflow": "update_map", "message": "update_map requires params.map_id"}
     etag = str(params.get("etag") or "")
-    patch = dict(params.get("patch") or {})
-    changed_meta: dict[str, Any] = {"id": map_id, "etag": etag, **patch}
+    patch = dict(params.get("map") or params.get("patch") or {})
     return {
         "workflow": "update_map",
         "persistent": True,
         "risk": "mutation",
         "intent": f"update map {map_id} (etag={etag[:8] or 'none'})",
-        "steps": [{"operation": "change_maps", "payload": {"changed": [{"meta": changed_meta}]}, "map_id": map_id}],
+        "steps": [{"operation": "change_maps", "payload": {"updated": [{"map_id": map_id, "etag": etag, "map": patch}]}, "map_id": map_id}],
         "rollback": {
             "strategy": "restore_map_snapshot",
             "description": "Pre-apply snapshot captured; rollback re-applies it via changed[].",
@@ -868,7 +906,7 @@ def _build_update_markers_plan(host_uid: str, params: dict[str, Any]) -> dict[st
             "workflow": "update_markers",
             "message": "update_markers requires params.map_id",
         }
-    markers = list(params.get("markers") or [])
+    markers = [_normalize_map_marker(marker) for marker in list(params.get("markers") or [])]
     return {
         "workflow": "update_markers",
         "persistent": True,
@@ -1143,6 +1181,7 @@ class OperatorRegistry:
         created_kinds: list[str] = []  # parallel to created_uids: "unit", "template", or "macro"
         step_results: list[list[str]] = []  # uids created by each step (for inter-step dependency resolution)
         wall_cookies: list[str] = []
+        wall_seq_numbers: list[int] = []
         for step in plan.get("steps", []):
             op = step.get("operation")
             if op == "add":
@@ -1265,6 +1304,7 @@ class OperatorRegistry:
                     created_uids.append(wall_id)
                     created_kinds.append("wall")
                 wall_cookies.append(cookie)
+                wall_seq_numbers.append(int(body.get("seq_number") or 0))
             elif op == "change_wall":
                 p = step["params"]
                 response = client.change_wall_via_api(
@@ -1275,6 +1315,9 @@ class OperatorRegistry:
                 if response.get("status") != 200:
                     self._record("apply", plan_id=plan_id, status="error", reason="change_wall_failed")
                     return {"status": "error", "message": "ChangeWall failed", "plan_id": plan_id}
+                body = response.get("body") if isinstance(response, dict) else {}
+                if (body or {}).get("new_seq_number") is not None:
+                    wall_seq_numbers.append(int((body or {}).get("new_seq_number") or 0))
                 step_results.append([])
             elif op == "set_control_data":
                 p = step["params"]
@@ -1286,6 +1329,9 @@ class OperatorRegistry:
                 if response.get("status") != 200:
                     self._record("apply", plan_id=plan_id, status="error", reason="set_control_data_failed")
                     return {"status": "error", "message": "SetControlData failed", "plan_id": plan_id}
+                body = response.get("body") if isinstance(response, dict) else {}
+                if (body or {}).get("new_seq_number") is not None:
+                    wall_seq_numbers.append(int((body or {}).get("new_seq_number") or 0))
                 step_results.append([])
             elif op == "unregister_wall":
                 p = step["params"]
@@ -1300,7 +1346,7 @@ class OperatorRegistry:
                     self._record("apply", plan_id=plan_id, status="error", reason="change_maps_failed")
                     return {"status": "error", "message": "ChangeMaps failed", "plan_id": plan_id}
                 map_id = step.get("map_id") or ""
-                if "added" in step["payload"] and map_id:
+                if "created" in step["payload"] and map_id:
                     created_uids.append(map_id)
                     created_kinds.append("map")
                 step_results.append([map_id] if map_id else [])
@@ -1323,9 +1369,13 @@ class OperatorRegistry:
             "created_uids": list(created_uids),
             "created_kinds": list(created_kinds),
             "wall_cookies": list(wall_cookies),
+            "wall_seq_numbers": list(wall_seq_numbers),
         }
         self._record("apply", plan_id=plan_id, status="applied", created_count=len(created_uids))
-        return {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
+        result = {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
+        if wall_seq_numbers:
+            result["wall_seq_numbers"] = list(wall_seq_numbers)
+        return result
 
     def verify(self, plan_id: str) -> dict[str, Any]:
         plan = self._plans.get(plan_id)

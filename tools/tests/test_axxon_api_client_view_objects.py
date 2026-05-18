@@ -92,6 +92,17 @@ class ViewObjectsWrappersTests(unittest.TestCase):
             ),
         )
 
+    def test_update_markers_wraps_updated_markers_in_changed(self) -> None:
+        c = _FakeClient()
+        c.update_markers("m-1", [{"component_name": "camera-ap"}])
+        self.assertEqual(
+            c.calls[0],
+            (
+                "axxonsoft.bl.maps.MapService.UpdateMarkers",
+                {"changed": [{"map_id": "m-1", "updated": [{"component_name": "camera-ap"}]}]},
+            ),
+        )
+
     def test_register_wall_passes_full_payload(self) -> None:
         c = _FakeClient()
         c.register_wall(host_name="h", pid=1, ppid=2, name="n", display_name="d", data_bytes=b"abc")

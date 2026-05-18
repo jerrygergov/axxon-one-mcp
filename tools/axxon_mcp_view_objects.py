@@ -78,9 +78,10 @@ def normalize_wall(raw: dict[str, Any]) -> dict[str, Any]:
 
 def normalize_marker(raw: dict[str, Any]) -> dict[str, Any]:
     """Flatten a marker entry to a stable schema."""
+    access_point = raw.get("access_point") or raw.get("ap") or raw.get("component_name") or ""
     return {
-        "marker_id": raw.get("id") or raw.get("marker_id") or "",
-        "access_point": raw.get("access_point") or raw.get("ap") or "",
+        "marker_id": raw.get("id") or raw.get("marker_id") or access_point,
+        "access_point": access_point,
         "position": raw.get("position") or {},
         "marker_type": raw.get("marker_type") or raw.get("type") or "",
     }
@@ -240,20 +241,22 @@ class AxxonMcpViewObjects:
                 "message": f"Map image not available: {map_id}",
             }
         body = resp.get("body") or {}
-        data_b64 = body.get("data", "")
+        image = body.get("image") if isinstance(body.get("image"), dict) else body
+        meta = image.get("meta") or {}
+        data_b64 = image.get("data", "")
         try:
             raw = base64.b64decode(data_b64) if data_b64 else b""
         except Exception:
             raw = b""
-        total = int(body.get("total_size_bytes") or len(raw))
+        total = int(body.get("total_size_bytes") or meta.get("size_bytes") or len(raw))
         truncated = total > applied_cap or len(raw) > applied_cap
         bytes_returned = min(total, applied_cap)
         return {
             "status": "ok",
             "tool": "get_map_image",
             "map_id": map_id,
-            "etag": body.get("etag", ""),
-            "content_type": body.get("content_type", ""),
+            "etag": image.get("etag", "") or body.get("etag", ""),
+            "content_type": body.get("content_type", "") or meta.get("mime_type", ""),
             "bytes_returned": bytes_returned,
             "truncated": truncated,
             "applied_cap": applied_cap,
@@ -263,7 +266,17 @@ class AxxonMcpViewObjects:
         client = self._ensure_client()
         resp = client.get_markers(map_id)
         body = resp.get("body") if isinstance(resp, dict) else {}
-        items = [normalize_marker(marker) for marker in (body or {}).get("markers", [])]
+        markers = (body or {}).get("markers", [])
+        if isinstance(markers, dict):
+            raw_markers = []
+            for access_point, marker in markers.items():
+                if isinstance(marker, dict):
+                    raw_markers.append({"id": access_point, "access_point": access_point, **marker})
+                else:
+                    raw_markers.append({"id": access_point, "access_point": access_point})
+        else:
+            raw_markers = list(markers)
+        items = [normalize_marker(marker) for marker in raw_markers]
         return {
             "status": "ok",
             "tool": "get_markers",

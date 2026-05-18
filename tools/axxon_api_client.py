@@ -618,7 +618,7 @@ class AxxonApiClient:
     def update_markers(self, map_id: str, markers: list[dict[str, Any]]) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.maps.MapService.UpdateMarkers",
-            {"map_id": map_id, "markers": list(markers)},
+            {"changed": [{"map_id": map_id, "updated": list(markers)}]},
         )
 
     def change_maps(self, payload: dict[str, Any]) -> dict[str, Any]:

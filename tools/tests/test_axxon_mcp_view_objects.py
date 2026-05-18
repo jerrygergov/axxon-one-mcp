@@ -186,6 +186,19 @@ class FakeClient:
 
     def get_markers(self, map_id: str) -> dict[str, Any]:
         self.calls.append(("get_markers", (map_id,), {}))
+        if map_id == "m-dict":
+            return {
+                "status": 200,
+                "body": {
+                    "markers": {
+                        "hosts/Server/DeviceIpint.7/SourceEndpoint.video:0:0": {
+                            "position": {"x": 0.3, "y": -0.3},
+                            "component_name": "hosts/Server/DeviceIpint.7/SourceEndpoint.video:0:0",
+                            "camera_marker": {"video_on": False},
+                        }
+                    }
+                },
+            }
         return {"status": 200, "body": {"markers": list(self.map_markers.get(map_id, []))}}
 
     def list_map_providers(self) -> dict[str, Any]:
@@ -436,6 +449,37 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(r["bytes_returned"], 1000)
         self.assertTrue(r["truncated"])
 
+    def test_get_map_image_accepts_nested_image_response(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        fake.map_image_bytes["m-nested"] = b"hello"
+
+        original_get_map_image = fake.get_map_image
+
+        def nested_get_map_image(map_id: str) -> dict[str, Any]:
+            if map_id != "m-nested":
+                return original_get_map_image(map_id)
+            return {
+                "status": 200,
+                "body": {
+                    "image": {
+                        "meta": {"mime_type": "image/png", "size_bytes": "68"},
+                        "etag": "image-etag",
+                        "data": "aGVsbG8=",
+                    }
+                },
+            }
+
+        fake.get_map_image = nested_get_map_image
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_map_image("m-nested", max_bytes=1000)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["etag"], "image-etag")
+        self.assertEqual(r["content_type"], "image/png")
+        self.assertEqual(r["bytes_returned"], 68)
+        self.assertFalse(r["truncated"])
+        self.assertNotIn("data", r)
+
     def test_get_map_image_unknown_id_returns_gap(self) -> None:
         module = importlib.import_module("axxon_mcp_view_objects")
         vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
@@ -450,6 +494,16 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(r["status"], "ok")
         self.assertEqual(r["count"], 1)
         self.assertEqual(r["items"][0]["marker_id"], "mk-1")
+
+    def test_get_markers_accepts_dict_keyed_by_access_point(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.get_markers("m-dict")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["marker_id"], "hosts/Server/DeviceIpint.7/SourceEndpoint.video:0:0")
+        self.assertEqual(r["items"][0]["access_point"], "hosts/Server/DeviceIpint.7/SourceEndpoint.video:0:0")
 
     def test_list_map_providers_returns_provider_list(self) -> None:
         module = importlib.import_module("axxon_mcp_view_objects")

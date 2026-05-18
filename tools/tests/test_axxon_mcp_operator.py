@@ -538,10 +538,13 @@ class OperatorPlanTests(unittest.TestCase):
         plan = _build_create_map_plan("hosts/Server", {"name": "codex-test", "type": "MAP_TYPE_RASTER"})
         self.assertEqual(plan["workflow"], "create_map")
         self.assertEqual(plan["steps"][0]["operation"], "change_maps")
-        added = plan["steps"][0]["payload"]["added"]
-        self.assertEqual(len(added), 1)
-        self.assertEqual(added[0]["meta"]["name"], "codex-test")
-        self.assertEqual(added[0]["meta"]["type"], "MAP_TYPE_RASTER")
+        created = plan["steps"][0]["payload"]["created"]
+        self.assertEqual(len(created), 1)
+        self.assertEqual(created[0]["id"], plan["expected"]["map_id"])
+        self.assertEqual(created[0]["map"]["name"], "codex-test")
+        self.assertEqual(created[0]["map"]["type"], "MAP_TYPE_RASTER")
+        self.assertIn("image_data", created[0])
+        self.assertEqual(created[0]["map"]["image_meta"]["mime_type"], "image/png")
 
     def test_update_map_plan_requires_map_id(self) -> None:
         from axxon_mcp_operator import _build_update_map_plan
@@ -550,9 +553,10 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(gap["status"], "gap")
         plan = _build_update_map_plan("hosts/Server", {"map_id": "m-1", "etag": "e1", "patch": {"name": "renamed"}})
         self.assertEqual(plan["steps"][0]["operation"], "change_maps")
-        changed = plan["steps"][0]["payload"]["changed"]
-        self.assertEqual(changed[0]["meta"]["id"], "m-1")
-        self.assertEqual(changed[0]["meta"]["etag"], "e1")
+        updated = plan["steps"][0]["payload"]["updated"]
+        self.assertEqual(updated[0]["map_id"], "m-1")
+        self.assertEqual(updated[0]["etag"], "e1")
+        self.assertEqual(updated[0]["map"]["name"], "renamed")
         self.assertEqual(plan["rollback"]["strategy"], "restore_map_snapshot")
 
     def test_delete_map_plan_includes_removed(self) -> None:
@@ -575,6 +579,8 @@ class OperatorPlanTests(unittest.TestCase):
         )
         self.assertEqual(plan["steps"][0]["operation"], "update_markers")
         self.assertEqual(plan["steps"][0]["params"]["map_id"], "m-1")
+        self.assertEqual(plan["steps"][0]["params"]["markers"][0]["component_name"], "hosts/Server/x")
+        self.assertIn("camera_marker", plan["steps"][0]["params"]["markers"][0])
 
     def test_update_layout_requires_layout_id(self) -> None:
         from axxon_mcp_operator import _build_update_layout_plan
@@ -625,6 +631,7 @@ class OperatorPlanTests(unittest.TestCase):
         applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
         self.assertEqual(applied["status"], "applied")
         self.assertIn("w-1", applied.get("created_uids", []))
+        self.assertEqual(registry._state[plan["plan_id"]]["wall_seq_numbers"], [1])
         rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(fake.calls[-1][0], "unregister_wall")
