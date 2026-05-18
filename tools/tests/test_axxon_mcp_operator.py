@@ -509,6 +509,9 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(plan["steps"][0]["operation"], "change_wall")
         self.assertEqual(plan["steps"][0]["params"]["cookie"], "ck")
         self.assertEqual(plan["steps"][0]["params"]["seq_number"], 2)
+        self.assertNotIn("ck", plan["intent"])
+        self.assertNotIn("cookie_prefix", plan["expected"])
+        self.assertTrue(plan["expected"]["cookie_present"])
 
     def test_videowall_set_control_data_requires_wall_id(self) -> None:
         from axxon_mcp_operator import _build_videowall_set_control_data_plan
@@ -529,6 +532,9 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(gap["status"], "gap")
         plan = _build_videowall_unregister_plan("hosts/Server", {"cookie": "ck"})
         self.assertEqual(plan["steps"][0]["operation"], "unregister_wall")
+        self.assertNotIn("ck", plan["intent"])
+        self.assertNotIn("cookie_prefix", plan["expected"])
+        self.assertTrue(plan["expected"]["cookie_present"])
 
     def test_create_map_plan_includes_added(self) -> None:
         from axxon_mcp_operator import _build_create_map_plan

@@ -750,7 +750,7 @@ def _build_videowall_change_plan(host_uid: str, params: dict[str, Any]) -> dict[
         "workflow": "videowall_change",
         "persistent": True,
         "risk": "mutation",
-        "intent": f"change videowall data (cookie={cookie[:8]}..., seq={seq_number})",
+        "intent": f"change videowall data (cookie supplied, seq={seq_number})",
         "steps": [
             {
                 "operation": "change_wall",
@@ -758,7 +758,7 @@ def _build_videowall_change_plan(host_uid: str, params: dict[str, Any]) -> dict[
             }
         ],
         "rollback": {"strategy": "noop", "description": "ChangeWall is a state push; no auto-revert."},
-        "expected": {"cookie_prefix": cookie[:8], "seq_number": seq_number},
+        "expected": {"cookie_present": True, "seq_number": seq_number},
         "confirmation_token": "CONFIRM-videowall_change",
         "rollback_confirmation_token": "CONFIRM-videowall_change-rollback",
     }
@@ -804,10 +804,10 @@ def _build_videowall_unregister_plan(host_uid: str, params: dict[str, Any]) -> d
         "workflow": "videowall_unregister",
         "persistent": True,
         "risk": "mutation",
-        "intent": f"unregister wall (cookie={cookie[:8]}...)",
+        "intent": "unregister wall (cookie supplied)",
         "steps": [{"operation": "unregister_wall", "params": {"cookie": cookie}}],
         "rollback": {"strategy": "noop", "description": "Unregister is terminal."},
-        "expected": {"cookie_prefix": cookie[:8]},
+        "expected": {"cookie_present": True},
         "confirmation_token": "CONFIRM-videowall_unregister",
         "rollback_confirmation_token": "CONFIRM-videowall_unregister-rollback",
     }
