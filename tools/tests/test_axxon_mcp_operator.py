@@ -529,6 +529,52 @@ class OperatorPlanTests(unittest.TestCase):
         plan = _build_videowall_unregister_plan("hosts/Server", {"cookie": "ck"})
         self.assertEqual(plan["steps"][0]["operation"], "unregister_wall")
 
+    def test_create_map_plan_includes_added(self) -> None:
+        from axxon_mcp_operator import _build_create_map_plan
+
+        gap = _build_create_map_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_create_map_plan("hosts/Server", {"name": "codex-test", "type": "MAP_TYPE_RASTER"})
+        self.assertEqual(plan["workflow"], "create_map")
+        self.assertEqual(plan["steps"][0]["operation"], "change_maps")
+        added = plan["steps"][0]["payload"]["added"]
+        self.assertEqual(len(added), 1)
+        self.assertEqual(added[0]["meta"]["name"], "codex-test")
+        self.assertEqual(added[0]["meta"]["type"], "MAP_TYPE_RASTER")
+
+    def test_update_map_plan_requires_map_id(self) -> None:
+        from axxon_mcp_operator import _build_update_map_plan
+
+        gap = _build_update_map_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_update_map_plan("hosts/Server", {"map_id": "m-1", "etag": "e1", "patch": {"name": "renamed"}})
+        self.assertEqual(plan["steps"][0]["operation"], "change_maps")
+        changed = plan["steps"][0]["payload"]["changed"]
+        self.assertEqual(changed[0]["meta"]["id"], "m-1")
+        self.assertEqual(changed[0]["meta"]["etag"], "e1")
+        self.assertEqual(plan["rollback"]["strategy"], "restore_map_snapshot")
+
+    def test_delete_map_plan_includes_removed(self) -> None:
+        from axxon_mcp_operator import _build_delete_map_plan
+
+        gap = _build_delete_map_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_delete_map_plan("hosts/Server", {"map_id": "m-1"})
+        self.assertEqual(plan["steps"][0]["payload"]["removed"], ["m-1"])
+        self.assertEqual(plan["rollback"]["strategy"], "restore_map_snapshot")
+
+    def test_update_markers_plan_requires_map_id(self) -> None:
+        from axxon_mcp_operator import _build_update_markers_plan
+
+        gap = _build_update_markers_plan("hosts/Server", {})
+        self.assertEqual(gap["status"], "gap")
+        plan = _build_update_markers_plan(
+            "hosts/Server",
+            {"map_id": "m-1", "markers": [{"access_point": "hosts/Server/x"}]},
+        )
+        self.assertEqual(plan["steps"][0]["operation"], "update_markers")
+        self.assertEqual(plan["steps"][0]["params"]["map_id"], "m-1")
+
 
 if __name__ == "__main__":
     unittest.main()

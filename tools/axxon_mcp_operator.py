@@ -735,6 +735,103 @@ def _build_videowall_unregister_plan(host_uid: str, params: dict[str, Any]) -> d
     }
 
 
+def _build_create_map_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    name = str(params.get("name") or "").strip()
+    if not name:
+        return {"status": "gap", "workflow": "create_map", "message": "create_map requires params.name"}
+    map_type = str(params.get("type") or "MAP_TYPE_RASTER")
+    map_id = str(params.get("map_id") or uuid.uuid4())
+    new_map = {
+        "meta": {
+            "id": map_id,
+            "name": name,
+            "type": map_type,
+            "access": "MAP_ACCESS_FULL",
+            "sharing": {"kind": "SHARING_KIND_OWNER", "shared_roles": []},
+        },
+    }
+    return {
+        "workflow": "create_map",
+        "persistent": True,
+        "caller_owns_lifecycle": True,
+        "risk": "mutation",
+        "intent": f"create persistent map {name} (type={map_type})",
+        "steps": [{"operation": "change_maps", "payload": {"added": [new_map]}, "map_id": map_id}],
+        "rollback": {"strategy": "change_maps_removed", "description": "Rollback removes the added map by id."},
+        "expected": {"map_id": map_id, "name": name, "type": map_type},
+        "confirmation_token": "CONFIRM-create_map",
+        "rollback_confirmation_token": "CONFIRM-create_map-rollback",
+    }
+
+
+def _build_update_map_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    map_id = str(params.get("map_id") or "").strip()
+    if not map_id:
+        return {"status": "gap", "workflow": "update_map", "message": "update_map requires params.map_id"}
+    etag = str(params.get("etag") or "")
+    patch = dict(params.get("patch") or {})
+    changed_meta: dict[str, Any] = {"id": map_id, "etag": etag, **patch}
+    return {
+        "workflow": "update_map",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"update map {map_id} (etag={etag[:8] or 'none'})",
+        "steps": [{"operation": "change_maps", "payload": {"changed": [{"meta": changed_meta}]}, "map_id": map_id}],
+        "rollback": {
+            "strategy": "restore_map_snapshot",
+            "description": "Pre-apply snapshot captured; rollback re-applies it via changed[].",
+        },
+        "expected": {"map_id": map_id, "patch_keys": sorted(patch.keys())},
+        "confirmation_token": "CONFIRM-update_map",
+        "rollback_confirmation_token": "CONFIRM-update_map-rollback",
+    }
+
+
+def _build_delete_map_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    map_id = str(params.get("map_id") or "").strip()
+    if not map_id:
+        return {"status": "gap", "workflow": "delete_map", "message": "delete_map requires params.map_id"}
+    return {
+        "workflow": "delete_map",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"delete map {map_id}",
+        "steps": [{"operation": "change_maps", "payload": {"removed": [map_id]}, "map_id": map_id}],
+        "rollback": {
+            "strategy": "restore_map_snapshot",
+            "description": "Pre-apply snapshot re-adds the map via added[].",
+        },
+        "expected": {"map_id": map_id},
+        "confirmation_token": "CONFIRM-delete_map",
+        "rollback_confirmation_token": "CONFIRM-delete_map-rollback",
+    }
+
+
+def _build_update_markers_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    map_id = str(params.get("map_id") or "").strip()
+    if not map_id:
+        return {
+            "status": "gap",
+            "workflow": "update_markers",
+            "message": "update_markers requires params.map_id",
+        }
+    markers = list(params.get("markers") or [])
+    return {
+        "workflow": "update_markers",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"update markers on map {map_id} ({len(markers)} markers)",
+        "steps": [{"operation": "update_markers", "params": {"map_id": map_id, "markers": markers}, "map_id": map_id}],
+        "rollback": {
+            "strategy": "restore_markers_snapshot",
+            "description": "Pre-apply snapshot captured via GetMarkers; rollback re-applies.",
+        },
+        "expected": {"map_id": map_id, "marker_count": len(markers)},
+        "confirmation_token": "CONFIRM-update_markers",
+        "rollback_confirmation_token": "CONFIRM-update_markers-rollback",
+    }
+
+
 WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "temp_camera": _build_temp_camera_plan,
     "temp_archive": _build_temp_archive_plan,
@@ -752,6 +849,10 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "videowall_change": _build_videowall_change_plan,
     "videowall_set_control_data": _build_videowall_set_control_data_plan,
     "videowall_unregister": _build_videowall_unregister_plan,
+    "create_map": _build_create_map_plan,
+    "update_map": _build_update_map_plan,
+    "delete_map": _build_delete_map_plan,
+    "update_markers": _build_update_markers_plan,
 }
 
 
