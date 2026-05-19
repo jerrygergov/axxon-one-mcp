@@ -30,6 +30,108 @@ class FakeClient:
         self.config = config
 
 
+class FakeDetectorCatalogClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.list_units_calls: list[str] = []
+        self.factories_requested: list[dict[str, Any]] = []
+
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        self.list_units_calls.append(unit_type)
+        if unit_type == "AVDetector":
+            return [
+                {
+                    "uid": "hosts/Server/AVDetector.1",
+                    "type": "AVDetector",
+                    "properties": [
+                        {
+                            "id": "input",
+                            "properties": [
+                                {
+                                    "id": "detector",
+                                    "enum_constraint": {
+                                        "items": [
+                                            {"value_string": "CrowdDensity"},
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ]
+        if unit_type == "AppDataDetector":
+            return [
+                {
+                    "uid": "hosts/Server/AppDataDetector.1",
+                    "type": "AppDataDetector",
+                    "properties": [
+                        {
+                            "id": "input",
+                            "properties": [
+                                {
+                                    "id": "detector",
+                                    "value_string": "FaceListMatch",
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ]
+        return []
+
+    def detector_archive_templates(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "type": "AVDetector",
+                "properties": [
+                    {
+                        "id": "input",
+                        "properties": [
+                            {
+                                "id": "detector",
+                                "enum_constraint": {
+                                    "items": [
+                                        {"value": "HelmetDetection"},
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
+        ]
+
+    def batch_get_factories(self, factory_ids: list[dict[str, Any]]) -> dict[str, Any]:
+        self.factories_requested.extend(factory_ids)
+        return {
+            "body": {
+                "items": [
+                    {
+                        "factory": {
+                            "type": "AppDataDetector",
+                            "properties": [
+                                {
+                                    "id": "input",
+                                    "properties": [
+                                        {
+                                            "id": "detector",
+                                            "enum_constraint": {
+                                                "items": [
+                                                    {"value_string": "QueueLength"},
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        }
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -189,6 +291,74 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("SECRET_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("PROPERTY_VALUE_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(redacted))
+
+    def test_detector_kind_catalog_returns_known_fallback_without_live_lookup(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorCatalogClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.detector_kind_catalog(include_live=False)
+
+        self.assertEqual(catalog["status"], "ok")
+        self.assertEqual(catalog["tool"], "detector_kind_catalog")
+        self.assertFalse(catalog["include_live"])
+        self.assertEqual(catalog["count"], sum(len(items) for items in catalog["by_unit_type"].values()))
+        self.assertIsNone(archive.client)
+
+        av_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AVDetector"]}
+        motion = av_by_kind["MotionDetection"]
+        self.assertEqual(motion["unit_type"], "AVDetector")
+        self.assertEqual(motion["source_type"], "Video")
+        self.assertEqual(motion["provenance"], ["known-catalog"])
+        self.assertEqual(motion["fixtures"]["required"], ["video_source_ap"])
+        self.assertEqual(motion["fixtures"]["missing"], ["video_source_ap"])
+
+        app_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AppDataDetector"]}
+        move_in_zone = app_by_kind["MoveInZone"]
+        self.assertEqual(move_in_zone["source_type"], "TargetList")
+        self.assertEqual(move_in_zone["provenance"], ["known-catalog"])
+        self.assertEqual(move_in_zone["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
+        self.assertEqual(move_in_zone["fixtures"]["missing"], ["video_source_ap", "vmda_source_ap"])
+
+    def test_detector_kind_catalog_merges_live_template_and_factory_sources(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeDetectorCatalogClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.detector_kind_catalog(include_live=True)
+
+        self.assertEqual(catalog["status"], "ok")
+        self.assertTrue(catalog["include_live"])
+        self.assertEqual(fake.list_units_calls, ["AVDetector", "AppDataDetector"])
+        self.assertEqual(
+            fake.factories_requested,
+            [
+                {"unit_type": "AVDetector", "ignore_possible_limits": True},
+                {"unit_type": "AppDataDetector", "ignore_possible_limits": True},
+            ],
+        )
+
+        av_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AVDetector"]}
+        self.assertIn("CrowdDensity", av_by_kind)
+        self.assertEqual(av_by_kind["CrowdDensity"]["provenance"], ["live-unit"])
+        self.assertEqual(av_by_kind["CrowdDensity"]["source_type"], "Video")
+
+        self.assertIn("HelmetDetection", av_by_kind)
+        self.assertEqual(av_by_kind["HelmetDetection"]["provenance"], ["template"])
+
+        app_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AppDataDetector"]}
+        self.assertIn("FaceListMatch", app_by_kind)
+        self.assertEqual(app_by_kind["FaceListMatch"]["provenance"], ["live-unit"])
+        self.assertEqual(app_by_kind["FaceListMatch"]["source_type"], "TargetList")
+
+        self.assertIn("QueueLength", app_by_kind)
+        self.assertEqual(app_by_kind["QueueLength"]["provenance"], ["factory"])
+        self.assertEqual(app_by_kind["QueueLength"]["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
 
 
 if __name__ == "__main__":

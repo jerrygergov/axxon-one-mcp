@@ -25,6 +25,15 @@ KNOWN_DETECTOR_KINDS = {
     "AVDetector": ("MotionDetection", "SceneDescription", "NeuroTracker"),
     "AppDataDetector": ("MoveInZone", "OneLineCrossing", "LongInZone", "LostObject", "AbandonedObject"),
 }
+DETECTOR_SOURCE_TYPES = {
+    "AVDetector": "Video",
+    "AppDataDetector": "TargetList",
+}
+DETECTOR_REQUIRED_FIXTURES = {
+    "AVDetector": ("video_source_ap",),
+    "AppDataDetector": ("video_source_ap", "vmda_source_ap"),
+}
+DETECTOR_PROVENANCE_ORDER = ("known-catalog", "live-unit", "factory", "template")
 PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
 PROPERTY_VALUE_FIELDS = (
     "value",
@@ -92,6 +101,127 @@ def redact_sensitive_properties(value: Any) -> Any:
     return value
 
 
+def _as_items(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if not isinstance(value, dict):
+        return []
+    if isinstance(value.get("body"), dict):
+        nested = _as_items(value["body"])
+        if nested:
+            return nested
+    for key in ("units", "items", "templates", "factories"):
+        if isinstance(value.get(key), list):
+            return [item for item in value[key] if isinstance(item, dict)]
+    return [value]
+
+
+def _property_identity(value: dict[str, Any]) -> str:
+    for field in PROPERTY_ID_FIELDS:
+        if value.get(field):
+            return str(value[field]).split(".")[-1].split("/")[-1].lower()
+    return ""
+
+
+def _iter_dict_nodes(value: Any) -> list[dict[str, Any]]:
+    nodes: list[dict[str, Any]] = []
+    if isinstance(value, dict):
+        nodes.append(value)
+        for item in value.values():
+            nodes.extend(_iter_dict_nodes(item))
+    elif isinstance(value, list):
+        for item in value:
+            nodes.extend(_iter_dict_nodes(item))
+    return nodes
+
+
+def _enum_item_value(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, dict):
+        return ""
+    for field in ("value_string", "value", "name", "id"):
+        item = value.get(field)
+        if isinstance(item, str) and item:
+            return item
+    return ""
+
+
+def _detector_kinds_from_descriptor(descriptor: dict[str, Any]) -> set[str]:
+    kinds: set[str] = set()
+    for node in _iter_dict_nodes(descriptor):
+        if _property_identity(node) != "detector":
+            continue
+        enum_items = node.get("enum_constraint", {}).get("items", [])
+        if isinstance(enum_items, list):
+            for item in enum_items:
+                detector_kind = _enum_item_value(item)
+                if detector_kind:
+                    kinds.add(detector_kind)
+        for field in PROPERTY_VALUE_FIELDS:
+            value = node.get(field)
+            if isinstance(value, str) and value:
+                kinds.add(value)
+    return kinds
+
+
+def _source_type(unit_type: str, descriptor: dict[str, Any] | None = None) -> str:
+    descriptor = descriptor or {}
+    for field in ("source_type", "sourceType"):
+        value = descriptor.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return DETECTOR_SOURCE_TYPES.get(unit_type, "")
+
+
+def _catalog_fixtures(unit_type: str) -> dict[str, list[str]]:
+    required = list(DETECTOR_REQUIRED_FIXTURES.get(unit_type, ()))
+    return {"required": required, "missing": list(required)}
+
+
+def _sort_provenance(values: set[str]) -> list[str]:
+    ordered = [item for item in DETECTOR_PROVENANCE_ORDER if item in values]
+    ordered.extend(sorted(values.difference(ordered)))
+    return ordered
+
+
+def _call_source(method: Any, *args: Any, **kwargs: Any) -> Any:
+    try:
+        return method(*args, **kwargs)
+    except TypeError:
+        if kwargs:
+            try:
+                return method(*args)
+            except TypeError:
+                return method()
+        return method()
+
+
+def _client_units(client: Any, unit_type: str) -> list[dict[str, Any]]:
+    method = getattr(client, "list_units", None)
+    if not callable(method):
+        return []
+    return _as_items(_call_source(method, unit_type=unit_type))
+
+
+def _client_templates(client: Any) -> list[dict[str, Any]]:
+    for name in ("detector_archive_templates", "list_templates", "device_templates"):
+        source = getattr(client, name, None)
+        if callable(source):
+            return _as_items(_call_source(source))
+        if source is not None:
+            return _as_items(source)
+    return []
+
+
+def _client_factories(client: Any) -> list[dict[str, Any]]:
+    method = getattr(client, "batch_get_factories", None)
+    if not callable(method):
+        return []
+    request = [{"unit_type": unit_type, "ignore_possible_limits": True} for unit_type in DETECTOR_UNIT_TYPES]
+    return _as_items(method(request))
+
+
 @dataclass
 class AxxonMcpDetectorArchive:
     """Read-only detector and archive policy tools."""
@@ -126,3 +256,68 @@ class AxxonMcpDetectorArchive:
         if self.client is None:
             self.detector_archive_connect_axxon_profile("env")
         return self.client
+
+    def detector_kind_catalog(self, include_live: bool = True) -> dict[str, Any]:
+        catalog: dict[str, dict[str, dict[str, Any]]] = {unit_type: {} for unit_type in DETECTOR_UNIT_TYPES}
+
+        def add_kind(unit_type: str, detector_kind: str, provenance: str, descriptor: dict[str, Any] | None = None) -> None:
+            if unit_type not in catalog or not detector_kind:
+                return
+            existing = catalog[unit_type].setdefault(
+                detector_kind,
+                {
+                    "unit_type": unit_type,
+                    "detector_kind": detector_kind,
+                    "source_type": _source_type(unit_type, descriptor),
+                    "provenance": set(),
+                    "fixtures": _catalog_fixtures(unit_type),
+                },
+            )
+            if not existing.get("source_type"):
+                existing["source_type"] = _source_type(unit_type, descriptor)
+            existing["provenance"].add(provenance)
+
+        for unit_type, detector_kinds in KNOWN_DETECTOR_KINDS.items():
+            for detector_kind in detector_kinds:
+                add_kind(unit_type, detector_kind, "known-catalog")
+
+        if include_live:
+            client = self.ensure_client()
+            for unit_type in DETECTOR_UNIT_TYPES:
+                for unit in _client_units(client, unit_type):
+                    actual_unit_type = unit.get("type") or unit_type
+                    if actual_unit_type != unit_type:
+                        continue
+                    for detector_kind in _detector_kinds_from_descriptor(unit):
+                        add_kind(unit_type, detector_kind, "live-unit", unit)
+
+            for template in _client_templates(client):
+                unit_type = template.get("type") or template.get("unit_type") or template.get("unitType")
+                if unit_type not in DETECTOR_UNIT_TYPES:
+                    continue
+                for detector_kind in _detector_kinds_from_descriptor(template):
+                    add_kind(unit_type, detector_kind, "template", template)
+
+            for factory_item in _client_factories(client):
+                factory = factory_item.get("factory") if isinstance(factory_item.get("factory"), dict) else factory_item
+                unit_type = factory.get("type") or factory.get("unit_type") or factory.get("unitType")
+                if unit_type not in DETECTOR_UNIT_TYPES:
+                    continue
+                for detector_kind in _detector_kinds_from_descriptor(factory):
+                    add_kind(unit_type, detector_kind, "factory", factory)
+
+        by_unit_type: dict[str, list[dict[str, Any]]] = {}
+        for unit_type, entries in catalog.items():
+            by_unit_type[unit_type] = []
+            for detector_kind in sorted(entries):
+                entry = dict(entries[detector_kind])
+                entry["provenance"] = _sort_provenance(entry["provenance"])
+                by_unit_type[unit_type].append(entry)
+
+        return {
+            "status": "ok",
+            "tool": "detector_kind_catalog",
+            "include_live": bool(include_live),
+            "by_unit_type": by_unit_type,
+            "count": sum(len(items) for items in by_unit_type.values()),
+        }
