@@ -132,6 +132,127 @@ class FakeDetectorCatalogClient(FakeClient):
         }
 
 
+class FakeListComponentsRequest:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
+class FakeListUnitsRequest:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
+class FakeDomainPb:
+    ListComponentsRequest = FakeListComponentsRequest
+
+
+class FakeConfigPb:
+    ListUnitsRequest = FakeListUnitsRequest
+
+
+class FakeDomainStub:
+    def __init__(self) -> None:
+        self.requests: list[FakeListComponentsRequest] = []
+
+    def ListComponents(self, request: FakeListComponentsRequest, timeout: float) -> list[dict[str, Any]]:
+        self.requests.append(request)
+        return [
+            {
+                "items": [
+                    {
+                        "access_point": "hosts/Server/AVDetector.2/EventSupplier.Detector",
+                    },
+                    {
+                        "access_point": "hosts/Server/AppDataDetector.3/SourceEndpoint.Target",
+                    },
+                ],
+            }
+        ]
+
+
+class FakeConfigStub:
+    def __init__(self) -> None:
+        self.list_units_requests: list[FakeListUnitsRequest] = []
+
+    def ListUnits(self, request: FakeListUnitsRequest, timeout: float) -> dict[str, Any]:
+        self.list_units_requests.append(request)
+        uid = request.kwargs["unit_uids"][0]
+        if uid == "hosts/Server/AVDetector.2":
+            return {
+                "units": [
+                    {
+                        "uid": uid,
+                        "type": "AVDetector",
+                        "properties": [
+                            {
+                                "id": "input",
+                                "properties": [
+                                    {
+                                        "id": "detector",
+                                        "enum_constraint": {
+                                            "items": [
+                                                {"value_string": "PeopleCounting"},
+                                            ],
+                                        },
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            }
+        if uid == "hosts/Server/AppDataDetector.3":
+            return {
+                "units": [
+                    {
+                        "uid": uid,
+                        "type": "AppDataDetector",
+                        "properties": [
+                            {
+                                "id": "input",
+                                "properties": [
+                                    {
+                                        "id": "detector",
+                                        "value_string": "VehicleListMatch",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            }
+        return {"units": []}
+
+
+class FakeRealShapedDetectorCatalogClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.authenticate_calls = 0
+        self.domain = FakeDomainStub()
+        self.config_stub = FakeConfigStub()
+        self.factories_requested: list[dict[str, Any]] = []
+
+    def authenticate_grpc(self) -> None:
+        self.authenticate_calls += 1
+
+    def import_module(self, module_name: str) -> Any:
+        if module_name == "axxonsoft.bl.domain.Domain_pb2":
+            return FakeDomainPb
+        if module_name == "axxonsoft.bl.config.ConfigurationService_pb2":
+            return FakeConfigPb
+        raise AssertionError(module_name)
+
+    def common_stubs(self) -> dict[str, Any]:
+        return {"domain": self.domain, "config": self.config_stub}
+
+    def message_to_dict(self, message: Any) -> dict[str, Any]:
+        return message if isinstance(message, dict) else {}
+
+    def batch_get_factories(self, factory_ids: list[dict[str, Any]]) -> dict[str, Any]:
+        self.factories_requested.extend(factory_ids)
+        return {"body": {"items": []}}
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -338,8 +459,8 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(
             fake.factories_requested,
             [
-                {"unit_type": "AVDetector", "ignore_possible_limits": True},
-                {"unit_type": "AppDataDetector", "ignore_possible_limits": True},
+                {"unit_type": "AVDetector", "parent_uid": "hosts/Server", "ignore_possible_limits": True},
+                {"unit_type": "AppDataDetector", "parent_uid": "hosts/Server", "ignore_possible_limits": True},
             ],
         )
 
@@ -359,6 +480,48 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertIn("QueueLength", app_by_kind)
         self.assertEqual(app_by_kind["QueueLength"]["provenance"], ["factory"])
         self.assertEqual(app_by_kind["QueueLength"]["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
+
+    def test_detector_kind_catalog_reads_real_client_live_units_without_list_units_wrapper(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedDetectorCatalogClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.detector_kind_catalog(include_live=True)
+
+        self.assertEqual(fake.authenticate_calls, 1)
+        self.assertEqual(fake.domain.requests[0].kwargs, {"page_size": 500})
+        self.assertEqual(
+            [request.kwargs for request in fake.config_stub.list_units_requests],
+            [
+                {"unit_uids": ["hosts/Server/AVDetector.2"]},
+                {"unit_uids": ["hosts/Server/AppDataDetector.3"]},
+            ],
+        )
+        av_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AVDetector"]}
+        self.assertEqual(av_by_kind["PeopleCounting"]["provenance"], ["live-unit"])
+        app_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AppDataDetector"]}
+        self.assertEqual(app_by_kind["VehicleListMatch"]["provenance"], ["live-unit"])
+
+    def test_detector_kind_catalog_requests_factories_with_host_parent_uid(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedDetectorCatalogClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        archive.detector_kind_catalog(include_live=True)
+
+        self.assertEqual(
+            fake.factories_requested,
+            [
+                {"unit_type": "AVDetector", "parent_uid": "hosts/Server", "ignore_possible_limits": True},
+                {"unit_type": "AppDataDetector", "parent_uid": "hosts/Server", "ignore_possible_limits": True},
+            ],
+        )
 
 
 if __name__ == "__main__":

@@ -197,11 +197,65 @@ def _call_source(method: Any, *args: Any, **kwargs: Any) -> Any:
         return method()
 
 
+def _live_unit_uid_from_access_point(access_point: str, unit_type: str) -> str:
+    if f"/{unit_type}." not in access_point:
+        return ""
+    return access_point.split("/EventSupplier")[0].split("/SourceEndpoint")[0]
+
+
+def _client_real_units_by_type(client: Any) -> dict[str, list[dict[str, Any]]]:
+    cached = getattr(client, "_detector_archive_live_units_cache", None)
+    if isinstance(cached, dict):
+        return cached
+
+    empty: dict[str, list[dict[str, Any]]] = {unit_type: [] for unit_type in DETECTOR_UNIT_TYPES}
+    try:
+        authenticate = getattr(client, "authenticate_grpc")
+        import_module = getattr(client, "import_module")
+        common_stubs = getattr(client, "common_stubs")
+        message_to_dict = getattr(client, "message_to_dict")
+    except AttributeError:
+        return empty
+
+    try:
+        authenticate()
+        pb_domain = import_module("axxonsoft.bl.domain.Domain_pb2")
+        pb_config = import_module("axxonsoft.bl.config.ConfigurationService_pb2")
+        stubs = common_stubs()
+        domain = stubs["domain"]
+        config_stub = stubs["config"]
+
+        candidates: dict[str, list[str]] = {unit_type: [] for unit_type in DETECTOR_UNIT_TYPES}
+        request = pb_domain.ListComponentsRequest(page_size=500)
+        for page in domain.ListComponents(request, timeout=getattr(client.config, "timeout", None)):
+            for component in message_to_dict(page).get("items", []):
+                access_point = component.get("access_point", "")
+                for unit_type in DETECTOR_UNIT_TYPES:
+                    if len(candidates[unit_type]) >= 50:
+                        continue
+                    uid = _live_unit_uid_from_access_point(access_point, unit_type)
+                    if uid and uid not in candidates[unit_type]:
+                        candidates[unit_type].append(uid)
+
+        units_by_type = {unit_type: [] for unit_type in DETECTOR_UNIT_TYPES}
+        for unit_type, unit_uids in candidates.items():
+            for uid in unit_uids[:10]:
+                request = pb_config.ListUnitsRequest(unit_uids=[uid])
+                response = config_stub.ListUnits(request, timeout=getattr(client.config, "timeout", None))
+                for unit in message_to_dict(response).get("units", []):
+                    if isinstance(unit, dict):
+                        units_by_type[unit_type].append(unit)
+        setattr(client, "_detector_archive_live_units_cache", units_by_type)
+        return units_by_type
+    except (AttributeError, KeyError, TypeError):
+        return empty
+
+
 def _client_units(client: Any, unit_type: str) -> list[dict[str, Any]]:
     method = getattr(client, "list_units", None)
-    if not callable(method):
-        return []
-    return _as_items(_call_source(method, unit_type=unit_type))
+    if callable(method):
+        return _as_items(_call_source(method, unit_type=unit_type))
+    return _client_real_units_by_type(client).get(unit_type, [])
 
 
 def _client_templates(client: Any) -> list[dict[str, Any]]:
@@ -218,8 +272,30 @@ def _client_factories(client: Any) -> list[dict[str, Any]]:
     method = getattr(client, "batch_get_factories", None)
     if not callable(method):
         return []
-    request = [{"unit_type": unit_type, "ignore_possible_limits": True} for unit_type in DETECTOR_UNIT_TYPES]
+    parent_uid = _factory_parent_uid(client)
+    request = [
+        {"unit_type": unit_type, "parent_uid": parent_uid, "ignore_possible_limits": True}
+        for unit_type in DETECTOR_UNIT_TYPES
+    ]
     return _as_items(method(request))
+
+
+def _factory_parent_uid(client: Any) -> str:
+    inventory = getattr(client, "inventory", None)
+    if isinstance(inventory, dict):
+        for field in ("host_uid", "uid"):
+            value = inventory.get(field)
+            if isinstance(value, str) and value.startswith("hosts/"):
+                return value
+        hosts = inventory.get("hosts")
+        if isinstance(hosts, list):
+            for host in hosts:
+                if isinstance(host, dict):
+                    value = host.get("uid")
+                    if isinstance(value, str) and value.startswith("hosts/"):
+                        return value
+    tls_cn = getattr(getattr(client, "config", None), "tls_cn", "")
+    return f"hosts/{tls_cn}" if tls_cn else ""
 
 
 @dataclass
