@@ -142,12 +142,19 @@ class FakeListUnitsRequest:
         self.kwargs = kwargs
 
 
+class FakeListTemplatesRequest:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
 class FakeDomainPb:
     ListComponentsRequest = FakeListComponentsRequest
 
 
 class FakeConfigPb:
+    VIEW_MODE_FULL = "VIEW_MODE_FULL"
     ListUnitsRequest = FakeListUnitsRequest
+    ListTemplatesRequest = FakeListTemplatesRequest
 
 
 class FakeDomainStub:
@@ -173,6 +180,7 @@ class FakeDomainStub:
 class FakeConfigStub:
     def __init__(self) -> None:
         self.list_units_requests: list[FakeListUnitsRequest] = []
+        self.list_templates_requests: list[FakeListTemplatesRequest] = []
 
     def ListUnits(self, request: FakeListUnitsRequest, timeout: float) -> dict[str, Any]:
         self.list_units_requests.append(request)
@@ -222,6 +230,35 @@ class FakeConfigStub:
                 ]
             }
         return {"units": []}
+
+    def ListTemplates(self, request: FakeListTemplatesRequest, timeout: float) -> dict[str, Any]:
+        self.list_templates_requests.append(request)
+        return {
+            "items": [
+                {
+                    "body": {
+                        "unit": {
+                            "type": "AVDetector",
+                            "properties": [
+                                {
+                                    "id": "input",
+                                    "properties": [
+                                        {
+                                            "id": "detector",
+                                            "enum_constraint": {
+                                                "items": [
+                                                    {"value_string": "Loitering"},
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                }
+                            ],
+                        }
+                    }
+                }
+            ]
+        }
 
 
 class FakeRealShapedDetectorCatalogClient(FakeClient):
@@ -522,6 +559,21 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                 {"unit_type": "AppDataDetector", "parent_uid": "hosts/Server", "ignore_possible_limits": True},
             ],
         )
+
+    def test_detector_kind_catalog_reads_real_client_template_units_without_helper_methods(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedDetectorCatalogClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.detector_kind_catalog(include_live=True)
+
+        self.assertEqual(len(fake.config_stub.list_templates_requests), 1)
+        self.assertEqual(fake.config_stub.list_templates_requests[0].kwargs, {"view": "VIEW_MODE_FULL"})
+        av_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AVDetector"]}
+        self.assertEqual(av_by_kind["Loitering"]["provenance"], ["template"])
 
 
 if __name__ == "__main__":

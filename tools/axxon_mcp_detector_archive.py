@@ -203,6 +203,13 @@ def _live_unit_uid_from_access_point(access_point: str, unit_type: str) -> str:
     return access_point.split("/EventSupplier")[0].split("/SourceEndpoint")[0]
 
 
+def _authenticate_grpc_once(client: Any) -> None:
+    if getattr(client, "_detector_archive_grpc_authenticated", False):
+        return
+    client.authenticate_grpc()
+    setattr(client, "_detector_archive_grpc_authenticated", True)
+
+
 def _client_real_units_by_type(client: Any) -> dict[str, list[dict[str, Any]]]:
     cached = getattr(client, "_detector_archive_live_units_cache", None)
     if isinstance(cached, dict):
@@ -210,7 +217,7 @@ def _client_real_units_by_type(client: Any) -> dict[str, list[dict[str, Any]]]:
 
     empty: dict[str, list[dict[str, Any]]] = {unit_type: [] for unit_type in DETECTOR_UNIT_TYPES}
     try:
-        authenticate = getattr(client, "authenticate_grpc")
+        getattr(client, "authenticate_grpc")
         import_module = getattr(client, "import_module")
         common_stubs = getattr(client, "common_stubs")
         message_to_dict = getattr(client, "message_to_dict")
@@ -218,7 +225,7 @@ def _client_real_units_by_type(client: Any) -> dict[str, list[dict[str, Any]]]:
         return empty
 
     try:
-        authenticate()
+        _authenticate_grpc_once(client)
         pb_domain = import_module("axxonsoft.bl.domain.Domain_pb2")
         pb_config = import_module("axxonsoft.bl.config.ConfigurationService_pb2")
         stubs = common_stubs()
@@ -265,7 +272,37 @@ def _client_templates(client: Any) -> list[dict[str, Any]]:
             return _as_items(_call_source(source))
         if source is not None:
             return _as_items(source)
-    return []
+    return _client_real_templates(client)
+
+
+def _client_real_templates(client: Any) -> list[dict[str, Any]]:
+    try:
+        getattr(client, "authenticate_grpc")
+        import_module = getattr(client, "import_module")
+        common_stubs = getattr(client, "common_stubs")
+        message_to_dict = getattr(client, "message_to_dict")
+    except AttributeError:
+        return []
+
+    try:
+        _authenticate_grpc_once(client)
+        pb_config = import_module("axxonsoft.bl.config.ConfigurationService_pb2")
+        config_stub = common_stubs()["config"]
+        view = getattr(pb_config, "VIEW_MODE_FULL", "VIEW_MODE_FULL")
+        request = pb_config.ListTemplatesRequest(view=view)
+        response = config_stub.ListTemplates(request, timeout=getattr(client.config, "timeout", None))
+        templates = []
+        for item in message_to_dict(response).get("items", []):
+            if not isinstance(item, dict):
+                continue
+            unit = item.get("body", {}).get("unit")
+            if isinstance(unit, dict):
+                templates.append(unit)
+            else:
+                templates.append(item)
+        return templates
+    except (AttributeError, KeyError, TypeError):
+        return []
 
 
 def _client_factories(client: Any) -> list[dict[str, Any]]:
