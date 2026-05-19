@@ -117,6 +117,74 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("SERIAL_VALUE_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("LICENSE_VALUE_SHOULD_NOT_LEAK", str(redacted))
 
+    def test_sensitive_property_redaction_handles_axxon_property_nodes(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        raw: dict[str, Any] = {
+            "properties": [
+                {
+                    "id": "password",
+                    "name": "Password",
+                    "type": "string",
+                    "readonly": False,
+                    "value_string": "PROPERTY_VALUE_SHOULD_NOT_LEAK",
+                },
+                {
+                    "id": "display_name",
+                    "name": "Display name",
+                    "type": "string",
+                    "readonly": False,
+                    "value_string": "Detector 1",
+                },
+                {
+                    "id": "connection",
+                    "name": "Connection",
+                    "type": "group",
+                    "readonly": True,
+                    "properties": [
+                        {
+                            "id": "apiToken",
+                            "name": "API token",
+                            "type": "string",
+                            "readonly": False,
+                            "value_string": "TOKEN_VALUE_SHOULD_NOT_LEAK",
+                        },
+                        {
+                            "id": "endpoint",
+                            "name": "Endpoint",
+                            "type": "string",
+                            "readonly": False,
+                            "value_string": "metadata-stream",
+                        },
+                    ],
+                },
+            ],
+        }
+
+        redacted = module.redact_sensitive_properties(raw)
+
+        password = redacted["properties"][0]
+        self.assertEqual(password["id"], "password")
+        self.assertEqual(password["name"], "Password")
+        self.assertEqual(password["type"], "string")
+        self.assertFalse(password["readonly"])
+        self.assertEqual(password["value_string"], "<redacted>")
+
+        display_name = redacted["properties"][1]
+        self.assertEqual(display_name["id"], "display_name")
+        self.assertEqual(display_name["value_string"], "Detector 1")
+
+        connection = redacted["properties"][2]
+        self.assertEqual(connection["id"], "connection")
+        self.assertTrue(connection["readonly"])
+        token = connection["properties"][0]
+        self.assertEqual(token["id"], "apiToken")
+        self.assertEqual(token["value_string"], "<redacted>")
+        endpoint = connection["properties"][1]
+        self.assertEqual(endpoint["id"], "endpoint")
+        self.assertEqual(endpoint["value_string"], "metadata-stream")
+        self.assertNotIn("PROPERTY_VALUE_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(redacted))
+
 
 if __name__ == "__main__":
     unittest.main()

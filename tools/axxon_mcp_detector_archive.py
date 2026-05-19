@@ -25,6 +25,8 @@ KNOWN_DETECTOR_KINDS = {
     "AVDetector": ("MotionDetection", "SceneDescription", "NeuroTracker"),
     "AppDataDetector": ("MoveInZone", "OneLineCrossing", "LongInZone", "LostObject", "AbandonedObject"),
 }
+PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
+PROPERTY_VALUE_FIELDS = ("string_list_value",)
 
 
 def default_config_factory() -> AxxonClientConfig:
@@ -54,10 +56,21 @@ def _sensitive_key(name: Any) -> bool:
     return any(token.replace("_", "") in simplified for token in SENSITIVE_PROPERTY_TOKENS)
 
 
+def _sensitive_property_node(value: dict[Any, Any]) -> bool:
+    return any(_sensitive_key(value.get(field, "")) for field in PROPERTY_ID_FIELDS)
+
+
+def _property_value_field(name: Any) -> bool:
+    return str(name).startswith("value_") or str(name) in PROPERTY_VALUE_FIELDS
+
+
 def redact_sensitive_properties(value: Any) -> Any:
     if isinstance(value, dict):
+        sensitive_node = _sensitive_property_node(value)
         return {
-            key: "<redacted>" if _sensitive_key(key) else redact_sensitive_properties(item)
+            key: "<redacted>"
+            if _sensitive_key(key) or (sensitive_node and _property_value_field(key))
+            else redact_sensitive_properties(item)
             for key, item in value.items()
         }
     if isinstance(value, list):
