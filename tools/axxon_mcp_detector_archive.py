@@ -48,6 +48,8 @@ PROPERTY_VALUE_FIELDS = (
     "value_bytes",
     "string_list_value",
 )
+VISUAL_SHAPE_VALUE_FIELDS = ("value_simple_polygon", "value_rectangle", "value_polyline")
+SCHEMA_VALUE_FIELDS = PROPERTY_VALUE_FIELDS + VISUAL_SHAPE_VALUE_FIELDS
 
 
 def default_config_factory() -> AxxonClientConfig:
@@ -163,6 +165,123 @@ def _detector_kinds_from_descriptor(descriptor: dict[str, Any]) -> set[str]:
             if isinstance(value, str) and value:
                 kinds.add(value)
     return kinds
+
+
+def _descriptor_value_kind(descriptor: dict[str, Any]) -> str:
+    value_kind = descriptor.get("value_kind")
+    if isinstance(value_kind, str) and value_kind:
+        return value_kind
+    for field in SCHEMA_VALUE_FIELDS:
+        if field in descriptor:
+            return field
+    return ""
+
+
+def _property_id(value: dict[str, Any]) -> str:
+    for field in PROPERTY_ID_FIELDS:
+        item = value.get(field)
+        if isinstance(item, str) and item:
+            return item.split(".")[-1].split("/")[-1]
+    return ""
+
+
+def _enum_choices(descriptor: dict[str, Any]) -> list[dict[str, Any]]:
+    items = descriptor.get("enum_constraint", {}).get("items", [])
+    if not isinstance(items, list):
+        return []
+    choices: list[dict[str, Any]] = []
+    for item in items:
+        value = _enum_item_value(item)
+        if not value:
+            continue
+        choice: dict[str, Any] = {"value": value}
+        if isinstance(item, dict):
+            for field in ("id", "name", "display_name", "displayName"):
+                if item.get(field):
+                    choice[field] = item[field]
+        choices.append(choice)
+    return choices
+
+
+def _schema_property_descriptor(descriptor: dict[str, Any], path: str) -> dict[str, Any]:
+    redacted = redact_sensitive_properties(descriptor)
+    out: dict[str, Any] = {
+        "id": _property_id(redacted),
+        "path": path,
+        "value_kind": _descriptor_value_kind(redacted),
+        "readonly": bool(redacted.get("readonly", False)),
+        "internal": bool(redacted.get("internal", False)),
+    }
+    for field in ("name", "type", "category", "required"):
+        if field in redacted:
+            out[field] = redacted[field]
+    choices = _enum_choices(redacted)
+    if choices:
+        out["enum"] = [choice["value"] for choice in choices]
+        out["enum_choices"] = choices
+    if isinstance(redacted.get("range_constraint"), dict):
+        out["range"] = dict(redacted["range_constraint"])
+    return out
+
+
+def _flatten_property_schema(properties: Any, prefix: str = "") -> dict[str, dict[str, Any]]:
+    flattened: dict[str, dict[str, Any]] = {}
+    if not isinstance(properties, list):
+        return flattened
+    for prop in properties:
+        if not isinstance(prop, dict):
+            continue
+        prop_id = _property_id(prop)
+        if not prop_id:
+            continue
+        path = f"{prefix}.{prop_id}" if prefix else prop_id
+        flattened[path] = _schema_property_descriptor(prop, path)
+        flattened.update(_flatten_property_schema(prop.get("properties"), path))
+    return flattened
+
+
+def _is_visual_element(value: dict[str, Any]) -> bool:
+    for field in ("type", "name", "unit_type", "unitType"):
+        item = value.get(field)
+        if isinstance(item, str) and "visualelement" in "".join(ch for ch in item.lower() if ch.isalnum()):
+            return True
+    return False
+
+
+def _iter_visual_elements(value: Any) -> list[dict[str, Any]]:
+    found: list[dict[str, Any]] = []
+    if isinstance(value, dict):
+        if _is_visual_element(value):
+            found.append(value)
+        for item in value.values():
+            found.extend(_iter_visual_elements(item))
+    elif isinstance(value, list):
+        for item in value:
+            found.extend(_iter_visual_elements(item))
+    return found
+
+
+def _visual_element_summaries(descriptor: dict[str, Any]) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for visual in _iter_visual_elements(descriptor):
+        shape_properties = [
+            item
+            for item in _flatten_property_schema(visual.get("properties")).values()
+            if item.get("value_kind") in VISUAL_SHAPE_VALUE_FIELDS
+        ]
+        if not shape_properties:
+            continue
+        shape_fields = sorted({str(item["value_kind"]) for item in shape_properties if item.get("value_kind")})
+        summaries.append(
+            {
+                "uid": visual.get("uid", ""),
+                "type": visual.get("type", ""),
+                "name": visual.get("name", ""),
+                "shape_fields": shape_fields,
+                "properties": shape_properties,
+            }
+        )
+    return summaries
 
 
 def _source_type(unit_type: str, descriptor: dict[str, Any] | None = None) -> str:
@@ -335,6 +454,35 @@ def _factory_parent_uid(client: Any) -> str:
     return f"hosts/{tls_cn}" if tls_cn else ""
 
 
+def _fixture_needed_schema(unit_type: str, detector_kind: str, message: str) -> dict[str, Any]:
+    return {
+        "status": "fixture-needed",
+        "tool": "detector_parameter_schema",
+        "unit_type": unit_type,
+        "detector_kind": detector_kind,
+        "message": message,
+        "fixtures": _catalog_fixtures(unit_type),
+    }
+
+
+def _schema_source_candidates(client: Any, unit_type: str) -> list[tuple[str, dict[str, Any]]]:
+    candidates: list[tuple[str, dict[str, Any]]] = []
+    for unit in _client_units(client, unit_type):
+        actual_unit_type = unit.get("type") or unit_type
+        if actual_unit_type == unit_type:
+            candidates.append(("live-unit", unit))
+    for template in _client_templates(client):
+        actual_unit_type = template.get("type") or template.get("unit_type") or template.get("unitType")
+        if actual_unit_type == unit_type:
+            candidates.append(("template", template))
+    for factory_item in _client_factories(client):
+        factory = factory_item.get("factory") if isinstance(factory_item.get("factory"), dict) else factory_item
+        actual_unit_type = factory.get("type") or factory.get("unit_type") or factory.get("unitType")
+        if actual_unit_type == unit_type:
+            candidates.append(("factory", factory))
+    return candidates
+
+
 @dataclass
 class AxxonMcpDetectorArchive:
     """Read-only detector and archive policy tools."""
@@ -434,3 +582,36 @@ class AxxonMcpDetectorArchive:
             "by_unit_type": by_unit_type,
             "count": sum(len(items) for items in by_unit_type.values()),
         }
+
+    def detector_parameter_schema(self, unit_type: str, detector_kind: str) -> dict[str, Any]:
+        if unit_type not in DETECTOR_UNIT_TYPES:
+            return _fixture_needed_schema(
+                unit_type,
+                detector_kind,
+                f"Unknown detector unit type {unit_type!r}; provide a fixture for detector_parameter_schema.",
+            )
+
+        client = self.ensure_client()
+        for provenance, descriptor in _schema_source_candidates(client, unit_type):
+            if detector_kind not in _detector_kinds_from_descriptor(descriptor):
+                continue
+            return {
+                "status": "ok",
+                "tool": "detector_parameter_schema",
+                "unit_type": unit_type,
+                "detector_kind": detector_kind,
+                "source_type": _source_type(unit_type, descriptor),
+                "schema": {
+                    "type": "object",
+                    "properties": _flatten_property_schema(descriptor.get("properties")),
+                },
+                "visual_elements": _visual_element_summaries(descriptor),
+                "provenance": [provenance],
+                "fixtures": _catalog_fixtures(unit_type),
+            }
+
+        return _fixture_needed_schema(
+            unit_type,
+            detector_kind,
+            f"Could not resolve detector kind {detector_kind!r} for {unit_type}; provide live/template/factory fixtures.",
+        )

@@ -290,6 +290,104 @@ class FakeRealShapedDetectorCatalogClient(FakeClient):
         return {"body": {"items": []}}
 
 
+class FakeDetectorSchemaClient(FakeClient):
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        if unit_type != "AppDataDetector":
+            return []
+        return [
+            {
+                "uid": "hosts/Server/AppDataDetector.Schema",
+                "type": "AppDataDetector",
+                "source_type": "TargetList",
+                "properties": [
+                    {
+                        "id": "input",
+                        "type": "group",
+                        "required": True,
+                        "properties": [
+                            {
+                                "id": "detector",
+                                "type": "string",
+                                "readonly": False,
+                                "internal": False,
+                                "value_kind": "value_string",
+                                "value_string": "MoveInZone",
+                                "enum_constraint": {
+                                    "items": [
+                                        {"value_string": "MoveInZone", "name": "Move in zone"},
+                                        {"value_string": "LongInZone", "name": "Long in zone"},
+                                    ],
+                                },
+                            },
+                            {
+                                "id": "camera_ref",
+                                "type": "link",
+                                "properties": [
+                                    {
+                                        "id": "streaming_id",
+                                        "type": "string",
+                                        "value_kind": "value_string",
+                                        "value_string": "vmda-source",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "id": "advanced",
+                        "type": "group",
+                        "properties": [
+                            {
+                                "id": "sensitivity",
+                                "type": "int",
+                                "value_kind": "value_int32",
+                                "value_int32": 42,
+                                "range_constraint": {"min_int": 0, "max_int": 100},
+                            },
+                            {
+                                "id": "apiToken",
+                                "type": "string",
+                                "value_kind": "value_string",
+                                "value_string": "SCHEMA_SECRET_SHOULD_NOT_LEAK",
+                            },
+                        ],
+                    },
+                ],
+                "child_units": [
+                    {
+                        "uid": "hosts/Server/AppDataDetector.Schema/VisualElement.1",
+                        "type": "VisualElement",
+                        "name": "VisualElement",
+                        "properties": [
+                            {
+                                "id": "polyline",
+                                "type": "shape",
+                                "readonly": False,
+                                "value_simple_polygon": {
+                                    "points": [
+                                        {"x": 0.1, "y": 0.1},
+                                        {"x": 0.9, "y": 0.1},
+                                    ],
+                                },
+                            },
+                            {
+                                "id": "secretOverlayToken",
+                                "type": "string",
+                                "value_string": "VISUAL_SECRET_SHOULD_NOT_LEAK",
+                            },
+                        ],
+                    }
+                ],
+            }
+        ]
+
+    def detector_archive_templates(self) -> list[dict[str, Any]]:
+        return []
+
+    def batch_get_factories(self, factory_ids: list[dict[str, Any]]) -> dict[str, Any]:
+        return {"body": {"items": []}}
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -574,6 +672,90 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(fake.config_stub.list_templates_requests[0].kwargs, {"view": "VIEW_MODE_FULL"})
         av_by_kind = {entry["detector_kind"]: entry for entry in catalog["by_unit_type"]["AVDetector"]}
         self.assertEqual(av_by_kind["Loitering"]["provenance"], ["template"])
+
+    def test_detector_parameter_schema_flattens_nested_descriptors_and_constraints(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorSchemaClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_parameter_schema("AppDataDetector", "MoveInZone")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "detector_parameter_schema")
+        self.assertEqual(result["unit_type"], "AppDataDetector")
+        self.assertEqual(result["detector_kind"], "MoveInZone")
+        self.assertEqual(result["source_type"], "TargetList")
+        self.assertEqual(result["provenance"], ["live-unit"])
+        self.assertEqual(result["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
+        properties = result["schema"]["properties"]
+        self.assertIn("input.detector", properties)
+        self.assertIn("input.camera_ref.streaming_id", properties)
+        self.assertIn("advanced.sensitivity", properties)
+
+        detector = properties["input.detector"]
+        self.assertEqual(detector["id"], "detector")
+        self.assertEqual(detector["path"], "input.detector")
+        self.assertEqual(detector["value_kind"], "value_string")
+        self.assertFalse(detector["readonly"])
+        self.assertFalse(detector["internal"])
+        self.assertEqual(detector["enum"], ["MoveInZone", "LongInZone"])
+        self.assertEqual(detector["enum_choices"][0]["name"], "Move in zone")
+
+        sensitivity = properties["advanced.sensitivity"]
+        self.assertEqual(sensitivity["value_kind"], "value_int32")
+        self.assertEqual(sensitivity["range"]["min_int"], 0)
+        self.assertEqual(sensitivity["range"]["max_int"], 100)
+
+    def test_detector_parameter_schema_reports_visual_elements_without_sensitive_values(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorSchemaClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_parameter_schema("AppDataDetector", "MoveInZone")
+
+        self.assertEqual(len(result["visual_elements"]), 1)
+        visual = result["visual_elements"][0]
+        self.assertEqual(visual["uid"], "hosts/Server/AppDataDetector.Schema/VisualElement.1")
+        self.assertEqual(visual["type"], "VisualElement")
+        self.assertEqual(visual["shape_fields"], ["value_simple_polygon"])
+        self.assertEqual(visual["properties"][0]["id"], "polyline")
+        self.assertEqual(visual["properties"][0]["value_kind"], "value_simple_polygon")
+        self.assertNotIn("VISUAL_SECRET_SHOULD_NOT_LEAK", str(result))
+
+    def test_detector_parameter_schema_redacts_sensitive_property_values(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorSchemaClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_parameter_schema("AppDataDetector", "MoveInZone")
+
+        token = result["schema"]["properties"]["advanced.apiToken"]
+        self.assertEqual(token["id"], "apiToken")
+        self.assertEqual(token["value_kind"], "value_string")
+        self.assertNotIn("SCHEMA_SECRET_SHOULD_NOT_LEAK", str(result))
+
+    def test_detector_parameter_schema_returns_fixture_needed_for_unresolved_kind(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorSchemaClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_parameter_schema("AppDataDetector", "NotInFixtures")
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "detector_parameter_schema")
+        self.assertEqual(result["unit_type"], "AppDataDetector")
+        self.assertEqual(result["detector_kind"], "NotInFixtures")
+        self.assertEqual(result["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
+        self.assertEqual(result["fixtures"]["missing"], ["video_source_ap", "vmda_source_ap"])
+        self.assertIn("NotInFixtures", result["message"])
 
 
 if __name__ == "__main__":
