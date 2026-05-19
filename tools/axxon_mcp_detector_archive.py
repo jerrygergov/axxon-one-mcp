@@ -27,6 +27,7 @@ KNOWN_DETECTOR_KINDS = {
 }
 PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
 PROPERTY_VALUE_FIELDS = (
+    "value",
     "value_string",
     "value_bool",
     "value_int32",

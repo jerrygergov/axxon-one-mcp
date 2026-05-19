@@ -127,6 +127,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                     "type": "string",
                     "readonly": False,
                     "value_kind": "value_string",
+                    "value": "SECRET_SHOULD_NOT_LEAK",
                     "value_string": "PROPERTY_VALUE_SHOULD_NOT_LEAK",
                 },
                 {
@@ -169,6 +170,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(password["type"], "string")
         self.assertFalse(password["readonly"])
         self.assertEqual(password["value_kind"], "value_string")
+        self.assertEqual(password["value"], "<redacted>")
         self.assertEqual(password["value_string"], "<redacted>")
 
         display_name = redacted["properties"][1]
@@ -184,6 +186,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         endpoint = connection["properties"][1]
         self.assertEqual(endpoint["id"], "endpoint")
         self.assertEqual(endpoint["value_string"], "metadata-stream")
+        self.assertNotIn("SECRET_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("PROPERTY_VALUE_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(redacted))
 
