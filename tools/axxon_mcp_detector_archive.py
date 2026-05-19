@@ -26,7 +26,18 @@ KNOWN_DETECTOR_KINDS = {
     "AppDataDetector": ("MoveInZone", "OneLineCrossing", "LongInZone", "LostObject", "AbandonedObject"),
 }
 PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
-PROPERTY_VALUE_FIELDS = ("string_list_value",)
+PROPERTY_VALUE_FIELDS = (
+    "value_string",
+    "value_bool",
+    "value_int32",
+    "value_int64",
+    "value_uint32",
+    "value_uint64",
+    "value_float",
+    "value_double",
+    "value_bytes",
+    "string_list_value",
+)
 
 
 def default_config_factory() -> AxxonClientConfig:
@@ -61,7 +72,7 @@ def _sensitive_property_node(value: dict[Any, Any]) -> bool:
 
 
 def _property_value_field(name: Any) -> bool:
-    return str(name).startswith("value_") or str(name) in PROPERTY_VALUE_FIELDS
+    return str(name) in PROPERTY_VALUE_FIELDS
 
 
 def redact_sensitive_properties(value: Any) -> Any:

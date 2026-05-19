@@ -126,6 +126,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                     "name": "Password",
                     "type": "string",
                     "readonly": False,
+                    "value_kind": "value_string",
                     "value_string": "PROPERTY_VALUE_SHOULD_NOT_LEAK",
                 },
                 {
@@ -167,6 +168,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(password["name"], "Password")
         self.assertEqual(password["type"], "string")
         self.assertFalse(password["readonly"])
+        self.assertEqual(password["value_kind"], "value_string")
         self.assertEqual(password["value_string"], "<redacted>")
 
         display_name = redacted["properties"][1]
