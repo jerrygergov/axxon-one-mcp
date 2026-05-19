@@ -349,6 +349,11 @@ class FakeDetectorSchemaClient(FakeClient):
                                 "type": "string",
                                 "value_kind": "value_string",
                                 "value_string": "SCHEMA_SECRET_SHOULD_NOT_LEAK",
+                                "enum_constraint": {
+                                    "items": [
+                                        {"value_string": "ENUM_SECRET_SHOULD_NOT_LEAK", "name": "Leaked token"},
+                                    ],
+                                },
                             },
                         ],
                     },
@@ -708,6 +713,20 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(sensitivity["range"]["min_int"], 0)
         self.assertEqual(sensitivity["range"]["max_int"], 100)
 
+    def test_detector_parameter_schema_matches_selected_kind_not_advertised_enum_choices(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorSchemaClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        selected = archive.detector_parameter_schema("AppDataDetector", "MoveInZone")
+        advertised = archive.detector_parameter_schema("AppDataDetector", "LongInZone")
+
+        self.assertEqual(selected["status"], "ok")
+        self.assertEqual(advertised["status"], "fixture-needed")
+        self.assertIn("LongInZone", advertised["message"])
+
     def test_detector_parameter_schema_reports_visual_elements_without_sensitive_values(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         archive = module.AxxonMcpDetectorArchive(
@@ -738,7 +757,10 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         token = result["schema"]["properties"]["advanced.apiToken"]
         self.assertEqual(token["id"], "apiToken")
         self.assertEqual(token["value_kind"], "value_string")
+        self.assertNotIn("enum", token)
+        self.assertNotIn("enum_choices", token)
         self.assertNotIn("SCHEMA_SECRET_SHOULD_NOT_LEAK", str(result))
+        self.assertNotIn("ENUM_SECRET_SHOULD_NOT_LEAK", str(result))
 
     def test_detector_parameter_schema_returns_fixture_needed_for_unresolved_kind(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")

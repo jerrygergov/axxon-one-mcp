@@ -167,6 +167,22 @@ def _detector_kinds_from_descriptor(descriptor: dict[str, Any]) -> set[str]:
     return kinds
 
 
+def _selected_detector_kinds_from_descriptor(descriptor: dict[str, Any]) -> set[str]:
+    kinds: set[str] = set()
+    for field in ("detector_kind", "detectorKind"):
+        value = descriptor.get(field)
+        if isinstance(value, str) and value:
+            kinds.add(value)
+    for node in _iter_dict_nodes(descriptor):
+        if _property_identity(node) != "detector":
+            continue
+        for field in PROPERTY_VALUE_FIELDS:
+            value = node.get(field)
+            if isinstance(value, str) and value:
+                kinds.add(value)
+    return kinds
+
+
 def _descriptor_value_kind(descriptor: dict[str, Any]) -> str:
     value_kind = descriptor.get("value_kind")
     if isinstance(value_kind, str) and value_kind:
@@ -204,6 +220,7 @@ def _enum_choices(descriptor: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _schema_property_descriptor(descriptor: dict[str, Any], path: str) -> dict[str, Any]:
+    sensitive_node = _sensitive_property_node(descriptor)
     redacted = redact_sensitive_properties(descriptor)
     out: dict[str, Any] = {
         "id": _property_id(redacted),
@@ -215,11 +232,11 @@ def _schema_property_descriptor(descriptor: dict[str, Any], path: str) -> dict[s
     for field in ("name", "type", "category", "required"):
         if field in redacted:
             out[field] = redacted[field]
-    choices = _enum_choices(redacted)
+    choices = [] if sensitive_node else _enum_choices(redacted)
     if choices:
         out["enum"] = [choice["value"] for choice in choices]
         out["enum_choices"] = choices
-    if isinstance(redacted.get("range_constraint"), dict):
+    if not sensitive_node and isinstance(redacted.get("range_constraint"), dict):
         out["range"] = dict(redacted["range_constraint"])
     return out
 
@@ -593,7 +610,7 @@ class AxxonMcpDetectorArchive:
 
         client = self.ensure_client()
         for provenance, descriptor in _schema_source_candidates(client, unit_type):
-            if detector_kind not in _detector_kinds_from_descriptor(descriptor):
+            if detector_kind not in _selected_detector_kinds_from_descriptor(descriptor):
                 continue
             return {
                 "status": "ok",
