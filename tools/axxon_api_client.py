@@ -425,6 +425,64 @@ class AxxonApiClient:
             return body.get("intervals", [])[:max_count]
         return []
 
+    def batch_get_factories(self, factory_ids: list[dict[str, Any]]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.config.ConfigurationService.BatchGetFactories",
+            {"factories": [dict(factory) for factory in factory_ids]},
+        )
+
+    def list_similar_units(self, unit_uid: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.config.ConfigurationService.ListSimilarUnits",
+            {
+                "uid": unit_uid,
+                "node_name": self.node_name(),
+                "page_size": 1000,
+                "search_mode": "BY_UNIT_TYPE",
+            },
+        )
+
+    def acquire_dynamic_parameters(self, unit_uid: str, property_path: str | None = None) -> dict[str, Any]:
+        if property_path is not None:
+            raise ValueError("property_path is not supported by DynamicParametersService.AcquireDynamicParameters")
+        return self.http_grpc(
+            "axxonsoft.bl.config.DynamicParametersService.AcquireDynamicParameters",
+            {"uid": unit_uid},
+        )
+
+    def acquire_device_additional_data(self, unit_uid: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.config.DynamicParametersService.AcquireDeviceAdditionalData",
+            {"uid": unit_uid},
+        )
+
+    def archive_format_volumes(self, access_point: str, volume_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.archive.ArchiveService.FormatVolumes",
+            {"access_point": access_point, "volumes": [{"id": volume_id} for volume_id in volume_ids]},
+        )
+
+    def archive_reindex(self, access_point: str, volume_ids: list[str], full: bool = True) -> dict[str, Any]:
+        data: dict[str, Any] = {"access_point": access_point, "volume_ids": list(volume_ids)}
+        if full:
+            data["full_reindex"] = {}
+        return self.http_grpc(
+            "axxonsoft.bl.archive.ArchiveService.Reindex",
+            data,
+        )
+
+    def archive_cancel_reindex(self, access_point: str, volume_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.archive.ArchiveService.CancelReindex",
+            {"access_point": access_point, "volume_ids": list(volume_ids)},
+        )
+
+    def archive_probe_volume(self, path_or_volume_hint: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.archive.ArchiveVolumeService.ProbeVolume",
+            {"volume_type": "local", "connection_params": {"path": path_or_volume_hint}},
+        )
+
     def http_get_json(self, path: str, max_items: int = 32) -> dict[str, Any]:
         """GET a legacy HTTP JSON endpoint with Bearer auth and return the parsed body."""
         response = self.http_request("GET", path, bearer=True, max_items=max_items)
