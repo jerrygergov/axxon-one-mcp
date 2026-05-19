@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **281 / 281** unit tests passing on the Phase 5D branch.
+- **281 / 281** unit tests passing on `main`.
 - **36** PDF gap-coverage matrix rows. 30 verified, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
@@ -44,7 +44,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5B — PTZ + Tag&Track | ⏸ deferred (no PTZ fixture) |
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
-| 5E — Detector depth + archive policies | ❌ not started |
+| 5E — Detector depth + archive policies | 📝 planned |
 | 5F — Security / users / system health + schedules | ❌ not started |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
