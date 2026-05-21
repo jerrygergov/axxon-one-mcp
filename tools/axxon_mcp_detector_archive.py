@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+import posixpath
 from typing import Any, Callable
 
 from axxon_api_client import AxxonApiClient, AxxonClientConfig
@@ -1098,7 +1099,19 @@ def _normalized_token_text(value: str) -> str:
 def _archive_policy_categories(path: str) -> set[str]:
     text = _normalized_token_text(path)
     categories: set[str] = set()
-    if any(token in text for token in ("retention", "archive_depth", "archive_days", "max_archive", "maxarchivedays", "ttl")):
+    if any(
+        token in text
+        for token in (
+            "retention",
+            "archive_depth",
+            "archive_days",
+            "max_archive",
+            "maxarchivedays",
+            "day_depth",
+            "daydepth",
+            "ttl",
+        )
+    ):
         categories.add("retention_properties")
     if any(token in text for token in ("schedule", "calendar", "weekly", "daily")):
         categories.add("schedule_properties")
@@ -1147,10 +1160,18 @@ def _fixture_needed_archive_policy(target: str, message: str) -> dict[str, Any]:
 def _safe_archive_probe_hint(path_or_volume_hint: str, client: Any) -> bool:
     if getattr(client, "allow_archive_volume_probe_fixture", False):
         return True
-    return (
-        path_or_volume_hint.startswith("codex-")
-        or path_or_volume_hint.startswith("/tmp/codex-")
-    )
+    if path_or_volume_hint.startswith("codex-"):
+        return "/" not in path_or_volume_hint and "\\" not in path_or_volume_hint and all(
+            ch.isalnum() or ch in "-_" for ch in path_or_volume_hint
+        )
+    if path_or_volume_hint.startswith("/"):
+        normalized = posixpath.normpath(path_or_volume_hint)
+        return (
+            normalized.startswith("/tmp/")
+            and posixpath.basename(normalized).startswith("codex-")
+            and posixpath.commonpath(["/tmp", normalized]) == "/tmp"
+        )
+    return False
 
 
 def _archive_mutation_policy() -> dict[str, Any]:

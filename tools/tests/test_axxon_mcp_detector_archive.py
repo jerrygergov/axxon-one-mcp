@@ -738,6 +738,10 @@ class FakeArchivePolicyClient(FakeClient):
                                     "value_string": self.archive_ap,
                                 },
                                 {
+                                    "id": "day_depth",
+                                    "value_int32": 7,
+                                },
+                                {
                                     "id": "archivePassword",
                                     "value_string": "ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK",
                                 },
@@ -1809,6 +1813,8 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(recording["recording.preAlarmDurationSec"]["value"], 5)
         retention = {item["path"]: item for item in result["retention_properties"]}
         self.assertEqual(retention["retention.maxArchiveDays"]["value"], 14)
+        self.assertIn("archive.day_depth", retention)
+        self.assertEqual(retention["archive.day_depth"]["value"], 7)
         schedule = {item["path"]: item for item in result["schedule_properties"]}
         self.assertEqual(schedule["schedule.weeklySchedule"]["value"], "24x7")
         self.assertNotIn("ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK", str(result))
@@ -1958,6 +1964,16 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
             "/var/lib/axxon/archive/codex-nonexistent-volume",
         )
         self.assertEqual(fake.probe_calls, [])
+
+        for unsafe_hint in (
+            "/tmp/codex-/../../var/lib/axxon/archive",
+            "codex-../real-volume",
+            "codex-volume/child",
+        ):
+            unsafe_result = archive.archive_volume_probe(unsafe_hint)
+            self.assertEqual(unsafe_result["status"], "fixture-needed")
+            self.assertEqual(unsafe_result["path_or_volume_hint"], unsafe_hint)
+            self.assertEqual(fake.probe_calls, [])
 
         safe = archive.archive_volume_probe("codex-nonexistent-volume")
 
