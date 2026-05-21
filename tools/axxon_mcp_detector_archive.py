@@ -87,12 +87,18 @@ def _property_value_field(name: Any) -> bool:
     return str(name) in PROPERTY_VALUE_FIELDS
 
 
+def _nested_sensitive_identity_field(name: Any) -> bool:
+    return str(name) in ("id", "property_id", "propertyId", "path")
+
+
 def _redact_sensitive_properties(value: Any, sensitive_context: bool) -> Any:
     if isinstance(value, dict):
         sensitive_node = sensitive_context or _sensitive_property_node(value)
         return {
             key: "<redacted>"
-            if _sensitive_key(key) or (sensitive_node and _property_value_field(key))
+            if _sensitive_key(key)
+            or (sensitive_node and _property_value_field(key))
+            or (sensitive_context and _nested_sensitive_identity_field(key))
             else _redact_sensitive_properties(item, sensitive_node)
             for key, item in value.items()
         }

@@ -444,6 +444,7 @@ class FakeDetectorConfigClient(FakeClient):
                                 "enum_constraint": {
                                     "items": [
                                         {
+                                            "id": "CONFIG_ENUM_ID_SECRET_SHOULD_NOT_LEAK",
                                             "value_string": "CONFIG_ENUM_SECRET_SHOULD_NOT_LEAK",
                                             "name": "Option A",
                                         },
@@ -717,6 +718,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                     "enum_constraint": {
                         "items": [
                             {
+                                "id": "ENUM_ID_SECRET_SHOULD_NOT_LEAK",
                                 "value_string": "ENUM_SECRET_SHOULD_NOT_LEAK",
                                 "name": "Option A",
                             },
@@ -727,6 +729,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                     },
                     "history": [
                         {
+                            "id": "HISTORY_ID_SECRET_SHOULD_NOT_LEAK",
                             "value_bytes": "HISTORY_SECRET_SHOULD_NOT_LEAK",
                         },
                     ],
@@ -740,6 +743,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
                     "enum_constraint": {
                         "items": [
                             {
+                                "id": "visible-id",
                                 "value_string": "visible",
                                 "name": "Visible",
                             },
@@ -757,18 +761,23 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(token["type"], "string")
         self.assertEqual(token["value_kind"], "value_string")
         self.assertEqual(token["value_string"], "<redacted>")
+        self.assertEqual(token["enum_constraint"]["items"][0]["id"], "<redacted>")
         self.assertEqual(token["enum_constraint"]["items"][0]["value_string"], "<redacted>")
         self.assertEqual(token["enum_constraint"]["items"][0]["name"], "Option A")
         self.assertEqual(token["default_value"]["value_string"], "<redacted>")
+        self.assertEqual(token["history"][0]["id"], "<redacted>")
         self.assertEqual(token["history"][0]["value_bytes"], "<redacted>")
 
         display = redacted["properties"][1]
         self.assertEqual(display["value_kind"], "value_string")
         self.assertEqual(display["value_string"], "visible")
+        self.assertEqual(display["enum_constraint"]["items"][0]["id"], "visible-id")
         self.assertEqual(display["enum_constraint"]["items"][0]["value_string"], "visible")
         self.assertNotIn("DIRECT_SECRET_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("ENUM_ID_SECRET_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("ENUM_SECRET_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("DEFAULT_SECRET_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("HISTORY_ID_SECRET_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("HISTORY_SECRET_SHOULD_NOT_LEAK", str(redacted))
 
     def test_detector_kind_catalog_returns_known_fallback_without_live_lookup(self) -> None:
@@ -1009,11 +1018,14 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("advanced.generated", writable)
 
         token_config = result["config"]["properties"][1]["properties"][1]
+        self.assertEqual(token_config["id"], "apiToken")
         self.assertEqual(token_config["value_string"], "<redacted>")
+        self.assertEqual(token_config["enum_constraint"]["items"][0]["id"], "<redacted>")
         self.assertEqual(token_config["enum_constraint"]["items"][0]["value_string"], "<redacted>")
         self.assertEqual(token_config["enum_constraint"]["items"][0]["name"], "Option A")
         self.assertEqual(token_config["default_value"]["value_string"], "<redacted>")
         self.assertEqual(token_config["value_kind"], "value_string")
+        self.assertNotIn("CONFIG_ENUM_ID_SECRET_SHOULD_NOT_LEAK", str(result))
         self.assertNotIn("CONFIG_ENUM_SECRET_SHOULD_NOT_LEAK", str(result))
         self.assertNotIn("CONFIG_DEFAULT_SECRET_SHOULD_NOT_LEAK", str(result))
 
