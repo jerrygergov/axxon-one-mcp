@@ -712,6 +712,9 @@ class FakeFailingInventoryMetadataCatalogClient(FakeClient):
 
 class FakeArchivePolicyClient(FakeClient):
     camera_uid = "hosts/Server/DeviceIpint.1"
+    camera_source_ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+    archive_uid = "hosts/Server/MultimediaStorage.AliceBlue"
+    archive_ap = "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage"
 
     def __init__(self, config: FakeConfig) -> None:
         super().__init__(config)
@@ -719,54 +722,150 @@ class FakeArchivePolicyClient(FakeClient):
 
     def list_units(self, unit_type: str) -> list[dict[str, Any]]:
         self.list_units_calls.append(unit_type)
-        if unit_type != "DeviceIpint":
-            return []
-        return [
-            {
-                "uid": self.camera_uid,
-                "type": "DeviceIpint",
-                "display_name": "Camera 1",
-                "properties": [
-                    {
-                        "id": "archive",
-                        "properties": [
-                            {
-                                "id": "storage_access_point",
-                                "value_string": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
-                            },
-                            {
-                                "id": "archivePassword",
-                                "value_string": "ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK",
-                            },
-                        ],
-                    },
-                    {
-                        "id": "recording",
-                        "properties": [
-                            {"id": "enabled", "value_bool": True},
-                            {"id": "preAlarmDurationSec", "value_int32": 5},
-                        ],
-                    },
-                    {
-                        "id": "retention",
-                        "properties": [
-                            {"id": "maxArchiveDays", "value_int32": 14},
-                        ],
-                    },
-                    {
-                        "id": "schedule",
-                        "properties": [
-                            {"id": "weeklySchedule", "value_string": "24x7"},
-                        ],
-                    },
-                ],
-            }
-        ]
+        if unit_type == "DeviceIpint":
+            return [
+                {
+                    "uid": self.camera_uid,
+                    "type": "DeviceIpint",
+                    "display_name": "Camera 1",
+                    "access_points": [self.camera_source_ap],
+                    "properties": [
+                        {
+                            "id": "archive",
+                            "properties": [
+                                {
+                                    "id": "storage_access_point",
+                                    "value_string": self.archive_ap,
+                                },
+                                {
+                                    "id": "archivePassword",
+                                    "value_string": "ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK",
+                                },
+                            ],
+                        },
+                        {
+                            "id": "recording",
+                            "properties": [
+                                {"id": "enabled", "value_bool": True},
+                                {"id": "preAlarmDurationSec", "value_int32": 5},
+                            ],
+                        },
+                        {
+                            "id": "retention",
+                            "properties": [
+                                {"id": "maxArchiveDays", "value_int32": 14},
+                            ],
+                        },
+                        {
+                            "id": "schedule",
+                            "properties": [
+                                {"id": "weeklySchedule", "value_string": "24x7"},
+                            ],
+                        },
+                    ],
+                }
+            ]
+        if unit_type == "MultimediaStorage":
+            return [
+                {
+                    "uid": self.archive_uid,
+                    "type": "MultimediaStorage",
+                    "access_point": self.archive_ap,
+                    "properties": [
+                        {
+                            "id": "archive",
+                            "properties": [
+                                {"id": "volumePath", "value_string": "/mnt/archive"},
+                            ],
+                        },
+                        {
+                            "id": "retention",
+                            "properties": [
+                                {"id": "maxArchiveDays", "value_int32": 30},
+                            ],
+                        },
+                    ],
+                }
+            ]
+        return []
 
 
 class FakeArchivePolicyMissingClient(FakeClient):
     def list_units(self, unit_type: str) -> list[dict[str, Any]]:
         return []
+
+
+class FakeArchivePolicyConfigStub:
+    def __init__(self) -> None:
+        self.list_units_requests: list[FakeListUnitsRequest] = []
+
+    def ListUnits(self, request: FakeListUnitsRequest, timeout: float) -> dict[str, Any]:
+        self.list_units_requests.append(request)
+        uid = request.kwargs["unit_uids"][0]
+        if uid == FakeArchivePolicyClient.camera_uid:
+            return {
+                "units": [
+                    {
+                        "uid": uid,
+                        "type": "DeviceIpint",
+                        "properties": [
+                            {
+                                "id": "recording",
+                                "properties": [
+                                    {"id": "enabled", "value_bool": True},
+                                ],
+                            },
+                        ],
+                    }
+                ]
+            }
+        if uid == FakeArchivePolicyClient.archive_uid:
+            return {
+                "units": [
+                    {
+                        "uid": uid,
+                        "type": "MultimediaStorage",
+                        "properties": [
+                            {
+                                "id": "retention",
+                                "properties": [
+                                    {"id": "maxArchiveDays", "value_int32": 21},
+                                ],
+                            },
+                        ],
+                    }
+                ]
+            }
+        return {"units": []}
+
+
+class FakeRealShapedArchivePolicyClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.authenticate_calls = 0
+        self.config_stub = FakeArchivePolicyConfigStub()
+
+    def authenticate_grpc(self) -> None:
+        self.authenticate_calls += 1
+
+    def load_inventory(self) -> dict[str, Any]:
+        return {
+            "items": [
+                {"access_point": FakeArchivePolicyClient.camera_source_ap},
+                {"access_point": FakeArchivePolicyClient.archive_ap},
+            ]
+        }
+
+    def import_module(self, module_name: str) -> Any:
+        if module_name == "axxonsoft.bl.config.ConfigurationService_pb2":
+            return FakeConfigPb
+        raise AssertionError(module_name)
+
+    def common_stubs(self) -> dict[str, Any]:
+        return {"config": self.config_stub}
+
+    def message_to_dict(self, message: Any) -> dict[str, Any]:
+        return message if isinstance(message, dict) else {}
 
 
 class FakeArchiveRequest:
@@ -870,6 +969,11 @@ class FakeArchiveNoFixtureClient(FakeClient):
 
     def archive_access_point(self) -> str:
         return ""
+
+
+class FakeArchiveAuthErrorClient(FakeClient):
+    def authenticate_grpc(self) -> None:
+        raise RuntimeError("auth setup failed")
 
 
 class FakeArchiveProbeClient(FakeClient):
@@ -1709,6 +1813,36 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(schedule["schedule.weeklySchedule"]["value"], "24x7")
         self.assertNotIn("ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK", str(result))
 
+    def test_archive_policy_get_normalizes_camera_and_archive_access_points_for_real_list_units(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        camera_result = archive.archive_policy_get(FakeArchivePolicyClient.camera_source_ap)
+        archive_result = archive.archive_policy_get(FakeArchivePolicyClient.archive_ap)
+
+        self.assertEqual(camera_result["status"], "ok")
+        self.assertEqual(camera_result["target"], FakeArchivePolicyClient.camera_source_ap)
+        self.assertEqual(camera_result["descriptor"]["uid"], FakeArchivePolicyClient.camera_uid)
+        recording = {item["path"]: item for item in camera_result["recording_properties"]}
+        self.assertTrue(recording["recording.enabled"]["value"])
+
+        self.assertEqual(archive_result["status"], "ok")
+        self.assertEqual(archive_result["target"], FakeArchivePolicyClient.archive_ap)
+        self.assertEqual(archive_result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
+        retention = {item["path"]: item for item in archive_result["retention_properties"]}
+        self.assertEqual(retention["retention.maxArchiveDays"]["value"], 21)
+        self.assertEqual(
+            [request.kwargs for request in fake.config_stub.list_units_requests],
+            [
+                {"unit_uids": [FakeArchivePolicyClient.camera_uid]},
+                {"unit_uids": [FakeArchivePolicyClient.archive_uid]},
+            ],
+        )
+
     def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         archive = module.AxxonMcpDetectorArchive(
@@ -1752,6 +1886,9 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["disk_space"]["status_code"], "OK")
         self.assertTrue(result["disk_space"]["capacity_bytes_present"])
         self.assertIn("ArchiveService.FormatVolumes", str(result["mutation_policy"]))
+        self.assertTrue(result["mutation_policy"]["read_only"])
+        self.assertIsInstance(result["mutation_policy"]["not_executed"], list)
+        self.assertIsInstance(result["mutation_policy"]["notes"], list)
 
         self.assertEqual(fake.authenticate_calls, 1)
         self.assertEqual(fake.load_inventory_calls, 1)
@@ -1777,6 +1914,25 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["tool"], "archive_management_status")
         self.assertEqual(result["archive_access_point"], "")
         self.assertIn("archive access point", result["message"])
+        self.assertTrue(result["mutation_policy"]["read_only"])
+        self.assertIsInstance(result["mutation_policy"]["not_executed"], list)
+        self.assertIsInstance(result["mutation_policy"]["notes"], list)
+
+    def test_archive_management_status_returns_stable_mutation_policy_on_setup_error(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchiveAuthErrorClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_management_status()
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "archive_management_status")
+        self.assertIn("auth setup failed", result["message"])
+        self.assertTrue(result["mutation_policy"]["read_only"])
+        self.assertIsInstance(result["mutation_policy"]["not_executed"], list)
+        self.assertIsInstance(result["mutation_policy"]["notes"], list)
 
     def test_archive_volume_probe_refuses_unsafe_hints_and_dispatches_safe_fixture_hints(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -1794,6 +1950,15 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(fake.probe_calls, [])
         self.assertIn("safe", unsafe["safety"]["message"])
 
+        unsafe_marker_path = archive.archive_volume_probe("/var/lib/axxon/archive/codex-nonexistent-volume")
+
+        self.assertEqual(unsafe_marker_path["status"], "fixture-needed")
+        self.assertEqual(
+            unsafe_marker_path["path_or_volume_hint"],
+            "/var/lib/axxon/archive/codex-nonexistent-volume",
+        )
+        self.assertEqual(fake.probe_calls, [])
+
         safe = archive.archive_volume_probe("codex-nonexistent-volume")
 
         self.assertEqual(safe["status"], "ok")
@@ -1804,6 +1969,10 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertTrue(safe["safety"]["non_mutating"])
         self.assertEqual(fake.probe_calls, ["codex-nonexistent-volume"])
         self.assertNotIn("PROBE_SECRET_SHOULD_NOT_LEAK", str(safe))
+
+        tmp_safe = archive.archive_volume_probe("/tmp/codex-volume")
+        self.assertEqual(tmp_safe["status"], "ok")
+        self.assertEqual(fake.probe_calls, ["codex-nonexistent-volume", "/tmp/codex-volume"])
 
     def test_archive_volume_probe_reports_transport_errors_with_bounded_message(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")

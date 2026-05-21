@@ -989,8 +989,51 @@ def _unit_type_from_uid(uid: str) -> str:
     return ""
 
 
-def _archive_policy_candidate_unit_types(target: str) -> list[str]:
-    parsed = _unit_type_from_uid(target)
+def _archive_policy_unit_uid_from_access_point(access_point: str) -> str:
+    for marker in ("/SourceEndpoint.", "/EventSupplier"):
+        if marker in access_point:
+            return access_point.split(marker, 1)[0]
+    if access_point.endswith("/MultimediaStorage") and "/MultimediaStorage." in access_point:
+        return access_point.rsplit("/MultimediaStorage", 1)[0]
+    return ""
+
+
+def _unique_nonempty(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+    return out
+
+
+def _archive_policy_inventory_uid_candidates(client: Any, target: str) -> list[str]:
+    load_inventory = getattr(client, "load_inventory", None)
+    if not callable(load_inventory):
+        return []
+    try:
+        inventory = load_inventory()
+    except Exception:
+        return []
+    candidates: list[str] = []
+    for text in _flatten_strings(inventory):
+        if target != text and target not in text and text not in target:
+            continue
+        candidates.append(_archive_policy_unit_uid_from_access_point(text))
+    return candidates
+
+
+def _archive_policy_target_uid_candidates(client: Any, target: str) -> list[str]:
+    normalized = _archive_policy_unit_uid_from_access_point(target)
+    candidates = [normalized] if normalized else [target]
+    candidates.extend(_archive_policy_inventory_uid_candidates(client, target))
+    return _unique_nonempty(candidates)
+
+
+def _archive_policy_candidate_unit_types(candidates: list[str]) -> list[str]:
+    parsed = next((unit_type for unit_type in (_unit_type_from_uid(candidate) for candidate in candidates) if unit_type), "")
     ordered = [parsed] if parsed else []
     ordered.extend(unit_type for unit_type in ARCHIVE_POLICY_UNIT_TYPES if unit_type not in ordered)
     return ordered
@@ -1000,11 +1043,20 @@ def _archive_policy_descriptor_from_wrappers(client: Any, target: str) -> tuple[
     method = getattr(client, "list_units", None)
     if not callable(method):
         return None, ""
+    target_candidates = _archive_policy_target_uid_candidates(client, target)
     found: dict[str, Any] | None = None
-    for unit_type in _archive_policy_candidate_unit_types(target):
+    for unit_type in _archive_policy_candidate_unit_types(target_candidates):
         for unit in _as_items(_call_source(method, unit_type=unit_type)):
             uid = _unit_uid(unit)
-            if uid == target or target in (str(unit.get("access_point", "")), str(unit.get("accessPoint", ""))):
+            unit_strings = _flatten_strings(unit)
+            unit_uid_candidates = _unique_nonempty(
+                [uid] + [_archive_policy_unit_uid_from_access_point(text) for text in unit_strings]
+            )
+            if (
+                any(candidate in target_candidates for candidate in unit_uid_candidates)
+                or target in unit_strings
+                or target in (str(unit.get("access_point", "")), str(unit.get("accessPoint", "")))
+            ):
                 found = unit
     return (found, "list_units") if found is not None else (None, "")
 
@@ -1013,9 +1065,10 @@ def _archive_policy_descriptor(client: Any, target: str) -> tuple[dict[str, Any]
     descriptor, source = _archive_policy_descriptor_from_wrappers(client, target)
     if descriptor is not None:
         return descriptor, source
-    descriptor = _client_real_unit_by_uid(client, target)
-    if descriptor is not None:
-        return descriptor, "configuration_service.ListUnits"
+    for candidate in _archive_policy_target_uid_candidates(client, target):
+        descriptor = _client_real_unit_by_uid(client, candidate)
+        if descriptor is not None:
+            return descriptor, "configuration_service.ListUnits"
     return None, ""
 
 
@@ -1097,8 +1150,17 @@ def _safe_archive_probe_hint(path_or_volume_hint: str, client: Any) -> bool:
     return (
         path_or_volume_hint.startswith("codex-")
         or path_or_volume_hint.startswith("/tmp/codex-")
-        or "codex-nonexistent-" in path_or_volume_hint
     )
+
+
+def _archive_mutation_policy() -> dict[str, Any]:
+    return {
+        "read_only": True,
+        "not_executed": [dict(item) for item in ARCHIVE_MUTATIONS_REQUIRING_APPROVAL],
+        "notes": [
+            "This status tool never formats, reindexes, cancels reindex, deletes, clears, resizes, or links archive volumes.",
+        ],
+    }
 
 
 def _archive_volume_summary(volumes_state: dict[str, Any], response: dict[str, Any]) -> dict[str, Any]:
@@ -1527,7 +1589,7 @@ class AxxonMcpDetectorArchive:
                 "tool": "archive_management_status",
                 "archive_access_point": "",
                 "message": str(exc)[:240],
-                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                "mutation_policy": _archive_mutation_policy(),
             }
 
         authenticate = getattr(client, "authenticate_grpc", None)
@@ -1540,7 +1602,7 @@ class AxxonMcpDetectorArchive:
                     "tool": "archive_management_status",
                     "archive_access_point": "",
                     "message": str(exc)[:240],
-                    "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                    "mutation_policy": _archive_mutation_policy(),
                 }
 
         load_inventory = getattr(client, "load_inventory", None)
@@ -1560,7 +1622,7 @@ class AxxonMcpDetectorArchive:
                 "traits": {"traits": [], "trait_count": 0},
                 "volume_summary": {"volume_count": 0, "states": {}, "readonly_count": 0, "not_found_count": 0},
                 "disk_space": {"status": "skipped", "message": "No archive access point."},
-                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                "mutation_policy": _archive_mutation_policy(),
             }
 
         try:
@@ -1614,13 +1676,7 @@ class AxxonMcpDetectorArchive:
                 },
                 "volume_summary": volume_summary,
                 "disk_space": disk_space,
-                "mutation_policy": {
-                    "read_only": True,
-                    "not_executed": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
-                    "notes": [
-                        "This status tool never formats, reindexes, cancels reindex, deletes, clears, resizes, or links archive volumes.",
-                    ],
-                },
+                "mutation_policy": _archive_mutation_policy(),
             }
             return redact_sensitive_properties(result)
         except Exception as exc:  # noqa: BLE001 - transport/setup failures are returned to MCP callers.
@@ -1629,7 +1685,7 @@ class AxxonMcpDetectorArchive:
                 "tool": "archive_management_status",
                 "archive_access_point": archive_access_point,
                 "message": str(exc)[:240],
-                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                "mutation_policy": _archive_mutation_policy(),
             }
 
     def archive_volume_probe(self, path_or_volume_hint: str) -> dict[str, Any]:
