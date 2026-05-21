@@ -886,13 +886,13 @@ def _client_metadata_endpoint_examples(client: Any) -> list[dict[str, Any]]:
         if callable(method):
             try:
                 candidates.append((method_name, _call_source(method)))
-            except (AttributeError, TypeError):
+            except Exception:
                 pass
     load_inventory = getattr(client, "load_inventory", None)
     if callable(load_inventory):
         try:
             candidates.append(("load_inventory", load_inventory()))
-        except (AttributeError, TypeError):
+        except Exception:
             pass
 
     examples: list[dict[str, Any]] = []
@@ -1157,21 +1157,28 @@ class AxxonMcpDetectorArchive:
         }
 
     def metadata_schema_catalog(self) -> dict[str, Any]:
-        client = self.ensure_client()
         schema_source = ["fallback"]
         schemas = _fallback_metadata_schemas()
-        try:
-            meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
-            descriptor_schemas = _metadata_schemas_from_descriptor(meta_pb2)
-            if descriptor_schemas:
-                schemas = {**schemas, **descriptor_schemas}
-                schema_source = ["proto-descriptor", "fallback"]
-        except (AttributeError, TypeError, ImportError):
-            pass
+        endpoint_examples = _metadata_evidence_examples()
+        client = self.client
+        if client is None:
+            try:
+                client = self.ensure_client()
+            except Exception:
+                client = None
 
-        endpoint_examples = _dedupe_endpoint_examples(
-            _client_metadata_endpoint_examples(client) + _metadata_evidence_examples()
-        )
+        if client is not None:
+            try:
+                meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
+                descriptor_schemas = _metadata_schemas_from_descriptor(meta_pb2)
+                if descriptor_schemas:
+                    schemas = {**schemas, **descriptor_schemas}
+                    schema_source = ["proto-descriptor", "fallback"]
+            except Exception:
+                pass
+
+            endpoint_examples = _client_metadata_endpoint_examples(client) + endpoint_examples
+        endpoint_examples = _dedupe_endpoint_examples(endpoint_examples)
         return {
             "status": "ok",
             "tool": "metadata_schema_catalog",

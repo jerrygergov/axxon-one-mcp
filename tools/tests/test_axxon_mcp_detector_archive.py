@@ -637,6 +637,11 @@ class FakeInventoryMetadataCatalogClient(FakeClient):
         }
 
 
+class FakeFailingInventoryMetadataCatalogClient(FakeClient):
+    def load_inventory(self) -> dict[str, Any]:
+        raise RuntimeError("inventory offline")
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -1253,6 +1258,49 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         inventory_catalog = inventory_archive.metadata_schema_catalog()
         inventory_endpoints = [item["access_point"] for item in inventory_catalog["endpoint_examples"]]
         self.assertIn("hosts/Server/AVDetector.Inventory/SourceEndpoint.vmda", inventory_endpoints)
+
+    def test_metadata_schema_catalog_returns_fallback_without_env_credentials(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        client_factory_calls: list[Any] = []
+
+        def missing_credentials_config_factory() -> FakeConfig:
+            raise ValueError("password is required")
+
+        def client_factory(config: FakeConfig) -> FakeClient:
+            client_factory_calls.append(config)
+            return FakeClient(config)
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=client_factory,
+            config_factory=missing_credentials_config_factory,
+        )
+
+        catalog = archive.metadata_schema_catalog()
+
+        self.assertEqual(catalog["status"], "ok")
+        self.assertIn("fallback", catalog["schema_source"])
+        self.assertIn("PullMetadataResponse", catalog["schemas"])
+        self.assertIn("MetadataSample", catalog["schemas"])
+        self.assertIn("Tracklets", catalog["schemas"])
+        endpoints = [item["access_point"] for item in catalog["endpoint_examples"]]
+        self.assertEqual(endpoints, ["hosts/Server/AVDetector.1/SourceEndpoint.vmda"])
+        self.assertEqual(client_factory_calls, [])
+        self.assertIsNone(archive.client)
+
+    def test_metadata_schema_catalog_ignores_live_inventory_errors(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeFailingInventoryMetadataCatalogClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.metadata_schema_catalog()
+
+        self.assertEqual(catalog["status"], "ok")
+        self.assertIn("fallback", catalog["schema_source"])
+        endpoints = [item["access_point"] for item in catalog["endpoint_examples"]]
+        self.assertEqual(endpoints, ["hosts/Server/AVDetector.1/SourceEndpoint.vmda"])
+        self.assertNotIn("inventory offline", str(catalog))
 
     def test_metadata_sample_bounded_clamps_requested_caps_and_stops_at_limit(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
