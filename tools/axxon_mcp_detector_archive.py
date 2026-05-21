@@ -1201,9 +1201,9 @@ class AxxonMcpDetectorArchive:
         timeout = applied["timeout_s"]
         frame_limit = applied["limit"]
         frames: list[dict[str, Any]] = []
-        client = self.ensure_client()
 
         try:
+            client = self.ensure_client()
             _authenticate_grpc_once(client)
             meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
             media_pb2 = client.import_module("axxonsoft.bl.media.Media_pb2")

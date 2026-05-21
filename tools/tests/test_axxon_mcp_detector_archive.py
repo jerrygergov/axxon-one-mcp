@@ -1336,6 +1336,34 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(request.kwargs["count"], module.METADATA_SAMPLE_LIMIT_CAP)
         self.assertEqual(request.kwargs["endpoint"].kwargs["access_point"], "hosts/Server/AVDetector.1/SourceEndpoint.vmda")
 
+    def test_metadata_sample_bounded_returns_structured_error_when_client_setup_fails(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+
+        def missing_credentials_config_factory() -> FakeConfig:
+            raise ValueError("password is required")
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeMetadataClient(config),
+            config_factory=missing_credentials_config_factory,
+        )
+
+        result = archive.metadata_sample_bounded(
+            "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+            timeout_s=999.0,
+            limit=999,
+        )
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "metadata_sample_bounded")
+        self.assertEqual(result["access_point"], "hosts/Server/AVDetector.1/SourceEndpoint.vmda")
+        self.assertEqual(result["requested"], {"timeout_s": 999.0, "limit": 999})
+        self.assertEqual(result["applied"]["timeout_s"], module.METADATA_SAMPLE_TIMEOUT_CAP)
+        self.assertEqual(result["applied"]["limit"], module.METADATA_SAMPLE_LIMIT_CAP)
+        self.assertEqual(result["count"], 0)
+        self.assertEqual(result["frames"], [])
+        self.assertIn("password is required", result["message"])
+        self.assertLessEqual(len(result["message"]), 240)
+
     def test_metadata_sample_bounded_reports_transport_errors_with_partial_frames(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         fake = FakeMetadataClient(
