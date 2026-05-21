@@ -658,6 +658,302 @@ def _writable_parameter_summaries(descriptor: dict[str, Any]) -> list[dict[str, 
     return summaries
 
 
+def _metadata_schema_field(
+    name: str,
+    field_type: str,
+    *,
+    repeated: bool = False,
+    oneof: str | None = None,
+    enum: list[str] | None = None,
+) -> dict[str, Any]:
+    field: dict[str, Any] = {"name": name, "type": field_type, "repeated": repeated}
+    if oneof:
+        field["oneof"] = oneof
+    if enum:
+        field["enum"] = enum
+    return field
+
+
+def _fallback_metadata_schemas() -> dict[str, dict[str, Any]]:
+    object_state = [
+        "OBJECT_STATE_UNSPECIFIED",
+        "OBJECT_STATE_APPEARED",
+        "OBJECT_STATE_NORMAL",
+        "OBJECT_STATE_DISAPPEARED",
+    ]
+    object_type = [
+        "OBJECT_TYPE_UNSPECIFIED",
+        "OBJECT_TYPE_HUMAN",
+        "OBJECT_TYPE_GROUP_OF_HUMANS",
+        "OBJECT_TYPE_VEHICLE",
+        "OBJECT_TYPE_FACE",
+        "OBJECT_TYPE_ANIMAL",
+        "OBJECT_TYPE_ROBOT_DOG",
+        "OBJECT_TYPE_CHILD",
+        "OBJECT_TYPE_CAT",
+    ]
+    return {
+        "PullMetadataResponse": {
+            "kind": "message",
+            "fields": [
+                _metadata_schema_field("sample", "MetadataSample", oneof="data"),
+                _metadata_schema_field("heartbeat", "HeartBeat", oneof="data"),
+                _metadata_schema_field("config_update", "StreamConfig", oneof="data"),
+            ],
+        },
+        "MetadataSample": {
+            "kind": "message",
+            "fields": [
+                _metadata_schema_field("timestamp", "string"),
+                _metadata_schema_field("tracklets", "Tracklets", oneof="data"),
+                _metadata_schema_field("global_tracklets", "GlobalTracklets", oneof="data"),
+            ],
+        },
+        "Tracklets": {
+            "kind": "message",
+            "fields": [_metadata_schema_field("tracklets", "Tracklet", repeated=True)],
+        },
+        "Tracklet": {
+            "kind": "message",
+            "fields": [
+                _metadata_schema_field("id", "int32"),
+                _metadata_schema_field("state", "ObjectState", enum=object_state),
+                _metadata_schema_field("rectangle", "Rectangle"),
+                _metadata_schema_field("logical_center", "Point"),
+                _metadata_schema_field("color", "HsvColor"),
+                _metadata_schema_field("type", "ObjectType", enum=object_type),
+                _metadata_schema_field(
+                    "behavior",
+                    "ObjectBehavior",
+                    enum=[
+                        "OBJECT_BEHAVIOR_UNSPECIFIED",
+                        "MOVING_OBJECT",
+                        "ABANDONED_OBJECT",
+                        "ABANDONED_TAKEN_OBJECT",
+                        "ABANDONED_GIVEN_OBJECT",
+                    ],
+                ),
+                _metadata_schema_field("temperature", "Temperature"),
+            ],
+        },
+        "GlobalTracklets": {
+            "kind": "message",
+            "fields": [_metadata_schema_field("tracklets", "GlobalTracklet", repeated=True)],
+        },
+        "GlobalTracklet": {
+            "kind": "message",
+            "fields": [
+                _metadata_schema_field("guid", "string"),
+                _metadata_schema_field("profile", "Profile"),
+                _metadata_schema_field(
+                    "state",
+                    "GlobalTrackState",
+                    enum=[
+                        "GT_STATE_UNSPECIFIED",
+                        "GT_STATE_APPEARED",
+                        "GT_STATE_NORMAL",
+                        "GT_STATE_RECOGNIZED",
+                        "GT_STATE_DISAPPEARED",
+                        "GT_STATE_TERMINATED",
+                        "GT_STATE_UNKNOWN",
+                    ],
+                ),
+                _metadata_schema_field("type", "ObjectType", enum=object_type),
+                _metadata_schema_field("on_map_positions", "MapPoint", repeated=True),
+                _metadata_schema_field("velocities", "MapPoint", repeated=True),
+                _metadata_schema_field("on_camera_positions", "CameraFrameArea", repeated=True),
+            ],
+        },
+        "StreamConfig": {
+            "kind": "message",
+            "fields": [_metadata_schema_field("max_channel_idle_ms", "int32")],
+        },
+    }
+
+
+def _protobuf_scalar_type(field_type: Any) -> str:
+    return {
+        1: "double",
+        2: "float",
+        3: "int64",
+        4: "uint64",
+        5: "int32",
+        6: "fixed64",
+        7: "fixed32",
+        8: "bool",
+        9: "string",
+        12: "bytes",
+        13: "uint32",
+        15: "sfixed32",
+        16: "sfixed64",
+        17: "sint32",
+        18: "sint64",
+    }.get(field_type, str(field_type))
+
+
+def _descriptor_field_schema(field: Any) -> dict[str, Any]:
+    message_type = getattr(field, "message_type", None)
+    enum_type = getattr(field, "enum_type", None)
+    field_type = getattr(message_type, "name", "") if message_type is not None else ""
+    if not field_type and enum_type is not None:
+        field_type = getattr(enum_type, "name", "")
+    if not field_type:
+        field_type = _protobuf_scalar_type(getattr(field, "type", ""))
+
+    repeated_label = getattr(field, "LABEL_REPEATED", 3)
+    item: dict[str, Any] = {
+        "name": getattr(field, "name", ""),
+        "type": field_type,
+        "repeated": getattr(field, "label", None) == repeated_label,
+    }
+    oneof = getattr(field, "containing_oneof", None)
+    if oneof is not None and getattr(oneof, "name", ""):
+        item["oneof"] = oneof.name
+    if enum_type is not None:
+        item["enum"] = [value.name for value in getattr(enum_type, "values", [])]
+    return item
+
+
+def _metadata_schemas_from_descriptor(meta_pb2: Any) -> dict[str, dict[str, Any]]:
+    names = (
+        "PullMetadataResponse",
+        "MetadataSample",
+        "Tracklets",
+        "GlobalTracklets",
+        "Tracklet",
+        "GlobalTracklet",
+        "StreamConfig",
+    )
+    schemas: dict[str, dict[str, Any]] = {}
+    for name in names:
+        message = getattr(meta_pb2, name, None)
+        descriptor = getattr(message, "DESCRIPTOR", None)
+        if descriptor is None:
+            continue
+        schemas[name] = {
+            "kind": "message",
+            "fields": [_descriptor_field_schema(field) for field in getattr(descriptor, "fields", [])],
+        }
+    return schemas
+
+
+def _flatten_strings(value: Any) -> list[str]:
+    out: list[str] = []
+    if isinstance(value, str):
+        out.append(value)
+    elif isinstance(value, dict):
+        for item in value.values():
+            out.extend(_flatten_strings(item))
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            out.extend(_flatten_strings(item))
+    return out
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+    return out
+
+
+def _metadata_endpoint_strings_from_source(value: Any) -> list[str]:
+    if (
+        isinstance(value, dict)
+        and isinstance(value.get("items"), list)
+        and all(isinstance(item, str) for item in value["items"])
+    ):
+        values = [str(item) for item in value["items"] if isinstance(item, str)]
+    else:
+        values = _flatten_strings(value)
+    return _unique_strings(
+        [
+            item
+            for item in values
+            if "SourceEndpoint.vmda" in item or "SourceEndpoint.metadata" in item
+        ]
+    )
+
+
+def _client_metadata_endpoint_examples(client: Any) -> list[dict[str, Any]]:
+    candidates: list[tuple[str, Any]] = []
+    for method_name in ("metadata_endpoints", "find_metadata_endpoints"):
+        method = getattr(client, method_name, None)
+        if callable(method):
+            try:
+                candidates.append((method_name, _call_source(method)))
+            except (AttributeError, TypeError):
+                pass
+    load_inventory = getattr(client, "load_inventory", None)
+    if callable(load_inventory):
+        try:
+            candidates.append(("load_inventory", load_inventory()))
+        except (AttributeError, TypeError):
+            pass
+
+    examples: list[dict[str, Any]] = []
+    for source, value in candidates:
+        for endpoint in _metadata_endpoint_strings_from_source(value):
+            examples.append({"source": source, "access_point": endpoint})
+    return examples
+
+
+def _metadata_evidence_examples() -> list[dict[str, Any]]:
+    return [
+        {
+            "source": "evidence:demo-metadata-tracklets-2026-05-02",
+            "access_point": "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+            "sample_kind": "MetadataSample.tracklets",
+            "observed": {
+                "samples": 3,
+                "config_updates": 1,
+                "heartbeats": 0,
+                "tracklet_counts": [21, 21, 21],
+            },
+        }
+    ]
+
+
+def _dedupe_endpoint_examples(examples: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for item in examples:
+        endpoint = item.get("access_point")
+        if not isinstance(endpoint, str) or not endpoint or endpoint in seen:
+            continue
+        seen.add(endpoint)
+        out.append(item)
+    return out
+
+
+def _normalize_metadata_sample_bounds(timeout_s: Any, limit: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    requested = {"timeout_s": timeout_s, "limit": limit}
+    try:
+        normalized_timeout = float(METADATA_SAMPLE_TIMEOUT_DEFAULT if timeout_s is None else timeout_s)
+    except (TypeError, ValueError):
+        normalized_timeout = METADATA_SAMPLE_TIMEOUT_DEFAULT
+    try:
+        normalized_limit = int(METADATA_SAMPLE_LIMIT_DEFAULT if limit is None else limit)
+    except (TypeError, ValueError):
+        normalized_limit = METADATA_SAMPLE_LIMIT_DEFAULT
+    applied = {
+        "timeout_s": max(1.0, min(normalized_timeout, METADATA_SAMPLE_TIMEOUT_CAP)),
+        "limit": max(1, min(normalized_limit, METADATA_SAMPLE_LIMIT_CAP)),
+    }
+    return requested, applied
+
+
+def _sanitize_metadata_frame(client: Any, value: Any) -> Any:
+    sanitize = getattr(client, "sanitize", None)
+    if callable(sanitize):
+        return sanitize(value)
+    return redact_sensitive_properties(value)
+
+
 def _fixture_needed_detector_tool(tool: str, detector_uid: str, message: str) -> dict[str, Any]:
     return {
         "status": "fixture-needed",
@@ -858,4 +1154,89 @@ class AxxonMcpDetectorArchive:
             "count": len(visual_elements),
             "visual_elements": visual_elements,
             "snapshot_metadata": config["snapshot_metadata"],
+        }
+
+    def metadata_schema_catalog(self) -> dict[str, Any]:
+        client = self.ensure_client()
+        schema_source = ["fallback"]
+        schemas = _fallback_metadata_schemas()
+        try:
+            meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
+            descriptor_schemas = _metadata_schemas_from_descriptor(meta_pb2)
+            if descriptor_schemas:
+                schemas = {**schemas, **descriptor_schemas}
+                schema_source = ["proto-descriptor", "fallback"]
+        except (AttributeError, TypeError, ImportError):
+            pass
+
+        endpoint_examples = _dedupe_endpoint_examples(
+            _client_metadata_endpoint_examples(client) + _metadata_evidence_examples()
+        )
+        return {
+            "status": "ok",
+            "tool": "metadata_schema_catalog",
+            "schema_source": schema_source,
+            "schemas": schemas,
+            "endpoint_examples": redact_sensitive_properties(endpoint_examples),
+            "notes": [
+                "Use metadata_sample_bounded with a vmda or metadata SourceEndpoint access point.",
+                "Evidence examples are summarized and exclude raw metadata payloads and credentials.",
+            ],
+        }
+
+    def metadata_sample_bounded(
+        self,
+        access_point: str,
+        timeout_s: float | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        requested, applied = _normalize_metadata_sample_bounds(timeout_s, limit)
+        timeout = applied["timeout_s"]
+        frame_limit = applied["limit"]
+        frames: list[dict[str, Any]] = []
+        client = self.ensure_client()
+
+        try:
+            _authenticate_grpc_once(client)
+            meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
+            media_pb2 = client.import_module("axxonsoft.bl.media.Media_pb2")
+            stub = client.stub_from_proto("axxonsoft/bl/metadata/MetadataService.proto", "MetadataService")
+            endpoint = media_pb2.EndpointRef(access_point=access_point)
+            request = meta_pb2.PullMetadataRequest(count=frame_limit, endpoint=endpoint)
+
+            import time as _time
+
+            deadline = _time.monotonic() + timeout
+            iterator = stub.PullMetadata(iter([request]), timeout=timeout)
+            for response in iterator:
+                if _time.monotonic() > deadline:
+                    break
+                frame = client.message_to_dict(response)
+                sanitized = _sanitize_metadata_frame(client, frame)
+                if isinstance(sanitized, dict):
+                    frames.append(sanitized)
+                else:
+                    frames.append({"value": sanitized})
+                if len(frames) >= frame_limit:
+                    break
+        except Exception as exc:  # noqa: BLE001 - transport/setup failures are returned to MCP callers.
+            return {
+                "status": "error",
+                "tool": "metadata_sample_bounded",
+                "access_point": access_point,
+                "requested": requested,
+                "applied": applied,
+                "message": str(exc)[:240],
+                "count": len(frames),
+                "frames": frames[:frame_limit],
+            }
+
+        return {
+            "status": "ok",
+            "tool": "metadata_sample_bounded",
+            "access_point": access_point,
+            "requested": requested,
+            "applied": applied,
+            "count": len(frames),
+            "frames": frames[:frame_limit],
         }

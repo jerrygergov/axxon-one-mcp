@@ -545,6 +545,98 @@ class FakeRealShapedDetectorConfigClient(FakeClient):
         return message if isinstance(message, dict) else {}
 
 
+class FakeEndpointRef:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
+class FakePullMetadataRequest:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
+class FakeMetadataPb:
+    PullMetadataRequest = FakePullMetadataRequest
+
+
+class FakeMediaPb:
+    EndpointRef = FakeEndpointRef
+
+
+class FakeMetadataStub:
+    def __init__(self, responses: list[dict[str, Any]], error: Exception | None = None) -> None:
+        self.responses = responses
+        self.error = error
+        self.requests: list[FakePullMetadataRequest] = []
+        self.timeouts: list[float] = []
+
+    def PullMetadata(self, requests: Any, timeout: float) -> Any:
+        self.requests.extend(list(requests))
+        self.timeouts.append(timeout)
+
+        def iterator() -> Any:
+            for response in self.responses:
+                yield response
+            if self.error is not None:
+                raise self.error
+
+        return iterator()
+
+
+class FakeMetadataClient(FakeClient):
+    def __init__(
+        self,
+        config: FakeConfig,
+        responses: list[dict[str, Any]] | None = None,
+        error: Exception | None = None,
+    ) -> None:
+        super().__init__(config)
+        self.authenticate_calls = 0
+        self.stub = FakeMetadataStub(responses or [], error)
+
+    def authenticate_grpc(self) -> None:
+        self.authenticate_calls += 1
+
+    def import_module(self, module_name: str) -> Any:
+        if module_name == "axxonsoft.bl.metadata.MetadataService_pb2":
+            return FakeMetadataPb
+        if module_name == "axxonsoft.bl.media.Media_pb2":
+            return FakeMediaPb
+        raise AssertionError(module_name)
+
+    def stub_from_proto(self, proto_path: str, service_name: str) -> FakeMetadataStub:
+        self.proto_path = proto_path
+        self.service_name = service_name
+        return self.stub
+
+    def message_to_dict(self, message: Any) -> dict[str, Any]:
+        return message if isinstance(message, dict) else {}
+
+    def sanitize(self, value: Any) -> Any:
+        redacted = importlib.import_module("axxon_mcp_detector_archive").redact_sensitive_properties(value)
+        if isinstance(redacted, dict):
+            return {"sanitized": True, **redacted}
+        return redacted
+
+
+class FakeMetadataCatalogClient(FakeClient):
+    def metadata_endpoints(self) -> list[str]:
+        return [
+            "hosts/Server/AVDetector.Live/SourceEndpoint.metadata",
+            "hosts/Server/AVDetector.Live/SourceEndpoint.metadata",
+        ]
+
+
+class FakeInventoryMetadataCatalogClient(FakeClient):
+    def load_inventory(self) -> dict[str, Any]:
+        return {
+            "items": [
+                {"access_point": "hosts/Server/AVDetector.Inventory/SourceEndpoint.vmda"},
+                {"access_point": "hosts/Server/AVDetector.Inventory/SourceEndpoint.Video"},
+            ],
+        }
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -1117,6 +1209,112 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["fixtures"]["required"], ["video_source_ap", "vmda_source_ap"])
         self.assertEqual(result["fixtures"]["missing"], ["video_source_ap", "vmda_source_ap"])
         self.assertIn("NotInFixtures", result["message"])
+
+    def test_metadata_schema_catalog_returns_proto_schema_and_endpoint_examples(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeMetadataCatalogClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.metadata_schema_catalog()
+
+        self.assertEqual(catalog["status"], "ok")
+        self.assertEqual(catalog["tool"], "metadata_schema_catalog")
+        self.assertIn("fallback", catalog["schema_source"])
+        schemas = catalog["schemas"]
+        for name in ("PullMetadataResponse", "MetadataSample", "Tracklets", "GlobalTracklets", "Tracklet"):
+            self.assertIn(name, schemas)
+
+        response_fields = {field["name"]: field for field in schemas["PullMetadataResponse"]["fields"]}
+        self.assertEqual(response_fields["sample"]["type"], "MetadataSample")
+        self.assertEqual(response_fields["sample"]["oneof"], "data")
+        self.assertEqual(response_fields["config_update"]["type"], "StreamConfig")
+
+        sample_fields = {field["name"]: field for field in schemas["MetadataSample"]["fields"]}
+        self.assertEqual(sample_fields["tracklets"]["type"], "Tracklets")
+        self.assertEqual(sample_fields["tracklets"]["oneof"], "data")
+        self.assertEqual(sample_fields["global_tracklets"]["type"], "GlobalTracklets")
+
+        tracklets_fields = {field["name"]: field for field in schemas["Tracklets"]["fields"]}
+        self.assertTrue(tracklets_fields["tracklets"]["repeated"])
+        self.assertEqual(tracklets_fields["tracklets"]["type"], "Tracklet")
+
+        endpoints = [item["access_point"] for item in catalog["endpoint_examples"]]
+        self.assertIn("hosts/Server/AVDetector.Live/SourceEndpoint.metadata", endpoints)
+        self.assertIn("hosts/Server/AVDetector.1/SourceEndpoint.vmda", endpoints)
+        self.assertEqual(len(endpoints), len(set(endpoints)))
+        self.assertNotIn("CONFIG_VALUE_SHOULD_NOT_LEAK", str(catalog))
+
+        inventory_archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeInventoryMetadataCatalogClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+        inventory_catalog = inventory_archive.metadata_schema_catalog()
+        inventory_endpoints = [item["access_point"] for item in inventory_catalog["endpoint_examples"]]
+        self.assertIn("hosts/Server/AVDetector.Inventory/SourceEndpoint.vmda", inventory_endpoints)
+
+    def test_metadata_sample_bounded_clamps_requested_caps_and_stops_at_limit(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        responses = [
+            {"sample": {"timestamp": f"t-{index}", "tracklets": {"tracklets": []}}}
+            for index in range(module.METADATA_SAMPLE_LIMIT_CAP + 5)
+        ]
+        fake = FakeMetadataClient(FakeConfig(), responses=responses)
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.metadata_sample_bounded(
+            "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+            timeout_s=999.0,
+            limit=999,
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "metadata_sample_bounded")
+        self.assertEqual(result["requested"], {"timeout_s": 999.0, "limit": 999})
+        self.assertEqual(result["applied"]["timeout_s"], module.METADATA_SAMPLE_TIMEOUT_CAP)
+        self.assertEqual(result["applied"]["limit"], module.METADATA_SAMPLE_LIMIT_CAP)
+        self.assertEqual(result["count"], module.METADATA_SAMPLE_LIMIT_CAP)
+        self.assertEqual(len(result["frames"]), module.METADATA_SAMPLE_LIMIT_CAP)
+        self.assertTrue(all(frame["sanitized"] for frame in result["frames"]))
+        self.assertEqual(fake.authenticate_calls, 1)
+        self.assertEqual(fake.proto_path, "axxonsoft/bl/metadata/MetadataService.proto")
+        self.assertEqual(fake.service_name, "MetadataService")
+        self.assertEqual(fake.stub.timeouts, [module.METADATA_SAMPLE_TIMEOUT_CAP])
+        request = fake.stub.requests[0]
+        self.assertEqual(request.kwargs["count"], module.METADATA_SAMPLE_LIMIT_CAP)
+        self.assertEqual(request.kwargs["endpoint"].kwargs["access_point"], "hosts/Server/AVDetector.1/SourceEndpoint.vmda")
+
+    def test_metadata_sample_bounded_reports_transport_errors_with_partial_frames(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeMetadataClient(
+            FakeConfig(),
+            responses=[{"sample": {"timestamp": "t-1"}, "apiToken": "TOKEN_VALUE_SHOULD_NOT_LEAK"}],
+            error=RuntimeError("metadata stream failed " + ("x" * 500)),
+        )
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.metadata_sample_bounded(
+            "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+            timeout_s=0,
+            limit=2,
+        )
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "metadata_sample_bounded")
+        self.assertEqual(result["requested"], {"timeout_s": 0, "limit": 2})
+        self.assertEqual(result["applied"], {"timeout_s": 1.0, "limit": 2})
+        self.assertLessEqual(len(result["message"]), 240)
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(len(result["frames"]), 1)
+        self.assertEqual(result["frames"][0]["apiToken"], "<redacted>")
+        self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(result))
 
 
 if __name__ == "__main__":
