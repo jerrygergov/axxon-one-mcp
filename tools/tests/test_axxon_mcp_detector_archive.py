@@ -393,6 +393,146 @@ class FakeDetectorSchemaClient(FakeClient):
         return {"body": {"items": []}}
 
 
+class FakeDetectorConfigClient(FakeClient):
+    detector_uid = "hosts/Server/AppDataDetector.Config"
+
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.list_units_calls: list[str] = []
+
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        self.list_units_calls.append(unit_type)
+        if unit_type != "AppDataDetector":
+            return []
+        return [
+            {
+                "uid": self.detector_uid,
+                "type": "AppDataDetector",
+                "source_type": "TargetList",
+                "display_name": "Zone watcher",
+                "properties": [
+                    {
+                        "id": "input",
+                        "type": "group",
+                        "properties": [
+                            {
+                                "id": "detector",
+                                "type": "string",
+                                "readonly": False,
+                                "value_kind": "value_string",
+                                "value_string": "MoveInZone",
+                            },
+                        ],
+                    },
+                    {
+                        "id": "advanced",
+                        "type": "group",
+                        "properties": [
+                            {
+                                "id": "sensitivity",
+                                "type": "int",
+                                "readonly": False,
+                                "value_kind": "value_int32",
+                                "value_int32": 55,
+                            },
+                            {
+                                "id": "apiToken",
+                                "type": "string",
+                                "readonly": False,
+                                "value_kind": "value_string",
+                                "value_string": "CONFIG_SECRET_SHOULD_NOT_LEAK",
+                            },
+                            {
+                                "id": "generated",
+                                "type": "string",
+                                "readonly": True,
+                                "value_kind": "value_string",
+                                "value_string": "server-owned",
+                            },
+                        ],
+                    },
+                ],
+                "child_units": [
+                    {
+                        "uid": "hosts/Server/AppDataDetector.Config/VisualElement.1",
+                        "type": "VisualElement",
+                        "name": "Zone polygon",
+                        "properties": [
+                            {
+                                "id": "zone",
+                                "type": "shape",
+                                "readonly": False,
+                                "value_simple_polygon": {
+                                    "points": [
+                                        {"x": 0.1, "y": 0.2},
+                                        {"x": 0.8, "y": 0.2},
+                                        {"x": 0.8, "y": 0.7},
+                                    ],
+                                },
+                            },
+                            {
+                                "id": "overlayToken",
+                                "type": "string",
+                                "readonly": False,
+                                "value_string": "VISUAL_CONFIG_SECRET_SHOULD_NOT_LEAK",
+                            },
+                        ],
+                    },
+                ],
+            }
+        ]
+
+
+class FakeDirectConfigStub:
+    def __init__(self) -> None:
+        self.list_units_requests: list[FakeListUnitsRequest] = []
+
+    def ListUnits(self, request: FakeListUnitsRequest, timeout: float) -> dict[str, Any]:
+        self.list_units_requests.append(request)
+        if request.kwargs["unit_uids"] != ["hosts/Server/AVDetector.Direct"]:
+            return {"units": []}
+        return {
+            "units": [
+                {
+                    "uid": "hosts/Server/AVDetector.Direct",
+                    "type": "AVDetector",
+                    "properties": [
+                        {
+                            "id": "input",
+                            "properties": [
+                                {
+                                    "id": "detector",
+                                    "value_string": "MotionDetection",
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+
+
+class FakeRealShapedDetectorConfigClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.authenticate_calls = 0
+        self.config_stub = FakeDirectConfigStub()
+
+    def authenticate_grpc(self) -> None:
+        self.authenticate_calls += 1
+
+    def import_module(self, module_name: str) -> Any:
+        if module_name == "axxonsoft.bl.config.ConfigurationService_pb2":
+            return FakeConfigPb
+        raise AssertionError(module_name)
+
+    def common_stubs(self) -> dict[str, Any]:
+        return {"config": self.config_stub}
+
+    def message_to_dict(self, message: Any) -> dict[str, Any]:
+        return message if isinstance(message, dict) else {}
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -761,6 +901,106 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("enum_choices", token)
         self.assertNotIn("SCHEMA_SECRET_SHOULD_NOT_LEAK", str(result))
         self.assertNotIn("ENUM_SECRET_SHOULD_NOT_LEAK", str(result))
+
+    def test_detector_config_get_returns_sanitized_config_snapshot_and_writable_summaries(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeDetectorConfigClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_config_get(FakeDetectorConfigClient.detector_uid)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "detector_config_get")
+        self.assertEqual(result["detector_uid"], FakeDetectorConfigClient.detector_uid)
+        self.assertEqual(result["unit_type"], "AppDataDetector")
+        self.assertEqual(result["detector_kind"], "MoveInZone")
+        self.assertEqual(result["source_type"], "TargetList")
+        self.assertEqual(fake.list_units_calls, ["AppDataDetector"])
+
+        self.assertEqual(result["config"]["display_name"], "Zone watcher")
+        self.assertNotIn("CONFIG_SECRET_SHOULD_NOT_LEAK", str(result))
+        self.assertNotIn("VISUAL_CONFIG_SECRET_SHOULD_NOT_LEAK", str(result))
+
+        writable = {item["path"]: item for item in result["writable_parameters"]}
+        self.assertEqual(writable["input.detector"]["value"], "MoveInZone")
+        self.assertEqual(writable["advanced.sensitivity"]["value"], 55)
+        self.assertEqual(writable["advanced.apiToken"]["value"], "<redacted>")
+        self.assertNotIn("advanced.generated", writable)
+
+        self.assertEqual(len(result["visual_elements"]), 1)
+        visual = result["visual_elements"][0]
+        self.assertEqual(visual["uid"], "hosts/Server/AppDataDetector.Config/VisualElement.1")
+        self.assertEqual(visual["path"], "VisualElement.1")
+        self.assertEqual(visual["type"], "VisualElement")
+        self.assertEqual(visual["shape_fields"], ["value_simple_polygon"])
+
+        snapshot = result["snapshot_metadata"]
+        self.assertEqual(snapshot["detector_uid"], FakeDetectorConfigClient.detector_uid)
+        self.assertEqual(snapshot["unit_type"], "AppDataDetector")
+        self.assertEqual(snapshot["detector_kind"], "MoveInZone")
+        self.assertEqual(snapshot["config_source"], "list_units")
+        self.assertEqual(snapshot["rollback_key"], f"detector_config:{FakeDetectorConfigClient.detector_uid}")
+
+    def test_detector_visual_elements_lists_editable_visual_children(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorConfigClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_visual_elements(FakeDetectorConfigClient.detector_uid)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "detector_visual_elements")
+        self.assertEqual(result["detector_uid"], FakeDetectorConfigClient.detector_uid)
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["visual_elements"][0]["path"], "VisualElement.1")
+        self.assertEqual(result["visual_elements"][0]["shape_fields"], ["value_simple_polygon"])
+        self.assertEqual(result["visual_elements"][0]["properties"][0]["path"], "zone")
+        self.assertNotIn("VISUAL_CONFIG_SECRET_SHOULD_NOT_LEAK", str(result))
+
+    def test_detector_config_get_reads_real_client_unit_by_uid_with_configuration_service(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedDetectorConfigClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_config_get("hosts/Server/AVDetector.Direct")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["detector_uid"], "hosts/Server/AVDetector.Direct")
+        self.assertEqual(result["unit_type"], "AVDetector")
+        self.assertEqual(result["detector_kind"], "MotionDetection")
+        self.assertEqual(fake.authenticate_calls, 1)
+        self.assertEqual(
+            [request.kwargs for request in fake.config_stub.list_units_requests],
+            [{"unit_uids": ["hosts/Server/AVDetector.Direct"]}],
+        )
+        self.assertEqual(result["snapshot_metadata"]["config_source"], "configuration_service.ListUnits")
+
+    def test_detector_config_get_returns_fixture_needed_for_missing_detector_uid(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeDetectorConfigClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.detector_config_get("hosts/Server/AppDataDetector.Missing")
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "detector_config_get")
+        self.assertEqual(result["detector_uid"], "hosts/Server/AppDataDetector.Missing")
+        self.assertIn("AppDataDetector.Missing", result["message"])
+
+        visual_result = archive.detector_visual_elements("hosts/Server/AppDataDetector.Missing")
+        self.assertEqual(visual_result["status"], "fixture-needed")
+        self.assertEqual(visual_result["tool"], "detector_visual_elements")
+        self.assertEqual(visual_result["detector_uid"], "hosts/Server/AppDataDetector.Missing")
 
     def test_detector_parameter_schema_returns_fixture_needed_for_unresolved_kind(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")

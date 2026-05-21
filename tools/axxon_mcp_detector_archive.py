@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read-only detector and archive policy tools for the Axxon One MCP server.
 
-Task 2 scaffolds connection and redaction only. Catalog, schema, detector
-config, metadata, and archive policy behavior are added in later Phase 5E tasks.
+Task 2 scaffolds connection and redaction. Later Phase 5E tasks add catalog,
+schema, detector config, metadata, and archive policy behavior incrementally.
 """
 
 from __future__ import annotations
@@ -278,13 +278,27 @@ def _iter_visual_elements(value: Any) -> list[dict[str, Any]]:
     return found
 
 
-def _visual_element_summaries(descriptor: dict[str, Any]) -> list[dict[str, Any]]:
+def _visual_element_path(visual: dict[str, Any], parent_uid: str = "") -> str:
+    path = visual.get("path")
+    if isinstance(path, str) and path:
+        return path
+    uid = visual.get("uid")
+    if isinstance(uid, str) and uid:
+        prefix = f"{parent_uid}/" if parent_uid else ""
+        return uid[len(prefix) :] if prefix and uid.startswith(prefix) else uid
+    name = visual.get("name")
+    return str(name) if name else ""
+
+
+def _visual_element_summaries(descriptor: dict[str, Any], parent_uid: str = "") -> list[dict[str, Any]]:
     summaries: list[dict[str, Any]] = []
     for visual in _iter_visual_elements(descriptor):
         shape_properties = [
             item
             for item in _flatten_property_schema(visual.get("properties")).values()
             if item.get("value_kind") in VISUAL_SHAPE_VALUE_FIELDS
+            and not item.get("readonly", False)
+            and not item.get("internal", False)
         ]
         if not shape_properties:
             continue
@@ -294,6 +308,7 @@ def _visual_element_summaries(descriptor: dict[str, Any]) -> list[dict[str, Any]
                 "uid": visual.get("uid", ""),
                 "type": visual.get("type", ""),
                 "name": visual.get("name", ""),
+                "path": _visual_element_path(visual, parent_uid),
                 "shape_fields": shape_fields,
                 "properties": shape_properties,
             }
@@ -500,6 +515,148 @@ def _schema_source_candidates(client: Any, unit_type: str) -> list[tuple[str, di
     return candidates
 
 
+def _detector_unit_type_from_uid(detector_uid: str) -> str:
+    for unit_type in DETECTOR_UNIT_TYPES:
+        if f"/{unit_type}." in detector_uid or detector_uid.startswith(f"{unit_type}."):
+            return unit_type
+    return ""
+
+
+def _detector_unit_type(descriptor: dict[str, Any], detector_uid: str = "") -> str:
+    for field in ("type", "unit_type", "unitType"):
+        value = descriptor.get(field)
+        if isinstance(value, str) and value in DETECTOR_UNIT_TYPES:
+            return value
+    return _detector_unit_type_from_uid(detector_uid or str(descriptor.get("uid", "")))
+
+
+def _unit_uid(descriptor: dict[str, Any]) -> str:
+    for field in ("uid", "unit_uid", "unitUid"):
+        value = descriptor.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return ""
+
+
+def _candidate_unit_types_for_uid(detector_uid: str) -> list[str]:
+    parsed = _detector_unit_type_from_uid(detector_uid)
+    if not parsed:
+        return list(DETECTOR_UNIT_TYPES)
+    return [parsed] + [unit_type for unit_type in DETECTOR_UNIT_TYPES if unit_type != parsed]
+
+
+def _client_real_unit_by_uid(client: Any, detector_uid: str) -> dict[str, Any] | None:
+    try:
+        getattr(client, "authenticate_grpc")
+        import_module = getattr(client, "import_module")
+        common_stubs = getattr(client, "common_stubs")
+        message_to_dict = getattr(client, "message_to_dict")
+    except AttributeError:
+        return None
+
+    try:
+        _authenticate_grpc_once(client)
+        pb_config = import_module("axxonsoft.bl.config.ConfigurationService_pb2")
+        config_stub = common_stubs()["config"]
+        request = pb_config.ListUnitsRequest(unit_uids=[detector_uid])
+        response = config_stub.ListUnits(request, timeout=getattr(client.config, "timeout", None))
+        for unit in message_to_dict(response).get("units", []):
+            if not isinstance(unit, dict):
+                continue
+            unit_uid = _unit_uid(unit)
+            if not unit_uid or unit_uid == detector_uid:
+                return unit
+        return None
+    except (AttributeError, KeyError, TypeError):
+        return None
+
+
+def _client_unit_by_uid(client: Any, detector_uid: str) -> tuple[dict[str, Any] | None, str]:
+    method = getattr(client, "list_units", None)
+    if callable(method):
+        for unit_type in _candidate_unit_types_for_uid(detector_uid):
+            for unit in _as_items(_call_source(method, unit_type=unit_type)):
+                if _unit_uid(unit) == detector_uid:
+                    return unit, "list_units"
+
+    unit = _client_real_unit_by_uid(client, detector_uid)
+    if unit is not None:
+        return unit, "configuration_service.ListUnits"
+    return None, ""
+
+
+def _selected_detector_kind(descriptor: dict[str, Any]) -> str:
+    for field in ("detector_kind", "detectorKind"):
+        value = descriptor.get(field)
+        if isinstance(value, str) and value:
+            return value
+    for node in _iter_dict_nodes(descriptor):
+        if _property_identity(node) != "detector":
+            continue
+        for field in PROPERTY_VALUE_FIELDS:
+            value = node.get(field)
+            if isinstance(value, str) and value:
+                return value
+    return ""
+
+
+def _iter_property_nodes(properties: Any, prefix: str = "") -> list[tuple[str, dict[str, Any]]]:
+    nodes: list[tuple[str, dict[str, Any]]] = []
+    if not isinstance(properties, list):
+        return nodes
+    for prop in properties:
+        if not isinstance(prop, dict):
+            continue
+        prop_id = _property_id(prop)
+        if not prop_id:
+            continue
+        path = f"{prefix}.{prop_id}" if prefix else prop_id
+        nodes.append((path, prop))
+        nodes.extend(_iter_property_nodes(prop.get("properties"), path))
+    return nodes
+
+
+def _property_value_summary(redacted: dict[str, Any]) -> tuple[str, Any]:
+    value_kind = _descriptor_value_kind(redacted)
+    if value_kind in SCHEMA_VALUE_FIELDS and value_kind in redacted:
+        return value_kind, redacted[value_kind]
+    for field in SCHEMA_VALUE_FIELDS:
+        if field in redacted:
+            return field, redacted[field]
+    return value_kind, None
+
+
+def _writable_parameter_summaries(descriptor: dict[str, Any]) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for path, prop in _iter_property_nodes(descriptor.get("properties")):
+        redacted = redact_sensitive_properties(prop)
+        value_kind, value = _property_value_summary(redacted)
+        if not value_kind or redacted.get("readonly", False) or redacted.get("internal", False):
+            continue
+        summary: dict[str, Any] = {
+            "id": _property_id(redacted),
+            "path": path,
+            "value_kind": value_kind,
+            "readonly": bool(redacted.get("readonly", False)),
+            "internal": bool(redacted.get("internal", False)),
+            "value": value,
+        }
+        for field in ("name", "type", "category"):
+            if field in redacted:
+                summary[field] = redacted[field]
+        summaries.append(summary)
+    return summaries
+
+
+def _fixture_needed_detector_tool(tool: str, detector_uid: str, message: str) -> dict[str, Any]:
+    return {
+        "status": "fixture-needed",
+        "tool": tool,
+        "detector_uid": detector_uid,
+        "message": message,
+    }
+
+
 @dataclass
 class AxxonMcpDetectorArchive:
     """Read-only detector and archive policy tools."""
@@ -632,3 +789,63 @@ class AxxonMcpDetectorArchive:
             detector_kind,
             f"Could not resolve detector kind {detector_kind!r} for {unit_type}; provide live/template/factory fixtures.",
         )
+
+    def detector_config_get(self, detector_uid: str) -> dict[str, Any]:
+        client = self.ensure_client()
+        descriptor, config_source = _client_unit_by_uid(client, detector_uid)
+        if descriptor is None:
+            return _fixture_needed_detector_tool(
+                "detector_config_get",
+                detector_uid,
+                f"Could not resolve detector {detector_uid!r}; provide a live ListUnits fixture.",
+            )
+
+        unit_type = _detector_unit_type(descriptor, detector_uid)
+        if unit_type not in DETECTOR_UNIT_TYPES:
+            return _fixture_needed_detector_tool(
+                "detector_config_get",
+                detector_uid,
+                f"Resolved unit {detector_uid!r} is not a supported detector type.",
+            )
+
+        detector_kind = _selected_detector_kind(descriptor)
+        return {
+            "status": "ok",
+            "tool": "detector_config_get",
+            "detector_uid": detector_uid,
+            "unit_type": unit_type,
+            "detector_kind": detector_kind,
+            "source_type": _source_type(unit_type, descriptor),
+            "config": redact_sensitive_properties(descriptor),
+            "writable_parameters": _writable_parameter_summaries(descriptor),
+            "visual_elements": _visual_element_summaries(descriptor, detector_uid),
+            "snapshot_metadata": {
+                "detector_uid": detector_uid,
+                "unit_type": unit_type,
+                "detector_kind": detector_kind,
+                "config_source": config_source,
+                "rollback_key": f"detector_config:{detector_uid}",
+            },
+        }
+
+    def detector_visual_elements(self, detector_uid: str) -> dict[str, Any]:
+        config = self.detector_config_get(detector_uid)
+        if config.get("status") != "ok":
+            return _fixture_needed_detector_tool(
+                "detector_visual_elements",
+                detector_uid,
+                str(config.get("message", f"Could not resolve detector {detector_uid!r}.")),
+            )
+
+        visual_elements = config["visual_elements"]
+        return {
+            "status": "ok",
+            "tool": "detector_visual_elements",
+            "detector_uid": detector_uid,
+            "unit_type": config["unit_type"],
+            "detector_kind": config["detector_kind"],
+            "source_type": config["source_type"],
+            "count": len(visual_elements),
+            "visual_elements": visual_elements,
+            "snapshot_metadata": config["snapshot_metadata"],
+        }
