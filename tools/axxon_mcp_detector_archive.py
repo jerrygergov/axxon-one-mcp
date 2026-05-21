@@ -1169,6 +1169,9 @@ class AxxonMcpDetectorArchive:
 
         if client is not None:
             try:
+                ensure_stubs = getattr(client, "ensure_stubs", None)
+                if callable(ensure_stubs):
+                    ensure_stubs()
                 meta_pb2 = client.import_module("axxonsoft.bl.metadata.MetadataService_pb2")
                 descriptor_schemas = _metadata_schemas_from_descriptor(meta_pb2)
                 if descriptor_schemas:

@@ -627,6 +627,74 @@ class FakeMetadataCatalogClient(FakeClient):
         ]
 
 
+class FakeProtoOneof:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeProtoMessageType:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeProtoField:
+    LABEL_REPEATED = 3
+
+    def __init__(
+        self,
+        name: str,
+        field_type: int = 9,
+        message_type: FakeProtoMessageType | None = None,
+        label: int = 1,
+        containing_oneof: FakeProtoOneof | None = None,
+    ) -> None:
+        self.name = name
+        self.type = field_type
+        self.message_type = message_type
+        self.enum_type = None
+        self.label = label
+        self.containing_oneof = containing_oneof
+
+
+class FakeProtoDescriptor:
+    def __init__(self, fields: list[FakeProtoField]) -> None:
+        self.fields = fields
+
+
+class FakeProtoMessage:
+    def __init__(self, fields: list[FakeProtoField]) -> None:
+        self.DESCRIPTOR = FakeProtoDescriptor(fields)
+
+
+class FakePreparedMetadataPb:
+    MetadataSample = FakeProtoMessage(
+        [
+            FakeProtoField("descriptor_timestamp", field_type=9),
+            FakeProtoField(
+                "descriptor_tracklets",
+                message_type=FakeProtoMessageType("DescriptorTracklets"),
+                containing_oneof=FakeProtoOneof("descriptor_data"),
+            ),
+        ]
+    )
+
+
+class FakePreparedDescriptorCatalogClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.ensure_stubs_calls = 0
+
+    def ensure_stubs(self) -> None:
+        self.ensure_stubs_calls += 1
+
+    def import_module(self, module_name: str) -> Any:
+        if self.ensure_stubs_calls == 0:
+            raise ModuleNotFoundError(module_name)
+        if module_name == "axxonsoft.bl.metadata.MetadataService_pb2":
+            return FakePreparedMetadataPb
+        raise AssertionError(module_name)
+
+
 class FakeInventoryMetadataCatalogClient(FakeClient):
     def load_inventory(self) -> dict[str, Any]:
         return {
@@ -1258,6 +1326,26 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         inventory_catalog = inventory_archive.metadata_schema_catalog()
         inventory_endpoints = [item["access_point"] for item in inventory_catalog["endpoint_examples"]]
         self.assertIn("hosts/Server/AVDetector.Inventory/SourceEndpoint.vmda", inventory_endpoints)
+
+    def test_metadata_schema_catalog_prepares_stubs_before_descriptor_import(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakePreparedDescriptorCatalogClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        catalog = archive.metadata_schema_catalog()
+
+        self.assertEqual(fake.ensure_stubs_calls, 1)
+        self.assertIn("proto-descriptor", catalog["schema_source"])
+        fields = {field["name"]: field for field in catalog["schemas"]["MetadataSample"]["fields"]}
+        self.assertIn("descriptor_timestamp", fields)
+        self.assertEqual(fields["descriptor_timestamp"]["type"], "string")
+        self.assertIn("descriptor_tracklets", fields)
+        self.assertEqual(fields["descriptor_tracklets"]["type"], "DescriptorTracklets")
+        self.assertEqual(fields["descriptor_tracklets"]["oneof"], "descriptor_data")
+        self.assertNotIn("timestamp", fields)
 
     def test_metadata_schema_catalog_returns_fallback_without_env_credentials(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
