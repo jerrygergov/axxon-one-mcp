@@ -7,6 +7,7 @@ schema, detector config, metadata, and archive policy behavior incrementally.
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -33,6 +34,24 @@ DETECTOR_REQUIRED_FIXTURES = {
     "AVDetector": ("video_source_ap",),
     "AppDataDetector": ("video_source_ap", "vmda_source_ap"),
 }
+ARCHIVE_POLICY_UNIT_TYPES = ("DeviceIpint", "MultimediaStorage")
+ARCHIVE_MUTATIONS_REQUIRING_APPROVAL = [
+    {
+        "rpc": "ArchiveService.FormatVolumes",
+        "risk": "formats archive volumes",
+        "requirement": "isolated non-production volume id and rollback/snapshot approval",
+    },
+    {
+        "rpc": "ArchiveService.Reindex",
+        "risk": "schedules archive volume reindexing",
+        "requirement": "isolated archive or explicit maintenance-window approval",
+    },
+    {
+        "rpc": "ArchiveService.CancelReindex",
+        "risk": "changes active reindex state",
+        "requirement": "only after this tool or an operator started a known test reindex",
+    },
+]
 DETECTOR_PROVENANCE_ORDER = ("known-catalog", "live-unit", "factory", "template")
 PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
 PROPERTY_VALUE_FIELDS = (
@@ -963,6 +982,215 @@ def _fixture_needed_detector_tool(tool: str, detector_uid: str, message: str) ->
     }
 
 
+def _unit_type_from_uid(uid: str) -> str:
+    for segment in reversed(uid.split("/")):
+        if "." in segment:
+            return segment.split(".", 1)[0]
+    return ""
+
+
+def _archive_policy_candidate_unit_types(target: str) -> list[str]:
+    parsed = _unit_type_from_uid(target)
+    ordered = [parsed] if parsed else []
+    ordered.extend(unit_type for unit_type in ARCHIVE_POLICY_UNIT_TYPES if unit_type not in ordered)
+    return ordered
+
+
+def _archive_policy_descriptor_from_wrappers(client: Any, target: str) -> tuple[dict[str, Any] | None, str]:
+    method = getattr(client, "list_units", None)
+    if not callable(method):
+        return None, ""
+    found: dict[str, Any] | None = None
+    for unit_type in _archive_policy_candidate_unit_types(target):
+        for unit in _as_items(_call_source(method, unit_type=unit_type)):
+            uid = _unit_uid(unit)
+            if uid == target or target in (str(unit.get("access_point", "")), str(unit.get("accessPoint", ""))):
+                found = unit
+    return (found, "list_units") if found is not None else (None, "")
+
+
+def _archive_policy_descriptor(client: Any, target: str) -> tuple[dict[str, Any] | None, str]:
+    descriptor, source = _archive_policy_descriptor_from_wrappers(client, target)
+    if descriptor is not None:
+        return descriptor, source
+    descriptor = _client_real_unit_by_uid(client, target)
+    if descriptor is not None:
+        return descriptor, "configuration_service.ListUnits"
+    return None, ""
+
+
+def _policy_property_summary(path: str, prop: dict[str, Any], source: str) -> dict[str, Any] | None:
+    redacted = redact_sensitive_properties(prop)
+    value_kind, value = _property_value_summary(redacted)
+    if not value_kind:
+        return None
+    summary: dict[str, Any] = {
+        "id": _property_id(redacted),
+        "path": path,
+        "value_kind": value_kind,
+        "value": value,
+        "readonly": bool(redacted.get("readonly", False)),
+        "source": source,
+    }
+    for field in ("name", "type", "category"):
+        if field in redacted:
+            summary[field] = redacted[field]
+    return summary
+
+
+def _normalized_token_text(value: str) -> str:
+    return "".join(ch.lower() if ch.isalnum() else "_" for ch in value)
+
+
+def _archive_policy_categories(path: str) -> set[str]:
+    text = _normalized_token_text(path)
+    categories: set[str] = set()
+    if any(token in text for token in ("retention", "archive_depth", "archive_days", "max_archive", "maxarchivedays", "ttl")):
+        categories.add("retention_properties")
+    if any(token in text for token in ("schedule", "calendar", "weekly", "daily")):
+        categories.add("schedule_properties")
+    if any(token in text for token in ("record", "pre_alarm", "prealarm", "post_alarm", "postalarm")):
+        categories.add("recording_properties")
+    if any(token in text for token in ("archive", "storage", "volume", "multimedia")) and "retention_properties" not in categories:
+        categories.add("archive_bindings")
+    return categories
+
+
+def _archive_policy_fields(descriptor: dict[str, Any], source: str) -> dict[str, list[dict[str, Any]]]:
+    fields: dict[str, list[dict[str, Any]]] = {
+        "archive_bindings": [],
+        "recording_properties": [],
+        "retention_properties": [],
+        "schedule_properties": [],
+    }
+    for path, prop in _iter_property_nodes(descriptor.get("properties")):
+        summary = _policy_property_summary(path, prop, source)
+        if summary is None:
+            continue
+        for category in _archive_policy_categories(path):
+            fields[category].append(summary)
+    return fields
+
+
+def _fixture_needed_archive_policy(target: str, message: str) -> dict[str, Any]:
+    return {
+        "status": "fixture-needed",
+        "tool": "archive_policy_get",
+        "target": target,
+        "archive_bindings": [],
+        "recording_properties": [],
+        "retention_properties": [],
+        "schedule_properties": [],
+        "confidence": "none",
+        "message": message,
+        "missing": [
+            "ListUnits",
+            "ConfigurationService.ListUnits descriptor for the target camera/archive",
+            "policy-like archive, recording, retention, or schedule fields",
+        ],
+    }
+
+
+def _safe_archive_probe_hint(path_or_volume_hint: str, client: Any) -> bool:
+    if getattr(client, "allow_archive_volume_probe_fixture", False):
+        return True
+    return (
+        path_or_volume_hint.startswith("codex-")
+        or path_or_volume_hint.startswith("/tmp/codex-")
+        or "codex-nonexistent-" in path_or_volume_hint
+    )
+
+
+def _archive_volume_summary(volumes_state: dict[str, Any], response: dict[str, Any]) -> dict[str, Any]:
+    states = Counter(str(item.get("state", "STATE_UNSPECIFIED")) for item in volumes_state.values() if isinstance(item, dict))
+    readonly_count = sum(1 for item in volumes_state.values() if isinstance(item, dict) and item.get("readonly") is True)
+    return {
+        "volume_count": len(volumes_state),
+        "states": dict(states),
+        "readonly_count": readonly_count,
+        "not_found_count": len(response.get("not_found_volumes", [])),
+        "is_failover_mode": response.get("is_failover_mode", False),
+        "is_temporary_storage": response.get("is_temporary_storage", False),
+        "volume_id_lengths": sorted(len(str(volume_id)) for volume_id in volumes_state),
+    }
+
+
+def _archive_access_point_from_inventory(value: Any) -> str:
+    for text in _flatten_strings(value):
+        if "MultimediaStorage" in text and ("/MultimediaStorage" in text or text.endswith("MultimediaStorage")):
+            return text
+    return ""
+
+
+def _discover_archive_access_point(client: Any) -> str:
+    method = getattr(client, "archive_access_point", None)
+    if callable(method):
+        try:
+            access_point = method()
+            if isinstance(access_point, str) and access_point:
+                return access_point
+        except Exception:
+            pass
+    load_inventory = getattr(client, "load_inventory", None)
+    if callable(load_inventory):
+        try:
+            return _archive_access_point_from_inventory(load_inventory())
+        except Exception:
+            return ""
+    return ""
+
+
+def _archive_stub_and_pb2(client: Any) -> tuple[Any, Any]:
+    archive_pb2 = client.import_module("axxonsoft.bl.archive.ArchiveSupport_pb2")
+    return client.common_stubs()["archive"], archive_pb2
+
+
+def _message_to_dict(client: Any, message: Any) -> dict[str, Any]:
+    converter = getattr(client, "message_to_dict", None)
+    if callable(converter):
+        converted = converter(message)
+        return converted if isinstance(converted, dict) else {}
+    return message if isinstance(message, dict) else {}
+
+
+def _analytics_fixture_template() -> dict[str, dict[str, Any]]:
+    return {
+        "global_tracker": {"available": False, "evidence": []},
+        "heatmap_builder": {"available": False, "evidence": []},
+        "realtime_recognizer": {"available": False, "evidence": []},
+        "realtime_recognizer_external": {"available": False, "evidence": []},
+        "vmda_metadata": {"available": False, "evidence": []},
+        "appdata_detector": {"available": False, "evidence": []},
+        "av_detector": {"available": False, "evidence": []},
+    }
+
+
+def _record_analytics_fixture(fixtures: dict[str, dict[str, Any]], key: str, evidence: str) -> None:
+    item = fixtures[key]
+    item["available"] = True
+    if evidence and evidence not in item["evidence"]:
+        item["evidence"].append(evidence)
+
+
+def _analytics_fixture_key_for_text(text: str) -> str:
+    simplified = text.lower()
+    if "globaltracker" in simplified or "global_tracker" in simplified:
+        return "global_tracker"
+    if "heatmapbuilder" in simplified or "heatmap" in simplified:
+        return "heatmap_builder"
+    if "realtimerecognizerexternal" in simplified or "recognizerexternal" in simplified:
+        return "realtime_recognizer_external"
+    if "realtimerecognizer" in simplified:
+        return "realtime_recognizer"
+    if "sourceendpoint.vmda" in simplified or "sourceendpoint.metadata" in simplified:
+        return "vmda_metadata"
+    if "appdatadetector" in simplified:
+        return "appdata_detector"
+    if "avdetector" in simplified:
+        return "av_detector"
+    return ""
+
+
 @dataclass
 class AxxonMcpDetectorArchive:
     """Read-only detector and archive policy tools."""
@@ -1249,4 +1477,262 @@ class AxxonMcpDetectorArchive:
             "applied": applied,
             "count": len(frames),
             "frames": frames[:frame_limit],
+        }
+
+    def archive_policy_get(self, camera_or_archive: str) -> dict[str, Any]:
+        client = self.ensure_client()
+        descriptor, source = _archive_policy_descriptor(client, camera_or_archive)
+        if descriptor is None:
+            return _fixture_needed_archive_policy(
+                camera_or_archive,
+                "Could not resolve archive policy descriptors from ConfigurationService.ListUnits; provide a camera/archive fixture with policy fields.",
+            )
+
+        fields = _archive_policy_fields(descriptor, source)
+        if not any(fields.values()):
+            return _fixture_needed_archive_policy(
+                camera_or_archive,
+                "Resolved descriptor did not expose archive policy fields; provide policy-like archive, recording, retention, or schedule descriptors.",
+            )
+
+        return {
+            "status": "ok",
+            "tool": "archive_policy_get",
+            "target": camera_or_archive,
+            "archive_bindings": fields["archive_bindings"],
+            "recording_properties": fields["recording_properties"],
+            "retention_properties": fields["retention_properties"],
+            "schedule_properties": fields["schedule_properties"],
+            "confidence": "descriptor",
+            "descriptor_source": source,
+            "descriptor": redact_sensitive_properties(
+                {
+                    "uid": descriptor.get("uid", ""),
+                    "type": descriptor.get("type", ""),
+                    "display_name": descriptor.get("display_name", descriptor.get("name", "")),
+                }
+            ),
+            "notes": [
+                "Read-only descriptor discovery only.",
+                "Archive policy mutation fields are not inferred when descriptors are absent.",
+            ],
+        }
+
+    def archive_management_status(self) -> dict[str, Any]:
+        try:
+            client = self.ensure_client()
+        except Exception as exc:  # noqa: BLE001 - report setup failures to MCP callers.
+            return {
+                "status": "fixture-needed",
+                "tool": "archive_management_status",
+                "archive_access_point": "",
+                "message": str(exc)[:240],
+                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+            }
+
+        authenticate = getattr(client, "authenticate_grpc", None)
+        if callable(authenticate):
+            try:
+                _authenticate_grpc_once(client)
+            except Exception as exc:  # noqa: BLE001 - missing live fixture should be structured.
+                return {
+                    "status": "error",
+                    "tool": "archive_management_status",
+                    "archive_access_point": "",
+                    "message": str(exc)[:240],
+                    "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                }
+
+        load_inventory = getattr(client, "load_inventory", None)
+        if callable(load_inventory):
+            try:
+                load_inventory()
+            except Exception:
+                pass
+
+        archive_access_point = _discover_archive_access_point(client)
+        if not archive_access_point:
+            return {
+                "status": "fixture-needed",
+                "tool": "archive_management_status",
+                "archive_access_point": "",
+                "message": "No archive access point fixture was discovered.",
+                "traits": {"traits": [], "trait_count": 0},
+                "volume_summary": {"volume_count": 0, "states": {}, "readonly_count": 0, "not_found_count": 0},
+                "disk_space": {"status": "skipped", "message": "No archive access point."},
+                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+            }
+
+        try:
+            stub, archive_pb2 = _archive_stub_and_pb2(client)
+            timeout = getattr(getattr(client, "config", None), "timeout", None)
+            traits_response = stub.GetArchiveTraits(
+                archive_pb2.GetArchiveTraitsRequest(access_point=archive_access_point),
+                timeout=timeout,
+            )
+            traits_data = _message_to_dict(client, traits_response)
+
+            volumes_response = stub.GetVolumesState(
+                archive_pb2.GetVolumesStateRequest(access_point=archive_access_point),
+                timeout=timeout,
+            )
+            volumes_data = _message_to_dict(client, volumes_response)
+            volumes_state = volumes_data.get("volumes_state", {})
+            if not isinstance(volumes_state, dict):
+                volumes_state = {}
+            volume_summary = _archive_volume_summary(volumes_state, volumes_data)
+
+            disk_space: dict[str, Any] = {"status": "skipped", "message": "No volume id found."}
+            first_volume = sorted(str(volume_id) for volume_id in volumes_state)[0] if volumes_state else ""
+            if first_volume:
+                disk_response = stub.GetDiskSpace(
+                    archive_pb2.GetDiskSpaceRequest(
+                        storage_access_point=archive_access_point,
+                        volume_id=first_volume,
+                    ),
+                    timeout=timeout,
+                )
+                disk_data = _message_to_dict(client, disk_response)
+                space = disk_data.get("space", {})
+                if not isinstance(space, dict):
+                    space = {}
+                disk_space = {
+                    "status": "ok" if disk_data.get("status_code", "OK") in ("OK", 0) else "warn",
+                    "volume_id_length": len(first_volume),
+                    "status_code": disk_data.get("status_code", "OK"),
+                    "capacity_bytes_present": "capacity_bytes" in space,
+                    "free_bytes_present": "free_bytes" in space,
+                }
+
+            result = {
+                "status": "ok" if volumes_state else "fixture-needed",
+                "tool": "archive_management_status",
+                "archive_access_point": archive_access_point,
+                "traits": {
+                    "traits": traits_data.get("traits", []),
+                    "trait_count": len(traits_data.get("traits", [])),
+                },
+                "volume_summary": volume_summary,
+                "disk_space": disk_space,
+                "mutation_policy": {
+                    "read_only": True,
+                    "not_executed": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+                    "notes": [
+                        "This status tool never formats, reindexes, cancels reindex, deletes, clears, resizes, or links archive volumes.",
+                    ],
+                },
+            }
+            return redact_sensitive_properties(result)
+        except Exception as exc:  # noqa: BLE001 - transport/setup failures are returned to MCP callers.
+            return {
+                "status": "error",
+                "tool": "archive_management_status",
+                "archive_access_point": archive_access_point,
+                "message": str(exc)[:240],
+                "mutation_policy": ARCHIVE_MUTATIONS_REQUIRING_APPROVAL,
+            }
+
+    def archive_volume_probe(self, path_or_volume_hint: str) -> dict[str, Any]:
+        client = self.ensure_client()
+        safety = {
+            "non_mutating": True,
+            "safe_markers": ["codex-", "codex-nonexistent-", "/tmp/codex-"],
+        }
+        if not path_or_volume_hint or not _safe_archive_probe_hint(path_or_volume_hint, client):
+            return {
+                "status": "fixture-needed",
+                "tool": "archive_volume_probe",
+                "path_or_volume_hint": path_or_volume_hint,
+                "probe": None,
+                "safety": {
+                    **safety,
+                    "allowed": False,
+                    "message": "Provide a safe test fixture hint before probing archive volumes.",
+                },
+            }
+
+        method = getattr(client, "archive_probe_volume", None)
+        if not callable(method):
+            return {
+                "status": "fixture-needed",
+                "tool": "archive_volume_probe",
+                "path_or_volume_hint": path_or_volume_hint,
+                "probe": None,
+                "safety": {**safety, "allowed": True},
+                "message": "Client does not expose ArchiveVolumeService.ProbeVolume wrapper.",
+            }
+
+        try:
+            probe = method(path_or_volume_hint)
+        except Exception as exc:  # noqa: BLE001 - transport failures are returned to MCP callers.
+            return {
+                "status": "error",
+                "tool": "archive_volume_probe",
+                "path_or_volume_hint": path_or_volume_hint,
+                "message": str(exc)[:240],
+                "probe": None,
+                "safety": {**safety, "allowed": True},
+            }
+
+        return {
+            "status": "ok",
+            "tool": "archive_volume_probe",
+            "path_or_volume_hint": path_or_volume_hint,
+            "probe": redact_sensitive_properties(probe),
+            "safety": {**safety, "allowed": True},
+        }
+
+    def analytics_fixture_report(self) -> dict[str, Any]:
+        fixtures = _analytics_fixture_template()
+        evidence_sources: list[str] = []
+
+        client = self.client
+        if client is None:
+            try:
+                client = self.ensure_client()
+            except Exception:
+                client = None
+
+        if client is not None:
+            load_inventory = getattr(client, "load_inventory", None)
+            if callable(load_inventory):
+                try:
+                    inventory = load_inventory()
+                    evidence_sources.append("load_inventory")
+                    for text in _flatten_strings(inventory):
+                        key = _analytics_fixture_key_for_text(text)
+                        if key:
+                            _record_analytics_fixture(fixtures, key, text)
+                except Exception:
+                    pass
+
+            for unit_type, key in (("AVDetector", "av_detector"), ("AppDataDetector", "appdata_detector")):
+                try:
+                    for unit in _client_units(client, unit_type):
+                        uid = _unit_uid(unit) or str(unit.get("access_point", ""))
+                        if uid:
+                            _record_analytics_fixture(fixtures, key, uid)
+                            evidence_sources.append(f"list_units:{unit_type}")
+                except Exception:
+                    pass
+
+            for endpoint in _client_metadata_endpoint_examples(client):
+                access_point = endpoint.get("access_point")
+                if isinstance(access_point, str) and access_point:
+                    _record_analytics_fixture(fixtures, "vmda_metadata", access_point)
+                    evidence_sources.append(str(endpoint.get("source", "metadata_endpoints")))
+
+        available = [key for key, value in fixtures.items() if value["available"]]
+        missing = [key for key, value in fixtures.items() if not value["available"]]
+        return {
+            "status": "ok",
+            "tool": "analytics_fixture_report",
+            "fixtures": redact_sensitive_properties(fixtures),
+            "available": available,
+            "missing": missing,
+            "evidence": sorted(set(evidence_sources)),
+            "notes": [
+                "Observed fixtures can be live-verified by bounded read tools only.",
+                "Missing fixtures remain fixture-needed; this report does not build heatmaps or mutate analytics configuration.",
+            ],
         }

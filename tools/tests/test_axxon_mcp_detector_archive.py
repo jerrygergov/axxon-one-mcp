@@ -710,6 +710,205 @@ class FakeFailingInventoryMetadataCatalogClient(FakeClient):
         raise RuntimeError("inventory offline")
 
 
+class FakeArchivePolicyClient(FakeClient):
+    camera_uid = "hosts/Server/DeviceIpint.1"
+
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.list_units_calls: list[str] = []
+
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        self.list_units_calls.append(unit_type)
+        if unit_type != "DeviceIpint":
+            return []
+        return [
+            {
+                "uid": self.camera_uid,
+                "type": "DeviceIpint",
+                "display_name": "Camera 1",
+                "properties": [
+                    {
+                        "id": "archive",
+                        "properties": [
+                            {
+                                "id": "storage_access_point",
+                                "value_string": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                            },
+                            {
+                                "id": "archivePassword",
+                                "value_string": "ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK",
+                            },
+                        ],
+                    },
+                    {
+                        "id": "recording",
+                        "properties": [
+                            {"id": "enabled", "value_bool": True},
+                            {"id": "preAlarmDurationSec", "value_int32": 5},
+                        ],
+                    },
+                    {
+                        "id": "retention",
+                        "properties": [
+                            {"id": "maxArchiveDays", "value_int32": 14},
+                        ],
+                    },
+                    {
+                        "id": "schedule",
+                        "properties": [
+                            {"id": "weeklySchedule", "value_string": "24x7"},
+                        ],
+                    },
+                ],
+            }
+        ]
+
+
+class FakeArchivePolicyMissingClient(FakeClient):
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        return []
+
+
+class FakeArchiveRequest:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+
+
+class FakeArchivePb:
+    GetArchiveTraitsRequest = FakeArchiveRequest
+    GetVolumesStateRequest = FakeArchiveRequest
+    GetDiskSpaceRequest = FakeArchiveRequest
+
+
+class FakeArchiveStub:
+    def __init__(self) -> None:
+        self.trait_requests: list[FakeArchiveRequest] = []
+        self.volume_requests: list[FakeArchiveRequest] = []
+        self.disk_requests: list[FakeArchiveRequest] = []
+        self.mutation_calls: list[str] = []
+
+    def GetArchiveTraits(self, request: FakeArchiveRequest, timeout: float) -> dict[str, Any]:
+        self.trait_requests.append(request)
+        return {"traits": [{"name": "archive", "supports_failover": False}]}
+
+    def GetVolumesState(self, request: FakeArchiveRequest, timeout: float) -> dict[str, Any]:
+        self.volume_requests.append(request)
+        return {
+            "volumes_state": {
+                "volume-1": {"state": "MOUNTED", "readonly": False},
+                "volume-2": {"state": "MOUNTED", "readonly": True},
+            },
+            "not_found_volumes": ["missing-volume"],
+            "is_failover_mode": False,
+            "is_temporary_storage": False,
+        }
+
+    def GetDiskSpace(self, request: FakeArchiveRequest, timeout: float) -> dict[str, Any]:
+        self.disk_requests.append(request)
+        return {
+            "status_code": "OK",
+            "space": {
+                "capacity_bytes": 1024,
+                "free_bytes": 512,
+            },
+        }
+
+    def FormatVolumes(self, *_args: Any, **_kwargs: Any) -> None:
+        self.mutation_calls.append("FormatVolumes")
+
+    def Reindex(self, *_args: Any, **_kwargs: Any) -> None:
+        self.mutation_calls.append("Reindex")
+
+    def CancelReindex(self, *_args: Any, **_kwargs: Any) -> None:
+        self.mutation_calls.append("CancelReindex")
+
+
+class FakeArchiveManagementClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.authenticate_calls = 0
+        self.load_inventory_calls = 0
+        self.stub = FakeArchiveStub()
+        self.format_calls = 0
+        self.reindex_calls = 0
+        self.cancel_reindex_calls = 0
+
+    def authenticate_grpc(self) -> None:
+        self.authenticate_calls += 1
+
+    def load_inventory(self) -> dict[str, Any]:
+        self.load_inventory_calls += 1
+        return {"items": [{"access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage"}]}
+
+    def archive_access_point(self) -> str:
+        return "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage"
+
+    def import_module(self, module_name: str) -> Any:
+        if module_name == "axxonsoft.bl.archive.ArchiveSupport_pb2":
+            return FakeArchivePb
+        raise AssertionError(module_name)
+
+    def common_stubs(self) -> dict[str, Any]:
+        return {"archive": self.stub}
+
+    def message_to_dict(self, message: Any) -> dict[str, Any]:
+        return message if isinstance(message, dict) else {}
+
+    def archive_format_volumes(self, *_args: Any, **_kwargs: Any) -> None:
+        self.format_calls += 1
+
+    def archive_reindex(self, *_args: Any, **_kwargs: Any) -> None:
+        self.reindex_calls += 1
+
+    def archive_cancel_reindex(self, *_args: Any, **_kwargs: Any) -> None:
+        self.cancel_reindex_calls += 1
+
+
+class FakeArchiveNoFixtureClient(FakeClient):
+    def load_inventory(self) -> dict[str, Any]:
+        return {"items": []}
+
+    def archive_access_point(self) -> str:
+        return ""
+
+
+class FakeArchiveProbeClient(FakeClient):
+    def __init__(self, config: FakeConfig, error: Exception | None = None) -> None:
+        super().__init__(config)
+        self.error = error
+        self.probe_calls: list[str] = []
+
+    def archive_probe_volume(self, path_or_volume_hint: str) -> dict[str, Any]:
+        self.probe_calls.append(path_or_volume_hint)
+        if self.error is not None:
+            raise self.error
+        return {
+            "status_code": "OK",
+            "volume_type": "local",
+            "apiToken": "PROBE_SECRET_SHOULD_NOT_LEAK",
+        }
+
+
+class FakeAnalyticsFixtureClient(FakeClient):
+    def load_inventory(self) -> dict[str, Any]:
+        return {
+            "items": [
+                {"access_point": "hosts/Server/GlobalTracker.0/GlobalTracker"},
+                {"access_point": "hosts/Server/HeatMapBuilder.0/HeatMapBuilder"},
+                {"access_point": "hosts/Server/RealtimeRecognizerExternal.1/RecognizerExternal"},
+                {"access_point": "hosts/Server/AVDetector.1/SourceEndpoint.vmda"},
+                {"access_point": "hosts/Server/AppDataDetector.22/EventSupplier"},
+            ]
+        }
+
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:
+        if unit_type == "AVDetector":
+            return [{"uid": "hosts/Server/AVDetector.1", "type": "AVDetector"}]
+        if unit_type == "AppDataDetector":
+            return [{"uid": "hosts/Server/AppDataDetector.22", "type": "AppDataDetector"}]
+        return []
+
+
 class AxxonMcpDetectorArchiveTests(unittest.TestCase):
     def test_module_loads_with_phase_5e_constants(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
@@ -1479,6 +1678,170 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(len(result["frames"]), 1)
         self.assertEqual(result["frames"][0]["apiToken"], "<redacted>")
         self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(result))
+
+    def test_archive_policy_get_discovers_policy_like_fields_from_descriptors(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.camera_uid)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "archive_policy_get")
+        self.assertEqual(result["target"], FakeArchivePolicyClient.camera_uid)
+        self.assertEqual(result["confidence"], "descriptor")
+        self.assertEqual(fake.list_units_calls, ["DeviceIpint", "MultimediaStorage"])
+
+        bindings = {item["path"]: item for item in result["archive_bindings"]}
+        self.assertEqual(
+            bindings["archive.storage_access_point"]["value"],
+            "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        )
+        recording = {item["path"]: item for item in result["recording_properties"]}
+        self.assertTrue(recording["recording.enabled"]["value"])
+        self.assertEqual(recording["recording.preAlarmDurationSec"]["value"], 5)
+        retention = {item["path"]: item for item in result["retention_properties"]}
+        self.assertEqual(retention["retention.maxArchiveDays"]["value"], 14)
+        schedule = {item["path"]: item for item in result["schedule_properties"]}
+        self.assertEqual(schedule["schedule.weeklySchedule"]["value"], "24x7")
+        self.assertNotIn("ARCHIVE_POLICY_SECRET_SHOULD_NOT_LEAK", str(result))
+
+    def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchivePolicyMissingClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get("hosts/Server/DeviceIpint.Missing")
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "archive_policy_get")
+        self.assertEqual(result["target"], "hosts/Server/DeviceIpint.Missing")
+        self.assertIn("ListUnits", result["missing"])
+        self.assertIn("policy", result["message"])
+        self.assertEqual(result["archive_bindings"], [])
+        self.assertEqual(result["recording_properties"], [])
+        self.assertEqual(result["retention_properties"], [])
+        self.assertEqual(result["schedule_properties"], [])
+
+    def test_archive_management_status_summarizes_read_only_archive_apis(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeArchiveManagementClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_management_status()
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "archive_management_status")
+        self.assertEqual(
+            result["archive_access_point"],
+            "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        )
+        self.assertEqual(result["traits"]["trait_count"], 1)
+        self.assertEqual(result["volume_summary"]["volume_count"], 2)
+        self.assertEqual(result["volume_summary"]["states"], {"MOUNTED": 2})
+        self.assertEqual(result["volume_summary"]["readonly_count"], 1)
+        self.assertEqual(result["volume_summary"]["not_found_count"], 1)
+        self.assertEqual(result["disk_space"]["status_code"], "OK")
+        self.assertTrue(result["disk_space"]["capacity_bytes_present"])
+        self.assertIn("ArchiveService.FormatVolumes", str(result["mutation_policy"]))
+
+        self.assertEqual(fake.authenticate_calls, 1)
+        self.assertEqual(fake.load_inventory_calls, 1)
+        self.assertEqual(fake.stub.trait_requests[0].kwargs["access_point"], result["archive_access_point"])
+        self.assertEqual(fake.stub.volume_requests[0].kwargs["access_point"], result["archive_access_point"])
+        self.assertEqual(fake.stub.disk_requests[0].kwargs["storage_access_point"], result["archive_access_point"])
+        self.assertEqual(fake.stub.disk_requests[0].kwargs["volume_id"], "volume-1")
+        self.assertEqual(fake.stub.mutation_calls, [])
+        self.assertEqual(fake.format_calls, 0)
+        self.assertEqual(fake.reindex_calls, 0)
+        self.assertEqual(fake.cancel_reindex_calls, 0)
+
+    def test_archive_management_status_returns_fixture_needed_without_archive_access_point(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchiveNoFixtureClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_management_status()
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "archive_management_status")
+        self.assertEqual(result["archive_access_point"], "")
+        self.assertIn("archive access point", result["message"])
+
+    def test_archive_volume_probe_refuses_unsafe_hints_and_dispatches_safe_fixture_hints(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeArchiveProbeClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        unsafe = archive.archive_volume_probe("/var/lib/axxon/archive/volume-1")
+
+        self.assertEqual(unsafe["status"], "fixture-needed")
+        self.assertEqual(unsafe["tool"], "archive_volume_probe")
+        self.assertEqual(unsafe["path_or_volume_hint"], "/var/lib/axxon/archive/volume-1")
+        self.assertEqual(fake.probe_calls, [])
+        self.assertIn("safe", unsafe["safety"]["message"])
+
+        safe = archive.archive_volume_probe("codex-nonexistent-volume")
+
+        self.assertEqual(safe["status"], "ok")
+        self.assertEqual(safe["tool"], "archive_volume_probe")
+        self.assertEqual(safe["path_or_volume_hint"], "codex-nonexistent-volume")
+        self.assertEqual(safe["probe"]["status_code"], "OK")
+        self.assertEqual(safe["probe"]["apiToken"], "<redacted>")
+        self.assertTrue(safe["safety"]["non_mutating"])
+        self.assertEqual(fake.probe_calls, ["codex-nonexistent-volume"])
+        self.assertNotIn("PROBE_SECRET_SHOULD_NOT_LEAK", str(safe))
+
+    def test_archive_volume_probe_reports_transport_errors_with_bounded_message(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeArchiveProbeClient(FakeConfig(), error=RuntimeError("probe failed " + ("x" * 500)))
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_volume_probe("/tmp/codex-volume")
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "archive_volume_probe")
+        self.assertEqual(result["path_or_volume_hint"], "/tmp/codex-volume")
+        self.assertLessEqual(len(result["message"]), 240)
+        self.assertEqual(fake.probe_calls, ["/tmp/codex-volume"])
+
+    def test_analytics_fixture_report_finds_observed_fixtures_and_reports_missing(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeAnalyticsFixtureClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.analytics_fixture_report()
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "analytics_fixture_report")
+        self.assertIn("global_tracker", result["available"])
+        self.assertIn("heatmap_builder", result["available"])
+        self.assertIn("realtime_recognizer_external", result["available"])
+        self.assertIn("vmda_metadata", result["available"])
+        self.assertIn("appdata_detector", result["available"])
+        self.assertIn("av_detector", result["available"])
+        self.assertIn("realtime_recognizer", result["missing"])
+        self.assertTrue(result["fixtures"]["heatmap_builder"]["evidence"])
+        self.assertTrue(result["fixtures"]["vmda_metadata"]["evidence"])
+        self.assertIn("live-verified", " ".join(result["notes"]))
 
 
 if __name__ == "__main__":
