@@ -87,20 +87,24 @@ def _property_value_field(name: Any) -> bool:
     return str(name) in PROPERTY_VALUE_FIELDS
 
 
-def redact_sensitive_properties(value: Any) -> Any:
+def _redact_sensitive_properties(value: Any, sensitive_context: bool) -> Any:
     if isinstance(value, dict):
-        sensitive_node = _sensitive_property_node(value)
+        sensitive_node = sensitive_context or _sensitive_property_node(value)
         return {
             key: "<redacted>"
             if _sensitive_key(key) or (sensitive_node and _property_value_field(key))
-            else redact_sensitive_properties(item)
+            else _redact_sensitive_properties(item, sensitive_node)
             for key, item in value.items()
         }
     if isinstance(value, list):
-        return [redact_sensitive_properties(item) for item in value]
+        return [_redact_sensitive_properties(item, sensitive_context) for item in value]
     if isinstance(value, tuple):
-        return tuple(redact_sensitive_properties(item) for item in value)
+        return tuple(_redact_sensitive_properties(item, sensitive_context) for item in value)
     return value
+
+
+def redact_sensitive_properties(value: Any) -> Any:
+    return _redact_sensitive_properties(value, False)
 
 
 def _as_items(value: Any) -> list[dict[str, Any]]:

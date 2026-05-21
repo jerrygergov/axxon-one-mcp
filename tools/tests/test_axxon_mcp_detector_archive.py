@@ -441,6 +441,17 @@ class FakeDetectorConfigClient(FakeClient):
                                 "readonly": False,
                                 "value_kind": "value_string",
                                 "value_string": "CONFIG_SECRET_SHOULD_NOT_LEAK",
+                                "enum_constraint": {
+                                    "items": [
+                                        {
+                                            "value_string": "CONFIG_ENUM_SECRET_SHOULD_NOT_LEAK",
+                                            "name": "Option A",
+                                        },
+                                    ],
+                                },
+                                "default_value": {
+                                    "value_string": "CONFIG_DEFAULT_SECRET_SHOULD_NOT_LEAK",
+                                },
                             },
                             {
                                 "id": "generated",
@@ -693,6 +704,73 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("PROPERTY_VALUE_SHOULD_NOT_LEAK", str(redacted))
         self.assertNotIn("TOKEN_VALUE_SHOULD_NOT_LEAK", str(redacted))
 
+    def test_sensitive_property_redaction_carries_context_into_nested_descriptor_values(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        raw: dict[str, Any] = {
+            "properties": [
+                {
+                    "id": "apiToken",
+                    "name": "API token",
+                    "type": "string",
+                    "value_kind": "value_string",
+                    "value_string": "DIRECT_SECRET_SHOULD_NOT_LEAK",
+                    "enum_constraint": {
+                        "items": [
+                            {
+                                "value_string": "ENUM_SECRET_SHOULD_NOT_LEAK",
+                                "name": "Option A",
+                            },
+                        ],
+                    },
+                    "default_value": {
+                        "value_string": "DEFAULT_SECRET_SHOULD_NOT_LEAK",
+                    },
+                    "history": [
+                        {
+                            "value_bytes": "HISTORY_SECRET_SHOULD_NOT_LEAK",
+                        },
+                    ],
+                },
+                {
+                    "id": "display_mode",
+                    "name": "Display mode",
+                    "type": "string",
+                    "value_kind": "value_string",
+                    "value_string": "visible",
+                    "enum_constraint": {
+                        "items": [
+                            {
+                                "value_string": "visible",
+                                "name": "Visible",
+                            },
+                        ],
+                    },
+                },
+            ],
+        }
+
+        redacted = module.redact_sensitive_properties(raw)
+
+        token = redacted["properties"][0]
+        self.assertEqual(token["id"], "apiToken")
+        self.assertEqual(token["name"], "API token")
+        self.assertEqual(token["type"], "string")
+        self.assertEqual(token["value_kind"], "value_string")
+        self.assertEqual(token["value_string"], "<redacted>")
+        self.assertEqual(token["enum_constraint"]["items"][0]["value_string"], "<redacted>")
+        self.assertEqual(token["enum_constraint"]["items"][0]["name"], "Option A")
+        self.assertEqual(token["default_value"]["value_string"], "<redacted>")
+        self.assertEqual(token["history"][0]["value_bytes"], "<redacted>")
+
+        display = redacted["properties"][1]
+        self.assertEqual(display["value_kind"], "value_string")
+        self.assertEqual(display["value_string"], "visible")
+        self.assertEqual(display["enum_constraint"]["items"][0]["value_string"], "visible")
+        self.assertNotIn("DIRECT_SECRET_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("ENUM_SECRET_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("DEFAULT_SECRET_SHOULD_NOT_LEAK", str(redacted))
+        self.assertNotIn("HISTORY_SECRET_SHOULD_NOT_LEAK", str(redacted))
+
     def test_detector_kind_catalog_returns_known_fallback_without_live_lookup(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         archive = module.AxxonMcpDetectorArchive(
@@ -929,6 +1007,15 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(writable["advanced.sensitivity"]["value"], 55)
         self.assertEqual(writable["advanced.apiToken"]["value"], "<redacted>")
         self.assertNotIn("advanced.generated", writable)
+
+        token_config = result["config"]["properties"][1]["properties"][1]
+        self.assertEqual(token_config["value_string"], "<redacted>")
+        self.assertEqual(token_config["enum_constraint"]["items"][0]["value_string"], "<redacted>")
+        self.assertEqual(token_config["enum_constraint"]["items"][0]["name"], "Option A")
+        self.assertEqual(token_config["default_value"]["value_string"], "<redacted>")
+        self.assertEqual(token_config["value_kind"], "value_string")
+        self.assertNotIn("CONFIG_ENUM_SECRET_SHOULD_NOT_LEAK", str(result))
+        self.assertNotIn("CONFIG_DEFAULT_SECRET_SHOULD_NOT_LEAK", str(result))
 
         self.assertEqual(len(result["visual_elements"]), 1)
         visual = result["visual_elements"][0]
