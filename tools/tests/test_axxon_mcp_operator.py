@@ -66,6 +66,36 @@ class FakeMutationClient:
         return {"units": [{"uid": uid, **self.units[uid], "parent_uid": self.parents.get(uid)}]}
 
 
+class FailDetectorSnapshotRestoreClient(FakeMutationClient):
+    """Fails only detector snapshot restore payloads."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.fail_restore_for: set[str] = set()
+
+    def change_config(self, payload: dict) -> dict:
+        for unit in payload.get("changed", []):
+            uid = unit.get("uid")
+            if uid in self.fail_restore_for and "type" in unit and "units" in unit:
+                self.calls.append(payload)
+                return {
+                    "added": [],
+                    "failed": [{"uid": uid, "reason": "restore failed"}],
+                    "failed_reason": ["restore failed"],
+                }
+        for parent in payload.get("added", []):
+            for unit in parent.get("units", []):
+                uid = unit.get("uid")
+                if uid in self.fail_restore_for:
+                    self.calls.append(payload)
+                    return {
+                        "added": [],
+                        "failed": [{"uid": uid, "reason": "restore failed"}],
+                        "failed_reason": ["restore failed"],
+                    }
+        return super().change_config(payload)
+
+
 def _test_find_property(properties: list[dict], prop_id: str) -> dict:
     for prop in properties:
         if prop.get("id") == prop_id or prop.get("name") == prop_id or prop.get("key") == prop_id:
@@ -762,6 +792,52 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(rolled["restored_uids"], [target_uid])
         self.assertEqual(client.units[target_uid]["properties"], original_properties)
 
+    def test_update_detector_parameters_rollback_restore_failure_is_error(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FailDetectorSnapshotRestoreClient()
+        target_uid = "hosts/Server/AVDetector.42"
+        original_properties = [{"id": "threshold", "value_int32": 5}]
+        requested_properties = [{"id": "threshold", "value_int32": 8}]
+        client.units[target_uid] = {"type": "AVDetector", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan("update_detector_parameters", {"uid": target_uid, "properties": requested_properties})
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        client.fail_restore_for.add(target_uid)
+
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(rolled["status"], "error")
+        self.assertEqual(rolled["restored_uids"], [])
+        self.assertEqual(rolled["failed"], [{"uid": target_uid, "reason": ["restore failed"]}])
+
+    def test_update_detector_parameters_verify_after_rollback_requires_snapshot(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FailDetectorSnapshotRestoreClient()
+        target_uid = "hosts/Server/AVDetector.42"
+        client.units[target_uid] = {
+            "type": "AVDetector",
+            "properties": [{"id": "threshold", "value_int32": 5}],
+            "units": [],
+        }
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan(
+            "update_detector_parameters",
+            {"uid": target_uid, "properties": [{"id": "threshold", "value_int32": 8}]},
+        )
+        reg.apply(plan["plan_id"], plan["confirmation_token"])
+        client.fail_restore_for.add(target_uid)
+        reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        verified = reg.verify(plan["plan_id"])
+
+        self.assertEqual(verified["status"], "error")
+        self.assertEqual(verified["target"], {"uid": target_uid, "still_present": True})
+
     def test_update_detector_visual_element_captures_snapshot_verifies_and_rolls_back(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         client = FakeMutationClient()
@@ -853,6 +929,50 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertIn(target_uid, client.units)
         self.assertEqual(client.parents[target_uid], "hosts/Server")
         self.assertEqual(client.units[target_uid], original_unit)
+
+    def test_delete_detector_rollback_readd_failure_is_error(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FailDetectorSnapshotRestoreClient()
+        target_uid = "hosts/Server/AppDataDetector.77"
+        client.units[target_uid] = {
+            "type": "AppDataDetector",
+            "properties": [{"id": "display_name", "value_string": "queue analytics"}],
+            "units": [],
+        }
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan("delete_detector", {"uid": target_uid})
+        reg.apply(plan["plan_id"], plan["confirmation_token"])
+        client.fail_restore_for.add(target_uid)
+
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(rolled["status"], "error")
+        self.assertEqual(rolled["restored_uids"], [])
+        self.assertEqual(rolled["failed"], [{"uid": target_uid, "reason": ["restore failed"]}])
+
+    def test_delete_detector_verify_after_rollback_requires_restored_snapshot(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FailDetectorSnapshotRestoreClient()
+        target_uid = "hosts/Server/AppDataDetector.77"
+        client.units[target_uid] = {
+            "type": "AppDataDetector",
+            "properties": [{"id": "display_name", "value_string": "queue analytics"}],
+            "units": [],
+        }
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan("delete_detector", {"uid": target_uid})
+        reg.apply(plan["plan_id"], plan["confirmation_token"])
+        client.fail_restore_for.add(target_uid)
+        reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        verified = reg.verify(plan["plan_id"])
+
+        self.assertEqual(verified["status"], "error")
+        self.assertEqual(verified["target"], {"uid": target_uid, "still_present": False})
 
     def test_create_layout_persistent(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")

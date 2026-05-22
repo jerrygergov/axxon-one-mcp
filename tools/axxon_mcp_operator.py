@@ -305,6 +305,19 @@ def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: b
     return {"added": [{"uid": snapshot.get("parent_uid") or _infer_parent_uid(uid, ""), "units": [restore_unit]}]}
 
 
+def _unit_matches_snapshot(unit: dict[str, Any], snapshot: dict[str, Any]) -> bool:
+    expected = dict(snapshot.get("unit") or {})
+    expected_parent_uid = str(snapshot.get("parent_uid") or "")
+    actual_parent_uid = str(unit.get("parent_uid") or unit.get("parentUid") or "")
+    if expected_parent_uid and actual_parent_uid != expected_parent_uid:
+        return False
+    return (
+        unit.get("type", "") == expected.get("type", "")
+        and list(unit.get("properties") or []) == list(expected.get("properties") or [])
+        and list(unit.get("units") or []) == list(expected.get("units") or [])
+    )
+
+
 def _property_matches(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
     return all(actual.get(key) == value for key, value in expected.items())
 
@@ -1913,6 +1926,15 @@ class OperatorRegistry:
             units = payload.get("units") or []
             target_present = bool(units)
             result["target"] = {"uid": target_uid, "still_present": target_present}
+            snapshots = list(state.get("snapshots", []))
+            snapshot = next((snap for snap in snapshots if str(snap.get("target_uid") or "") == target_uid), None)
+            if state_status == "rolled_back":
+                snapshot_restored = bool(snapshot and units and _unit_matches_snapshot(units[0], snapshot))
+                result["snapshot_restored"] = snapshot_restored
+                result["status"] = "verified" if snapshot_restored else "error"
+                return result
+            if state_status == "error" and snapshot is not None:
+                result["snapshot_restored"] = bool(units and _unit_matches_snapshot(units[0], snapshot))
             if workflow == "delete_detector":
                 if state_status == "applied":
                     result["status"] = "verified" if not target_present else "error"
@@ -1973,15 +1995,18 @@ class OperatorRegistry:
                     failed.append({"uid": target_uid, "reason": response.get("failed_reason", []) or response.get("failed", [])})
                     continue
                 restored.append(target_uid)
+            rollback_status = "error" if failed else "rolled_back"
             self._state[plan_id] = {
-                "status": "rolled_back",
+                "status": rollback_status,
                 "created_uids": list(created_uids),
                 "created_kinds": list(created_kinds),
                 "snapshots": snapshots,
+                "restored_uids": list(restored),
+                "failed": list(failed),
             }
-            self._record("rollback", plan_id=plan_id, status="rolled_back", restored_count=len(restored))
+            self._record("rollback", plan_id=plan_id, status=rollback_status, restored_count=len(restored), failed_count=len(failed))
             return {
-                "status": "rolled_back",
+                "status": rollback_status,
                 "plan_id": plan_id,
                 "restored_uids": restored,
                 "failed": failed,
