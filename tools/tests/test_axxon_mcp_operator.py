@@ -313,6 +313,142 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(registry.verify(plan["plan_id"])["still_present"], [])
 
+        appdata_plan = registry.plan("create_appdata_detector_full", {
+            "display_name": "persistent-appdata-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MoveInZone",
+            "properties": [{"id": "zone", "value_string": "entry"}],
+        })
+        appdata_applied = registry.apply(appdata_plan["plan_id"], appdata_plan["confirmation_token"])
+        self.assertEqual(appdata_applied["status"], "applied")
+        self.assertEqual(len(appdata_applied["created_uids"]), 2)
+        appdata_verified = registry.verify(appdata_plan["plan_id"])
+        self.assertEqual(appdata_verified["detector_checks"], {
+            "display_name": True,
+            "detector": True,
+            "video_source_ap": True,
+            "vmda_source_ap": True,
+        })
+        appdata_rolled = registry.rollback(appdata_plan["plan_id"], appdata_plan["rollback_confirmation_token"])
+        self.assertEqual(appdata_rolled["status"], "rolled_back")
+        self.assertEqual(len(appdata_rolled["removed_uids"]), 2)
+        self.assertEqual(registry.verify(appdata_plan["plan_id"])["still_present"], [])
+
+    def test_create_av_detector_full_plan_includes_full_properties_and_provenance(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        video_ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+
+        plan = module._build_create_av_detector_full_plan("hosts/Server", {
+            "display_name": "persistent-motion",
+            "video_source_ap": video_ap,
+            "detector": "MotionDetection",
+            "schema_source": {"source": "fixture-schema", "unit_type": "AVDetector"},
+            "properties": [
+                {"id": "threshold", "value_int32": 42},
+                {"id": "input", "value_string": "caller-input-must-not-replace-binding"},
+            ],
+        })
+
+        self.assertEqual(plan["workflow"], "create_av_detector_full")
+        self.assertTrue(plan["caller_owns_lifecycle"])
+        self.assertEqual(plan["rollback"]["strategy"], "remove_created_uids")
+        self.assertEqual(plan["schema_source"], {"source": "fixture-schema", "unit_type": "AVDetector"})
+        self.assertEqual(plan["source_bindings"], {"video_source_ap": video_ap})
+        self.assertEqual(plan["expected"], {
+            "display_name": "persistent-motion",
+            "detector": "MotionDetection",
+            "video_source_ap": video_ap,
+        })
+        props = plan["steps"][0]["payload"]["added"][0]["units"][0]["properties"]
+        self.assertEqual([prop["id"] for prop in props], ["display_name", "input", "threshold"])
+        self.assertEqual(plan["diff"], {"added": [{"unit_type": "AVDetector", "properties": props}]})
+
+    def test_create_appdata_detector_full_plan_chains_scene_and_preserves_parameter_tree(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        video_ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+
+        plan = module._build_create_appdata_detector_full_plan("hosts/Server", {
+            "name": "persistent-appdata",
+            "video_source_ap": video_ap,
+            "detector": "MoveInZone",
+            "schema_provenance": ["template", "operator"],
+            "parameter_tree": {
+                "properties": [
+                    {"id": "zone", "value_string": "main-entry"},
+                    {"id": "display_name", "value_string": "caller-name-must-not-replace-display-name"},
+                ],
+            },
+        })
+
+        self.assertEqual(plan["workflow"], "create_appdata_detector_full")
+        self.assertTrue(plan["caller_owns_lifecycle"])
+        self.assertEqual(len(plan["steps"]), 2)
+        self.assertEqual(plan["steps"][0]["unit_type"], "AVDetector")
+        self.assertEqual(plan["steps"][1]["unit_type"], "AppDataDetector")
+        self.assertEqual(plan["steps"][1]["resolve_vmda_from_step"], 0)
+        self.assertEqual(plan["steps"][1]["appdata_template"]["properties"], [{"id": "zone", "value_string": "main-entry"}])
+        self.assertEqual(plan["schema_source"], ["template", "operator"])
+        self.assertEqual(plan["expected"], {
+            "display_name": "persistent-appdata",
+            "detector": "MoveInZone",
+            "video_source_ap": video_ap,
+            "vmda_source_ap": "<chain-created from step 0>",
+        })
+        self.assertEqual(plan["source_bindings"], {
+            "video_source_ap": video_ap,
+            "vmda_source_ap": "<chain-created from step 0>",
+        })
+        appdata_diff = plan["diff"]["added"][1]
+        self.assertEqual(appdata_diff["unit_type"], "AppDataDetector")
+        self.assertEqual([prop["id"] for prop in appdata_diff["properties"]], ["display_name", "input", "zone"])
+
+    def test_create_detector_full_workflows_are_registered_and_apply_rollback(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        self.assertIn("create_av_detector_full", registry.known_workflows())
+        self.assertIn("create_appdata_detector_full", registry.known_workflows())
+
+        plan = registry.plan("create_av_detector_full", {
+            "display_name": "persistent-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MotionDetection",
+            "properties": [{"id": "threshold", "value_int32": 7}],
+        })
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        verified = registry.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(verified["detector_checks"], {
+            "display_name": True,
+            "detector": True,
+            "video_source_ap": True,
+        })
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(registry.verify(plan["plan_id"])["still_present"], [])
+
+        appdata_plan = registry.plan("create_appdata_detector_full", {
+            "display_name": "persistent-appdata-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MoveInZone",
+            "properties": [{"id": "zone", "value_string": "entry"}],
+        })
+        appdata_applied = registry.apply(appdata_plan["plan_id"], appdata_plan["confirmation_token"])
+        self.assertEqual(appdata_applied["status"], "applied")
+        self.assertEqual(len(appdata_applied["created_uids"]), 2)
+        appdata_verified = registry.verify(appdata_plan["plan_id"])
+        self.assertEqual(appdata_verified["detector_checks"], {
+            "display_name": True,
+            "detector": True,
+            "video_source_ap": True,
+            "vmda_source_ap": True,
+        })
+        appdata_rolled = registry.rollback(appdata_plan["plan_id"], appdata_plan["rollback_confirmation_token"])
+        self.assertEqual(appdata_rolled["status"], "rolled_back")
+        self.assertEqual(len(appdata_rolled["removed_uids"]), 2)
+        self.assertEqual(registry.verify(appdata_plan["plan_id"])["still_present"], [])
+
     def test_temp_device_template_requires_camera_uid(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         registry = module.OperatorRegistry(client_factory=lambda: FakeMutationClient(), host="hosts/Server")

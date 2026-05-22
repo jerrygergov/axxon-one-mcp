@@ -149,6 +149,146 @@ def _build_temp_archive_plan(host_uid: str, params: dict[str, Any]) -> dict[str,
     }
 
 
+def _property_node_id(prop: dict[str, Any]) -> str:
+    return str(prop.get("id") or prop.get("property_id") or prop.get("propertyId") or prop.get("name") or "")
+
+
+def _full_parameter_properties(params: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = params.get("properties")
+    if raw is None:
+        raw = params.get("parameter_tree")
+    if raw is None:
+        raw = params.get("parameters")
+    if raw is None:
+        return []
+    if isinstance(raw, dict):
+        raw = raw.get("properties") if isinstance(raw.get("properties"), list) else [raw]
+    if not isinstance(raw, list):
+        return []
+    return [dict(prop) for prop in raw if isinstance(prop, dict)]
+
+
+def _merge_detector_properties(base: list[dict[str, Any]], extra: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    reserved = {"display_name", "input"}
+    merged = list(base)
+    merged.extend(dict(prop) for prop in extra if _property_node_id(prop) not in reserved)
+    return merged
+
+
+def _detector_extension_properties(params: dict[str, Any]) -> list[dict[str, Any]]:
+    reserved = {"display_name", "input"}
+    return [prop for prop in _full_parameter_properties(params) if _property_node_id(prop) not in reserved]
+
+
+def _schema_source(params: dict[str, Any]) -> Any:
+    return params.get("schema_source") or params.get("schema_provenance") or "operator-local-payload"
+
+
+def _payload_unit_properties(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    return payload["added"][0]["units"][0]["properties"]
+
+
+def _find_property(properties: list[dict[str, Any]], prop_id: str) -> dict[str, Any] | None:
+    for prop in properties:
+        if _property_node_id(prop) == prop_id:
+            return prop
+    return None
+
+
+def _property_string_value(prop: dict[str, Any] | None) -> str:
+    if not prop:
+        return ""
+    return str(prop.get("value_string") or prop.get("value") or "")
+
+
+def _detector_checks_for_plan(client: Any, plan: dict[str, Any], created_uids: list[str], created_kinds: list[str]) -> dict[str, bool] | None:
+    workflow = plan.get("workflow")
+    if workflow not in {"create_av_detector_full", "create_appdata_detector_full"}:
+        return None
+    expected = plan.get("expected") or {}
+    target_type = "AppDataDetector" if workflow == "create_appdata_detector_full" else "AVDetector"
+    target_unit: dict[str, Any] | None = None
+    for uid, kind in zip(created_uids, created_kinds):
+        if kind != "unit":
+            continue
+        payload = client.read_unit(uid)
+        for unit in payload.get("units") or []:
+            if unit.get("type") == target_type:
+                target_unit = unit
+                break
+        if target_unit is not None:
+            break
+    checks = {
+        "display_name": False,
+        "detector": False,
+        "video_source_ap": False,
+    }
+    if target_unit is None:
+        if target_type == "AppDataDetector":
+            checks["vmda_source_ap"] = False
+        return checks
+    properties = target_unit.get("properties") or []
+    display_prop = _find_property(properties, "display_name")
+    input_prop = _find_property(properties, "input")
+    input_properties = input_prop.get("properties") if isinstance(input_prop, dict) else []
+    if not isinstance(input_properties, list):
+        input_properties = []
+    camera_ref = _find_property(input_properties, "camera_ref")
+    camera_ref_properties = camera_ref.get("properties") if isinstance(camera_ref, dict) else []
+    if not isinstance(camera_ref_properties, list):
+        camera_ref_properties = []
+    streaming_id = _find_property(camera_ref_properties, "streaming_id")
+    detector_prop = _find_property(input_properties, "detector")
+    checks["display_name"] = _property_string_value(display_prop) == str(expected.get("display_name") or "")
+    checks["detector"] = _property_string_value(detector_prop) == str(expected.get("detector") or "")
+    checks["video_source_ap"] = _property_string_value(camera_ref) == str(expected.get("video_source_ap") or "")
+    if target_type == "AppDataDetector":
+        expected_vmda = str(expected.get("vmda_source_ap") or "")
+        actual_vmda = _property_string_value(streaming_id)
+        checks["vmda_source_ap"] = (
+            actual_vmda.endswith("/SourceEndpoint.vmda") if expected_vmda == "<chain-created from step 0>" else actual_vmda == expected_vmda
+        )
+    return checks
+
+
+def _av_detector_payload(
+    host_uid: str,
+    display_name: str,
+    video_source_ap: str,
+    detector_kind: str,
+    properties: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    base_properties = [
+        prop_string("display_name", display_name),
+        prop_string(
+            "input",
+            "Video",
+            properties=[
+                prop_string(
+                    "camera_ref",
+                    video_source_ap,
+                    properties=[prop_string("streaming_id", video_source_ap)],
+                ),
+                prop_string("detector", detector_kind),
+            ],
+        ),
+    ]
+    return {
+        "added": [
+            {
+                "uid": host_uid,
+                "units": [
+                    {
+                        "type": "AVDetector",
+                        "properties": _merge_detector_properties(base_properties, properties or []),
+                        "units": [],
+                    }
+                ],
+            }
+        ]
+    }
+
+
 def _build_temp_av_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
     """Temp AVDetector requires a real video source AP, which the caller must supply."""
     video_source_ap = str(params.get("video_source_ap") or "").strip()
@@ -162,34 +302,7 @@ def _build_temp_av_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[
     detector_kind = str(params.get("detector") or "MotionDetection").strip() or "MotionDetection"
     stamp = _short_stamp()
     display_name = f"codex-temp-{detector_kind}-{hint}-{stamp}"
-    payload = {
-        "added": [
-            {
-                "uid": host_uid,
-                "units": [
-                    {
-                        "type": "AVDetector",
-                        "properties": [
-                            prop_string("display_name", display_name),
-                            prop_string(
-                                "input",
-                                "Video",
-                                properties=[
-                                    prop_string(
-                                        "camera_ref",
-                                        video_source_ap,
-                                        properties=[prop_string("streaming_id", video_source_ap)],
-                                    ),
-                                    prop_string("detector", detector_kind),
-                                ],
-                            ),
-                        ],
-                        "units": [],
-                    }
-                ],
-            }
-        ]
-    }
+    payload = _av_detector_payload(host_uid, display_name, video_source_ap, detector_kind)
     return {
         "workflow": "temp_av_detector",
         "risk": "mutation",
@@ -205,7 +318,29 @@ def _build_temp_av_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[
     }
 
 
-def _appdata_payload(host_uid: str, display_name: str, video_source_ap: str, vmda_source_ap: str, detector_kind: str) -> dict[str, Any]:
+def _appdata_payload(
+    host_uid: str,
+    display_name: str,
+    video_source_ap: str,
+    vmda_source_ap: str,
+    detector_kind: str,
+    properties: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    base_properties = [
+        prop_string("display_name", display_name),
+        prop_string(
+            "input",
+            "TargetList",
+            properties=[
+                prop_string(
+                    "camera_ref",
+                    video_source_ap,
+                    properties=[prop_string("streaming_id", vmda_source_ap)],
+                ),
+                prop_string("detector", detector_kind),
+            ],
+        ),
+    ]
     return {
         "added": [
             {
@@ -213,21 +348,7 @@ def _appdata_payload(host_uid: str, display_name: str, video_source_ap: str, vmd
                 "units": [
                     {
                         "type": "AppDataDetector",
-                        "properties": [
-                            prop_string("display_name", display_name),
-                            prop_string(
-                                "input",
-                                "TargetList",
-                                properties=[
-                                    prop_string(
-                                        "camera_ref",
-                                        video_source_ap,
-                                        properties=[prop_string("streaming_id", vmda_source_ap)],
-                                    ),
-                                    prop_string("detector", detector_kind),
-                                ],
-                            ),
-                        ],
+                        "properties": _merge_detector_properties(base_properties, properties or []),
                         "units": [],
                     }
                 ],
@@ -237,34 +358,7 @@ def _appdata_payload(host_uid: str, display_name: str, video_source_ap: str, vmd
 
 
 def _scene_avdetector_payload(host_uid: str, display_name: str, video_source_ap: str) -> dict[str, Any]:
-    return {
-        "added": [
-            {
-                "uid": host_uid,
-                "units": [
-                    {
-                        "type": "AVDetector",
-                        "properties": [
-                            prop_string("display_name", display_name),
-                            prop_string(
-                                "input",
-                                "Video",
-                                properties=[
-                                    prop_string(
-                                        "camera_ref",
-                                        video_source_ap,
-                                        properties=[prop_string("streaming_id", video_source_ap)],
-                                    ),
-                                    prop_string("detector", "SceneDescription"),
-                                ],
-                            ),
-                        ],
-                        "units": [],
-                    }
-                ],
-            }
-        ]
-    }
+    return _av_detector_payload(host_uid, display_name, video_source_ap, "SceneDescription")
 
 
 def _build_temp_appdata_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -325,6 +419,135 @@ def _build_temp_appdata_detector_plan(host_uid: str, params: dict[str, Any]) -> 
         },
         "confirmation_token": "CONFIRM-temp_appdata_detector",
         "rollback_confirmation_token": "CONFIRM-temp_appdata_detector-rollback",
+    }
+
+
+def _build_create_av_detector_full_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Persistent AVDetector creation using caller-supplied detector parameter properties."""
+    display_name = str(params.get("display_name") or params.get("name") or "").strip()
+    if not display_name:
+        return {
+            "status": "gap",
+            "workflow": "create_av_detector_full",
+            "message": "create_av_detector_full requires params.display_name (or params.name)",
+        }
+    video_source_ap = str(params.get("video_source_ap") or "").strip()
+    if not video_source_ap:
+        return {
+            "status": "gap",
+            "workflow": "create_av_detector_full",
+            "message": "create_av_detector_full requires params.video_source_ap",
+        }
+    detector_kind = str(params.get("detector") or "MotionDetection").strip() or "MotionDetection"
+    extra_properties = _detector_extension_properties(params)
+    payload = _av_detector_payload(host_uid, display_name, video_source_ap, detector_kind, extra_properties)
+    detector_properties = _payload_unit_properties(payload)
+    return {
+        "workflow": "create_av_detector_full",
+        "persistent": True,
+        "caller_owns_lifecycle": True,
+        "risk": "mutation",
+        "intent": f"create a persistent {detector_kind} AVDetector bound to the given video source",
+        "steps": [{"operation": "add", "unit_type": "AVDetector", "payload": payload}],
+        "rollback": {
+            "strategy": "remove_created_uids",
+            "description": "Persistent: rollback removes created detector units in reverse order if caller explicitly invokes.",
+        },
+        "expected": {
+            "display_name": display_name,
+            "detector": detector_kind,
+            "video_source_ap": video_source_ap,
+        },
+        "source_bindings": {"video_source_ap": video_source_ap},
+        "schema_source": _schema_source(params),
+        "diff": {"added": [{"unit_type": "AVDetector", "properties": detector_properties}]},
+        "confirmation_token": "CONFIRM-create_av_detector_full",
+        "rollback_confirmation_token": "CONFIRM-create_av_detector_full-rollback",
+    }
+
+
+def _build_create_appdata_detector_full_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Persistent AppDataDetector creation with optional chain-created SceneDescription VMDA source."""
+    display_name = str(params.get("display_name") or params.get("name") or "").strip()
+    if not display_name:
+        return {
+            "status": "gap",
+            "workflow": "create_appdata_detector_full",
+            "message": "create_appdata_detector_full requires params.display_name (or params.name)",
+        }
+    video_source_ap = str(params.get("video_source_ap") or "").strip()
+    if not video_source_ap:
+        return {
+            "status": "gap",
+            "workflow": "create_appdata_detector_full",
+            "message": "create_appdata_detector_full requires params.video_source_ap",
+        }
+    vmda_source_ap = str(params.get("vmda_source_ap") or "").strip()
+    detector_kind = str(params.get("detector") or "MoveInZone").strip() or "MoveInZone"
+    extra_properties = _detector_extension_properties(params)
+    steps: list[dict[str, Any]] = []
+    diff_added: list[dict[str, Any]] = []
+    expected_vmda_source_ap = vmda_source_ap or "<chain-created from step 0>"
+    if not vmda_source_ap:
+        scene_display_name = str(params.get("scene_display_name") or f"{display_name}-SceneDescription").strip()
+        scene_payload = _scene_avdetector_payload(host_uid, scene_display_name, video_source_ap)
+        scene_properties = _payload_unit_properties(scene_payload)
+        steps.append({
+            "operation": "add",
+            "unit_type": "AVDetector",
+            "payload": scene_payload,
+        })
+        diff_added.append({"unit_type": "AVDetector", "properties": scene_properties})
+        steps.append({
+            "operation": "add",
+            "unit_type": "AppDataDetector",
+            "resolve_vmda_from_step": 0,
+            "appdata_template": {
+                "host_uid": host_uid,
+                "display_name": display_name,
+                "video_source_ap": video_source_ap,
+                "detector_kind": detector_kind,
+                "properties": extra_properties,
+            },
+            "payload": None,
+        })
+    else:
+        payload = _appdata_payload(host_uid, display_name, video_source_ap, vmda_source_ap, detector_kind, extra_properties)
+        steps.append({"operation": "add", "unit_type": "AppDataDetector", "payload": payload})
+    appdata_diff_payload = _appdata_payload(
+        host_uid,
+        display_name,
+        video_source_ap,
+        expected_vmda_source_ap,
+        detector_kind,
+        extra_properties,
+    )
+    diff_added.append({"unit_type": "AppDataDetector", "properties": _payload_unit_properties(appdata_diff_payload)})
+    return {
+        "workflow": "create_appdata_detector_full",
+        "persistent": True,
+        "caller_owns_lifecycle": True,
+        "risk": "mutation",
+        "intent": f"create a persistent {detector_kind} AppDataDetector bound to a vmda source",
+        "steps": steps,
+        "rollback": {
+            "strategy": "remove_created_uids",
+            "description": "Persistent: rollback removes created detector units in reverse order if caller explicitly invokes.",
+        },
+        "expected": {
+            "display_name": display_name,
+            "detector": detector_kind,
+            "video_source_ap": video_source_ap,
+            "vmda_source_ap": expected_vmda_source_ap,
+        },
+        "source_bindings": {
+            "video_source_ap": video_source_ap,
+            "vmda_source_ap": expected_vmda_source_ap,
+        },
+        "schema_source": _schema_source(params),
+        "diff": {"added": diff_added},
+        "confirmation_token": "CONFIRM-create_appdata_detector_full",
+        "rollback_confirmation_token": "CONFIRM-create_appdata_detector_full-rollback",
     }
 
 
@@ -928,6 +1151,8 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "temp_archive": _build_temp_archive_plan,
     "temp_av_detector": _build_temp_av_detector_plan,
     "temp_appdata_detector": _build_temp_appdata_detector_plan,
+    "create_av_detector_full": _build_create_av_detector_full_plan,
+    "create_appdata_detector_full": _build_create_appdata_detector_full_plan,
     "temp_device_template": _build_temp_device_template_plan,
     "external_event_inject": _build_external_event_inject_plan,
     "temp_macro": _build_temp_macro_plan,
@@ -1200,7 +1425,12 @@ class OperatorRegistry:
                         client.wait_for_component(vmda_ap, timeout_seconds=10.0)
                     tmpl = step["appdata_template"]
                     step_payload = _appdata_payload(
-                        tmpl["host_uid"], tmpl["display_name"], tmpl["video_source_ap"], vmda_ap, tmpl["detector_kind"]
+                        tmpl["host_uid"],
+                        tmpl["display_name"],
+                        tmpl["video_source_ap"],
+                        vmda_ap,
+                        tmpl["detector_kind"],
+                        tmpl.get("properties"),
                     )
                 else:
                     step_payload = step["payload"]
@@ -1405,12 +1635,16 @@ class OperatorRegistry:
                 if units:
                     still_present.append(uid)
         status = "verified" if (self._state.get(plan_id, {}).get("status") in {"applied", "rolled_back"}) else "planned"
-        return {
+        result = {
             "status": status,
             "plan_id": plan_id,
             "created_uids": list(created_uids),
             "still_present": still_present,
         }
+        detector_checks = _detector_checks_for_plan(client, plan, list(created_uids), list(created_kinds))
+        if detector_checks is not None:
+            result["detector_checks"] = detector_checks
+        return result
 
     def rollback(self, plan_id: str, confirmation: str) -> dict[str, Any]:
         plan = self._plans.get(plan_id)
