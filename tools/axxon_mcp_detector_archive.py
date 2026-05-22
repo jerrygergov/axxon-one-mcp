@@ -1048,6 +1048,9 @@ def _archive_policy_descriptor_from_wrappers(client: Any, target: str) -> tuple[
     found: dict[str, Any] | None = None
     for unit_type in _archive_policy_candidate_unit_types(target_candidates):
         for unit in _as_items(_call_source(method, unit_type=unit_type)):
+            returned_type = str(unit.get("type") or unit.get("unit_type") or unit.get("unitType") or "")
+            if returned_type and returned_type != unit_type:
+                continue
             uid = _unit_uid(unit)
             unit_strings = _flatten_strings(unit)
             unit_uid_candidates = _unique_nonempty(

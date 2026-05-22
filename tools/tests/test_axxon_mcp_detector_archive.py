@@ -799,6 +799,13 @@ class FakeArchivePolicyMissingClient(FakeClient):
         return []
 
 
+class FakeAggregateArchivePolicyClient(FakeArchivePolicyClient):
+    def list_units(self) -> list[dict[str, Any]]:  # type: ignore[override]
+        device_units = super().list_units("DeviceIpint")
+        archive_units = super().list_units("MultimediaStorage")
+        return device_units + archive_units
+
+
 class FakeArchivePolicyConfigStub:
     def __init__(self) -> None:
         self.list_units_requests: list[FakeListUnitsRequest] = []
@@ -1863,6 +1870,19 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
         retention = {item["path"]: item for item in result["retention_properties"]}
         self.assertEqual(retention["retention.maxArchiveDays"]["value"], 30)
+
+    def test_archive_policy_get_prefers_archive_descriptor_from_aggregate_wrapper_lists(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeAggregateArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.archive_ap)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
 
     def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
