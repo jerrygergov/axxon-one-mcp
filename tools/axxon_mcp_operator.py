@@ -307,8 +307,11 @@ def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: b
 
 def _unit_matches_snapshot(unit: dict[str, Any], snapshot: dict[str, Any]) -> bool:
     expected = dict(snapshot.get("unit") or {})
-    expected_parent_uid = str(snapshot.get("parent_uid") or "")
-    actual_parent_uid = str(unit.get("parent_uid") or unit.get("parentUid") or "")
+    expected_parent_uid = str(snapshot.get("parent_uid") or "").strip()
+    actual_parent_uid = str(unit.get("parent_uid") or unit.get("parentUid") or "").strip()
+    if not actual_parent_uid:
+        target_uid = str(unit.get("uid") or snapshot.get("target_uid") or expected.get("uid") or "")
+        actual_parent_uid = _infer_parent_uid(target_uid, expected_parent_uid)
     if expected_parent_uid and actual_parent_uid != expected_parent_uid:
         return False
     return (

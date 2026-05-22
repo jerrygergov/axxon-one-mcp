@@ -96,6 +96,16 @@ class FailDetectorSnapshotRestoreClient(FakeMutationClient):
         return super().change_config(payload)
 
 
+class OmitParentReadUnitClient(FakeMutationClient):
+    """Simulates read_unit responses that omit parent metadata."""
+
+    def read_unit(self, uid: str) -> dict:
+        self.reads.append(uid)
+        if uid not in self.units:
+            return {"units": []}
+        return {"units": [{"uid": uid, **self.units[uid]}]}
+
+
 def _test_find_property(properties: list[dict], prop_id: str) -> dict:
     for prop in properties:
         if prop.get("id") == prop_id or prop.get("name") == prop_id or prop.get("key") == prop_id:
@@ -812,6 +822,28 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(rolled["status"], "error")
         self.assertEqual(rolled["restored_uids"], [])
         self.assertEqual(rolled["failed"], [{"uid": target_uid, "reason": ["restore failed"]}])
+
+    def test_update_detector_parameters_verify_after_rollback_infers_omitted_parent(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = OmitParentReadUnitClient()
+        target_uid = "hosts/Server/AVDetector.42"
+        original_properties = [{"id": "threshold", "value_int32": 5}]
+        requested_properties = [{"id": "threshold", "value_int32": 8}]
+        client.units[target_uid] = {"type": "AVDetector", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan("update_detector_parameters", {"uid": target_uid, "properties": requested_properties})
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["snapshots"][0]["parent_uid"], "hosts/Server")
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+
+        verified = reg.verify(plan["plan_id"])
+
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["snapshot_restored"])
 
     def test_update_detector_parameters_verify_after_rollback_requires_snapshot(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
