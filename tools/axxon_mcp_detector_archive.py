@@ -1061,11 +1061,13 @@ def _archive_policy_inventory_uid_candidates(client: Any, target: str) -> list[s
         inventory = load_inventory()
     except Exception:
         return []
+    target_uid = _archive_policy_unit_uid_from_access_point(target) or target
     candidates: list[str] = []
     for text in _flatten_strings(inventory):
-        if target != text and target not in text and text not in target:
+        text_uid = _archive_policy_unit_uid_from_access_point(text) or text
+        if target != text and target_uid != text_uid:
             continue
-        candidates.append(_archive_policy_unit_uid_from_access_point(text))
+        candidates.append(text_uid)
     return candidates
 
 

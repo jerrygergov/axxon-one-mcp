@@ -847,6 +847,38 @@ class FakeTypelessAggregateArchivePolicyClient(FakeAggregateArchivePolicyClient)
         return [{key: value for key, value in unit.items() if key != "type"} for unit in units]
 
 
+class FakePrefixOverlapArchivePolicyClient(FakeArchivePolicyClient):
+    def load_inventory(self) -> dict[str, Any]:
+        return {
+            "items": [
+                {"access_point": "hosts/Server/DeviceIpint.11/SourceEndpoint.video:0:0"},
+                {"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"},
+            ]
+        }
+
+    def list_units(self, unit_type: str) -> list[dict[str, Any]]:  # type: ignore[override]
+        if unit_type != "DeviceIpint":
+            return []
+        return [
+            {
+                "uid": "hosts/Server/DeviceIpint.11",
+                "type": "DeviceIpint",
+                "access_points": ["hosts/Server/DeviceIpint.11/SourceEndpoint.video:0:0"],
+                "properties": [
+                    {"id": "retention", "properties": [{"id": "maxArchiveDays", "value_int32": 11}]},
+                ],
+            },
+            {
+                "uid": "hosts/Server/DeviceIpint.1",
+                "type": "DeviceIpint",
+                "access_points": ["hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"],
+                "properties": [
+                    {"id": "retention", "properties": [{"id": "maxArchiveDays", "value_int32": 1}]},
+                ],
+            },
+        ]
+
+
 class FakeArchivePolicyConfigStub:
     def __init__(self) -> None:
         self.list_units_requests: list[FakeListUnitsRequest] = []
@@ -1942,6 +1974,21 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
+
+    def test_archive_policy_get_prefers_exact_uid_over_prefix_overlapping_inventory(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakePrefixOverlapArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get("hosts/Server/DeviceIpint.1")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["descriptor"]["uid"], "hosts/Server/DeviceIpint.1")
+        retention = {item["path"]: item for item in result["retention_properties"]}
+        self.assertEqual(retention["retention.maxArchiveDays"]["value"], 1)
 
     def test_archive_policy_get_returns_redacted_setup_error(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
