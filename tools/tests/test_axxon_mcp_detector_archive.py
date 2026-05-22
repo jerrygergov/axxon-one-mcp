@@ -25,6 +25,16 @@ def fake_secret_error(prefix: str, marker: str) -> str:
     )
 
 
+def fake_quoted_secret_error(prefix: str) -> str:
+    return (
+        prefix
+        + " {'pass"
+        + "word': 'root', \"tok"
+        + "en\": \"abc\", 'sec"
+        + "ret': 'hidden'}"
+    )
+
+
 class FakeConfig:
     host = "example.local"
     grpc_port = 20109
@@ -1942,6 +1952,42 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertNotIn("POLICY_" + "TOKEN", result["message"])
         self.assertNotIn("pass" + "word=root", result["message"])
         self.assertNotIn("sec" + "ret=policy", result["message"])
+
+    def test_archive_policy_get_redacts_quoted_secret_setup_error(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+
+        def config_factory() -> FakeConfig:
+            raise RuntimeError(fake_quoted_secret_error("setup failed"))
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeClient(config),
+            config_factory=config_factory,
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.camera_uid)
+
+        self.assertEqual(result["status"], "error")
+        self.assertNotIn("root", result["message"])
+        self.assertNotIn("abc", result["message"])
+        self.assertNotIn("hidden", result["message"])
+
+    def test_archive_policy_get_rejects_empty_and_broad_targets_without_inventory_guessing(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeRealShapedArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        for target in ("", "Server", "hosts/Server"):
+            result = archive.archive_policy_get(target)
+            self.assertEqual(result["status"], "fixture-needed")
+            self.assertEqual(result["tool"], "archive_policy_get")
+            self.assertEqual(result["target"], target)
+            self.assertIn("camera_or_archive", result["message"])
+
+        self.assertEqual(fake.authenticate_calls, 0)
+        self.assertEqual(fake.config_stub.list_units_requests, [])
 
     def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")

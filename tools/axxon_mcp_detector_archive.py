@@ -136,7 +136,8 @@ def redact_sensitive_properties(value: Any) -> Any:
 
 _BEARER_TEXT_RE = re.compile(r"\bBearer\s+[^,\s;]+", re.IGNORECASE)
 _SECRET_ASSIGNMENT_TEXT_RE = re.compile(
-    r"\b(password|passwd|pwd|token|secret|api[_-]?token|bearer_token)\b\s*[:=]\s*[^,\s;]+",
+    r"(?P<key_quote>['\"]?)(?P<key>\b(password|passwd|pwd|token|secret|api[_-]?token|bearer_token)\b)"
+    r"(?P=key_quote)(?P<sep>\s*[:=]\s*)(?P<value_quote>['\"]?)[^,'\"\s;}\]]+(?P=value_quote)?",
     re.IGNORECASE,
 )
 
@@ -144,7 +145,11 @@ _SECRET_ASSIGNMENT_TEXT_RE = re.compile(
 def _redact_sensitive_text(value: Any, limit: int = 240) -> str:
     text = str(value)
     text = _BEARER_TEXT_RE.sub("Bearer <redacted>", text)
-    text = _SECRET_ASSIGNMENT_TEXT_RE.sub(lambda match: f"{match.group(1)}=<redacted>", text)
+    text = _SECRET_ASSIGNMENT_TEXT_RE.sub(
+        lambda match: f"{match.group('key_quote')}{match.group('key')}{match.group('key_quote')}"
+        f"{match.group('sep')}<redacted>",
+        text,
+    )
     return text[:limit]
 
 
@@ -1014,6 +1019,14 @@ def _archive_policy_unit_uid_from_access_point(access_point: str) -> str:
     return ""
 
 
+def _valid_archive_policy_target(target: str) -> bool:
+    value = str(target or "").strip()
+    if not value:
+        return False
+    unit_uid = _archive_policy_unit_uid_from_access_point(value) or value
+    return _unit_type_from_uid(unit_uid) in ARCHIVE_POLICY_UNIT_TYPES
+
+
 def _unique_nonempty(values: list[str]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
@@ -1586,6 +1599,11 @@ class AxxonMcpDetectorArchive:
         }
 
     def archive_policy_get(self, camera_or_archive: str) -> dict[str, Any]:
+        if not _valid_archive_policy_target(camera_or_archive):
+            return _fixture_needed_archive_policy(
+                camera_or_archive,
+                "archive_policy_get requires params.camera_or_archive to be a camera/archive UID or access point, not a broad host/server label.",
+            )
         try:
             client = self.ensure_client()
             descriptor, source = _archive_policy_descriptor(client, camera_or_archive)
