@@ -1080,6 +1080,44 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(guessed_nested["status"], "gap")
         self.assertIn("retention.undocumented_nested_policy", guessed_nested["message"])
 
+    def test_archive_policy_update_rejects_parameter_tree_wrapper_guesses(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeMutationClient(), host="hosts/Server")
+
+        guessed_nested = registry.plan(
+            "archive_policy_update",
+            {
+                "uid": "hosts/Server/MultimediaStorage.1",
+                "descriptor": {
+                    "parameter_tree": {
+                        "properties": [
+                            {
+                                "id": "retention",
+                                "parameter_tree": {
+                                    "properties": [
+                                        {"id": "day_depth"},
+                                    ]
+                                },
+                            }
+                        ]
+                    }
+                },
+                "properties": [
+                    {
+                        "id": "retention",
+                        "parameter_tree": {
+                            "properties": [
+                                {"id": "undocumented_nested_policy", "value_bool": True},
+                            ]
+                        },
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(guessed_nested["status"], "gap")
+        self.assertIn("retention.undocumented_nested_policy", guessed_nested["message"])
+
     def test_archive_policy_update_captures_snapshot_verifies_and_rolls_back(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         client = FakeMutationClient()

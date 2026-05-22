@@ -342,7 +342,7 @@ def _property_child_nodes(prop: dict[str, Any]) -> list[dict[str, Any]]:
     if raw is None:
         raw = prop.get("parameters")
     if isinstance(raw, dict):
-        raw = [raw]
+        raw = raw.get("properties") if isinstance(raw.get("properties"), list) else [raw]
     if not isinstance(raw, list):
         return []
     return [child for child in raw if isinstance(child, dict)]
@@ -354,7 +354,7 @@ def _descriptor_property_ids(descriptor: Any) -> set[str]:
     else:
         raw = descriptor
     if isinstance(raw, dict):
-        raw = [raw]
+        raw = raw.get("properties") if isinstance(raw.get("properties"), list) else [raw]
     if not isinstance(raw, list):
         return set()
     return set(_property_paths([prop for prop in raw if isinstance(prop, dict)]))
