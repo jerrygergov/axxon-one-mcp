@@ -15,8 +15,10 @@ class FakeMutationClient:
 
     def __init__(self) -> None:
         self.calls: list[dict] = []
+        self.reads: list[str] = []
         self._next_uid = 0
         self.units: dict[str, dict] = {}
+        self.parents: dict[str, str] = {}
 
     def _alloc_uid(self, unit_type: str) -> str:
         self._next_uid += 1
@@ -27,28 +29,41 @@ class FakeMutationClient:
         added_uids: list[str] = []
         failed: list[dict] = []
         for parent in payload.get("added", []):
+            parent_uid = parent["uid"]
             for unit in parent.get("units", []):
-                uid = self._alloc_uid(unit["type"])
-                self.units[uid] = {"type": unit["type"], "properties": unit.get("properties", [])}
+                uid = unit.get("uid") or self._alloc_uid(unit["type"])
+                self.units[uid] = {
+                    "type": unit["type"],
+                    "properties": unit.get("properties", []),
+                    "units": unit.get("units", []),
+                }
+                self.parents[uid] = parent_uid
                 added_uids.append(uid)
         for unit in payload.get("changed", []):
             uid = unit["uid"]
             if uid not in self.units:
                 failed.append({"uid": uid, "reason": "missing"})
                 continue
-            self.units[uid]["properties"] = unit.get("properties", [])
+            if "type" in unit:
+                self.units[uid]["type"] = unit["type"]
+            if "properties" in unit:
+                self.units[uid]["properties"] = unit.get("properties", [])
+            if "units" in unit:
+                self.units[uid]["units"] = unit.get("units", [])
         for unit in payload.get("removed", []):
             uid = unit["uid"]
             if uid not in self.units:
                 failed.append({"uid": uid, "reason": "missing"})
                 continue
             del self.units[uid]
+            self.parents.pop(uid, None)
         return {"added": added_uids, "failed": failed, "failed_reason": []}
 
     def read_unit(self, uid: str) -> dict:
+        self.reads.append(uid)
         if uid not in self.units:
             return {"units": []}
-        return {"units": [{"uid": uid, **self.units[uid]}]}
+        return {"units": [{"uid": uid, **self.units[uid], "parent_uid": self.parents.get(uid)}]}
 
 
 def _test_find_property(properties: list[dict], prop_id: str) -> dict:
@@ -688,6 +703,156 @@ class OperatorPlanTests(unittest.TestCase):
         applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
         self.assertEqual(applied["status"], "applied")
         self.assertEqual(client.units["hosts/Server/DeviceIpint.99"]["properties"][0]["value_string"], "renamed")
+
+    def test_update_detector_parameters_captures_snapshot_verifies_and_rolls_back(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        target_uid = "hosts/Server/AVDetector.42"
+        original_properties = [
+            {"id": "display_name", "value_string": "motion"},
+            {"id": "threshold", "value_int32": 5},
+        ]
+        requested_properties = [
+            {"id": "threshold", "value_int32": 8},
+            {"id": "sensitivity", "value_double": 0.75},
+        ]
+        client.units[target_uid] = {"type": "AVDetector", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan(
+            "update_detector_parameters",
+            {"uid": target_uid, "properties": requested_properties},
+        )
+
+        self.assertEqual(plan["workflow"], "update_detector_parameters")
+        self.assertTrue(plan["persistent"])
+        self.assertEqual(plan["risk"], "mutation")
+        self.assertEqual(plan["confirmation_token"], "CONFIRM-update_detector_parameters")
+        self.assertEqual(plan["rollback_confirmation_token"], "CONFIRM-update_detector_parameters-rollback")
+        self.assertEqual(plan["rollback"]["strategy"], "restore_detector_snapshot")
+        self.assertEqual(plan["snapshot_capture"], {
+            "source": "read_unit",
+            "snapshot_key": f"unit:{target_uid}",
+            "target_uid": target_uid,
+            "target_role": "detector",
+        })
+        self.assertEqual(plan["diff"]["changed"][0]["target_uid"], target_uid)
+        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["threshold", "sensitivity"])
+        self.assertEqual(plan["diff"]["changed"][0]["before"], "<captured during apply>")
+        self.assertEqual(plan["diff"]["changed"][0]["after"], requested_properties)
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.reads, [])
+
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["snapshots"][0]["target_uid"], target_uid)
+        self.assertEqual(applied["snapshots"][0]["unit"]["properties"], original_properties)
+        self.assertEqual(client.reads, [target_uid])
+        self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": requested_properties}]})
+        self.assertEqual(client.units[target_uid]["properties"], requested_properties)
+
+        verified = reg.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["target"]["still_present"])
+        self.assertEqual(verified["property_checks"], {"threshold": True, "sensitivity": True})
+
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(rolled["restored_uids"], [target_uid])
+        self.assertEqual(client.units[target_uid]["properties"], original_properties)
+
+    def test_update_detector_visual_element_captures_snapshot_verifies_and_rolls_back(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        target_uid = "hosts/Server/AVDetector.42/VisualElement.1"
+        original_properties = [
+            {"id": "display_name", "value_string": "Zone A"},
+            {"id": "color", "value_string": "#ff0000"},
+        ]
+        requested_properties = [
+            {"id": "color", "value_string": "#00ff00"},
+            {"id": "enabled", "value_bool": True},
+        ]
+        client.units[target_uid] = {"type": "VisualElement", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server/AVDetector.42"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan(
+            "update_detector_visual_element",
+            {"visual_element_uid": target_uid, "properties": requested_properties},
+        )
+
+        self.assertEqual(plan["workflow"], "update_detector_visual_element")
+        self.assertEqual(plan["steps"][0]["operation"], "change_detector_snapshot_unit")
+        self.assertEqual(plan["snapshot_capture"]["target_role"], "visual_element")
+        self.assertEqual(plan["diff"]["changed"][0]["target_uid"], target_uid)
+        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["color", "enabled"])
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.reads, [])
+
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["snapshots"][0]["unit"]["properties"], original_properties)
+        verified = reg.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["target"]["still_present"])
+        self.assertEqual(verified["property_checks"], {"color": True, "enabled": True})
+
+        client.units[target_uid]["properties"] = [{"id": "color", "value_string": "#000000"}]
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(client.units[target_uid]["properties"], original_properties)
+
+    def test_delete_detector_captures_snapshot_deletes_verifies_and_readds_on_rollback(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        target_uid = "hosts/Server/AppDataDetector.77"
+        original_unit = {
+            "type": "AppDataDetector",
+            "properties": [
+                {"id": "display_name", "value_string": "queue analytics"},
+                {"id": "zone", "value_string": "entry"},
+            ],
+            "units": [],
+        }
+        client.units[target_uid] = dict(original_unit)
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan("delete_detector", {"uid": target_uid})
+
+        self.assertEqual(plan["workflow"], "delete_detector")
+        self.assertEqual(plan["steps"][0], {
+            "operation": "remove_detector_snapshot_unit",
+            "target_uid": target_uid,
+            "payload": {"removed": [{"uid": target_uid}]},
+        })
+        self.assertEqual(plan["diff"], {
+            "removed": [{
+                "target_uid": target_uid,
+                "delete": True,
+                "before": "<captured during apply>",
+            }]
+        })
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.reads, [])
+
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["snapshots"][0]["parent_uid"], "hosts/Server")
+        self.assertNotIn(target_uid, client.units)
+
+        verified = reg.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertFalse(verified["target"]["still_present"])
+
+        rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(rolled["restored_uids"], [target_uid])
+        self.assertIn(target_uid, client.units)
+        self.assertEqual(client.parents[target_uid], "hosts/Server")
+        self.assertEqual(client.units[target_uid], original_unit)
 
     def test_create_layout_persistent(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")

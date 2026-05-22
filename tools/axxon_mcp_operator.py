@@ -264,6 +264,60 @@ def _detector_checks_for_plan(client: Any, plan: dict[str, Any], created_uids: l
     return checks
 
 
+def _infer_parent_uid(uid: str, fallback: str) -> str:
+    if "/" in uid:
+        return uid.rsplit("/", 1)[0]
+    return fallback
+
+
+def _snapshot_unit_from_read(payload: dict[str, Any], target_uid: str, fallback_parent_uid: str) -> dict[str, Any] | None:
+    units = payload.get("units") or []
+    if not units:
+        return None
+    raw_unit = dict(units[0])
+    unit = {
+        "uid": target_uid,
+        "type": raw_unit.get("type", ""),
+        "properties": list(raw_unit.get("properties") or []),
+        "units": list(raw_unit.get("units") or []),
+    }
+    parent_uid = str(raw_unit.get("parent_uid") or raw_unit.get("parentUid") or "").strip()
+    if not parent_uid:
+        parent_uid = _infer_parent_uid(target_uid, fallback_parent_uid)
+    return {
+        "target_uid": target_uid,
+        "parent_uid": parent_uid,
+        "unit": unit,
+    }
+
+
+def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: bool) -> dict[str, Any]:
+    unit = dict(snapshot["unit"])
+    uid = str(snapshot["target_uid"])
+    restore_unit = {
+        "uid": uid,
+        "type": unit.get("type", ""),
+        "properties": list(unit.get("properties") or []),
+        "units": list(unit.get("units") or []),
+    }
+    if target_present:
+        return {"changed": [restore_unit]}
+    return {"added": [{"uid": snapshot.get("parent_uid") or _infer_parent_uid(uid, ""), "units": [restore_unit]}]}
+
+
+def _property_matches(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
+    return all(actual.get(key) == value for key, value in expected.items())
+
+
+def _requested_property_checks(actual_properties: list[dict[str, Any]], requested_properties: list[dict[str, Any]]) -> dict[str, bool]:
+    checks: dict[str, bool] = {}
+    for requested in requested_properties:
+        prop_id = _property_node_id(requested)
+        actual = _find_property(actual_properties, prop_id)
+        checks[prop_id] = bool(actual and _property_matches(actual, requested))
+    return checks
+
+
 def _av_detector_payload(
     host_uid: str,
     display_name: str,
@@ -897,6 +951,131 @@ def _build_set_unit_properties_plan(host_uid: str, params: dict[str, Any]) -> di
     }
 
 
+def _property_paths(properties: list[dict[str, Any]]) -> list[str]:
+    return [_property_node_id(prop) for prop in properties]
+
+
+def _build_detector_snapshot_change_plan(
+    workflow: str,
+    uid: str,
+    properties: list[dict[str, Any]],
+    *,
+    target_role: str,
+) -> dict[str, Any]:
+    if not uid or not properties:
+        return {
+            "status": "gap",
+            "workflow": workflow,
+            "message": f"{workflow} requires params.uid and a non-empty params.properties list",
+        }
+    payload = {"changed": [{"uid": uid, "properties": properties}]}
+    return {
+        "workflow": workflow,
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"update {target_role} properties on {uid}",
+        "steps": [{
+            "operation": "change_detector_snapshot_unit",
+            "unit_type": "any",
+            "payload": payload,
+            "target_uid": uid,
+            "target_role": target_role,
+        }],
+        "rollback": {
+            "strategy": "restore_detector_snapshot",
+            "description": "Pre-apply unit snapshot is captured via read_unit and restored during rollback.",
+        },
+        "snapshot_capture": {
+            "source": "read_unit",
+            "snapshot_key": f"unit:{uid}",
+            "target_uid": uid,
+            "target_role": target_role,
+        },
+        "expected": {"uid": uid, "property_count": len(properties), "target_role": target_role},
+        "diff": {
+            "changed": [{
+                "target_uid": uid,
+                "target_role": target_role,
+                "property_paths": _property_paths(properties),
+                "before": "<captured during apply>",
+                "after": properties,
+            }]
+        },
+        "confirmation_token": f"CONFIRM-{workflow}",
+        "rollback_confirmation_token": f"CONFIRM-{workflow}-rollback",
+    }
+
+
+def _build_update_detector_parameters_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Reversible detector parameter update; captures the target snapshot during apply."""
+    uid = str(params.get("uid") or params.get("detector_uid") or "").strip()
+    properties = list(params.get("properties") or [])
+    return _build_detector_snapshot_change_plan(
+        "update_detector_parameters",
+        uid,
+        properties,
+        target_role="detector",
+    )
+
+
+def _build_update_detector_visual_element_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Reversible detector visual-element update; captures the element snapshot during apply."""
+    uid = str(params.get("visual_element_uid") or params.get("uid") or "").strip()
+    properties = list(params.get("properties") or [])
+    return _build_detector_snapshot_change_plan(
+        "update_detector_visual_element",
+        uid,
+        properties,
+        target_role="visual_element",
+    )
+
+
+def _build_delete_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Reversible detector delete; captures the target unit during apply and re-adds on rollback."""
+    uid = str(params.get("uid") or params.get("detector_uid") or "").strip()
+    if not uid:
+        return {
+            "status": "gap",
+            "workflow": "delete_detector",
+            "message": "delete_detector requires params.uid",
+        }
+    parent_uid = str(params.get("parent_uid") or "").strip()
+    snapshot_capture: dict[str, Any] = {
+        "source": "read_unit",
+        "snapshot_key": f"unit:{uid}",
+        "target_uid": uid,
+        "target_role": "detector",
+    }
+    if parent_uid:
+        snapshot_capture["parent_uid"] = parent_uid
+    return {
+        "workflow": "delete_detector",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"delete detector {uid}",
+        "steps": [{
+            "operation": "remove_detector_snapshot_unit",
+            "target_uid": uid,
+            "payload": {"removed": [{"uid": uid}]},
+        }],
+        "rollback": {
+            "strategy": "restore_detector_snapshot",
+            "description": "Pre-apply detector snapshot is captured via read_unit and re-added during rollback.",
+        },
+        "snapshot_capture": snapshot_capture,
+        "expected": {"uid": uid, "deleted": True},
+        "diff": {
+            "removed": [{
+                "target_uid": uid,
+                "delete": True,
+                "before": "<captured during apply>",
+            }]
+        },
+        "confirmation_token": "CONFIRM-delete_detector",
+        "rollback_confirmation_token": "CONFIRM-delete_detector-rollback",
+    }
+
+
 def _build_temp_wall_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
     """Ephemeral videowall registration with explicit unregister rollback."""
     name = str(params.get("name") or f"codex-wall-{uuid.uuid4().hex[:8]}")
@@ -1175,6 +1354,9 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "update_layout": _build_update_layout_plan,
     "delete_layout": _build_delete_layout_plan,
     "set_unit_properties": _build_set_unit_properties_plan,
+    "update_detector_parameters": _build_update_detector_parameters_plan,
+    "update_detector_visual_element": _build_update_detector_visual_element_plan,
+    "delete_detector": _build_delete_detector_plan,
     "temp_wall": _build_temp_wall_plan,
     "videowall_register": _build_videowall_register_plan,
     "videowall_change": _build_videowall_change_plan,
@@ -1420,6 +1602,7 @@ class OperatorRegistry:
         step_results: list[list[str]] = []  # uids created by each step (for inter-step dependency resolution)
         wall_cookies: list[str] = []
         wall_seq_numbers: list[int] = []
+        snapshots: list[dict[str, Any]] = []
 
         def store_apply_state(status: str) -> None:
             self._state[plan_id] = {
@@ -1428,7 +1611,16 @@ class OperatorRegistry:
                 "created_kinds": list(created_kinds),
                 "wall_cookies": list(wall_cookies),
                 "wall_seq_numbers": list(wall_seq_numbers),
+                "snapshots": list(snapshots),
             }
+
+        def capture_snapshot(target_uid: str) -> dict[str, Any] | None:
+            capture = plan.get("snapshot_capture") or {}
+            parent_uid = str(capture.get("parent_uid") or "").strip() or _infer_parent_uid(target_uid, self.host)
+            snapshot = _snapshot_unit_from_read(client.read_unit(target_uid), target_uid, parent_uid)
+            if snapshot is not None:
+                snapshots.append(snapshot)
+            return snapshot
 
         for step in plan.get("steps", []):
             op = step.get("operation")
@@ -1515,6 +1707,40 @@ class OperatorRegistry:
                     }
                 step_results.append([step.get("target_uid", "")])
                 # No new UID created; do not record for rollback.
+            elif op == "change_detector_snapshot_unit":
+                target_uid = str(step.get("target_uid") or "")
+                if not capture_snapshot(target_uid):
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="snapshot_missing")
+                    return {"status": "error", "message": "target unit snapshot was not found", "plan_id": plan_id}
+                response = client.change_config(step["payload"])
+                if response.get("failed"):
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="change_config_failed")
+                    return {
+                        "status": "error",
+                        "message": "ChangeConfig (detector update) reported failures during apply",
+                        "plan_id": plan_id,
+                        "failed": response.get("failed", []),
+                    }
+                step_results.append([target_uid])
+            elif op == "remove_detector_snapshot_unit":
+                target_uid = str(step.get("target_uid") or "")
+                if not capture_snapshot(target_uid):
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="snapshot_missing")
+                    return {"status": "error", "message": "target unit snapshot was not found", "plan_id": plan_id}
+                response = client.change_config(step["payload"])
+                if response.get("failed"):
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="change_config_failed")
+                    return {
+                        "status": "error",
+                        "message": "ChangeConfig (detector delete) reported failures during apply",
+                        "plan_id": plan_id,
+                        "failed": response.get("failed", []),
+                    }
+                step_results.append([target_uid])
             elif op == "add_layout":
                 response = client.change_layouts(step["payload"])
                 if response.get("failed"):
@@ -1636,6 +1862,8 @@ class OperatorRegistry:
         result = {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
         if wall_seq_numbers:
             result["wall_seq_numbers"] = list(wall_seq_numbers)
+        if snapshots:
+            result["snapshots"] = list(snapshots)
         return result
 
     def verify(self, plan_id: str) -> dict[str, Any]:
@@ -1678,6 +1906,29 @@ class OperatorRegistry:
             "created_uids": list(created_uids),
             "still_present": still_present,
         }
+        workflow = plan.get("workflow")
+        if workflow in {"update_detector_parameters", "update_detector_visual_element", "delete_detector"}:
+            target_uid = str((plan.get("expected") or {}).get("uid") or "")
+            payload = client.read_unit(target_uid)
+            units = payload.get("units") or []
+            target_present = bool(units)
+            result["target"] = {"uid": target_uid, "still_present": target_present}
+            if workflow == "delete_detector":
+                if state_status == "applied":
+                    result["status"] = "verified" if not target_present else "error"
+                return result
+            requested_properties = []
+            for step in plan.get("steps") or []:
+                if step.get("operation") == "change_detector_snapshot_unit":
+                    changed = (step.get("payload") or {}).get("changed") or []
+                    requested_properties = list((changed[0] if changed else {}).get("properties") or [])
+                    break
+            actual_properties = list((units[0] if units else {}).get("properties") or [])
+            property_checks = _requested_property_checks(actual_properties, requested_properties)
+            result["property_checks"] = property_checks
+            if state_status == "applied":
+                result["status"] = "verified" if target_present and all(property_checks.values()) else "error"
+            return result
         detector_checks = None
         if state_status != "rolled_back":
             detector_checks = _detector_checks_for_plan(client, plan, list(created_uids), list(created_kinds))
@@ -1710,6 +1961,31 @@ class OperatorRegistry:
         state = self._state.get(plan_id, {})
         created_uids = list(state.get("created_uids", []))
         created_kinds = list(state.get("created_kinds", ["unit"] * len(created_uids)))
+        snapshots = list(state.get("snapshots", []))
+        if (plan.get("rollback") or {}).get("strategy") == "restore_detector_snapshot":
+            restored: list[str] = []
+            failed: list[dict[str, Any]] = []
+            for snapshot in reversed(snapshots):
+                target_uid = str(snapshot.get("target_uid") or "")
+                target_present = bool((client.read_unit(target_uid).get("units") or []))
+                response = client.change_config(_restore_payload_for_snapshot(snapshot, target_present=target_present))
+                if response.get("failed"):
+                    failed.append({"uid": target_uid, "reason": response.get("failed_reason", []) or response.get("failed", [])})
+                    continue
+                restored.append(target_uid)
+            self._state[plan_id] = {
+                "status": "rolled_back",
+                "created_uids": list(created_uids),
+                "created_kinds": list(created_kinds),
+                "snapshots": snapshots,
+            }
+            self._record("rollback", plan_id=plan_id, status="rolled_back", restored_count=len(restored))
+            return {
+                "status": "rolled_back",
+                "plan_id": plan_id,
+                "restored_uids": restored,
+                "failed": failed,
+            }
         wall_uids = [uid for uid, kind in zip(created_uids, created_kinds) if kind == "wall"]
         wall_cookie_by_uid = dict(zip(wall_uids, state.get("wall_cookies", [])))
         removed: list[str] = []
