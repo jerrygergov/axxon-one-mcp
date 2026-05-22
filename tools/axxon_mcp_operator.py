@@ -39,6 +39,7 @@ def _short_stamp() -> str:
 
 PNG_1X1_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
 PNG_1X1_SIZE = len(base64.b64decode(PNG_1X1_B64))
+ARCHIVE_MAINTENANCE_APPROVE_ENV = "AXXON_ARCHIVE_MAINTENANCE_APPROVE"
 
 
 def _normalize_map_marker(raw: dict[str, Any]) -> dict[str, Any]:
@@ -332,6 +333,43 @@ def _requested_property_checks(actual_properties: list[dict[str, Any]], requeste
         actual = _find_property(actual_properties, prop_id)
         checks[prop_id] = bool(actual and _property_matches(actual, requested))
     return checks
+
+
+def _descriptor_property_ids(descriptor: Any) -> set[str]:
+    if isinstance(descriptor, dict):
+        raw = descriptor.get("properties") or descriptor.get("parameter_tree") or descriptor.get("parameters") or []
+    else:
+        raw = descriptor
+    if isinstance(raw, dict):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return set()
+    return {_property_node_id(prop) for prop in raw if isinstance(prop, dict) and _property_node_id(prop)}
+
+
+def _noop_archive_volume_id(volume_id: str) -> bool:
+    return volume_id.startswith("codex-nonexistent-")
+
+
+def _safe_volume_ids(params: dict[str, Any]) -> set[str]:
+    raw = params.get("safe_volume_ids") or params.get("safe_volumes") or params.get("fixture_volume_ids") or []
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return set()
+    return {str(item) for item in raw}
+
+
+def _has_safe_volume_declaration(params: dict[str, Any], real_volume_ids: list[str]) -> bool:
+    safe_ids = _safe_volume_ids(params)
+    return (
+        bool(real_volume_ids)
+        and (
+            bool(params.get("safe_volume_declared"))
+            or bool(params.get("fixture_volume_declared"))
+            or all(volume_id in safe_ids for volume_id in real_volume_ids)
+        )
+    )
 
 
 def _av_detector_payload(
@@ -1092,6 +1130,130 @@ def _build_delete_detector_plan(host_uid: str, params: dict[str, Any]) -> dict[s
     }
 
 
+def _build_archive_policy_update_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Reversible archive policy update using only descriptor-declared property IDs."""
+    uid = str(params.get("uid") or params.get("archive_uid") or "").strip()
+    properties = list(params.get("properties") or [])
+    if not uid or not properties:
+        return {
+            "status": "gap",
+            "workflow": "archive_policy_update",
+            "message": "archive_policy_update requires params.uid and a non-empty params.properties list",
+        }
+    descriptor = params.get("descriptor") or params.get("archive_descriptor") or params.get("property_descriptor")
+    descriptor_ids = _descriptor_property_ids(descriptor)
+    if not descriptor_ids:
+        return {
+            "status": "gap",
+            "workflow": "archive_policy_update",
+            "message": "archive_policy_update requires descriptor-backed archive policy properties",
+        }
+    requested_ids = _property_paths(properties)
+    missing = [prop_id for prop_id in requested_ids if prop_id not in descriptor_ids]
+    if missing:
+        return {
+            "status": "gap",
+            "workflow": "archive_policy_update",
+            "message": f"archive_policy_update refuses non descriptor-backed properties: {', '.join(missing)}",
+        }
+    payload = {"changed": [{"uid": uid, "properties": properties}]}
+    return {
+        "workflow": "archive_policy_update",
+        "persistent": True,
+        "risk": "mutation",
+        "intent": f"update archive policy properties on {uid}",
+        "steps": [{
+            "operation": "change_archive_policy_snapshot_unit",
+            "unit_type": "MultimediaStorage",
+            "payload": payload,
+            "target_uid": uid,
+        }],
+        "rollback": {
+            "strategy": "restore_archive_policy_snapshot",
+            "description": "Pre-apply archive unit snapshot is captured via read_unit and restored during rollback.",
+        },
+        "snapshot_capture": {
+            "source": "read_unit",
+            "snapshot_key": f"unit:{uid}",
+            "target_uid": uid,
+            "target_role": "archive_policy",
+        },
+        "expected": {"uid": uid, "property_count": len(properties), "target_role": "archive_policy"},
+        "diff": {
+            "changed": [{
+                "target_uid": uid,
+                "target_role": "archive_policy",
+                "property_paths": requested_ids,
+                "before": "<captured during apply>",
+                "after": properties,
+                "descriptor_property_ids": sorted(descriptor_ids),
+            }]
+        },
+        "confirmation_token": "CONFIRM-archive_policy_update",
+        "rollback_confirmation_token": "CONFIRM-archive_policy_update-rollback",
+    }
+
+
+def _build_archive_maintenance_plan(workflow: str, params: dict[str, Any], *, operation: str) -> dict[str, Any]:
+    access_point = str(params.get("access_point") or "").strip()
+    volume_ids = [str(item).strip() for item in list(params.get("volume_ids") or []) if str(item).strip()]
+    if not access_point or not volume_ids:
+        return {
+            "status": "gap",
+            "workflow": workflow,
+            "message": f"{workflow} requires params.access_point and a non-empty params.volume_ids list",
+        }
+    real_volume_ids = [volume_id for volume_id in volume_ids if not _noop_archive_volume_id(volume_id)]
+    if real_volume_ids and not _has_safe_volume_declaration(params, real_volume_ids):
+        return {
+            "status": "gap",
+            "workflow": workflow,
+            "message": f"{workflow} refuses real archive volume ids without a fixture/safe-volume declaration",
+            "real_volume_ids": real_volume_ids,
+        }
+    step: dict[str, Any] = {
+        "operation": operation,
+        "access_point": access_point,
+        "volume_ids": volume_ids,
+    }
+    if operation == "archive_reindex":
+        step["full"] = bool(params.get("full", True))
+    rollback_strategy = "archive_cancel_reindex" if operation == "archive_reindex" else "noop"
+    return {
+        "workflow": workflow,
+        "persistent": True,
+        "risk": "archive_maintenance",
+        "intent": f"run archive maintenance {workflow} on {access_point}",
+        "archive_maintenance": True,
+        "maintenance_approval_env": ARCHIVE_MAINTENANCE_APPROVE_ENV,
+        "noop_volume_only": not real_volume_ids,
+        "steps": [step],
+        "rollback": {
+            "strategy": rollback_strategy,
+            "description": "Reindex rollback cancels the started reindex; other archive maintenance rollbacks are no-ops.",
+        },
+        "expected": {
+            "access_point": access_point,
+            "volume_ids": volume_ids,
+            "noop_volume_only": not real_volume_ids,
+        },
+        "confirmation_token": f"CONFIRM-{workflow}",
+        "rollback_confirmation_token": f"CONFIRM-{workflow}-rollback",
+    }
+
+
+def _build_archive_format_volume_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    return _build_archive_maintenance_plan("archive_format_volume", params, operation="archive_format_volume")
+
+
+def _build_archive_reindex_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    return _build_archive_maintenance_plan("archive_reindex", params, operation="archive_reindex")
+
+
+def _build_archive_cancel_reindex_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    return _build_archive_maintenance_plan("archive_cancel_reindex", params, operation="archive_cancel_reindex")
+
+
 def _build_temp_wall_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
     """Ephemeral videowall registration with explicit unregister rollback."""
     name = str(params.get("name") or f"codex-wall-{uuid.uuid4().hex[:8]}")
@@ -1373,6 +1535,10 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "update_detector_parameters": _build_update_detector_parameters_plan,
     "update_detector_visual_element": _build_update_detector_visual_element_plan,
     "delete_detector": _build_delete_detector_plan,
+    "archive_policy_update": _build_archive_policy_update_plan,
+    "archive_format_volume": _build_archive_format_volume_plan,
+    "archive_reindex": _build_archive_reindex_plan,
+    "archive_cancel_reindex": _build_archive_cancel_reindex_plan,
     "temp_wall": _build_temp_wall_plan,
     "videowall_register": _build_videowall_register_plan,
     "videowall_change": _build_videowall_change_plan,
@@ -1541,6 +1707,15 @@ class AxxonOperatorClient:
     def get_markers_via_api(self, map_id: str) -> dict[str, Any]:
         return self._client.get_markers(map_id)
 
+    def archive_format_volumes_via_api(self, access_point: str, volume_ids: list[str]) -> dict[str, Any]:
+        return self._client.archive_format_volumes(access_point, volume_ids)
+
+    def archive_reindex_via_api(self, access_point: str, volume_ids: list[str], *, full: bool = True) -> dict[str, Any]:
+        return self._client.archive_reindex(access_point, volume_ids, full=full)
+
+    def archive_cancel_reindex_via_api(self, access_point: str, volume_ids: list[str]) -> dict[str, Any]:
+        return self._client.archive_cancel_reindex(access_point, volume_ids)
+
     def http_post_bearer(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
         self._client.authenticate_http_grpc()
         return self._client.http_request("POST", path, body, bearer=True)
@@ -1610,6 +1785,13 @@ class OperatorRegistry:
             return {
                 "status": "rejected",
                 "message": "confirmation token does not match the plan",
+                "plan_id": plan_id,
+            }
+        if plan.get("archive_maintenance") and _os.environ.get(ARCHIVE_MAINTENANCE_APPROVE_ENV) != "1":
+            self._record("apply", plan_id=plan_id, status="rejected", reason="archive_maintenance_env_gate")
+            return {
+                "status": "rejected",
+                "message": f"archive maintenance requires {ARCHIVE_MAINTENANCE_APPROVE_ENV}=1 at apply time",
                 "plan_id": plan_id,
             }
         client = self.ensure_client()
@@ -1723,7 +1905,7 @@ class OperatorRegistry:
                     }
                 step_results.append([step.get("target_uid", "")])
                 # No new UID created; do not record for rollback.
-            elif op == "change_detector_snapshot_unit":
+            elif op in {"change_detector_snapshot_unit", "change_archive_policy_snapshot_unit"}:
                 target_uid = str(step.get("target_uid") or "")
                 if not capture_snapshot(target_uid):
                     store_apply_state("error")
@@ -1735,7 +1917,7 @@ class OperatorRegistry:
                     self._record("apply", plan_id=plan_id, status="error", reason="change_config_failed")
                     return {
                         "status": "error",
-                        "message": "ChangeConfig (detector update) reported failures during apply",
+                        "message": "ChangeConfig (snapshot update) reported failures during apply",
                         "plan_id": plan_id,
                         "failed": response.get("failed", []),
                     }
@@ -1873,6 +2055,31 @@ class OperatorRegistry:
                     return {"status": "error", "message": "LayoutManager.Update failed", "plan_id": plan_id}
                 layout_id = step.get("layout_id") or ""
                 step_results.append([layout_id] if layout_id else [])
+            elif op == "archive_format_volume":
+                response = client.archive_format_volumes_via_api(step["access_point"], step["volume_ids"])
+                if response.get("status") != 200:
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="archive_format_volume_failed")
+                    return {"status": "error", "message": "archive format volume failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "archive_reindex":
+                response = client.archive_reindex_via_api(
+                    step["access_point"],
+                    step["volume_ids"],
+                    full=bool(step.get("full", True)),
+                )
+                if response.get("status") != 200:
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="archive_reindex_failed")
+                    return {"status": "error", "message": "archive reindex failed", "plan_id": plan_id}
+                step_results.append([])
+            elif op == "archive_cancel_reindex":
+                response = client.archive_cancel_reindex_via_api(step["access_point"], step["volume_ids"])
+                if response.get("status") != 200:
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="archive_cancel_reindex_failed")
+                    return {"status": "error", "message": "archive cancel reindex failed", "plan_id": plan_id}
+                step_results.append([])
         store_apply_state("applied")
         self._record("apply", plan_id=plan_id, status="applied", created_count=len(created_uids))
         result = {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
@@ -1923,7 +2130,7 @@ class OperatorRegistry:
             "still_present": still_present,
         }
         workflow = plan.get("workflow")
-        if workflow in {"update_detector_parameters", "update_detector_visual_element", "delete_detector"}:
+        if workflow in {"update_detector_parameters", "update_detector_visual_element", "delete_detector", "archive_policy_update"}:
             target_uid = str((plan.get("expected") or {}).get("uid") or "")
             payload = client.read_unit(target_uid)
             units = payload.get("units") or []
@@ -1944,7 +2151,7 @@ class OperatorRegistry:
                 return result
             requested_properties = []
             for step in plan.get("steps") or []:
-                if step.get("operation") == "change_detector_snapshot_unit":
+                if step.get("operation") in {"change_detector_snapshot_unit", "change_archive_policy_snapshot_unit"}:
                     changed = (step.get("payload") or {}).get("changed") or []
                     requested_properties = list((changed[0] if changed else {}).get("properties") or [])
                     break
@@ -1987,7 +2194,8 @@ class OperatorRegistry:
         created_uids = list(state.get("created_uids", []))
         created_kinds = list(state.get("created_kinds", ["unit"] * len(created_uids)))
         snapshots = list(state.get("snapshots", []))
-        if (plan.get("rollback") or {}).get("strategy") == "restore_detector_snapshot":
+        rollback_strategy = (plan.get("rollback") or {}).get("strategy")
+        if rollback_strategy in {"restore_detector_snapshot", "restore_archive_policy_snapshot"}:
             restored: list[str] = []
             failed: list[dict[str, Any]] = []
             for snapshot in reversed(snapshots):
@@ -2012,6 +2220,33 @@ class OperatorRegistry:
                 "status": rollback_status,
                 "plan_id": plan_id,
                 "restored_uids": restored,
+                "failed": failed,
+            }
+        if rollback_strategy == "archive_cancel_reindex":
+            failed: list[dict[str, Any]] = []
+            cancelled: list[str] = []
+            if state.get("status") == "applied":
+                for step in plan.get("steps") or []:
+                    if step.get("operation") != "archive_reindex":
+                        continue
+                    response = client.archive_cancel_reindex_via_api(step["access_point"], step["volume_ids"])
+                    if response.get("status") != 200:
+                        failed.append({"access_point": step["access_point"], "volume_ids": step["volume_ids"]})
+                        continue
+                    cancelled.extend(list(step["volume_ids"]))
+            rollback_status = "error" if failed else "rolled_back"
+            self._state[plan_id] = {
+                "status": rollback_status,
+                "created_uids": list(created_uids),
+                "created_kinds": list(created_kinds),
+                "cancelled_volume_ids": list(cancelled),
+                "failed": list(failed),
+            }
+            self._record("rollback", plan_id=plan_id, status=rollback_status, cancelled_count=len(cancelled), failed_count=len(failed))
+            return {
+                "status": rollback_status,
+                "plan_id": plan_id,
+                "cancelled_volume_ids": cancelled,
                 "failed": failed,
             }
         wall_uids = [uid for uid, kind in zip(created_uids, created_kinds) if kind == "wall"]

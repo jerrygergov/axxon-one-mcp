@@ -224,6 +224,26 @@ class FakeLayoutClient(FakeMutationClient):
         return {"items": []}
 
 
+class FakeArchiveMaintenanceClient(FakeMutationClient):
+    """Records archive maintenance calls."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.archive_calls: list[tuple[str, str, list[str], dict]] = []
+
+    def archive_format_volumes_via_api(self, access_point: str, volume_ids: list[str]) -> dict:
+        self.archive_calls.append(("format", access_point, list(volume_ids), {}))
+        return {"status": 200, "body": {"accepted": True}}
+
+    def archive_reindex_via_api(self, access_point: str, volume_ids: list[str], *, full: bool = True) -> dict:
+        self.archive_calls.append(("reindex", access_point, list(volume_ids), {"full": full}))
+        return {"status": 200, "body": {"started": True}}
+
+    def archive_cancel_reindex_via_api(self, access_point: str, volume_ids: list[str]) -> dict:
+        self.archive_calls.append(("cancel_reindex", access_point, list(volume_ids), {}))
+        return {"status": 200, "body": {"cancelled": True}}
+
+
 class OperatorPlanTests(unittest.TestCase):
     def test_plan_temp_camera_returns_typed_plan_without_server_call(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
@@ -1005,6 +1025,191 @@ class OperatorPlanTests(unittest.TestCase):
 
         self.assertEqual(verified["status"], "error")
         self.assertEqual(verified["target"], {"uid": target_uid, "still_present": False})
+
+    def test_archive_policy_update_requires_descriptor_backed_properties(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeMutationClient(), host="hosts/Server")
+
+        missing_descriptor = registry.plan(
+            "archive_policy_update",
+            {"uid": "hosts/Server/MultimediaStorage.1", "properties": [{"id": "day_depth", "value_int32": 7}]},
+        )
+        self.assertEqual(missing_descriptor["status"], "gap")
+        self.assertIn("descriptor", missing_descriptor["message"])
+
+        guessed_field = registry.plan(
+            "archive_policy_update",
+            {
+                "uid": "hosts/Server/MultimediaStorage.1",
+                "descriptor": {"properties": [{"id": "day_depth"}]},
+                "properties": [{"id": "undocumented_policy", "value_bool": True}],
+            },
+        )
+        self.assertEqual(guessed_field["status"], "gap")
+        self.assertIn("descriptor-backed", guessed_field["message"])
+
+    def test_archive_policy_update_captures_snapshot_verifies_and_rolls_back(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        target_uid = "hosts/Server/MultimediaStorage.9"
+        original_properties = [
+            {"id": "display_name", "value_string": "Main archive"},
+            {"id": "day_depth", "value_int32": 3},
+            {"id": "storage_type", "value_string": "object"},
+        ]
+        requested_properties = [{"id": "day_depth", "value_int32": 5}]
+        client.units[target_uid] = {"type": "MultimediaStorage", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server"
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = registry.plan(
+            "archive_policy_update",
+            {
+                "uid": target_uid,
+                "descriptor": {"properties": [{"id": "day_depth"}, {"id": "storage_type"}]},
+                "properties": requested_properties,
+            },
+        )
+
+        self.assertEqual(plan["workflow"], "archive_policy_update")
+        self.assertEqual(plan["steps"][0]["operation"], "change_archive_policy_snapshot_unit")
+        self.assertEqual(plan["rollback"]["strategy"], "restore_archive_policy_snapshot")
+        self.assertEqual(plan["snapshot_capture"]["target_uid"], target_uid)
+        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["day_depth"])
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.reads, [])
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["snapshots"][0]["unit"]["properties"], original_properties)
+        self.assertEqual(client.units[target_uid]["properties"], requested_properties)
+
+        verified = registry.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(verified["property_checks"], {"day_depth": True})
+
+        client.units[target_uid]["properties"] = [{"id": "day_depth", "value_int32": 99}]
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(rolled["restored_uids"], [target_uid])
+        self.assertEqual(client.units[target_uid]["properties"], original_properties)
+
+    def test_archive_maintenance_plan_gates_real_volumes_but_allows_safe_and_noop(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeArchiveMaintenanceClient(), host="hosts/Server")
+        access_point = "hosts/Server/MultimediaStorage.1/Archive"
+
+        real = registry.plan(
+            "archive_format_volume",
+            {"access_point": access_point, "volume_ids": ["volume-real-1"]},
+        )
+        self.assertEqual(real["status"], "gap")
+        self.assertIn("safe-volume", real["message"])
+
+        declared_safe = registry.plan(
+            "archive_format_volume",
+            {
+                "access_point": access_point,
+                "volume_ids": ["volume-real-1"],
+                "safe_volume_ids": ["volume-real-1"],
+            },
+        )
+        self.assertEqual(declared_safe["status"], "planned")
+        self.assertFalse(declared_safe["noop_volume_only"])
+
+        noop = registry.plan(
+            "archive_reindex",
+            {"access_point": access_point, "volume_ids": ["codex-nonexistent-volume-1"]},
+        )
+        self.assertEqual(noop["status"], "planned")
+        self.assertTrue(noop["noop_volume_only"])
+
+    def test_archive_maintenance_apply_requires_env_gate(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeArchiveMaintenanceClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan(
+            "archive_format_volume",
+            {
+                "access_point": "hosts/Server/MultimediaStorage.1/Archive",
+                "volume_ids": ["codex-nonexistent-volume-1"],
+            },
+        )
+
+        old_value = module._os.environ.pop("AXXON_ARCHIVE_MAINTENANCE_APPROVE", None)
+        try:
+            applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        finally:
+            if old_value is not None:
+                module._os.environ["AXXON_ARCHIVE_MAINTENANCE_APPROVE"] = old_value
+
+        self.assertEqual(applied["status"], "rejected")
+        self.assertIn("AXXON_ARCHIVE_MAINTENANCE_APPROVE=1", applied["message"])
+        self.assertEqual(client.archive_calls, [])
+
+    def test_archive_maintenance_dispatches_noop_volumes_when_env_gate_is_set(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeArchiveMaintenanceClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        access_point = "hosts/Server/MultimediaStorage.1/Archive"
+        old_value = module._os.environ.get("AXXON_ARCHIVE_MAINTENANCE_APPROVE")
+        module._os.environ["AXXON_ARCHIVE_MAINTENANCE_APPROVE"] = "1"
+        try:
+            workflows = [
+                ("archive_format_volume", "format", {}),
+                ("archive_reindex", "reindex", {"full": False}),
+                ("archive_cancel_reindex", "cancel_reindex", {}),
+            ]
+            for workflow, expected_call, extra in workflows:
+                plan = registry.plan(
+                    workflow,
+                    {
+                        "access_point": access_point,
+                        "volume_ids": [f"codex-nonexistent-{workflow}"],
+                        **extra,
+                    },
+                )
+                applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+                self.assertEqual(applied["status"], "applied")
+                self.assertEqual(applied["created_uids"], [])
+                self.assertEqual(client.archive_calls[-1][0], expected_call)
+                self.assertEqual(client.archive_calls[-1][1], access_point)
+                self.assertEqual(client.archive_calls[-1][2], [f"codex-nonexistent-{workflow}"])
+        finally:
+            if old_value is None:
+                module._os.environ.pop("AXXON_ARCHIVE_MAINTENANCE_APPROVE", None)
+            else:
+                module._os.environ["AXXON_ARCHIVE_MAINTENANCE_APPROVE"] = old_value
+
+    def test_archive_reindex_rollback_cancels_started_reindex(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeArchiveMaintenanceClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        access_point = "hosts/Server/MultimediaStorage.1/Archive"
+        old_value = module._os.environ.get("AXXON_ARCHIVE_MAINTENANCE_APPROVE")
+        module._os.environ["AXXON_ARCHIVE_MAINTENANCE_APPROVE"] = "1"
+        try:
+            plan = registry.plan(
+                "archive_reindex",
+                {"access_point": access_point, "volume_ids": ["codex-nonexistent-reindex-rollback"]},
+            )
+            applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+            self.assertEqual(applied["status"], "applied")
+
+            rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+            self.assertEqual(rolled["status"], "rolled_back")
+            self.assertEqual(client.archive_calls[-1], (
+                "cancel_reindex",
+                access_point,
+                ["codex-nonexistent-reindex-rollback"],
+                {},
+            ))
+        finally:
+            if old_value is None:
+                module._os.environ.pop("AXXON_ARCHIVE_MAINTENANCE_APPROVE", None)
+            else:
+                module._os.environ["AXXON_ARCHIVE_MAINTENANCE_APPROVE"] = old_value
 
     def test_create_layout_persistent(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
