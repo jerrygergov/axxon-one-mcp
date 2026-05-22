@@ -1849,6 +1849,21 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
             ],
         )
 
+    def test_archive_policy_get_prefers_archive_descriptor_for_archive_access_point_wrappers(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.archive_ap)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
+        retention = {item["path"]: item for item in result["retention_properties"]}
+        self.assertEqual(retention["retention.maxArchiveDays"]["value"], 30)
+
     def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         archive = module.AxxonMcpDetectorArchive(
@@ -1967,6 +1982,10 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
 
         for unsafe_hint in (
             "/tmp/codex-/../../var/lib/axxon/archive",
+            "/tmp/notcodex/codex-volume",
+            "/tmp/codex-volume/../codex-real",
+            "/tmp/codex-volume\\..\\real-volume",
+            "/tmp/../tmp/codex-volume",
             "codex-../real-volume",
             "codex-volume/child",
         ):
@@ -1974,6 +1993,11 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
             self.assertEqual(unsafe_result["status"], "fixture-needed")
             self.assertEqual(unsafe_result["path_or_volume_hint"], unsafe_hint)
             self.assertEqual(fake.probe_calls, [])
+
+        fake.allow_archive_volume_probe_fixture = True
+        unsafe_bypass = archive.archive_volume_probe("/var/lib/axxon/archive/volume-1")
+        self.assertEqual(unsafe_bypass["status"], "fixture-needed")
+        self.assertEqual(fake.probe_calls, [])
 
         safe = archive.archive_volume_probe("codex-nonexistent-volume")
 

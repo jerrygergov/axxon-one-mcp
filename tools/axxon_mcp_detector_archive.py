@@ -1058,7 +1058,8 @@ def _archive_policy_descriptor_from_wrappers(client: Any, target: str) -> tuple[
                 or target in unit_strings
                 or target in (str(unit.get("access_point", "")), str(unit.get("accessPoint", "")))
             ):
-                found = unit
+                if found is None:
+                    found = unit
     return (found, "list_units") if found is not None else (None, "")
 
 
@@ -1158,18 +1159,21 @@ def _fixture_needed_archive_policy(target: str, message: str) -> dict[str, Any]:
 
 
 def _safe_archive_probe_hint(path_or_volume_hint: str, client: Any) -> bool:
-    if getattr(client, "allow_archive_volume_probe_fixture", False):
-        return True
+    del client
+    if not path_or_volume_hint or "\\" in path_or_volume_hint:
+        return False
     if path_or_volume_hint.startswith("codex-"):
         return "/" not in path_or_volume_hint and "\\" not in path_or_volume_hint and all(
             ch.isalnum() or ch in "-_" for ch in path_or_volume_hint
         )
     if path_or_volume_hint.startswith("/"):
         normalized = posixpath.normpath(path_or_volume_hint)
+        basename = posixpath.basename(normalized)
         return (
-            normalized.startswith("/tmp/")
-            and posixpath.basename(normalized).startswith("codex-")
-            and posixpath.commonpath(["/tmp", normalized]) == "/tmp"
+            normalized == path_or_volume_hint
+            and posixpath.dirname(normalized) == "/tmp"
+            and basename.startswith("codex-")
+            and all(ch.isalnum() or ch in "-_" for ch in basename)
         )
     return False
 
