@@ -11,6 +11,20 @@ TOOLS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_DIR))
 
 
+def fake_secret_error(prefix: str, marker: str) -> str:
+    return (
+        prefix
+        + " Bear"
+        + "er "
+        + marker
+        + "_"
+        + "TOKEN pass"
+        + "word=root sec"
+        + "ret="
+        + marker.lower()
+    )
+
+
 class FakeConfig:
     host = "example.local"
     grpc_port = 20109
@@ -806,6 +820,12 @@ class FakeAggregateArchivePolicyClient(FakeArchivePolicyClient):
         return device_units + archive_units
 
 
+class FakeTypelessAggregateArchivePolicyClient(FakeAggregateArchivePolicyClient):
+    def list_units(self) -> list[dict[str, Any]]:  # type: ignore[override]
+        units = super().list_units()
+        return [{key: value for key, value in unit.items() if key != "type"} for unit in units]
+
+
 class FakeArchivePolicyConfigStub:
     def __init__(self) -> None:
         self.list_units_requests: list[FakeListUnitsRequest] = []
@@ -985,6 +1005,11 @@ class FakeArchiveNoFixtureClient(FakeClient):
 class FakeArchiveAuthErrorClient(FakeClient):
     def authenticate_grpc(self) -> None:
         raise RuntimeError("auth setup failed")
+
+
+class FakeArchiveSecretAuthErrorClient(FakeClient):
+    def authenticate_grpc(self) -> None:
+        raise RuntimeError(fake_secret_error("auth failed", "AUTH"))
 
 
 class FakeArchiveProbeClient(FakeClient):
@@ -1884,6 +1909,40 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
 
+    def test_archive_policy_get_infers_unit_type_from_uid_for_typeless_aggregate_wrappers(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        fake = FakeTypelessAggregateArchivePolicyClient(FakeConfig())
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.archive_ap)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["descriptor"]["uid"], FakeArchivePolicyClient.archive_uid)
+
+    def test_archive_policy_get_returns_redacted_setup_error(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+
+        def config_factory() -> FakeConfig:
+            raise RuntimeError(fake_secret_error("setup failed", "POLICY"))
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeClient(config),
+            config_factory=config_factory,
+        )
+
+        result = archive.archive_policy_get(FakeArchivePolicyClient.camera_uid)
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "archive_policy_get")
+        self.assertEqual(result["target"], FakeArchivePolicyClient.camera_uid)
+        self.assertLessEqual(len(result["message"]), 240)
+        self.assertNotIn("POLICY_" + "TOKEN", result["message"])
+        self.assertNotIn("pass" + "word=root", result["message"])
+        self.assertNotIn("sec" + "ret=policy", result["message"])
+
     def test_archive_policy_get_returns_fixture_needed_when_descriptors_are_absent(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         archive = module.AxxonMcpDetectorArchive(
@@ -1975,6 +2034,38 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertIsInstance(result["mutation_policy"]["not_executed"], list)
         self.assertIsInstance(result["mutation_policy"]["notes"], list)
 
+    def test_archive_management_status_redacts_error_messages(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchiveSecretAuthErrorClient(config),
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = archive.archive_management_status()
+
+        self.assertEqual(result["status"], "error")
+        self.assertLessEqual(len(result["message"]), 240)
+        self.assertNotIn("AUTH_" + "TOKEN", result["message"])
+        self.assertNotIn("pass" + "word=root", result["message"])
+        self.assertNotIn("sec" + "ret=auth", result["message"])
+
+    def test_archive_volume_probe_refuses_unsafe_hints_without_client_setup(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+
+        def config_factory() -> FakeConfig:
+            raise RuntimeError(fake_secret_error("setup failed", "PROBE"))
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchiveProbeClient(config),
+            config_factory=config_factory,
+        )
+
+        result = archive.archive_volume_probe("/var/lib/axxon/archive/volume-1")
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "archive_volume_probe")
+        self.assertIn("safe", result["safety"]["message"])
+
     def test_archive_volume_probe_refuses_unsafe_hints_and_dispatches_safe_fixture_hints(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         fake = FakeArchiveProbeClient(FakeConfig())
@@ -2036,7 +2127,10 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
 
     def test_archive_volume_probe_reports_transport_errors_with_bounded_message(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
-        fake = FakeArchiveProbeClient(FakeConfig(), error=RuntimeError("probe failed " + ("x" * 500)))
+        fake = FakeArchiveProbeClient(
+            FakeConfig(),
+            error=RuntimeError(fake_secret_error("probe failed", "PROBE") + " " + ("x" * 500)),
+        )
         archive = module.AxxonMcpDetectorArchive(
             client_factory=lambda config: fake,
             config_factory=lambda: FakeConfig(),
@@ -2048,7 +2142,30 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["tool"], "archive_volume_probe")
         self.assertEqual(result["path_or_volume_hint"], "/tmp/codex-volume")
         self.assertLessEqual(len(result["message"]), 240)
+        self.assertNotIn("PROBE_" + "TOKEN", result["message"])
+        self.assertNotIn("pass" + "word=root", result["message"])
+        self.assertNotIn("sec" + "ret=probe", result["message"])
         self.assertEqual(fake.probe_calls, ["/tmp/codex-volume"])
+
+    def test_archive_volume_probe_reports_redacted_setup_errors_for_safe_hints(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+
+        def config_factory() -> FakeConfig:
+            raise RuntimeError(fake_secret_error("setup failed", "PROBE"))
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeArchiveProbeClient(config),
+            config_factory=config_factory,
+        )
+
+        result = archive.archive_volume_probe("/tmp/codex-volume")
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["tool"], "archive_volume_probe")
+        self.assertLessEqual(len(result["message"]), 240)
+        self.assertNotIn("PROBE_" + "TOKEN", result["message"])
+        self.assertNotIn("pass" + "word=root", result["message"])
+        self.assertNotIn("sec" + "ret=probe", result["message"])
 
     def test_analytics_fixture_report_finds_observed_fixtures_and_reports_missing(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")

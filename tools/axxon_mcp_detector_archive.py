@@ -11,6 +11,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 import posixpath
+import re
 from typing import Any, Callable
 
 from axxon_api_client import AxxonApiClient, AxxonClientConfig
@@ -131,6 +132,20 @@ def _redact_sensitive_properties(value: Any, sensitive_context: bool) -> Any:
 
 def redact_sensitive_properties(value: Any) -> Any:
     return _redact_sensitive_properties(value, False)
+
+
+_BEARER_TEXT_RE = re.compile(r"\bBearer\s+[^,\s;]+", re.IGNORECASE)
+_SECRET_ASSIGNMENT_TEXT_RE = re.compile(
+    r"\b(password|passwd|pwd|token|secret|api[_-]?token|bearer_token)\b\s*[:=]\s*[^,\s;]+",
+    re.IGNORECASE,
+)
+
+
+def _redact_sensitive_text(value: Any, limit: int = 240) -> str:
+    text = str(value)
+    text = _BEARER_TEXT_RE.sub("Bearer <redacted>", text)
+    text = _SECRET_ASSIGNMENT_TEXT_RE.sub(lambda match: f"{match.group(1)}=<redacted>", text)
+    return text[:limit]
 
 
 def _as_items(value: Any) -> list[dict[str, Any]]:
@@ -1048,10 +1063,11 @@ def _archive_policy_descriptor_from_wrappers(client: Any, target: str) -> tuple[
     found: dict[str, Any] | None = None
     for unit_type in _archive_policy_candidate_unit_types(target_candidates):
         for unit in _as_items(_call_source(method, unit_type=unit_type)):
+            uid = _unit_uid(unit)
             returned_type = str(unit.get("type") or unit.get("unit_type") or unit.get("unitType") or "")
+            returned_type = returned_type or _unit_type_from_uid(uid)
             if returned_type and returned_type != unit_type:
                 continue
-            uid = _unit_uid(unit)
             unit_strings = _flatten_strings(unit)
             unit_uid_candidates = _unique_nonempty(
                 [uid] + [_archive_policy_unit_uid_from_access_point(text) for text in unit_strings]
@@ -1570,8 +1586,16 @@ class AxxonMcpDetectorArchive:
         }
 
     def archive_policy_get(self, camera_or_archive: str) -> dict[str, Any]:
-        client = self.ensure_client()
-        descriptor, source = _archive_policy_descriptor(client, camera_or_archive)
+        try:
+            client = self.ensure_client()
+            descriptor, source = _archive_policy_descriptor(client, camera_or_archive)
+        except Exception as exc:  # noqa: BLE001 - setup/transport failures are returned to MCP callers.
+            return {
+                "status": "error",
+                "tool": "archive_policy_get",
+                "target": camera_or_archive,
+                "message": _redact_sensitive_text(exc),
+            }
         if descriptor is None:
             return _fixture_needed_archive_policy(
                 camera_or_archive,
@@ -1616,7 +1640,7 @@ class AxxonMcpDetectorArchive:
                 "status": "fixture-needed",
                 "tool": "archive_management_status",
                 "archive_access_point": "",
-                "message": str(exc)[:240],
+                "message": _redact_sensitive_text(exc),
                 "mutation_policy": _archive_mutation_policy(),
             }
 
@@ -1629,7 +1653,7 @@ class AxxonMcpDetectorArchive:
                     "status": "error",
                     "tool": "archive_management_status",
                     "archive_access_point": "",
-                    "message": str(exc)[:240],
+                    "message": _redact_sensitive_text(exc),
                     "mutation_policy": _archive_mutation_policy(),
                 }
 
@@ -1712,17 +1736,16 @@ class AxxonMcpDetectorArchive:
                 "status": "error",
                 "tool": "archive_management_status",
                 "archive_access_point": archive_access_point,
-                "message": str(exc)[:240],
+                "message": _redact_sensitive_text(exc),
                 "mutation_policy": _archive_mutation_policy(),
             }
 
     def archive_volume_probe(self, path_or_volume_hint: str) -> dict[str, Any]:
-        client = self.ensure_client()
         safety = {
             "non_mutating": True,
             "safe_markers": ["codex-", "codex-nonexistent-", "/tmp/codex-"],
         }
-        if not path_or_volume_hint or not _safe_archive_probe_hint(path_or_volume_hint, client):
+        if not path_or_volume_hint or not _safe_archive_probe_hint(path_or_volume_hint, None):
             return {
                 "status": "fixture-needed",
                 "tool": "archive_volume_probe",
@@ -1733,6 +1756,18 @@ class AxxonMcpDetectorArchive:
                     "allowed": False,
                     "message": "Provide a safe test fixture hint before probing archive volumes.",
                 },
+            }
+
+        try:
+            client = self.ensure_client()
+        except Exception as exc:  # noqa: BLE001 - setup failures are returned to MCP callers.
+            return {
+                "status": "error",
+                "tool": "archive_volume_probe",
+                "path_or_volume_hint": path_or_volume_hint,
+                "message": _redact_sensitive_text(exc),
+                "probe": None,
+                "safety": {**safety, "allowed": True},
             }
 
         method = getattr(client, "archive_probe_volume", None)
@@ -1753,7 +1788,7 @@ class AxxonMcpDetectorArchive:
                 "status": "error",
                 "tool": "archive_volume_probe",
                 "path_or_volume_hint": path_or_volume_hint,
-                "message": str(exc)[:240],
+                "message": _redact_sensitive_text(exc),
                 "probe": None,
                 "safety": {**safety, "allowed": True},
             }
