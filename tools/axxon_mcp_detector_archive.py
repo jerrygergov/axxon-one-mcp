@@ -135,9 +135,15 @@ def redact_sensitive_properties(value: Any) -> Any:
 
 
 _BEARER_TEXT_RE = re.compile(r"\bBearer\s+[^,\s;]+", re.IGNORECASE)
-_SECRET_ASSIGNMENT_TEXT_RE = re.compile(
-    r"(?P<key_quote>['\"]?)(?P<key>\b(password|passwd|pwd|token|secret|api[_-]?token|bearer_token)\b)"
-    r"(?P=key_quote)(?P<sep>\s*[:=]\s*)(?P<value_quote>['\"]?)[^,'\"\s;}\]]+(?P=value_quote)?",
+_SECRET_KEY_TEXT = r"(password|passwd|pwd|secret|certificate|private[_-]?key|serial|license|[A-Za-z0-9_-]*token[A-Za-z0-9_-]*)"
+_QUOTED_SECRET_ASSIGNMENT_TEXT_RE = re.compile(
+    rf"(?P<key_quote>['\"]?)(?P<key>\b{_SECRET_KEY_TEXT}\b)(?P=key_quote)"
+    r"(?P<sep>\s*[:=]\s*)(?P<value_quote>['\"])(?P<value>.*?)(?P=value_quote)",
+    re.IGNORECASE,
+)
+_UNQUOTED_SECRET_ASSIGNMENT_TEXT_RE = re.compile(
+    rf"(?P<key_quote>['\"]?)(?P<key>\b{_SECRET_KEY_TEXT}\b)(?P=key_quote)"
+    r"(?P<sep>\s*[:=]\s*)[^,\s;}\]]+",
     re.IGNORECASE,
 )
 
@@ -145,7 +151,12 @@ _SECRET_ASSIGNMENT_TEXT_RE = re.compile(
 def _redact_sensitive_text(value: Any, limit: int = 240) -> str:
     text = str(value)
     text = _BEARER_TEXT_RE.sub("Bearer <redacted>", text)
-    text = _SECRET_ASSIGNMENT_TEXT_RE.sub(
+    text = _QUOTED_SECRET_ASSIGNMENT_TEXT_RE.sub(
+        lambda match: f"{match.group('key_quote')}{match.group('key')}{match.group('key_quote')}"
+        f"{match.group('sep')}<redacted>",
+        text,
+    )
+    text = _UNQUOTED_SECRET_ASSIGNMENT_TEXT_RE.sub(
         lambda match: f"{match.group('key_quote')}{match.group('key')}{match.group('key_quote')}"
         f"{match.group('sep')}<redacted>",
         text,
@@ -1024,7 +1035,11 @@ def _valid_archive_policy_target(target: str) -> bool:
     if not value:
         return False
     unit_uid = _archive_policy_unit_uid_from_access_point(value) or value
-    return _unit_type_from_uid(unit_uid) in ARCHIVE_POLICY_UNIT_TYPES
+    if _unit_type_from_uid(unit_uid) not in ARCHIVE_POLICY_UNIT_TYPES:
+        return False
+    segment = unit_uid.rsplit("/", 1)[-1]
+    _prefix, separator, instance = segment.partition(".")
+    return separator == "." and bool(instance.strip())
 
 
 def _unique_nonempty(values: list[str]) -> list[str]:

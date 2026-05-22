@@ -35,6 +35,17 @@ def fake_quoted_secret_error(prefix: str) -> str:
     )
 
 
+def fake_complex_secret_error(prefix: str) -> str:
+    return (
+        prefix
+        + " {'access_"
+        + "to"
+        + "ken': 'abc"
+        + "123', 'pass"
+        + "word': 'root root'}"
+    )
+
+
 class FakeConfig:
     host = "example.local"
     grpc_port = 20109
@@ -1957,7 +1968,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         module = importlib.import_module("axxon_mcp_detector_archive")
 
         def config_factory() -> FakeConfig:
-            raise RuntimeError(fake_quoted_secret_error("setup failed"))
+            raise RuntimeError(fake_quoted_secret_error("setup failed") + " " + fake_complex_secret_error("nested"))
 
         archive = module.AxxonMcpDetectorArchive(
             client_factory=lambda config: FakeClient(config),
@@ -1969,6 +1980,7 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         self.assertNotIn("root", result["message"])
         self.assertNotIn("abc", result["message"])
+        self.assertNotIn("abc123", result["message"])
         self.assertNotIn("hidden", result["message"])
 
     def test_archive_policy_get_rejects_empty_and_broad_targets_without_inventory_guessing(self) -> None:
@@ -1979,7 +1991,15 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
             config_factory=lambda: FakeConfig(),
         )
 
-        for target in ("", "Server", "hosts/Server"):
+        for target in (
+            "",
+            "Server",
+            "hosts/Server",
+            "hosts/Server/DeviceIpint.",
+            "DeviceIpint.",
+            "hosts/Server/MultimediaStorage.",
+            "MultimediaStorage.",
+        ):
             result = archive.archive_policy_get(target)
             self.assertEqual(result["status"], "fixture-needed")
             self.assertEqual(result["tool"], "archive_policy_get")
