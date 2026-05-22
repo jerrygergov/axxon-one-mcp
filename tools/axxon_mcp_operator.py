@@ -201,6 +201,18 @@ def _property_string_value(prop: dict[str, Any] | None) -> str:
     return str(prop.get("value_string") or prop.get("value") or "")
 
 
+def _created_unit_uid_for_step(plan: dict[str, Any], created_uids: list[str], created_kinds: list[str], step_index: int) -> str:
+    unit_uids = [uid for uid, kind in zip(created_uids, created_kinds) if kind == "unit"]
+    unit_add_index = 0
+    for idx, step in enumerate(plan.get("steps") or []):
+        if step.get("operation") != "add":
+            continue
+        if idx == step_index:
+            return unit_uids[unit_add_index] if unit_add_index < len(unit_uids) else ""
+        unit_add_index += 1
+    return ""
+
+
 def _detector_checks_for_plan(client: Any, plan: dict[str, Any], created_uids: list[str], created_kinds: list[str]) -> dict[str, bool] | None:
     workflow = plan.get("workflow")
     if workflow not in {"create_av_detector_full", "create_appdata_detector_full"}:
@@ -245,9 +257,10 @@ def _detector_checks_for_plan(client: Any, plan: dict[str, Any], created_uids: l
     if target_type == "AppDataDetector":
         expected_vmda = str(expected.get("vmda_source_ap") or "")
         actual_vmda = _property_string_value(streaming_id)
-        checks["vmda_source_ap"] = (
-            actual_vmda.endswith("/SourceEndpoint.vmda") if expected_vmda == "<chain-created from step 0>" else actual_vmda == expected_vmda
-        )
+        if expected_vmda == "<chain-created from step 0>":
+            chained_uid = _created_unit_uid_for_step(plan, created_uids, created_kinds, 0)
+            expected_vmda = f"{chained_uid}/SourceEndpoint.vmda" if chained_uid else ""
+        checks["vmda_source_ap"] = actual_vmda == expected_vmda
     return checks
 
 
@@ -1407,6 +1420,16 @@ class OperatorRegistry:
         step_results: list[list[str]] = []  # uids created by each step (for inter-step dependency resolution)
         wall_cookies: list[str] = []
         wall_seq_numbers: list[int] = []
+
+        def store_apply_state(status: str) -> None:
+            self._state[plan_id] = {
+                "status": status,
+                "created_uids": list(created_uids),
+                "created_kinds": list(created_kinds),
+                "wall_cookies": list(wall_cookies),
+                "wall_seq_numbers": list(wall_seq_numbers),
+            }
+
         for step in plan.get("steps", []):
             op = step.get("operation")
             if op == "add":
@@ -1414,6 +1437,7 @@ class OperatorRegistry:
                 if resolve_idx is not None and step.get("payload") is None:
                     prior_uids = step_results[resolve_idx]
                     if not prior_uids:
+                        store_apply_state("error")
                         self._record("apply", plan_id=plan_id, status="error", reason="prior_step_no_uid")
                         return {
                             "status": "error",
@@ -1436,6 +1460,7 @@ class OperatorRegistry:
                     step_payload = step["payload"]
                 response = client.change_config(step_payload)
                 if response.get("failed"):
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_config_failed")
                     return {
                         "status": "error",
@@ -1450,6 +1475,7 @@ class OperatorRegistry:
             elif op == "add_template":
                 response = client.change_templates(step["payload"])
                 if response.get("failed"):
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_templates_failed")
                     return {
                         "status": "error",
@@ -1464,6 +1490,7 @@ class OperatorRegistry:
             elif op == "add_macro":
                 response = client.change_macros(step["payload"])
                 if response.get("failed"):
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_macros_failed")
                     return {
                         "status": "error",
@@ -1478,6 +1505,7 @@ class OperatorRegistry:
             elif op == "change_unit":
                 response = client.change_config(step["payload"])
                 if response.get("failed"):
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_config_failed")
                     return {
                         "status": "error",
@@ -1490,6 +1518,7 @@ class OperatorRegistry:
             elif op == "add_layout":
                 response = client.change_layouts(step["payload"])
                 if response.get("failed"):
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_layouts_failed")
                     return {
                         "status": "error",
@@ -1505,6 +1534,7 @@ class OperatorRegistry:
             elif op == "http_post":
                 response = client.http_post_bearer(step["path"], step["body"])
                 if response.get("status") and response["status"] >= 400:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="http_post_failed")
                     return {
                         "status": "error",
@@ -1527,6 +1557,7 @@ class OperatorRegistry:
                 cookie = (body or {}).get("cookie") or ""
                 wall_id = (body or {}).get("wall_id") or ""
                 if response.get("status") != 200 or not cookie:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="register_wall_failed")
                     return {"status": "error", "message": "RegisterWall failed", "plan_id": plan_id}
                 step_results.append([cookie, wall_id])
@@ -1543,6 +1574,7 @@ class OperatorRegistry:
                     seq_number=p["seq_number"],
                 )
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_wall_failed")
                     return {"status": "error", "message": "ChangeWall failed", "plan_id": plan_id}
                 body = response.get("body") if isinstance(response, dict) else {}
@@ -1557,6 +1589,7 @@ class OperatorRegistry:
                     data_bytes=base64.b64decode(p.get("data_b64") or ""),
                 )
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="set_control_data_failed")
                     return {"status": "error", "message": "SetControlData failed", "plan_id": plan_id}
                 body = response.get("body") if isinstance(response, dict) else {}
@@ -1567,12 +1600,14 @@ class OperatorRegistry:
                 p = step["params"]
                 response = client.unregister_wall_via_api(p["cookie"])
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="unregister_wall_failed")
                     return {"status": "error", "message": "UnregisterWall failed", "plan_id": plan_id}
                 step_results.append([])
             elif op == "change_maps":
                 response = client.change_maps_via_api(step["payload"])
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="change_maps_failed")
                     return {"status": "error", "message": "ChangeMaps failed", "plan_id": plan_id}
                 map_id = step.get("map_id") or ""
@@ -1584,23 +1619,19 @@ class OperatorRegistry:
                 p = step["params"]
                 response = client.update_markers_via_api(p["map_id"], p["markers"])
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="update_markers_failed")
                     return {"status": "error", "message": "UpdateMarkers failed", "plan_id": plan_id}
                 step_results.append([])
             elif op == "update_layout":
                 response = client.update_layout_via_api(step["payload"])
                 if response.get("status") != 200:
+                    store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="update_layout_failed")
                     return {"status": "error", "message": "LayoutManager.Update failed", "plan_id": plan_id}
                 layout_id = step.get("layout_id") or ""
                 step_results.append([layout_id] if layout_id else [])
-        self._state[plan_id] = {
-            "status": "applied",
-            "created_uids": list(created_uids),
-            "created_kinds": list(created_kinds),
-            "wall_cookies": list(wall_cookies),
-            "wall_seq_numbers": list(wall_seq_numbers),
-        }
+        store_apply_state("applied")
         self._record("apply", plan_id=plan_id, status="applied", created_count=len(created_uids))
         result = {"status": "applied", "plan_id": plan_id, "created_uids": created_uids}
         if wall_seq_numbers:
@@ -1613,6 +1644,7 @@ class OperatorRegistry:
             return {"status": "rejected", "message": "unknown plan_id", "plan_id": plan_id}
         client = self.ensure_client()
         state = self._state.get(plan_id, {})
+        state_status = state.get("status")
         created_uids = state.get("created_uids", [])
         created_kinds = state.get("created_kinds", ["unit"] * len(created_uids))
         still_present = []
@@ -1634,16 +1666,25 @@ class OperatorRegistry:
                 units = payload.get("units") or []
                 if units:
                     still_present.append(uid)
-        status = "verified" if (self._state.get(plan_id, {}).get("status") in {"applied", "rolled_back"}) else "planned"
+        if state_status in {"applied", "rolled_back"}:
+            status = "verified"
+        elif state_status == "error":
+            status = "error"
+        else:
+            status = "planned"
         result = {
             "status": status,
             "plan_id": plan_id,
             "created_uids": list(created_uids),
             "still_present": still_present,
         }
-        detector_checks = _detector_checks_for_plan(client, plan, list(created_uids), list(created_kinds))
+        detector_checks = None
+        if state_status != "rolled_back":
+            detector_checks = _detector_checks_for_plan(client, plan, list(created_uids), list(created_kinds))
         if detector_checks is not None:
             result["detector_checks"] = detector_checks
+            if state_status == "applied" and not all(detector_checks.values()):
+                result["status"] = "error"
         return result
 
     def rollback(self, plan_id: str, confirmation: str) -> dict[str, Any]:

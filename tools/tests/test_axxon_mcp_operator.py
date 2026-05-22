@@ -51,6 +51,43 @@ class FakeMutationClient:
         return {"units": [{"uid": uid, **self.units[uid]}]}
 
 
+def _test_find_property(properties: list[dict], prop_id: str) -> dict:
+    for prop in properties:
+        if prop.get("id") == prop_id or prop.get("name") == prop_id or prop.get("key") == prop_id:
+            return prop
+    raise AssertionError(f"missing property {prop_id}")
+
+
+def _test_detector_input_properties(unit: dict) -> list[dict]:
+    input_prop = _test_find_property(unit["properties"], "input")
+    return input_prop["properties"]
+
+
+def _test_detector_camera_properties(unit: dict) -> list[dict]:
+    camera_ref = _test_find_property(_test_detector_input_properties(unit), "camera_ref")
+    return camera_ref["properties"]
+
+
+class FailSecondAddMutationClient(FakeMutationClient):
+    """Creates the first added unit, then fails the next add without creating it."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.add_calls = 0
+
+    def change_config(self, payload: dict) -> dict:
+        if payload.get("added"):
+            self.add_calls += 1
+            if self.add_calls == 2:
+                self.calls.append(payload)
+                return {
+                    "added": [],
+                    "failed": [{"uid": "pending-AppDataDetector", "reason": "simulated failure"}],
+                    "failed_reason": ["simulated failure"],
+                }
+        return super().change_config(payload)
+
+
 class FakeTemplateClient(FakeMutationClient):
     """Adds ChangeTemplates support on top of the basic ChangeConfig fake."""
 
@@ -448,6 +485,90 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(appdata_rolled["status"], "rolled_back")
         self.assertEqual(len(appdata_rolled["removed_uids"]), 2)
         self.assertEqual(registry.verify(appdata_plan["plan_id"])["still_present"], [])
+
+    def test_create_av_detector_full_verify_fails_on_wrong_detector_config(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan("create_av_detector_full", {
+            "display_name": "persistent-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MotionDetection",
+        })
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+
+        unit = client.units[applied["created_uids"][0]]
+        _test_find_property(unit["properties"], "display_name")["value_string"] = "wrong-name"
+        input_properties = _test_detector_input_properties(unit)
+        _test_find_property(input_properties, "detector")["value_string"] = "SceneDescription"
+        _test_find_property(input_properties, "camera_ref")["value_string"] = (
+            "hosts/Server/DeviceIpint.99/SourceEndpoint.video:0:0"
+        )
+
+        verified = registry.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "error")
+        self.assertEqual(verified["detector_checks"], {
+            "display_name": False,
+            "detector": False,
+            "video_source_ap": False,
+        })
+
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        post = registry.verify(plan["plan_id"])
+        self.assertEqual(post["status"], "verified")
+        self.assertEqual(post["still_present"], [])
+        self.assertNotIn("detector_checks", post)
+
+    def test_create_appdata_detector_full_verify_requires_chained_vmda_uid(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan("create_appdata_detector_full", {
+            "display_name": "persistent-appdata-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MoveInZone",
+        })
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        scene_uid, appdata_uid = applied["created_uids"]
+
+        appdata_unit = client.units[appdata_uid]
+        streaming_id = _test_find_property(_test_detector_camera_properties(appdata_unit), "streaming_id")
+        streaming_id["value_string"] = "hosts/Server/AVDetector.999/SourceEndpoint.vmda"
+        unrelated = registry.verify(plan["plan_id"])
+        self.assertEqual(unrelated["status"], "error")
+        self.assertFalse(unrelated["detector_checks"]["vmda_source_ap"])
+
+        streaming_id["value_string"] = f"{scene_uid}/SourceEndpoint.vmda"
+        chained = registry.verify(plan["plan_id"])
+        self.assertEqual(chained["status"], "verified")
+        self.assertTrue(chained["detector_checks"]["vmda_source_ap"])
+
+    def test_create_appdata_detector_full_partial_apply_records_scene_for_rollback(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FailSecondAddMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan("create_appdata_detector_full", {
+            "display_name": "persistent-appdata-registered",
+            "video_source_ap": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "detector": "MoveInZone",
+        })
+
+        result = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(result["status"], "error")
+        scene_uids = [uid for uid, unit in client.units.items() if unit["type"] == "AVDetector"]
+        self.assertEqual(len(scene_uids), 1)
+        scene_uid = scene_uids[0]
+        self.assertEqual(registry._state[plan["plan_id"]]["status"], "error")
+        self.assertEqual(registry._state[plan["plan_id"]]["created_uids"], [scene_uid])
+        self.assertEqual(registry._state[plan["plan_id"]]["created_kinds"], ["unit"])
+
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(rolled["removed_uids"], [scene_uid])
+        self.assertNotIn(scene_uid, client.units)
 
     def test_temp_device_template_requires_camera_uid(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
