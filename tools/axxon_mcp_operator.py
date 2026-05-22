@@ -335,6 +335,19 @@ def _requested_property_checks(actual_properties: list[dict[str, Any]], requeste
     return checks
 
 
+def _property_child_nodes(prop: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = prop.get("properties")
+    if raw is None:
+        raw = prop.get("parameter_tree")
+    if raw is None:
+        raw = prop.get("parameters")
+    if isinstance(raw, dict):
+        raw = [raw]
+    if not isinstance(raw, list):
+        return []
+    return [child for child in raw if isinstance(child, dict)]
+
+
 def _descriptor_property_ids(descriptor: Any) -> set[str]:
     if isinstance(descriptor, dict):
         raw = descriptor.get("properties") or descriptor.get("parameter_tree") or descriptor.get("parameters") or []
@@ -344,7 +357,7 @@ def _descriptor_property_ids(descriptor: Any) -> set[str]:
         raw = [raw]
     if not isinstance(raw, list):
         return set()
-    return {_property_node_id(prop) for prop in raw if isinstance(prop, dict) and _property_node_id(prop)}
+    return set(_property_paths([prop for prop in raw if isinstance(prop, dict)]))
 
 
 def _noop_archive_volume_id(volume_id: str) -> bool:
@@ -362,14 +375,7 @@ def _safe_volume_ids(params: dict[str, Any]) -> set[str]:
 
 def _has_safe_volume_declaration(params: dict[str, Any], real_volume_ids: list[str]) -> bool:
     safe_ids = _safe_volume_ids(params)
-    return (
-        bool(real_volume_ids)
-        and (
-            bool(params.get("safe_volume_declared"))
-            or bool(params.get("fixture_volume_declared"))
-            or all(volume_id in safe_ids for volume_id in real_volume_ids)
-        )
-    )
+    return bool(real_volume_ids) and all(volume_id in safe_ids for volume_id in real_volume_ids)
 
 
 def _av_detector_payload(
@@ -1005,8 +1011,16 @@ def _build_set_unit_properties_plan(host_uid: str, params: dict[str, Any]) -> di
     }
 
 
-def _property_paths(properties: list[dict[str, Any]]) -> list[str]:
-    return [_property_node_id(prop) for prop in properties]
+def _property_paths(properties: list[dict[str, Any]], prefix: str = "") -> list[str]:
+    paths: list[str] = []
+    for prop in properties:
+        prop_id = _property_node_id(prop)
+        if not prop_id:
+            continue
+        path = f"{prefix}.{prop_id}" if prefix else prop_id
+        paths.append(path)
+        paths.extend(_property_paths(_property_child_nodes(prop), path))
+    return paths
 
 
 def _build_detector_snapshot_change_plan(

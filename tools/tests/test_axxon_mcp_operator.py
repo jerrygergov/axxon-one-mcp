@@ -1048,6 +1048,38 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(guessed_field["status"], "gap")
         self.assertIn("descriptor-backed", guessed_field["message"])
 
+    def test_archive_policy_update_rejects_guessed_nested_descriptor_properties(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeMutationClient(), host="hosts/Server")
+
+        guessed_nested = registry.plan(
+            "archive_policy_update",
+            {
+                "uid": "hosts/Server/MultimediaStorage.1",
+                "descriptor": {
+                    "properties": [
+                        {
+                            "id": "retention",
+                            "properties": [
+                                {"id": "day_depth"},
+                            ],
+                        }
+                    ]
+                },
+                "properties": [
+                    {
+                        "id": "retention",
+                        "properties": [
+                            {"id": "undocumented_nested_policy", "value_bool": True},
+                        ],
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(guessed_nested["status"], "gap")
+        self.assertIn("retention.undocumented_nested_policy", guessed_nested["message"])
+
     def test_archive_policy_update_captures_snapshot_verifies_and_rolls_back(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         client = FakeMutationClient()
@@ -1123,6 +1155,23 @@ class OperatorPlanTests(unittest.TestCase):
         )
         self.assertEqual(noop["status"], "planned")
         self.assertTrue(noop["noop_volume_only"])
+
+    def test_archive_maintenance_rejects_broad_boolean_safe_volume_declaration(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeArchiveMaintenanceClient(), host="hosts/Server")
+        access_point = "hosts/Server/MultimediaStorage.1/Archive"
+
+        broad_declared = registry.plan(
+            "archive_format_volume",
+            {
+                "access_point": access_point,
+                "volume_ids": ["volume-real-1"],
+                "safe_volume_declared": True,
+            },
+        )
+
+        self.assertEqual(broad_declared["status"], "gap")
+        self.assertIn("safe-volume", broad_declared["message"])
 
     def test_archive_maintenance_apply_requires_env_gate(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
