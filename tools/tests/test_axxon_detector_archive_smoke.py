@@ -50,6 +50,12 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         raw = {
             "url": "http://demo.internal/api",
             "auth": "Bearer live-token",
+            "username": "root",
+            "user": "root",
+            "login": "root",
+            "tls_cn": "Server",
+            "tls-cn": "Server",
+            "tls_common_name": "Server",
             "password": "root",
             "root_password": "secret",
             "nested": [
@@ -63,6 +69,12 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
 
         self.assertEqual(sanitized["url"], "http://<demo-host>/api")
         self.assertEqual(sanitized["auth"], "Bearer <redacted>")
+        self.assertEqual(sanitized["username"], "<demo-user>")
+        self.assertEqual(sanitized["user"], "<demo-user>")
+        self.assertEqual(sanitized["login"], "<demo-user>")
+        self.assertEqual(sanitized["tls_cn"], "<demo-tls-cn>")
+        self.assertEqual(sanitized["tls-cn"], "<demo-tls-cn>")
+        self.assertEqual(sanitized["tls_common_name"], "<demo-tls-cn>")
         self.assertEqual(sanitized["password"], "<redacted>")
         self.assertEqual(sanitized["root_password"], "<redacted>")
         self.assertEqual(sanitized["nested"][0], "<demo-host>")

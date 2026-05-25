@@ -51,10 +51,21 @@ UNQUOTED_SECRET_ASSIGNMENT_RE = re.compile(
     r"(?P<sep>\s*[:=]\s*)[^,\s;}\]]+",
     re.IGNORECASE,
 )
+USER_KEYS = {"username", "user", "login"}
+TLS_CN_KEYS = {"tls_cn", "tls-cn", "tls_common_name"}
 
 
 def _secret_key(key: Any) -> bool:
     return bool(SECRET_KEY_RE.search(str(key)))
+
+
+def _identity_key(key: Any) -> str:
+    normalized = str(key).lower()
+    if normalized in USER_KEYS:
+        return "user"
+    if normalized in TLS_CN_KEYS:
+        return "tls-cn"
+    return ""
 
 
 def _sanitize_text(value: str, host: str = "") -> str:
@@ -72,7 +83,12 @@ def sanitize_evidence(value: Any, host: str = "") -> Any:
     if isinstance(value, dict):
         out: dict[Any, Any] = {}
         for key, item in value.items():
-            if _secret_key(key):
+            identity = _identity_key(key)
+            if identity == "user":
+                out[key] = "<demo-user>" if item else item
+            elif identity == "tls-cn":
+                out[key] = "<demo-tls-cn>" if item else item
+            elif _secret_key(key):
                 if isinstance(item, str) and BEARER_RE.search(item):
                     out[key] = _sanitize_text(item, host)
                 else:
