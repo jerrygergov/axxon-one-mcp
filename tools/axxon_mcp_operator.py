@@ -327,7 +327,7 @@ def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: b
         "units": list(unit.get("units") or []),
     }
     if target_present:
-        return {"changed": [restore_unit]}
+        return {"changed": [{"uid": uid, "properties": restore_unit["properties"]}]}
     return {"added": [{"uid": snapshot.get("parent_uid") or _infer_parent_uid(uid, ""), "units": [restore_unit]}]}
 
 

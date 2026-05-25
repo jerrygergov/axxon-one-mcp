@@ -76,7 +76,7 @@ class FailDetectorSnapshotRestoreClient(FakeMutationClient):
     def change_config(self, payload: dict) -> dict:
         for unit in payload.get("changed", []):
             uid = unit.get("uid")
-            if uid in self.fail_restore_for and "type" in unit and "units" in unit:
+            if uid in self.fail_restore_for:
                 self.calls.append(payload)
                 return {
                     "added": [],
@@ -912,6 +912,7 @@ class OperatorPlanTests(unittest.TestCase):
         rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(rolled["restored_uids"], [target_uid])
+        self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": original_properties}]})
         self.assertEqual(client.units[target_uid]["properties"], original_properties)
 
     def test_update_detector_parameters_rollback_restore_failure_is_error(self) -> None:
