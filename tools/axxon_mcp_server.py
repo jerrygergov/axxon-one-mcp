@@ -41,6 +41,7 @@ def create_server(
     alarms: Any | None = None,
     alarm_mutator: Any | None = None,
     view_objects: Any | None = None,
+    detector_archive: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -113,7 +114,71 @@ def create_server(
     if view_objects is not None:
         register_view_objects_tools(server, view_objects)
 
+    if detector_archive is not None:
+        register_detector_archive_tools(server, detector_archive)
+
     return server
+
+
+def register_detector_archive_tools(server: Any, detector_archive: Any) -> None:
+    @server.tool(name="detector_archive_connect_axxon_profile")
+    def detector_archive_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the detector/archive layer to an Axxon profile (read-only, env-backed)."""
+        return detector_archive.detector_archive_connect_axxon_profile(profile)
+
+    @server.tool(name="detector_kind_catalog")
+    def detector_kind_catalog(include_live: bool = True) -> dict[str, Any]:
+        """Return the known detector-kind catalog, optionally enriched from live descriptors."""
+        return detector_archive.detector_kind_catalog(include_live=include_live)
+
+    @server.tool(name="detector_parameter_schema")
+    def detector_parameter_schema(unit_type: str, detector_kind: str) -> dict[str, Any]:
+        """Return the parameter schema for a detector unit type and kind."""
+        return detector_archive.detector_parameter_schema(unit_type, detector_kind)
+
+    @server.tool(name="detector_config_get")
+    def detector_config_get(detector_uid: str) -> dict[str, Any]:
+        """Return a redacted detector configuration snapshot."""
+        return detector_archive.detector_config_get(detector_uid)
+
+    @server.tool(name="detector_visual_elements")
+    def detector_visual_elements(detector_uid: str) -> dict[str, Any]:
+        """Return visual elements configured for a detector."""
+        return detector_archive.detector_visual_elements(detector_uid)
+
+    @server.tool(name="metadata_schema_catalog")
+    def metadata_schema_catalog() -> dict[str, Any]:
+        """Return known metadata schema and endpoint guidance."""
+        return detector_archive.metadata_schema_catalog()
+
+    @server.tool(name="metadata_sample_bounded")
+    def metadata_sample_bounded(
+        access_point: str,
+        timeout_s: float | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        """Pull a bounded metadata sample from a metadata access point."""
+        return detector_archive.metadata_sample_bounded(access_point, timeout_s=timeout_s, limit=limit)
+
+    @server.tool(name="archive_policy_get")
+    def archive_policy_get(camera_or_archive: str) -> dict[str, Any]:
+        """Return archive policy information for a camera or archive."""
+        return detector_archive.archive_policy_get(camera_or_archive)
+
+    @server.tool(name="archive_management_status")
+    def archive_management_status() -> dict[str, Any]:
+        """Return read-only archive management and health status."""
+        return detector_archive.archive_management_status()
+
+    @server.tool(name="archive_volume_probe")
+    def archive_volume_probe(path_or_volume_hint: str) -> dict[str, Any]:
+        """Probe archive volume information without formatting or mutating volumes."""
+        return detector_archive.archive_volume_probe(path_or_volume_hint)
+
+    @server.tool(name="analytics_fixture_report")
+    def analytics_fixture_report() -> dict[str, Any]:
+        """Report fixture readiness for detector and archive analytics workflows."""
+        return detector_archive.analytics_fixture_report()
 
 
 def register_view_tools(server: Any, view: Any) -> None:
@@ -590,6 +655,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5D read tools for layouts, maps, and videowalls.",
     )
+    parser.add_argument(
+        "--enable-detector-archive",
+        action="store_true",
+        help="Enable Phase 5E read tools for detectors, metadata, and archive policies.",
+    )
     return parser
 
 
@@ -640,6 +710,11 @@ def main() -> int:
         from axxon_mcp_view_objects import AxxonMcpViewObjects
 
         view_objects = AxxonMcpViewObjects()
+    detector_archive = None
+    if args.enable_detector_archive:
+        from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
+
+        detector_archive = AxxonMcpDetectorArchive()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -649,6 +724,7 @@ def main() -> int:
         alarms=alarms,
         alarm_mutator=alarm_mutator,
         view_objects=view_objects,
+        detector_archive=detector_archive,
     )
     server.run(transport=args.transport)
     return 0

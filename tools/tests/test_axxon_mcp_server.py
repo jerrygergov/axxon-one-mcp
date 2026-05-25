@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 from pathlib import Path
 import sys
 import unittest
@@ -107,6 +108,41 @@ class StubOperator:
         return [{"action": "plan", "plan_id": "plan-test"}]
 
 
+class StubDetectorArchive:
+    def detector_archive_connect_axxon_profile(self, profile: str = "env"):
+        return {"profile": profile, "mode": "read-only"}
+
+    def detector_kind_catalog(self, include_live: bool = True):
+        return {"include_live": include_live}
+
+    def detector_parameter_schema(self, unit_type: str, detector_kind: str):
+        return {"unit_type": unit_type, "detector_kind": detector_kind}
+
+    def detector_config_get(self, detector_uid: str):
+        return {"detector_uid": detector_uid}
+
+    def detector_visual_elements(self, detector_uid: str):
+        return {"detector_uid": detector_uid, "elements": []}
+
+    def metadata_schema_catalog(self):
+        return {"schemas": []}
+
+    def metadata_sample_bounded(self, access_point: str, timeout_s=None, limit=None):
+        return {"access_point": access_point, "timeout_s": timeout_s, "limit": limit}
+
+    def archive_policy_get(self, camera_or_archive: str):
+        return {"camera_or_archive": camera_or_archive}
+
+    def archive_management_status(self):
+        return {"status": "ok"}
+
+    def archive_volume_probe(self, path_or_volume_hint: str):
+        return {"path_or_volume_hint": path_or_volume_hint}
+
+    def analytics_fixture_report(self):
+        return {"fixtures": []}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_phase_one_tools_and_resources(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -187,6 +223,56 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(rolled["status"], "rolled_back")
         audit = server.resources["axxon://operator/audit-log"]()
         self.assertEqual(audit["entries"][0]["action"], "plan")
+
+    def test_create_server_registers_detector_archive_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        detector_archive_tools = {
+            "detector_archive_connect_axxon_profile",
+            "detector_kind_catalog",
+            "detector_parameter_schema",
+            "detector_config_get",
+            "detector_visual_elements",
+            "metadata_schema_catalog",
+            "metadata_sample_bounded",
+            "archive_policy_get",
+            "archive_management_status",
+            "archive_volume_probe",
+            "analytics_fixture_report",
+        }
+        operator_workflow_tools = {
+            "list_operator_workflows",
+            "plan_operator_workflow",
+            "apply_operator_plan",
+            "verify_operator_plan",
+            "rollback_operator_plan",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in detector_archive_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("detector_archive", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-detector-archive"])
+        self.assertTrue(args.enable_detector_archive)
+
+        server = module.create_server(
+            docs=StubDocs(),
+            detector_archive=StubDetectorArchive(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        self.assertLessEqual(detector_archive_tools, set(server.tools))
+        self.assertTrue(operator_workflow_tools.isdisjoint(server.tools))
+        self.assertEqual(
+            server.tools["detector_archive_connect_axxon_profile"]("env"),
+            {"profile": "env", "mode": "read-only"},
+        )
+        self.assertEqual(server.tools["detector_kind_catalog"](False)["include_live"], False)
+        self.assertEqual(
+            server.tools["detector_parameter_schema"]("AVDetector", "MotionDetection"),
+            {"unit_type": "AVDetector", "detector_kind": "MotionDetection"},
+        )
+        self.assertEqual(server.tools["metadata_sample_bounded"]("vmda", 2.5, 10)["limit"], 10)
+        self.assertEqual(server.tools["archive_volume_probe"]("/archive")["path_or_volume_hint"], "/archive")
 
     def test_create_server_registers_view_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
