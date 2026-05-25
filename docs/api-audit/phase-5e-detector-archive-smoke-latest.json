@@ -1,0 +1,4883 @@
+{
+  "started_at": "2026-05-25T19:42:41.642333+00:00",
+  "finished_at": "2026-05-25T19:43:13.431162+00:00",
+  "target": {
+    "host": "<demo-host>",
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>",
+    "username": "<demo-user>",
+    "password": "<redacted>",
+    "tls_cn": "<demo-tls-cn>"
+  },
+  "modes": {
+    "read_only": true,
+    "mutation": true,
+    "archive_maintenance_noop": true
+  },
+  "defaults": {
+    "metadata_sample_limit": 20,
+    "metadata_sample_timeout": 5.0,
+    "noop_volume_prefix": "codex-nonexistent-"
+  },
+  "summary": {
+    "PASS": 12,
+    "WARN": 3,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "connect",
+      "status": "PASS",
+      "elapsed_ms": 610,
+      "evidence": {
+        "connected": true,
+        "profile_name": "env",
+        "profile": {
+          "host": "<demo-host>",
+          "grpc_port": 20109,
+          "http_port": 8000,
+          "http_url": "http://<demo-host>",
+          "username": "<demo-user>",
+          "password_present": "<redacted>",
+          "tls_cn": "<demo-tls-cn>",
+          "ca": "<redacted-ca>",
+          "timeout": 10.0
+        },
+        "mode": "read-only"
+      }
+    },
+    {
+      "group": "analytics_fixture_report",
+      "status": "PASS",
+      "elapsed_ms": 9836,
+      "evidence": {
+        "status": "ok",
+        "tool": "analytics_fixture_report",
+        "fixtures": {
+          "global_tracker": {
+            "available": true,
+            "evidence": [
+              "hosts/Server/GlobalTracker.4",
+              "GlobalTracker",
+              "hosts/Server/GlobalTracker.4/GlobalTracker"
+            ]
+          },
+          "heatmap_builder": {
+            "available": true,
+            "evidence": [
+              "hosts/Server/HeatMapBuilder.0",
+              "HeatMapBuilder",
+              "hosts/Server/HeatMapBuilder.0/HeatMapBuilder"
+            ]
+          },
+          "realtime_recognizer": {
+            "available": false,
+            "evidence": []
+          },
+          "realtime_recognizer_external": {
+            "available": true,
+            "evidence": [
+              "RealtimeRecognizerExternal"
+            ]
+          },
+          "vmda_metadata": {
+            "available": true,
+            "evidence": [
+              "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.96/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.103/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.78/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.120/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.55/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.100/SourceEndpoint.vmda",
+              "hosts/Server/DetectorEx.1/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.90/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.101/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.102/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.74/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.94/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.95/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.98/SourceEndpoint.vmda",
+              "hosts/Server/AVDetector.42/SourceEndpoint.vmda"
+            ]
+          },
+          "appdata_detector": {
+            "available": true,
+            "evidence": [
+              "hosts/Server/AppDataDetector.6/EventSupplier",
+              "hosts/Server/AppDataDetector.21/EventSupplier",
+              "hosts/Server/AppDataDetector.13/EventSupplier",
+              "hosts/Server/AppDataDetector.22/EventSupplier",
+              "hosts/Server/AppDataDetector.11/EventSupplier",
+              "hosts/Server/AppDataDetector.11",
+              "AppDataDetector",
+              "hosts/Server/AppDataDetector.13",
+              "hosts/Server/AppDataDetector.14",
+              "hosts/Server/AppDataDetector.14/EventSupplier",
+              "hosts/Server/AppDataDetector.15",
+              "hosts/Server/AppDataDetector.15/EventSupplier",
+              "hosts/Server/AppDataDetector.16",
+              "hosts/Server/AppDataDetector.16/EventSupplier",
+              "hosts/Server/AppDataDetector.17",
+              "hosts/Server/AppDataDetector.17/EventSupplier",
+              "hosts/Server/AppDataDetector.18",
+              "hosts/Server/AppDataDetector.18/EventSupplier",
+              "hosts/Server/AppDataDetector.19",
+              "hosts/Server/AppDataDetector.19/EventSupplier",
+              "hosts/Server/AppDataDetector.2",
+              "hosts/Server/AppDataDetector.2/EventSupplier",
+              "hosts/Server/AppDataDetector.20",
+              "hosts/Server/AppDataDetector.20/EventSupplier",
+              "hosts/Server/AppDataDetector.21",
+              "hosts/Server/AppDataDetector.22",
+              "hosts/Server/AppDataDetector.27",
+              "hosts/Server/AppDataDetector.27/EventSupplier",
+              "hosts/Server/AppDataDetector.3",
+              "hosts/Server/AppDataDetector.3/EventSupplier",
+              "hosts/Server/AppDataDetector.4",
+              "hosts/Server/AppDataDetector.4/EventSupplier",
+              "hosts/Server/AppDataDetector.5",
+              "hosts/Server/AppDataDetector.5/EventSupplier",
+              "hosts/Server/AppDataDetector.6"
+            ]
+          },
+          "av_detector": {
+            "available": true,
+            "evidence": [
+              "hosts/Server/AVDetector.4/EventSupplier",
+              "hosts/Server/AVDetector.15/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.96/EventSupplier",
+              "hosts/Server/AVDetector.78/EventSupplier",
+              "hosts/Server/AVDetector.114/EventSupplier",
+              "hosts/Server/AVDetector.42/EventSupplier",
+              "hosts/Server/AVDetector.91/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.81/EventSupplier",
+              "hosts/Server/AVDetector.100/EventSupplier",
+              "hosts/Server/AVDetector.120/EventSupplier",
+              "hosts/Server/AVDetector.119/EventSupplier",
+              "hosts/Server/AVDetector.82/EventSupplier",
+              "hosts/Server/AVDetector.94/EventSupplier",
+              "hosts/Server/AVDetector.79/EventSupplier",
+              "hosts/Server/AVDetector.1/EventSupplier",
+              "hosts/Server/AVDetector.100/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.101/EventSupplier",
+              "hosts/Server/AVDetector.101/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.102/EventSupplier",
+              "hosts/Server/AVDetector.102/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.103/EventSupplier",
+              "hosts/Server/AVDetector.103/SourceEndpoint.mask",
+              "hosts/Server/AVDetector.112/EventSupplier",
+              "hosts/Server/AVDetector.1",
+              "AVDetector",
+              "hosts/Server/AVDetector.100",
+              "hosts/Server/AVDetector.101",
+              "hosts/Server/AVDetector.102",
+              "hosts/Server/AVDetector.103",
+              "hosts/Server/AVDetector.112",
+              "hosts/Server/AVDetector.114",
+              "hosts/Server/AVDetector.118",
+              "hosts/Server/AVDetector.118/EventSupplier",
+              "hosts/Server/AVDetector.119",
+              "hosts/Server/AVDetector.120",
+              "hosts/Server/AVDetector.15",
+              "hosts/Server/AVDetector.15/EventSupplier",
+              "hosts/Server/AVDetector.21",
+              "hosts/Server/AVDetector.21/EventSupplier",
+              "hosts/Server/AVDetector.34",
+              "hosts/Server/AVDetector.34/EventSupplier",
+              "hosts/Server/AVDetector.4",
+              "hosts/Server/AVDetector.42",
+              "hosts/Server/AVDetector.5",
+              "hosts/Server/AVDetector.5/EventSupplier",
+              "hosts/Server/AVDetector.50",
+              "hosts/Server/AVDetector.50/EventSupplier",
+              "hosts/Server/AVDetector.51",
+              "hosts/Server/AVDetector.51/EventSupplier",
+              "hosts/Server/AVDetector.55",
+              "hosts/Server/AVDetector.55/EventSupplier",
+              "hosts/Server/AVDetector.57",
+              "hosts/Server/AVDetector.57/EventSupplier",
+              "hosts/Server/AVDetector.58",
+              "hosts/Server/AVDetector.58/EventSupplier",
+              "hosts/Server/AVDetector.68",
+              "hosts/Server/AVDetector.68/EventSupplier",
+              "hosts/Server/AVDetector.72",
+              "hosts/Server/AVDetector.72/EventSupplier",
+              "hosts/Server/AVDetector.74",
+              "hosts/Server/AVDetector.74/EventSupplier",
+              "hosts/Server/AVDetector.76",
+              "hosts/Server/AVDetector.76/EventSupplier",
+              "hosts/Server/AVDetector.77",
+              "hosts/Server/AVDetector.77/EventSupplier",
+              "hosts/Server/AVDetector.78",
+              "hosts/Server/AVDetector.79",
+              "hosts/Server/AVDetector.80",
+              "hosts/Server/AVDetector.80/EventSupplier",
+              "hosts/Server/AVDetector.81",
+              "hosts/Server/AVDetector.82",
+              "hosts/Server/AVDetector.83",
+              "hosts/Server/AVDetector.83/EventSupplier",
+              "hosts/Server/AVDetector.89",
+              "hosts/Server/AVDetector.89/EventSupplier",
+              "hosts/Server/AVDetector.9",
+              "hosts/Server/AVDetector.9/EventSupplier",
+              "hosts/Server/AVDetector.90",
+              "hosts/Server/AVDetector.90/EventSupplier",
+              "hosts/Server/AVDetector.91",
+              "hosts/Server/AVDetector.91/EventSupplier",
+              "hosts/Server/AVDetector.93",
+              "hosts/Server/AVDetector.93/EventSupplier",
+              "hosts/Server/AVDetector.94",
+              "hosts/Server/AVDetector.95",
+              "hosts/Server/AVDetector.95/EventSupplier",
+              "hosts/Server/AVDetector.96",
+              "hosts/Server/AVDetector.97",
+              "hosts/Server/AVDetector.97/EventSupplier",
+              "hosts/Server/AVDetector.98",
+              "hosts/Server/AVDetector.98/EventSupplier",
+              "hosts/Server/AVDetector.99",
+              "hosts/Server/AVDetector.99/EventSupplier",
+              "hosts/Server/AVDetector.34/SourceEndpoint.humanBone"
+            ]
+          }
+        },
+        "available": [
+          "global_tracker",
+          "heatmap_builder",
+          "realtime_recognizer_external",
+          "vmda_metadata",
+          "appdata_detector",
+          "av_detector"
+        ],
+        "missing": [
+          "realtime_recognizer"
+        ],
+        "evidence": [
+          "list_units:AVDetector",
+          "list_units:AppDataDetector",
+          "load_inventory"
+        ],
+        "notes": [
+          "Observed fixtures can be live-verified by bounded read tools only.",
+          "Missing fixtures remain fixture-needed; this report does not build heatmaps or mutate analytics configuration."
+        ]
+      }
+    },
+    {
+      "group": "detector_kind_catalog",
+      "status": "PASS",
+      "elapsed_ms": 771,
+      "evidence": {
+        "status": "ok",
+        "tool": "detector_kind_catalog",
+        "include_live": true,
+        "by_unit_type": {
+          "AVDetector": [
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "AreaToArea_V2",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "BarcodeDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "BlipDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "BlurSegmentsDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "BrasletDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "ComeInZone",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "CrossOneLine",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "FightDetector_Roadar",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "FireDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "FloatingObjectsDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "GlowEstimateDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LongInZone",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LostObject",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LotsObjects",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LprDetector_Roadar",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LprDetector_RoadarArchive",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "LprDetector_RoadarParking",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "MaskingObject",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "MotionDetection",
+              "source_type": "Video",
+              "provenance": [
+                "known-catalog",
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "MoveInZone",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "NeuroCounter",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "NeuroTracker",
+              "source_type": "Video",
+              "provenance": [
+                "known-catalog",
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "NoiseAudioDetection",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "NullAudioDetection",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "ObjectPresenceDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "OccupancyDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "OutOfZone",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "PeopleCounter",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "PoseDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "PrivacyShieldDetector",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "QueueDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "RRTrafficAnalyzer",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "SceneDescription",
+              "source_type": "Video",
+              "provenance": [
+                "known-catalog",
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "SelfMaskSegmentDetector",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "SignalAudioDetection",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "SmokeDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "StopInZone",
+              "source_type": "Video",
+              "provenance": [
+                "live-unit"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "StoppedObjectDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "TamperingDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "VaCrowdDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "VaFaceDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "VehicleDetector_Roadar",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AVDetector",
+              "detector_kind": "WaterLevelDetector",
+              "source_type": "Video",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap"
+                ]
+              }
+            }
+          ],
+          "AppDataDetector": [
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "AbandonedObject",
+              "source_type": "TargetList",
+              "provenance": [
+                "known-catalog"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "ActiveShooterDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "AreaToArea_V2",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "ComeInZone",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "CrossOneLine",
+              "source_type": "TargetList",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "FaceTemperatureDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "GlobalTracker",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "HandRailDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "HandsUpDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "LongInZone",
+              "source_type": "TargetList",
+              "provenance": [
+                "known-catalog",
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "LostObject",
+              "source_type": "TargetList",
+              "provenance": [
+                "known-catalog"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "LotsObjects",
+              "source_type": "TargetList",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "MaskingObject",
+              "source_type": "TargetList",
+              "provenance": [
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "MoveInZone",
+              "source_type": "TargetList",
+              "provenance": [
+                "known-catalog",
+                "live-unit",
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "OneLineCrossing",
+              "source_type": "TargetList",
+              "provenance": [
+                "known-catalog"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "OutOfZone",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "PeopleCountDetectorBySkeleton",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "PeopleDistanceDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "RecumbentDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "SitDownDetector",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            },
+            {
+              "unit_type": "AppDataDetector",
+              "detector_kind": "StopInZone",
+              "source_type": "TargetList",
+              "provenance": [
+                "factory"
+              ],
+              "fixtures": {
+                "required": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ],
+                "missing": [
+                  "video_source_ap",
+                  "vmda_source_ap"
+                ]
+              }
+            }
+          ]
+        },
+        "count": 64
+      }
+    },
+    {
+      "group": "av_detector_schema",
+      "status": "PASS",
+      "elapsed_ms": 785,
+      "evidence": {
+        "status": "ok",
+        "tool": "detector_parameter_schema",
+        "unit_type": "AVDetector",
+        "detector_kind": "MotionDetection",
+        "source_type": "Video",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "display_name": {
+              "id": "display_name",
+              "path": "display_name",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Name",
+              "type": "string",
+              "category": "Object identification"
+            },
+            "enabled": {
+              "id": "enabled",
+              "path": "enabled",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Enable",
+              "type": "bool",
+              "category": "Object identification"
+            },
+            "detector": {
+              "id": "detector",
+              "path": "detector",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": false,
+              "name": "Type",
+              "type": "string",
+              "category": "Object identification"
+            },
+            "streaming_id": {
+              "id": "streaming_id",
+              "path": "streaming_id",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": true,
+              "name": "streaming_id",
+              "type": "string",
+              "category": "Object identification",
+              "enum": [
+                "hosts/Server/DeviceIpint.52/SourceEndpoint.video:0:0",
+                "hosts/Server/DeviceIpint.52/SourceEndpoint.video:0:1"
+              ],
+              "enum_choices": [
+                {
+                  "value": "hosts/Server/DeviceIpint.52/SourceEndpoint.video:0:0",
+                  "name": "Main stream"
+                },
+                {
+                  "value": "hosts/Server/DeviceIpint.52/SourceEndpoint.video:0:1",
+                  "name": "Second stream"
+                }
+              ]
+            },
+            "stream_index": {
+              "id": "stream_index",
+              "path": "stream_index",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Video stream",
+              "type": "string",
+              "category": "&2. Object features",
+              "enum": [
+                "0",
+                "1"
+              ],
+              "enum_choices": [
+                {
+                  "value": "0",
+                  "name": "Main stream"
+                },
+                {
+                  "value": "1",
+                  "name": "Second stream"
+                }
+              ]
+            },
+            "period": {
+              "id": "period",
+              "path": "period",
+              "value_kind": "value_int32",
+              "readonly": false,
+              "internal": true,
+              "name": "Period",
+              "type": "int32",
+              "category": "Object identification",
+              "range": {
+                "min_int": 0,
+                "max_int": 65535
+              }
+            },
+            "target_fps": {
+              "id": "target_fps",
+              "path": "target_fps",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Number of frames processed per second",
+              "type": "double",
+              "category": "Object identification",
+              "range": {
+                "min_double": 0.016,
+                "max_double": 100.0
+              }
+            },
+            "onlyKeyFrames": {
+              "id": "onlyKeyFrames",
+              "path": "onlyKeyFrames",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Decode key frames",
+              "type": "bool",
+              "category": "Object identification"
+            },
+            "DecoderMode": {
+              "id": "DecoderMode",
+              "path": "DecoderMode",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Decoder mode",
+              "type": "string",
+              "category": "Object identification",
+              "enum": [
+                "Auto",
+                "CPU",
+                "GPU",
+                "HuaweiNPU"
+              ],
+              "enum_choices": [
+                {
+                  "value": "Auto"
+                },
+                {
+                  "value": "CPU"
+                },
+                {
+                  "value": "GPU"
+                },
+                {
+                  "value": "HuaweiNPU"
+                }
+              ]
+            },
+            "EnableRecordingObjectsTracking": {
+              "id": "EnableRecordingObjectsTracking",
+              "path": "EnableRecordingObjectsTracking",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Record object trajectories",
+              "type": "bool",
+              "category": "&2. Object features"
+            },
+            "ShouldWriteMaskData": {
+              "id": "ShouldWriteMaskData",
+              "path": "ShouldWriteMaskData",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Record mask to archive",
+              "type": "bool",
+              "category": "&2. Object features"
+            },
+            "MaskObj": {
+              "id": "MaskObj",
+              "path": "MaskObj",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Motion mask",
+              "type": "bool",
+              "category": "Advanced settings"
+            },
+            "TrackingObj": {
+              "id": "TrackingObj",
+              "path": "TrackingObj",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Object tracking",
+              "type": "bool",
+              "category": "Advanced settings"
+            },
+            "TargetLifeEvent": {
+              "id": "TargetLifeEvent",
+              "path": "TargetLifeEvent",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Track lifespan",
+              "type": "bool",
+              "category": "Advanced settings"
+            },
+            "contrastSensitivity": {
+              "id": "contrastSensitivity",
+              "path": "contrastSensitivity",
+              "value_kind": "value_int32",
+              "readonly": false,
+              "internal": false,
+              "name": "Sensitivity: Contrast",
+              "type": "int32",
+              "category": "Basic settings",
+              "range": {
+                "min_int": 0,
+                "max_int": 20,
+                "default_int": 12
+              }
+            },
+            "sizeSensitivity": {
+              "id": "sizeSensitivity",
+              "path": "sizeSensitivity",
+              "value_kind": "value_int32",
+              "readonly": false,
+              "internal": false,
+              "name": "Sensitivity: Size",
+              "type": "int32",
+              "category": "Basic settings",
+              "range": {
+                "min_int": 0,
+                "max_int": 10,
+                "default_int": 9
+              }
+            },
+            "AlarmEndDelay": {
+              "id": "AlarmEndDelay",
+              "path": "AlarmEndDelay",
+              "value_kind": "value_int32",
+              "readonly": false,
+              "internal": false,
+              "name": "Alarm end delay",
+              "type": "int32",
+              "category": "Advanced settings",
+              "range": {
+                "min_int": 0,
+                "max_int": 86400,
+                "default_int": 10
+              }
+            },
+            "CameraPosition": {
+              "id": "CameraPosition",
+              "path": "CameraPosition",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Camera position",
+              "type": "string",
+              "category": "Advanced settings",
+              "enum": [
+                "Wall",
+                "Ceiling"
+              ],
+              "enum_choices": [
+                {
+                  "value": "Wall",
+                  "name": "Wall"
+                },
+                {
+                  "value": "Ceiling",
+                  "name": "Ceiling"
+                }
+              ]
+            },
+            "event_types": {
+              "id": "event_types",
+              "path": "event_types",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": true,
+              "type": "string"
+            },
+            "input": {
+              "id": "input",
+              "path": "input",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": true,
+              "name": "Input type",
+              "type": "string",
+              "category": "Object identification",
+              "enum": [
+                "Video"
+              ],
+              "enum_choices": [
+                {
+                  "value": "Video"
+                }
+              ]
+            }
+          }
+        },
+        "visual_elements": [],
+        "provenance": [
+          "live-unit"
+        ],
+        "fixtures": {
+          "required": [
+            "video_source_ap"
+          ],
+          "missing": [
+            "video_source_ap"
+          ]
+        }
+      }
+    },
+    {
+      "group": "appdata_detector_schema",
+      "status": "PASS",
+      "elapsed_ms": 778,
+      "evidence": {
+        "status": "ok",
+        "tool": "detector_parameter_schema",
+        "unit_type": "AppDataDetector",
+        "detector_kind": "MoveInZone",
+        "source_type": "TargetList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "display_name": {
+              "id": "display_name",
+              "path": "display_name",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Name",
+              "type": "string",
+              "category": "Object identification"
+            },
+            "enabled": {
+              "id": "enabled",
+              "path": "enabled",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Enable",
+              "type": "bool",
+              "category": "Object identification"
+            },
+            "detector": {
+              "id": "detector",
+              "path": "detector",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": false,
+              "name": "Type",
+              "type": "string",
+              "category": "Object identification"
+            },
+            "streaming_id": {
+              "id": "streaming_id",
+              "path": "streaming_id",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": true,
+              "name": "streaming_id",
+              "type": "string",
+              "category": "Object identification"
+            },
+            "MinObjWidth": {
+              "id": "MinObjWidth",
+              "path": "MinObjWidth",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Minimum object width",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.05,
+                "max_double": 100.0,
+                "default_double": 0.1
+              }
+            },
+            "MinObjHeight": {
+              "id": "MinObjHeight",
+              "path": "MinObjHeight",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Minimum object height",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.05,
+                "max_double": 100.0,
+                "default_double": 0.1
+              }
+            },
+            "MaxObjWidth": {
+              "id": "MaxObjWidth",
+              "path": "MaxObjWidth",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Maximum object width",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.05,
+                "max_double": 100.0,
+                "default_double": 100.0
+              }
+            },
+            "MaxObjHeight": {
+              "id": "MaxObjHeight",
+              "path": "MaxObjHeight",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Maximum object height",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.05,
+                "max_double": 100.0,
+                "default_double": 100.0
+              }
+            },
+            "ObjectRelaxationOffsetX": {
+              "id": "ObjectRelaxationOffsetX",
+              "path": "ObjectRelaxationOffsetX",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "X-axis offset",
+              "type": "double",
+              "category": "Advanced settings",
+              "range": {
+                "min_double": 1.0,
+                "max_double": 40.0,
+                "default_double": 15.0
+              }
+            },
+            "ObjectRelaxationOffsetY": {
+              "id": "ObjectRelaxationOffsetY",
+              "path": "ObjectRelaxationOffsetY",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Y-axis offset",
+              "type": "double",
+              "category": "Advanced settings",
+              "range": {
+                "min_double": 1.0,
+                "max_double": 40.0,
+                "default_double": 10.0
+              }
+            },
+            "MinSpeed": {
+              "id": "MinSpeed",
+              "path": "MinSpeed",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Minimum speed",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.0,
+                "max_double": 500.0,
+                "default_double": 0.0
+              }
+            },
+            "MaxSpeed": {
+              "id": "MaxSpeed",
+              "path": "MaxSpeed",
+              "value_kind": "value_double",
+              "readonly": false,
+              "internal": false,
+              "name": "Maximum speed",
+              "type": "double",
+              "category": "Basic settings",
+              "range": {
+                "min_double": 0.0,
+                "max_double": 500.0,
+                "default_double": 500.0
+              }
+            },
+            "ObjectClass": {
+              "id": "ObjectClass",
+              "path": "ObjectClass",
+              "value_kind": "value_string",
+              "readonly": false,
+              "internal": false,
+              "name": "Object class",
+              "type": "string",
+              "category": "Basic settings",
+              "enum": [
+                "All classes",
+                "Car",
+                "Human"
+              ],
+              "enum_choices": [
+                {
+                  "value": "All classes",
+                  "name": "All classes"
+                },
+                {
+                  "value": "Car",
+                  "name": "Vehicle"
+                },
+                {
+                  "value": "Human",
+                  "name": "Person"
+                }
+              ]
+            },
+            "AlarmObjectCount": {
+              "id": "AlarmObjectCount",
+              "path": "AlarmObjectCount",
+              "value_kind": "value_int32",
+              "readonly": false,
+              "internal": false,
+              "name": "Number of alarm objects",
+              "type": "int32",
+              "category": "Basic settings",
+              "range": {
+                "min_int": 1,
+                "max_int": 100,
+                "default_int": 2
+              }
+            },
+            "EnableGroupEvent": {
+              "id": "EnableGroupEvent",
+              "path": "EnableGroupEvent",
+              "value_kind": "value_bool",
+              "readonly": false,
+              "internal": false,
+              "name": "Trigger on group of objects",
+              "type": "bool",
+              "category": "Basic settings"
+            },
+            "event_types": {
+              "id": "event_types",
+              "path": "event_types",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": true,
+              "type": "string"
+            },
+            "input": {
+              "id": "input",
+              "path": "input",
+              "value_kind": "value_string",
+              "readonly": true,
+              "internal": true,
+              "name": "Input type",
+              "type": "string",
+              "category": "Object identification",
+              "enum": [
+                "TargetList"
+              ],
+              "enum_choices": [
+                {
+                  "value": "TargetList"
+                }
+              ]
+            }
+          }
+        },
+        "visual_elements": [],
+        "provenance": [
+          "live-unit"
+        ],
+        "fixtures": {
+          "required": [
+            "video_source_ap",
+            "vmda_source_ap"
+          ],
+          "missing": [
+            "video_source_ap",
+            "vmda_source_ap"
+          ]
+        }
+      }
+    },
+    {
+      "group": "detector_config_get",
+      "status": "PASS",
+      "elapsed_ms": 224,
+      "evidence": {
+        "status": "ok",
+        "tool": "detector_config_get",
+        "detector_uid": "hosts/Server/AVDetector.4",
+        "unit_type": "AVDetector",
+        "detector_kind": "NeuroTracker",
+        "source_type": "Video",
+        "config": {
+          "uid": "hosts/Server/AVDetector.4",
+          "display_id": "4",
+          "type": "AVDetector",
+          "display_name": "Neurotracker",
+          "access_point": "hosts/Server/AVDetector.4/EventSupplier",
+          "properties": [
+            {
+              "id": "display_name",
+              "name": "Name",
+              "type": "string",
+              "description": "Detection object name.",
+              "category": "Object identification",
+              "value_string": "Neurotracker"
+            },
+            {
+              "id": "enabled",
+              "name": "Enable",
+              "type": "bool",
+              "description": "Use the selected detection algorithm",
+              "category": "Object identification",
+              "value_bool": false
+            },
+            {
+              "id": "detector",
+              "name": "Type",
+              "type": "string",
+              "readonly": true,
+              "description": "Detector type.",
+              "display_value": "Neural tracker",
+              "category": "Object identification",
+              "value_string": "NeuroTracker"
+            },
+            {
+              "id": "streaming_id",
+              "name": "streaming_id",
+              "type": "string",
+              "internal": true,
+              "category": "Object identification",
+              "value_string": "hosts/Server/VideoDecoder.6/SourceEndpoint.video",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "name": "Main stream",
+                    "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0"
+                  },
+                  {
+                    "name": "Second stream",
+                    "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:1"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "stream_index",
+              "name": "Video stream",
+              "type": "string",
+              "description": "Select a video stream for detection.",
+              "category": "&2. Object features",
+              "value_string": "0",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "name": "Main stream",
+                    "value_string": "0"
+                  },
+                  {
+                    "name": "Second stream",
+                    "value_string": "1"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "period",
+              "name": "Period",
+              "type": "int32",
+              "description": "Time period in ms, after which the next frame will be processed. At \"0\", each of them will be processed.",
+              "internal": true,
+              "category": "Object identification",
+              "value_int32": 201,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 65535
+              }
+            },
+            {
+              "id": "target_fps",
+              "name": "Number of frames processed per second",
+              "type": "double",
+              "category": "Object identification",
+              "value_double": 5.0,
+              "range_constraint": {
+                "min_double": 0.016,
+                "max_double": 100.0
+              }
+            },
+            {
+              "id": "DecoderMode",
+              "name": "Decoder mode",
+              "type": "string",
+              "description": "Device for video decoding",
+              "category": "Object identification",
+              "value_string": "GPU",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "value_string": "Auto"
+                  },
+                  {
+                    "value_string": "CPU"
+                  },
+                  {
+                    "value_string": "GPU"
+                  },
+                  {
+                    "value_string": "HuaweiNPU"
+                  }
+                ],
+                "default_string": "GPU"
+              }
+            },
+            {
+              "id": "EnableRecordingObjectsTracking",
+              "name": "Record object trajectories",
+              "type": "bool",
+              "description": "Enable recording of object trajectories to the corresponding database. Object trajectories are used for Search in archive.",
+              "category": "&2. Object features",
+              "value_bool": true
+            },
+            {
+              "id": "TargetLifeEvent",
+              "name": "Track lifespan",
+              "type": "bool",
+              "description": "Show track lifespan for objects in seconds.",
+              "category": "Advanced settings",
+              "value_bool": false
+            },
+            {
+              "id": "threshold",
+              "name": "Detection threshold",
+              "type": "double",
+              "description": "Specify the threshold value, at which detection is triggered.",
+              "category": "Basic settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_double": 15.0,
+              "range_constraint": {
+                "min_double": 0.05,
+                "max_double": 100.0,
+                "default_double": 30.0
+              }
+            },
+            {
+              "id": "CameraPosition",
+              "name": "Camera position",
+              "type": "string",
+              "description": "Select the camera position from the list.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": "Wall",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "name": "Wall",
+                    "value_string": "Wall"
+                  },
+                  {
+                    "name": "Ceiling",
+                    "value_string": "Ceiling"
+                  }
+                ],
+                "default_string": "Wall"
+              }
+            },
+            {
+              "id": "mode",
+              "name": "Neural tracker mode",
+              "type": "string",
+              "description": "Neural tracker operating mode.",
+              "category": "Basic settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": "GPU0",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "name": "CPU",
+                    "value_string": "CPU"
+                  },
+                  {
+                    "name": "Nvidia GPU 0",
+                    "value_string": "GPU0"
+                  },
+                  {
+                    "name": "Nvidia GPU 1",
+                    "value_string": "GPU1"
+                  },
+                  {
+                    "name": "Nvidia GPU 2",
+                    "value_string": "GPU2"
+                  },
+                  {
+                    "name": "Nvidia GPU 3",
+                    "value_string": "GPU3"
+                  },
+                  {
+                    "name": "Intel NCS (not supported)",
+                    "value_string": "Movidius"
+                  },
+                  {
+                    "name": "Intel HDDL (not supported)",
+                    "value_string": "HDDL"
+                  },
+                  {
+                    "name": "Intel Multi-GPU",
+                    "value_string": "IntelMultiGPU"
+                  },
+                  {
+                    "name": "Intel GPU 0",
+                    "value_string": "IntelGPU0"
+                  },
+                  {
+                    "name": "Intel GPU 1",
+                    "value_string": "IntelGPU1"
+                  },
+                  {
+                    "name": "Intel GPU 2",
+                    "value_string": "IntelGPU2"
+                  },
+                  {
+                    "name": "Intel GPU 3",
+                    "value_string": "IntelGPU3"
+                  },
+                  {
+                    "name": "Huawei NPU",
+                    "value_string": "HuaweiNPU"
+                  }
+                ],
+                "default_string": "CPU"
+              }
+            },
+            {
+              "id": "ANNModelFile",
+              "name": "Neural network file",
+              "type": "FilePathType",
+              "description": "Specify the path to the file of the neural network.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "file_path": {}
+                },
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": "C:/Program Files/Common Files/AxxonSoft/DetectorPack/NeuroSDK/GeneralNMHumanAndVehicle_Medium_v2.0_onnx.ann"
+            },
+            {
+              "id": "objectType",
+              "name": "Detection neural network",
+              "type": "string",
+              "description": "Select a detection neural network from the list.\nNeural networks are named according to the objects they detect.\nThe names may indicate the size of the neural network.\nThe size (Nano, Medium, Large) of the neural network indicates the amount of resources consumed.\nThe larger the neural network, the higher the accuracy.",
+              "category": "Basic settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": "humanAndVehicle_Medium",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "name": "Person",
+                    "value_string": "human"
+                  },
+                  {
+                    "name": "Person (top-down view)",
+                    "value_string": "humanTopView"
+                  },
+                  {
+                    "name": "Person (top-down view Nano)",
+                    "value_string": "humanTopViewNano"
+                  },
+                  {
+                    "name": "Person (top-down view Medium)",
+                    "value_string": "humanTopViewMedium"
+                  },
+                  {
+                    "name": "Person (top-down view Large)",
+                    "value_string": "humanTopViewLarge"
+                  },
+                  {
+                    "name": "Vehicle",
+                    "value_string": "car"
+                  },
+                  {
+                    "name": "Person and vehicle (Nano)",
+                    "value_string": "humanAndVehicle_Nano"
+                  },
+                  {
+                    "name": "Person and vehicle (Medium)",
+                    "value_string": "humanAndVehicle_Medium"
+                  },
+                  {
+                    "name": "Person and vehicle (Large)",
+                    "value_string": "humanAndVehicle_Large"
+                  }
+                ],
+                "default_string": "human"
+              }
+            },
+            {
+              "id": "filterEnable",
+              "name": "Neural filter",
+              "type": "bool",
+              "description": "Enable the neural filter.",
+              "category": "Neural network filter",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "filterANNModelFile",
+              "name": "Neural filter file",
+              "type": "FilePathType",
+              "description": "Specify the path to the neural filter file.",
+              "category": "Neural network filter",
+              "attributes": [
+                {
+                  "file_path": {}
+                },
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": ""
+            },
+            {
+              "id": "allowedLabels",
+              "name": "Selected object classes",
+              "type": "EditableString",
+              "description": "Specify the number values for object classes separated by a spaced comma.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_string": ""
+            },
+            {
+              "id": "recognitionEnable",
+              "name": "Similitude search",
+              "type": "bool",
+              "description": "This parameter enables/disables the algorithm of similitude search.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "reportTimeout",
+              "name": "Time of processing similitude tracks (sec)",
+              "type": "int32",
+              "description": "Specify the time (in seconds) required to process the track for the algorithm of similitude search. The recommended value must exceed the average lifespan of a track. The higher the value, the more accurate the result.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 3600,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "trackRetentionTime",
+              "name": "Track retention time (sec)",
+              "type": "double",
+              "description": "Specify the track retention time.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_double": 1.0,
+              "range_constraint": {
+                "min_double": 0.3,
+                "max_double": 1000.0,
+                "default_double": 0.7
+              }
+            },
+            {
+              "id": "numOfFramesToAppear",
+              "name": "Minimum number of detection triggers",
+              "type": "int32",
+              "description": "Specify the minimum number of detection triggers to display the track.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 5,
+              "range_constraint": {
+                "min_int": 2,
+                "max_int": 100,
+                "default_int": 6
+              }
+            },
+            {
+              "id": "hideStillObjects",
+              "name": "Hide static objects",
+              "type": "bool",
+              "description": "Hide static objects from the detection area.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "hideStillObjectsSensitivity",
+              "name": "Sensitivity of excluding static objects",
+              "type": "double",
+              "description": "The higher the value, the less sensitive is the algorithm to motion.",
+              "category": "Advanced settings",
+              "value_double": 25.0,
+              "range_constraint": {
+                "min_double": 0.0,
+                "max_double": 100.0,
+                "default_double": 25.0
+              }
+            },
+            {
+              "id": "hideStillObjectsPeriod",
+              "name": "Time period of excluding static objects",
+              "type": "int32",
+              "description": "Specify the period of time in seconds, after which static objects will be no longer detected.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 86400,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "trackLongStillObjectsOnly",
+              "name": "Hide moving objects",
+              "type": "bool",
+              "description": "Hide moving objects from the detection area.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "useScanningWindow",
+              "name": "Scanning mode",
+              "type": "bool",
+              "description": "Enable the scanning mode.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "scanningWindowWidth",
+              "name": "Scanning window width",
+              "type": "int32",
+              "description": "Specify the width of the scanning window.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 10000,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "scanningWindowHeight",
+              "name": "Scanning window height",
+              "type": "int32",
+              "description": "Specify the height of the scanning window.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 10000,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "scanningWindowStepWidth",
+              "name": "Scanning window step width",
+              "type": "int32",
+              "description": "Specify the width of the scanning window step.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 10000,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "scanningWindowStepHeight",
+              "name": "Scanning window step height",
+              "type": "int32",
+              "description": "Specify the height of the scanning window step.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_int32": 0,
+              "range_constraint": {
+                "min_int": 0,
+                "max_int": 10000,
+                "default_int": 0
+              }
+            },
+            {
+              "id": "int8Mode",
+              "name": "Model quantization",
+              "type": "bool",
+              "description": "The parameter enables/disables network quantization. This allows to alleviate the network, use less accelerator computing power, but also slightly affects detection quality. This parameter works only with GPU mode enabled.",
+              "category": "Advanced settings",
+              "attributes": [
+                {
+                  "device_property": {}
+                }
+              ],
+              "value_bool": false
+            },
+            {
+              "id": "event_types",
+              "type": "string",
+              "readonly": true,
+              "internal": true,
+              "value_string": "ObjectAttributesEvent:DetectorOnePhaseEventType,ObjectDescriptorEvent:DetectorOnePhaseEventType,TargetList:DetectorPeriodicalEventType"
+            },
+            {
+              "id": "input",
+              "name": "Input type",
+              "type": "string",
+              "readonly": true,
+              "internal": true,
+              "category": "Object identification",
+              "value_string": "Video",
+              "enum_constraint": {
+                "items": [
+                  {
+                    "value_string": "Video",
+                    "properties": [
+                      {
+                        "id": "detector",
+                        "name": "Type",
+                        "type": "string",
+                        "readonly": true,
+                        "description": "Detector type.",
+                        "display_value": "Neural tracker",
+                        "category": "Object identification",
+                        "value_string": "NeuroTracker"
+                      },
+                      {
+                        "id": "camera_ref",
+                        "name": "Camera reference",
+                        "type": "string",
+                        "category": "Object identification",
+                        "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0",
+                        "enum_constraint": {
+                          "items": [
+                            {
+                              "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0",
+                              "properties": [
+                                {
+                                  "id": "streaming_id",
+                                  "name": "streaming_id",
+                                  "type": "string",
+                                  "internal": true,
+                                  "category": "Object identification",
+                                  "value_string": "hosts/Server/VideoDecoder.6/SourceEndpoint.video",
+                                  "enum_constraint": {
+                                    "items": [
+                                      {
+                                        "name": "Main stream",
+                                        "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0"
+                                      },
+                                      {
+                                        "name": "Second stream",
+                                        "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:1"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "factory": [
+            {
+              "type": "VisualElement",
+              "properties": [
+                {
+                  "id": "element_type",
+                  "type": "string",
+                  "value_string": "RegionOfIgnoring",
+                  "enum_constraint": {
+                    "items": [
+                      {
+                        "name": "Ignore area",
+                        "traits": [
+                          {
+                            "id": "areaType",
+                            "type": "string",
+                            "value_string": "areaOfIgnore"
+                          }
+                        ],
+                        "value_string": "RegionOfIgnoring",
+                        "properties": [
+                          {
+                            "id": "polyline",
+                            "name": "Ignore area",
+                            "type": "SimplePolygon",
+                            "description": "Area for ignoring detection triggering."
+                          },
+                          {
+                            "id": "minimum_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 0
+                          },
+                          {
+                            "id": "maximum_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 30
+                          },
+                          {
+                            "id": "minimum_points_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 0
+                          },
+                          {
+                            "id": "maximum_points_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 100
+                          },
+                          {
+                            "id": "is_filled",
+                            "type": "bool",
+                            "readonly": true,
+                            "internal": true,
+                            "value_bool": true
+                          }
+                        ]
+                      },
+                      {
+                        "name": "Detection area (polygon)",
+                        "traits": [
+                          {
+                            "id": "areaType",
+                            "type": "string",
+                            "value_string": "areaOfInterest"
+                          }
+                        ],
+                        "value_string": "regionOfInterest",
+                        "properties": [
+                          {
+                            "id": "polyline",
+                            "name": "Detection area (polygon)",
+                            "type": "SimplePolygon",
+                            "description": "Polygonal area for detection triggering."
+                          },
+                          {
+                            "id": "minimum_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 0
+                          },
+                          {
+                            "id": "maximum_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 30
+                          },
+                          {
+                            "id": "minimum_points_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 0
+                          },
+                          {
+                            "id": "maximum_points_count",
+                            "type": "int32",
+                            "readonly": true,
+                            "internal": true,
+                            "value_int32": 100
+                          },
+                          {
+                            "id": "is_filled",
+                            "type": "bool",
+                            "readonly": true,
+                            "internal": true,
+                            "value_bool": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "AppDataDetector",
+              "properties": [
+                {
+                  "id": "display_name",
+                  "name": "Name",
+                  "type": "string",
+                  "description": "Detection object name.",
+                  "value_string": ""
+                },
+                {
+                  "id": "detector",
+                  "name": "Type",
+                  "type": "string",
+                  "description": "Detector type.",
+                  "value_string": "",
+                  "enum_constraint": {
+                    "items": [
+                      {
+                        "name": "Line crossing",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "CrossOneLine"
+                      },
+                      {
+                        "name": "Loitering in area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "LongInZone"
+                      },
+                      {
+                        "name": "Stop in area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "StopInZone"
+                      },
+                      {
+                        "name": "Track masking",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector,Mask,PrivacyDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "MaskingObject"
+                      },
+                      {
+                        "name": "Motion in area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "MoveInZone"
+                      },
+                      {
+                        "name": "Entrance in area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "ComeInZone"
+                      },
+                      {
+                        "name": "Exit from area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "OutOfZone"
+                      },
+                      {
+                        "name": "Multiple objects",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "LotsObjects"
+                      },
+                      {
+                        "name": "Move from area to area",
+                        "traits": [
+                          {
+                            "id": "input",
+                            "type": "string",
+                            "value_string": "TargetList"
+                          },
+                          {
+                            "id": "detectorsGroup",
+                            "type": "string",
+                            "value_string": "SituationDetector"
+                          },
+                          {
+                            "id": "detectorsVisualGroup",
+                            "type": "string",
+                            "display_value": "Category: Other",
+                            "value_string": "Others"
+                          }
+                        ],
+                        "value_string": "AreaToArea_V2"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "streaming_id",
+                  "name": "streaming_id",
+                  "type": "string",
+                  "internal": true,
+                  "value_string": "",
+                  "enum_constraint": {}
+                },
+                {
+                  "id": "input",
+                  "name": "Input type",
+                  "type": "string",
+                  "internal": true,
+                  "value_string": "",
+                  "enum_constraint": {
+                    "items": [
+                      {
+                        "value_string": "TargetList",
+                        "properties": [
+                          {
+                            "id": "detector",
+                            "name": "Type",
+                            "type": "string",
+                            "description": "Detector type.",
+                            "internal": true,
+                            "value_string": ""
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "status": "UNIT_STATUS_INACTIVE",
+          "opaque_params": [
+            {
+              "id": "Guid",
+              "type": "string",
+              "value_string": "b5494793-9850-48d6-8a92-3c58f1d89705"
+            },
+            {
+              "id": "last_modification_time",
+              "type": "string",
+              "value_string": "20260416T120707.783616"
+            }
+          ],
+          "traits": [
+            {
+              "id": "input",
+              "type": "string",
+              "value_string": "Video"
+            },
+            {
+              "id": "detectorsGroup",
+              "type": "string",
+              "value_string": "Tracker,FeatureExtractor,AIDetector"
+            },
+            {
+              "id": "detectorsVisualGroup",
+              "type": "string",
+              "display_value": "Category: Trackers",
+              "value_string": "TrackingDetectors"
+            },
+            {
+              "id": "camera_ref",
+              "type": "string",
+              "value_string": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0"
+            },
+            {
+              "id": "detectorsGroup",
+              "name": "Detections group",
+              "type": "string",
+              "readonly": true,
+              "internal": true,
+              "category": "Object identification",
+              "value_string": "Tracker,FeatureExtractor,AIDetector"
+            },
+            {
+              "id": "detectorsVisualGroup",
+              "name": "Category: Trackers",
+              "type": "string",
+              "readonly": true,
+              "internal": true,
+              "category": "Object identification",
+              "value_string": "TrackingDetectors"
+            }
+          ],
+          "config_name": "hosts/Server/AVDetector.4",
+          "config_etag": "E78E05636DB9757E62D44625689763F5BD1D207C",
+          "reset_operations": [
+            {
+              "id": "RESET_VISUAL_SETTINGS",
+              "display_name": "Reset visual elements to default"
+            },
+            {
+              "id": "RESET_CONFIG_TO_DEFAULT",
+              "display_name": "Reset configuration to default"
+            }
+          ],
+          "property_category": {
+            "categories": [
+              {
+                "name": "&2. Object features"
+              },
+              {
+                "name": "Object identification"
+              },
+              {
+                "name": "Basic settings"
+              },
+              {
+                "name": "Advanced settings"
+              },
+              {
+                "name": "Neural network filter"
+              }
+            ]
+          }
+        },
+        "writable_parameters": [
+          {
+            "id": "display_name",
+            "path": "display_name",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "Neurotracker",
+            "name": "Name",
+            "type": "string",
+            "category": "Object identification"
+          },
+          {
+            "id": "enabled",
+            "path": "enabled",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Enable",
+            "type": "bool",
+            "category": "Object identification"
+          },
+          {
+            "id": "stream_index",
+            "path": "stream_index",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "0",
+            "name": "Video stream",
+            "type": "string",
+            "category": "&2. Object features"
+          },
+          {
+            "id": "target_fps",
+            "path": "target_fps",
+            "value_kind": "value_double",
+            "readonly": false,
+            "internal": false,
+            "value": 5.0,
+            "name": "Number of frames processed per second",
+            "type": "double",
+            "category": "Object identification"
+          },
+          {
+            "id": "DecoderMode",
+            "path": "DecoderMode",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "GPU",
+            "name": "Decoder mode",
+            "type": "string",
+            "category": "Object identification"
+          },
+          {
+            "id": "EnableRecordingObjectsTracking",
+            "path": "EnableRecordingObjectsTracking",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": true,
+            "name": "Record object trajectories",
+            "type": "bool",
+            "category": "&2. Object features"
+          },
+          {
+            "id": "TargetLifeEvent",
+            "path": "TargetLifeEvent",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Track lifespan",
+            "type": "bool",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "threshold",
+            "path": "threshold",
+            "value_kind": "value_double",
+            "readonly": false,
+            "internal": false,
+            "value": 15.0,
+            "name": "Detection threshold",
+            "type": "double",
+            "category": "Basic settings"
+          },
+          {
+            "id": "CameraPosition",
+            "path": "CameraPosition",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "Wall",
+            "name": "Camera position",
+            "type": "string",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "mode",
+            "path": "mode",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "GPU0",
+            "name": "Neural tracker mode",
+            "type": "string",
+            "category": "Basic settings"
+          },
+          {
+            "id": "ANNModelFile",
+            "path": "ANNModelFile",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "C:/Program Files/Common Files/AxxonSoft/DetectorPack/NeuroSDK/GeneralNMHumanAndVehicle_Medium_v2.0_onnx.ann",
+            "name": "Neural network file",
+            "type": "FilePathType",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "objectType",
+            "path": "objectType",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "humanAndVehicle_Medium",
+            "name": "Detection neural network",
+            "type": "string",
+            "category": "Basic settings"
+          },
+          {
+            "id": "filterEnable",
+            "path": "filterEnable",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Neural filter",
+            "type": "bool",
+            "category": "Neural network filter"
+          },
+          {
+            "id": "filterANNModelFile",
+            "path": "filterANNModelFile",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "",
+            "name": "Neural filter file",
+            "type": "FilePathType",
+            "category": "Neural network filter"
+          },
+          {
+            "id": "allowedLabels",
+            "path": "allowedLabels",
+            "value_kind": "value_string",
+            "readonly": false,
+            "internal": false,
+            "value": "",
+            "name": "Selected object classes",
+            "type": "EditableString",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "recognitionEnable",
+            "path": "recognitionEnable",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Similitude search",
+            "type": "bool",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "reportTimeout",
+            "path": "reportTimeout",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Time of processing similitude tracks (sec)",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "trackRetentionTime",
+            "path": "trackRetentionTime",
+            "value_kind": "value_double",
+            "readonly": false,
+            "internal": false,
+            "value": 1.0,
+            "name": "Track retention time (sec)",
+            "type": "double",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "numOfFramesToAppear",
+            "path": "numOfFramesToAppear",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 5,
+            "name": "Minimum number of detection triggers",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "hideStillObjects",
+            "path": "hideStillObjects",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Hide static objects",
+            "type": "bool",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "hideStillObjectsSensitivity",
+            "path": "hideStillObjectsSensitivity",
+            "value_kind": "value_double",
+            "readonly": false,
+            "internal": false,
+            "value": 25.0,
+            "name": "Sensitivity of excluding static objects",
+            "type": "double",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "hideStillObjectsPeriod",
+            "path": "hideStillObjectsPeriod",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Time period of excluding static objects",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "trackLongStillObjectsOnly",
+            "path": "trackLongStillObjectsOnly",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Hide moving objects",
+            "type": "bool",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "useScanningWindow",
+            "path": "useScanningWindow",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Scanning mode",
+            "type": "bool",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "scanningWindowWidth",
+            "path": "scanningWindowWidth",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Scanning window width",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "scanningWindowHeight",
+            "path": "scanningWindowHeight",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Scanning window height",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "scanningWindowStepWidth",
+            "path": "scanningWindowStepWidth",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Scanning window step width",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "scanningWindowStepHeight",
+            "path": "scanningWindowStepHeight",
+            "value_kind": "value_int32",
+            "readonly": false,
+            "internal": false,
+            "value": 0,
+            "name": "Scanning window step height",
+            "type": "int32",
+            "category": "Advanced settings"
+          },
+          {
+            "id": "int8Mode",
+            "path": "int8Mode",
+            "value_kind": "value_bool",
+            "readonly": false,
+            "internal": false,
+            "value": false,
+            "name": "Model quantization",
+            "type": "bool",
+            "category": "Advanced settings"
+          }
+        ],
+        "visual_elements": [],
+        "snapshot_metadata": {
+          "detector_uid": "hosts/Server/AVDetector.4",
+          "unit_type": "AVDetector",
+          "detector_kind": "NeuroTracker",
+          "config_source": "configuration_service.ListUnits",
+          "rollback_key": "detector_config:hosts/Server/AVDetector.4"
+        }
+      }
+    },
+    {
+      "group": "detector_visual_elements",
+      "status": "PASS",
+      "elapsed_ms": 209,
+      "evidence": {
+        "status": "ok",
+        "tool": "detector_visual_elements",
+        "detector_uid": "hosts/Server/AVDetector.4",
+        "unit_type": "AVDetector",
+        "detector_kind": "NeuroTracker",
+        "source_type": "Video",
+        "count": 0,
+        "visual_elements": [],
+        "snapshot_metadata": {
+          "detector_uid": "hosts/Server/AVDetector.4",
+          "unit_type": "AVDetector",
+          "detector_kind": "NeuroTracker",
+          "config_source": "configuration_service.ListUnits",
+          "rollback_key": "detector_config:hosts/Server/AVDetector.4"
+        }
+      }
+    },
+    {
+      "group": "metadata_schema_catalog",
+      "status": "PASS",
+      "elapsed_ms": 1401,
+      "evidence": {
+        "status": "ok",
+        "tool": "metadata_schema_catalog",
+        "schema_source": [
+          "proto-descriptor",
+          "fallback"
+        ],
+        "schemas": {
+          "PullMetadataResponse": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "sample",
+                "type": "MetadataSample",
+                "repeated": false,
+                "oneof": "data"
+              },
+              {
+                "name": "heartbeat",
+                "type": "HeartBeat",
+                "repeated": false,
+                "oneof": "data"
+              },
+              {
+                "name": "config_update",
+                "type": "StreamConfig",
+                "repeated": false,
+                "oneof": "data"
+              }
+            ]
+          },
+          "MetadataSample": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "timestamp",
+                "type": "string",
+                "repeated": false
+              },
+              {
+                "name": "tracklets",
+                "type": "Tracklets",
+                "repeated": false,
+                "oneof": "data"
+              },
+              {
+                "name": "global_tracklets",
+                "type": "GlobalTracklets",
+                "repeated": false,
+                "oneof": "data"
+              }
+            ]
+          },
+          "Tracklets": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "tracklets",
+                "type": "Tracklet",
+                "repeated": true
+              }
+            ]
+          },
+          "Tracklet": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "id",
+                "type": "int32",
+                "repeated": false
+              },
+              {
+                "name": "state",
+                "type": "ObjectState",
+                "repeated": false,
+                "enum": [
+                  "OBJECT_STATE_UNSPECIFIED",
+                  "OBJECT_STATE_APPEARED",
+                  "OBJECT_STATE_NORMAL",
+                  "OBJECT_STATE_DISAPPEARED"
+                ]
+              },
+              {
+                "name": "rectangle",
+                "type": "Rectangle",
+                "repeated": false
+              },
+              {
+                "name": "logical_center",
+                "type": "Point",
+                "repeated": false
+              },
+              {
+                "name": "color",
+                "type": "HsvColor",
+                "repeated": false
+              },
+              {
+                "name": "type",
+                "type": "ObjectType",
+                "repeated": false,
+                "enum": [
+                  "OBJECT_TYPE_UNSPECIFIED",
+                  "OBJECT_TYPE_HUMAN",
+                  "OBJECT_TYPE_GROUP_OF_HUMANS",
+                  "OBJECT_TYPE_VEHICLE",
+                  "OBJECT_TYPE_FACE",
+                  "OBJECT_TYPE_ANIMAL",
+                  "OBJECT_TYPE_ROBOT_DOG",
+                  "OBJECT_TYPE_CHILD",
+                  "OBJECT_TYPE_CAT"
+                ]
+              },
+              {
+                "name": "behavior",
+                "type": "ObjectBehavior",
+                "repeated": false,
+                "enum": [
+                  "OBJECT_BEHAVIOR_UNSPECIFIED",
+                  "MOVING_OBJECT",
+                  "ABANDONED_OBJECT",
+                  "ABANDONED_TAKEN_OBJECT",
+                  "ABANDONED_GIVEN_OBJECT"
+                ]
+              },
+              {
+                "name": "temperature",
+                "type": "Temperature",
+                "repeated": false
+              }
+            ]
+          },
+          "GlobalTracklets": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "tracklets",
+                "type": "GlobalTracklet",
+                "repeated": true
+              }
+            ]
+          },
+          "GlobalTracklet": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "guid",
+                "type": "string",
+                "repeated": false
+              },
+              {
+                "name": "profile",
+                "type": "Profile",
+                "repeated": false
+              },
+              {
+                "name": "state",
+                "type": "GlobalTrackState",
+                "repeated": false,
+                "enum": [
+                  "GT_STATE_UNSPECIFIED",
+                  "GT_STATE_APPEARED",
+                  "GT_STATE_NORMAL",
+                  "GT_STATE_RECOGNIZED",
+                  "GT_STATE_DISAPPEARED",
+                  "GT_STATE_TERMINATED",
+                  "GT_STATE_UNKNOWN"
+                ]
+              },
+              {
+                "name": "type",
+                "type": "ObjectType",
+                "repeated": false,
+                "enum": [
+                  "OBJECT_TYPE_UNSPECIFIED",
+                  "OBJECT_TYPE_HUMAN",
+                  "OBJECT_TYPE_GROUP_OF_HUMANS",
+                  "OBJECT_TYPE_VEHICLE",
+                  "OBJECT_TYPE_FACE",
+                  "OBJECT_TYPE_ANIMAL",
+                  "OBJECT_TYPE_ROBOT_DOG",
+                  "OBJECT_TYPE_CHILD",
+                  "OBJECT_TYPE_CAT"
+                ]
+              },
+              {
+                "name": "on_map_positions",
+                "type": "MapPoint",
+                "repeated": true
+              },
+              {
+                "name": "velocities",
+                "type": "MapPoint",
+                "repeated": true
+              },
+              {
+                "name": "on_camera_positions",
+                "type": "CameraFrameArea",
+                "repeated": true
+              }
+            ]
+          },
+          "StreamConfig": {
+            "kind": "message",
+            "fields": [
+              {
+                "name": "max_channel_idle_ms",
+                "type": "int32",
+                "repeated": false
+              }
+            ]
+          }
+        },
+        "endpoint_examples": [
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.96/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.103/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.78/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.120/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.55/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.100/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/DetectorEx.1/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.1/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.90/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.101/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.102/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.74/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.94/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.95/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.98/SourceEndpoint.vmda"
+          },
+          {
+            "source": "load_inventory",
+            "access_point": "hosts/Server/AVDetector.42/SourceEndpoint.vmda"
+          }
+        ],
+        "notes": [
+          "Use metadata_sample_bounded with a vmda or metadata SourceEndpoint access point.",
+          "Evidence examples are summarized and exclude raw metadata payloads and credentials."
+        ]
+      }
+    },
+    {
+      "group": "metadata_sample_bounded",
+      "status": "PASS",
+      "elapsed_ms": 195,
+      "evidence": {
+        "status": "ok",
+        "tool": "metadata_sample_bounded",
+        "access_point": "hosts/Server/AVDetector.72/SourceEndpoint.vmda",
+        "requested": {
+          "timeout_s": 5.0,
+          "limit": 20
+        },
+        "applied": {
+          "timeout_s": 5.0,
+          "limit": 20
+        },
+        "count": 1,
+        "frames": [
+          {
+            "config_update": {
+              "max_channel_idle_ms": 15000
+            }
+          }
+        ]
+      }
+    },
+    {
+      "group": "archive_policy_get",
+      "status": "WARN",
+      "elapsed_ms": 1605,
+      "evidence": {
+        "status": "fixture-needed",
+        "tool": "archive_policy_get",
+        "target": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        "archive_bindings": [],
+        "recording_properties": [],
+        "retention_properties": [],
+        "schedule_properties": [],
+        "confidence": "none",
+        "message": "Resolved descriptor did not expose archive policy fields; provide policy-like archive, recording, retention, or schedule descriptors.",
+        "missing": [
+          "ListUnits",
+          "ConfigurationService.ListUnits descriptor for the target camera/archive",
+          "policy-like archive, recording, retention, or schedule fields"
+        ]
+      }
+    },
+    {
+      "group": "archive_management_status",
+      "status": "PASS",
+      "elapsed_ms": 1979,
+      "evidence": {
+        "status": "ok",
+        "tool": "archive_management_status",
+        "archive_access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        "traits": {
+          "traits": [
+            "AT_RANDOM_RECORDING"
+          ],
+          "trait_count": 1
+        },
+        "volume_summary": {
+          "volume_count": 1,
+          "states": {
+            "MOUNTED": 1
+          },
+          "readonly_count": 0,
+          "not_found_count": 0,
+          "is_failover_mode": false,
+          "is_temporary_storage": false,
+          "volume_id_lengths": [
+            36
+          ]
+        },
+        "disk_space": {
+          "status": "ok",
+          "volume_id_length": 36,
+          "status_code": "OK",
+          "capacity_bytes_present": true,
+          "free_bytes_present": true
+        },
+        "mutation_policy": {
+          "read_only": true,
+          "not_executed": [
+            {
+              "rpc": "ArchiveService.FormatVolumes",
+              "risk": "formats archive volumes",
+              "requirement": "isolated non-production volume id and rollback/snapshot approval"
+            },
+            {
+              "rpc": "ArchiveService.Reindex",
+              "risk": "schedules archive volume reindexing",
+              "requirement": "isolated archive or explicit maintenance-window approval"
+            },
+            {
+              "rpc": "ArchiveService.CancelReindex",
+              "risk": "changes active reindex state",
+              "requirement": "only after this tool or an operator started a known test reindex"
+            }
+          ],
+          "notes": [
+            "This status tool never formats, reindexes, cancels reindex, deletes, clears, resizes, or links archive volumes."
+          ]
+        }
+      }
+    },
+    {
+      "group": "mutation_av_detector",
+      "status": "WARN",
+      "elapsed_ms": 8492,
+      "evidence": {
+        "status": "partial",
+        "create": {
+          "plan": {
+            "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+            "status": "planned",
+            "workflow": "create_av_detector_full",
+            "persistent": true,
+            "caller_owns_lifecycle": true,
+            "risk": "mutation",
+            "intent": "create a persistent MotionDetection AVDetector bound to the given video source",
+            "steps": [
+              {
+                "operation": "add",
+                "unit_type": "AVDetector",
+                "payload": {
+                  "added": [
+                    {
+                      "uid": "hosts/Server",
+                      "units": [
+                        {
+                          "type": "AVDetector",
+                          "properties": [
+                            {
+                              "id": "display_name",
+                              "value_string": "codex-detector-archive-av-013a587a"
+                            },
+                            {
+                              "id": "input",
+                              "value_string": "Video",
+                              "properties": [
+                                {
+                                  "id": "camera_ref",
+                                  "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                                  "properties": [
+                                    {
+                                      "id": "streaming_id",
+                                      "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": "detector",
+                                  "value_string": "MotionDetection"
+                                }
+                              ]
+                            }
+                          ],
+                          "units": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "rollback": {
+              "strategy": "remove_created_uids",
+              "description": "Persistent: rollback removes created detector units in reverse order if caller explicitly invokes."
+            },
+            "expected": {
+              "display_name": "codex-detector-archive-av-013a587a",
+              "detector": "MotionDetection",
+              "video_source_ap": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+            },
+            "source_bindings": {
+              "video_source_ap": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+            },
+            "schema_source": "operator-local-payload",
+            "diff": {
+              "added": [
+                {
+                  "unit_type": "AVDetector",
+                  "properties": [
+                    {
+                      "id": "display_name",
+                      "value_string": "codex-detector-archive-av-013a587a"
+                    },
+                    {
+                      "id": "input",
+                      "value_string": "Video",
+                      "properties": [
+                        {
+                          "id": "camera_ref",
+                          "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                          "properties": [
+                            {
+                              "id": "streaming_id",
+                              "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "detector",
+                          "value_string": "MotionDetection"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "confirmation_token": "<redacted>",
+            "rollback_confirmation_token": "<redacted>"
+          },
+          "apply": {
+            "status": "applied",
+            "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+            "created_uids": [
+              "hosts/Server/AVDetector.127"
+            ]
+          },
+          "verify": {
+            "status": "verified",
+            "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+            "created_uids": [
+              "hosts/Server/AVDetector.127"
+            ],
+            "still_present": [
+              "hosts/Server/AVDetector.127"
+            ],
+            "detector_checks": {
+              "display_name": true,
+              "detector": true,
+              "video_source_ap": true
+            }
+          }
+        },
+        "scalar_update": {
+          "status": "ok",
+          "plan": {
+            "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+            "status": "planned",
+            "workflow": "update_detector_parameters",
+            "persistent": true,
+            "risk": "mutation",
+            "intent": "update detector properties on hosts/Server/AVDetector.127",
+            "steps": [
+              {
+                "operation": "change_detector_snapshot_unit",
+                "unit_type": "any",
+                "payload": {
+                  "changed": [
+                    {
+                      "uid": "hosts/Server/AVDetector.127",
+                      "properties": [
+                        {
+                          "id": "enabled",
+                          "value_bool": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "target_uid": "hosts/Server/AVDetector.127",
+                "target_role": "detector"
+              }
+            ],
+            "rollback": {
+              "strategy": "restore_detector_snapshot",
+              "description": "Pre-apply unit snapshot is captured via read_unit and restored during rollback."
+            },
+            "snapshot_capture": {
+              "source": "read_unit",
+              "snapshot_key": "unit:hosts/Server/AVDetector.127",
+              "target_uid": "hosts/Server/AVDetector.127",
+              "target_role": "detector"
+            },
+            "expected": {
+              "uid": "hosts/Server/AVDetector.127",
+              "property_count": 1,
+              "target_role": "detector"
+            },
+            "diff": {
+              "changed": [
+                {
+                  "target_uid": "hosts/Server/AVDetector.127",
+                  "target_role": "detector",
+                  "property_paths": [
+                    "enabled"
+                  ],
+                  "before": "<captured during apply>",
+                  "after": [
+                    {
+                      "id": "enabled",
+                      "value_bool": false
+                    }
+                  ]
+                }
+              ]
+            },
+            "confirmation_token": "<redacted>",
+            "rollback_confirmation_token": "<redacted>"
+          },
+          "apply": {
+            "status": "applied",
+            "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+            "created_uids": [],
+            "snapshots": [
+              {
+                "target_uid": "hosts/Server/AVDetector.127",
+                "parent_uid": "hosts/Server",
+                "unit": {
+                  "uid": "hosts/Server/AVDetector.127",
+                  "type": "AVDetector",
+                  "properties": [
+                    {
+                      "id": "display_name",
+                      "name": "Name",
+                      "type": "string",
+                      "description": "Detection object name.",
+                      "category": "Object identification",
+                      "value_string": "codex-detector-archive-av-013a587a"
+                    },
+                    {
+                      "id": "enabled",
+                      "name": "Enable",
+                      "type": "bool",
+                      "description": "Use the selected detection algorithm",
+                      "category": "Object identification",
+                      "value_bool": true
+                    },
+                    {
+                      "id": "detector",
+                      "name": "Type",
+                      "type": "string",
+                      "readonly": true,
+                      "description": "Detector type.",
+                      "display_value": "Motion detector",
+                      "category": "Object identification",
+                      "value_string": "MotionDetection"
+                    },
+                    {
+                      "id": "streaming_id",
+                      "name": "streaming_id",
+                      "type": "string",
+                      "internal": true,
+                      "category": "Object identification",
+                      "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                      "enum_constraint": {
+                        "items": [
+                          {
+                            "name": "Main stream",
+                            "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+                          },
+                          {
+                            "name": "Second stream",
+                            "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "stream_index",
+                      "name": "Video stream",
+                      "type": "string",
+                      "description": "Select a video stream for detection.",
+                      "category": "&2. Object features",
+                      "value_string": "0",
+                      "enum_constraint": {
+                        "items": [
+                          {
+                            "name": "Main stream",
+                            "value_string": "0"
+                          },
+                          {
+                            "name": "Second stream",
+                            "value_string": "1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "period",
+                      "name": "Period",
+                      "type": "int32",
+                      "description": "Time period in ms, after which the next frame will be processed. At \"0\", each of them will be processed.",
+                      "internal": true,
+                      "category": "Object identification",
+                      "value_int32": 50,
+                      "range_constraint": {
+                        "min_int": 0,
+                        "max_int": 65535
+                      }
+                    },
+                    {
+                      "id": "target_fps",
+                      "name": "Number of frames processed per second",
+                      "type": "double",
+                      "category": "Object identification",
+                      "value_double": 20.0,
+                      "range_constraint": {
+                        "min_double": 0.016,
+                        "max_double": 100.0
+                      }
+                    },
+                    {
+                      "id": "onlyKeyFrames",
+                      "name": "Decode key frames",
+                      "type": "bool",
+                      "description": "Decode only key frames.",
+                      "category": "Object identification",
+                      "value_bool": false
+                    },
+                    {
+                      "id": "DecoderMode",
+                      "name": "Decoder mode",
+                      "type": "string",
+                      "description": "Device for video decoding",
+                      "category": "Object identification",
+                      "value_string": "GPU",
+                      "enum_constraint": {
+                        "items": [
+                          {
+                            "value_string": "Auto"
+                          },
+                          {
+                            "value_string": "CPU"
+                          },
+                          {
+                            "value_string": "GPU"
+                          },
+                          {
+                            "value_string": "HuaweiNPU"
+                          }
+                        ],
+                        "default_string": "GPU"
+                      }
+                    },
+                    {
+                      "id": "EnableRecordingObjectsTracking",
+                      "name": "Record object trajectories",
+                      "type": "bool",
+                      "description": "Enable recording of object trajectories to the corresponding database. Object trajectories are used for Search in archive.",
+                      "category": "&2. Object features",
+                      "value_bool": true
+                    },
+                    {
+                      "id": "ShouldWriteMaskData",
+                      "name": "Record mask to archive",
+                      "type": "bool",
+                      "description": "Enable recording a mask to the archive.",
+                      "category": "&2. Object features",
+                      "value_bool": false
+                    },
+                    {
+                      "id": "MaskObj",
+                      "name": "Motion mask",
+                      "type": "bool",
+                      "description": "Enable motion mask.",
+                      "category": "Advanced settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_bool": true
+                    },
+                    {
+                      "id": "TrackingObj",
+                      "name": "Object tracking",
+                      "type": "bool",
+                      "description": "Enable object tracking.",
+                      "category": "Advanced settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_bool": false
+                    },
+                    {
+                      "id": "TargetLifeEvent",
+                      "name": "Track lifespan",
+                      "type": "bool",
+                      "description": "Show track lifespan for objects in seconds.",
+                      "category": "Advanced settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_bool": false
+                    },
+                    {
+                      "id": "contrastSensitivity",
+                      "name": "Sensitivity: Contrast",
+                      "type": "int32",
+                      "description": "Specify the sensitivity for the object contrast.",
+                      "category": "Basic settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_int32": 12,
+                      "range_constraint": {
+                        "min_int": 0,
+                        "max_int": 20,
+                        "default_int": 12
+                      }
+                    },
+                    {
+                      "id": "sizeSensitivity",
+                      "name": "Sensitivity: Size",
+                      "type": "int32",
+                      "description": "Specify the sensitivity for object size.",
+                      "category": "Basic settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_int32": 9,
+                      "range_constraint": {
+                        "min_int": 0,
+                        "max_int": 10,
+                        "default_int": 9
+                      }
+                    },
+                    {
+                      "id": "AlarmEndDelay",
+                      "name": "Alarm end delay",
+                      "type": "int32",
+                      "description": "Specify the alarm end delay time in seconds.",
+                      "category": "Advanced settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_int32": 10,
+                      "range_constraint": {
+                        "min_int": 0,
+                        "max_int": 86400,
+                        "default_int": 10
+                      }
+                    },
+                    {
+                      "id": "CameraPosition",
+                      "name": "Camera position",
+                      "type": "string",
+                      "description": "Select the camera position from the list.",
+                      "category": "Advanced settings",
+                      "attributes": [
+                        {
+                          "device_property": {}
+                        }
+                      ],
+                      "value_string": "Wall",
+                      "enum_constraint": {
+                        "items": [
+                          {
+                            "name": "Wall",
+                            "value_string": "Wall"
+                          },
+                          {
+                            "name": "Ceiling",
+                            "value_string": "Ceiling"
+                          }
+                        ],
+                        "default_string": "Wall"
+                      }
+                    },
+                    {
+                      "id": "event_types",
+                      "type": "string",
+                      "readonly": true,
+                      "internal": true,
+                      "value_string": "MotionDetected:DetectorTwoPhaseEventType,MotionMask:DetectorPeriodicalEventType,TargetList:DetectorPeriodicalEventType"
+                    },
+                    {
+                      "id": "input",
+                      "name": "Input type",
+                      "type": "string",
+                      "readonly": true,
+                      "internal": true,
+                      "category": "Object identification",
+                      "value_string": "Video",
+                      "enum_constraint": {
+                        "items": [
+                          {
+                            "value_string": "Video",
+                            "properties": [
+                              {
+                                "id": "detector",
+                                "name": "Type",
+                                "type": "string",
+                                "readonly": true,
+                                "description": "Detector type.",
+                                "display_value": "Motion detector",
+                                "category": "Object identification",
+                                "value_string": "MotionDetection"
+                              },
+                              {
+                                "id": "camera_ref",
+                                "name": "Camera reference",
+                                "type": "string",
+                                "category": "Object identification",
+                                "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                                "enum_constraint": {
+                                  "items": [
+                                    {
+                                      "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                                      "properties": [
+                                        {
+                                          "id": "streaming_id",
+                                          "name": "streaming_id",
+                                          "type": "string",
+                                          "internal": true,
+                                          "category": "Object identification",
+                                          "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+                                          "enum_constraint": {
+                                            "items": [
+                                              {
+                                                "name": "Main stream",
+                                                "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+                                              },
+                                              {
+                                                "name": "Second stream",
+                                                "value_string": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:1"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "units": []
+                },
+                "restore_properties": [
+                  {
+                    "id": "enabled",
+                    "name": "Enable",
+                    "type": "bool",
+                    "description": "Use the selected detection algorithm",
+                    "category": "Object identification",
+                    "value_bool": true
+                  }
+                ]
+              }
+            ]
+          },
+          "verify": {
+            "status": "verified",
+            "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+            "created_uids": [],
+            "still_present": [],
+            "target": {
+              "uid": "hosts/Server/AVDetector.127",
+              "still_present": true
+            },
+            "property_checks": {
+              "enabled": true
+            }
+          },
+          "rollback": {
+            "status": "rolled_back",
+            "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+            "restored_uids": [
+              "hosts/Server/AVDetector.127"
+            ],
+            "failed": []
+          },
+          "rollback_verify": {
+            "status": "verified",
+            "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+            "created_uids": [],
+            "still_present": [],
+            "target": {
+              "uid": "hosts/Server/AVDetector.127",
+              "still_present": true
+            },
+            "snapshot_restored": true
+          }
+        },
+        "visual_update": {
+          "status": "fixture-needed",
+          "tool": "update_detector_visual_element",
+          "message": "No writable visual element child was discovered."
+        },
+        "rollback": {
+          "status": "rolled_back",
+          "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+          "removed_uids": [
+            "hosts/Server/AVDetector.127"
+          ],
+          "failed": []
+        },
+        "rollback_verify": {
+          "status": "verified",
+          "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+          "created_uids": [],
+          "still_present": []
+        }
+      }
+    },
+    {
+      "group": "mutation_appdata_detector",
+      "status": "PASS",
+      "elapsed_ms": 3345,
+      "evidence": {
+        "status": "ok",
+        "plan": {
+          "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+          "status": "planned",
+          "workflow": "create_appdata_detector_full",
+          "persistent": true,
+          "caller_owns_lifecycle": true,
+          "risk": "mutation",
+          "intent": "create a persistent MoveInZone AppDataDetector bound to a vmda source",
+          "steps": [
+            {
+              "operation": "add",
+              "unit_type": "AppDataDetector",
+              "payload": {
+                "added": [
+                  {
+                    "uid": "hosts/Server",
+                    "units": [
+                      {
+                        "type": "AppDataDetector",
+                        "properties": [
+                          {
+                            "id": "display_name",
+                            "value_string": "codex-detector-archive-appdata-3de08e0d"
+                          },
+                          {
+                            "id": "input",
+                            "value_string": "TargetList",
+                            "properties": [
+                              {
+                                "id": "camera_ref",
+                                "value_string": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0",
+                                "properties": [
+                                  {
+                                    "id": "streaming_id",
+                                    "value_string": "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "detector",
+                                "value_string": "MoveInZone"
+                              }
+                            ]
+                          }
+                        ],
+                        "units": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "rollback": {
+            "strategy": "remove_created_uids",
+            "description": "Persistent: rollback removes created detector units in reverse order if caller explicitly invokes."
+          },
+          "expected": {
+            "display_name": "codex-detector-archive-appdata-3de08e0d",
+            "detector": "MoveInZone",
+            "video_source_ap": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0",
+            "vmda_source_ap": "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+          },
+          "source_bindings": {
+            "video_source_ap": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0",
+            "vmda_source_ap": "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+          },
+          "schema_source": "operator-local-payload",
+          "diff": {
+            "added": [
+              {
+                "unit_type": "AppDataDetector",
+                "properties": [
+                  {
+                    "id": "display_name",
+                    "value_string": "codex-detector-archive-appdata-3de08e0d"
+                  },
+                  {
+                    "id": "input",
+                    "value_string": "TargetList",
+                    "properties": [
+                      {
+                        "id": "camera_ref",
+                        "value_string": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0",
+                        "properties": [
+                          {
+                            "id": "streaming_id",
+                            "value_string": "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "detector",
+                        "value_string": "MoveInZone"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>"
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+          "created_uids": [
+            "hosts/Server/AppDataDetector.34"
+          ]
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+          "created_uids": [
+            "hosts/Server/AppDataDetector.34"
+          ],
+          "still_present": [
+            "hosts/Server/AppDataDetector.34"
+          ],
+          "detector_checks": {
+            "display_name": true,
+            "detector": true,
+            "video_source_ap": true,
+            "vmda_source_ap": true
+          }
+        },
+        "rollback": {
+          "status": "rolled_back",
+          "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+          "removed_uids": [
+            "hosts/Server/AppDataDetector.34"
+          ],
+          "failed": []
+        },
+        "rollback_verify": {
+          "status": "verified",
+          "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+          "created_uids": [],
+          "still_present": []
+        }
+      }
+    },
+    {
+      "group": "mutation_archive_policy",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "evidence": {
+        "status": "fixture-needed",
+        "tool": "archive_policy_update",
+        "message": "No isolated codex archive/camera fixture was supplied; real archive policy update skipped."
+      }
+    },
+    {
+      "group": "archive_maintenance_noop",
+      "status": "PASS",
+      "elapsed_ms": 1548,
+      "evidence": {
+        "status": "ok",
+        "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        "noop_volume_id_prefix": "codex-nonexistent-",
+        "noop_volume_id_len": 54,
+        "results": [
+          {
+            "workflow": "archive_format_volume",
+            "plan": {
+              "plan_id": "plan-b354bdc7-7dc4-46e3-ad2d-6933a63d504f",
+              "status": "planned",
+              "workflow": "archive_format_volume",
+              "persistent": true,
+              "risk": "archive_maintenance",
+              "intent": "run archive maintenance archive_format_volume on hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+              "archive_maintenance": true,
+              "maintenance_approval_env": "AXXON_ARCHIVE_MAINTENANCE_APPROVE",
+              "noop_volume_only": true,
+              "steps": [
+                {
+                  "operation": "archive_format_volume",
+                  "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                  "volume_ids": [
+                    "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                  ]
+                }
+              ],
+              "rollback": {
+                "strategy": "noop",
+                "description": "Reindex rollback cancels the started reindex; other archive maintenance rollbacks are no-ops."
+              },
+              "expected": {
+                "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                "volume_ids": [
+                  "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                ],
+                "noop_volume_only": true
+              },
+              "confirmation_token": "<redacted>",
+              "rollback_confirmation_token": "<redacted>"
+            },
+            "apply": {
+              "status": "applied",
+              "plan_id": "plan-b354bdc7-7dc4-46e3-ad2d-6933a63d504f",
+              "created_uids": []
+            },
+            "verify": {
+              "status": "verified",
+              "plan_id": "plan-b354bdc7-7dc4-46e3-ad2d-6933a63d504f",
+              "created_uids": [],
+              "still_present": []
+            }
+          },
+          {
+            "workflow": "archive_reindex",
+            "plan": {
+              "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+              "status": "planned",
+              "workflow": "archive_reindex",
+              "persistent": true,
+              "risk": "archive_maintenance",
+              "intent": "run archive maintenance archive_reindex on hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+              "archive_maintenance": true,
+              "maintenance_approval_env": "AXXON_ARCHIVE_MAINTENANCE_APPROVE",
+              "noop_volume_only": true,
+              "steps": [
+                {
+                  "operation": "archive_reindex",
+                  "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                  "volume_ids": [
+                    "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                  ],
+                  "full": true
+                }
+              ],
+              "rollback": {
+                "strategy": "archive_cancel_reindex",
+                "description": "Reindex rollback cancels the started reindex; other archive maintenance rollbacks are no-ops."
+              },
+              "expected": {
+                "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                "volume_ids": [
+                  "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                ],
+                "noop_volume_only": true
+              },
+              "confirmation_token": "<redacted>",
+              "rollback_confirmation_token": "<redacted>"
+            },
+            "apply": {
+              "status": "applied",
+              "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+              "created_uids": []
+            },
+            "verify": {
+              "status": "verified",
+              "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+              "created_uids": [],
+              "still_present": []
+            },
+            "rollback": {
+              "status": "rolled_back",
+              "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+              "cancelled_volume_ids": [
+                "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+              ],
+              "failed": []
+            }
+          },
+          {
+            "workflow": "archive_cancel_reindex",
+            "plan": {
+              "plan_id": "plan-c4e50118-98a6-46c5-965a-05e13d6e1603",
+              "status": "planned",
+              "workflow": "archive_cancel_reindex",
+              "persistent": true,
+              "risk": "archive_maintenance",
+              "intent": "run archive maintenance archive_cancel_reindex on hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+              "archive_maintenance": true,
+              "maintenance_approval_env": "AXXON_ARCHIVE_MAINTENANCE_APPROVE",
+              "noop_volume_only": true,
+              "steps": [
+                {
+                  "operation": "archive_cancel_reindex",
+                  "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                  "volume_ids": [
+                    "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                  ]
+                }
+              ],
+              "rollback": {
+                "strategy": "noop",
+                "description": "Reindex rollback cancels the started reindex; other archive maintenance rollbacks are no-ops."
+              },
+              "expected": {
+                "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+                "volume_ids": [
+                  "codex-nonexistent-58631ac9-f5c3-4c9b-8ac1-cb3a671ebfcb"
+                ],
+                "noop_volume_only": true
+              },
+              "confirmation_token": "<redacted>",
+              "rollback_confirmation_token": "<redacted>"
+            },
+            "apply": {
+              "status": "applied",
+              "plan_id": "plan-c4e50118-98a6-46c5-965a-05e13d6e1603",
+              "created_uids": []
+            },
+            "verify": {
+              "status": "verified",
+              "plan_id": "plan-c4e50118-98a6-46c5-965a-05e13d6e1603",
+              "created_uids": [],
+              "still_present": []
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "operator_audit_log": [
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:00.042926+00:00",
+      "workflow": "create_av_detector_full",
+      "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:03.143855+00:00",
+      "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+      "status": "applied",
+      "created_count": 1
+    },
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:03.748839+00:00",
+      "workflow": "update_detector_parameters",
+      "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:05.493865+00:00",
+      "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+      "status": "applied",
+      "created_count": 0
+    },
+    {
+      "action": "rollback",
+      "timestamp": "2026-05-25T19:43:06.857335+00:00",
+      "plan_id": "plan-576d48af-96a6-4bb1-bc6a-883b5a10d955",
+      "status": "rolled_back",
+      "restored_count": 1,
+      "failed_count": 0
+    },
+    {
+      "action": "rollback",
+      "timestamp": "2026-05-25T19:43:08.528483+00:00",
+      "plan_id": "plan-646711fb-011f-42fb-ad4b-c694b95d06de",
+      "status": "rolled_back",
+      "removed_count": 1
+    },
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:08.736294+00:00",
+      "workflow": "create_appdata_detector_full",
+      "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:10.201755+00:00",
+      "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+      "status": "applied",
+      "created_count": 1
+    },
+    {
+      "action": "rollback",
+      "timestamp": "2026-05-25T19:43:11.879291+00:00",
+      "plan_id": "plan-316742b8-62ef-40c4-a69b-53de17203236",
+      "status": "rolled_back",
+      "removed_count": 1
+    },
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:11.882032+00:00",
+      "workflow": "archive_format_volume",
+      "plan_id": "plan-b354bdc7-7dc4-46e3-ad2d-6933a63d504f"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:12.273812+00:00",
+      "plan_id": "plan-b354bdc7-7dc4-46e3-ad2d-6933a63d504f",
+      "status": "applied",
+      "created_count": 0
+    },
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:12.274157+00:00",
+      "workflow": "archive_reindex",
+      "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:12.658579+00:00",
+      "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+      "status": "applied",
+      "created_count": 0
+    },
+    {
+      "action": "rollback",
+      "timestamp": "2026-05-25T19:43:13.041011+00:00",
+      "plan_id": "plan-4eb8ff09-d836-494a-8fbd-bd3a56e00f46",
+      "status": "rolled_back",
+      "cancelled_count": 1,
+      "failed_count": 0
+    },
+    {
+      "action": "plan",
+      "timestamp": "2026-05-25T19:43:13.041145+00:00",
+      "workflow": "archive_cancel_reindex",
+      "plan_id": "plan-c4e50118-98a6-46c5-965a-05e13d6e1603"
+    },
+    {
+      "action": "apply",
+      "timestamp": "2026-05-25T19:43:13.427254+00:00",
+      "plan_id": "plan-c4e50118-98a6-46c5-965a-05e13d6e1603",
+      "status": "applied",
+      "created_count": 0
+    }
+  ]
+}
