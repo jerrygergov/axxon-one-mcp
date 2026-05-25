@@ -161,7 +161,7 @@ def report_paths(report_dir: Path, stamp: str) -> dict[str, Path]:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     repo_root = Path(__file__).resolve().parents[1]
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     add_common_args(parser, repo_root=repo_root)
     parser.add_argument("--report-dir", type=Path, default=repo_root / "docs/api-audit")
     parser.add_argument("--metadata-sample-limit", type=int, default=DEFAULT_METADATA_SAMPLE_LIMIT)

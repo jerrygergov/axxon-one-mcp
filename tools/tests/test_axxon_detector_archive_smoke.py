@@ -62,6 +62,13 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
                     with self.assertRaises(SystemExit):
                         self.module.parse_args(argv)
 
+    def test_rejects_abbreviated_cli_connection_and_credential_flags(self) -> None:
+        for argv in (["--pass", "root"], ["--user", "root"], ["--tls", "Server"], ["--hos", "demo.internal"]):
+            with self.subTest(argv=argv):
+                with redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit):
+                        self.module.parse_args(argv)
+
     def test_cap_defaults_are_bounded_and_use_nonexistent_volume_prefix(self) -> None:
         args = self.module.parse_args([])
 
