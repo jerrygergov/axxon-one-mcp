@@ -234,6 +234,16 @@ def result_status(payload: Any) -> str:
     return "PASS"
 
 
+def lifecycle_failed(payload: dict[str, Any], *, expected_status: str | None = None) -> bool:
+    if expected_status is not None:
+        return payload.get("status") != expected_status
+    return result_status(payload) == "FAIL"
+
+
+def nested_lifecycle_failed(payload: dict[str, Any]) -> bool:
+    return result_status(payload) == "FAIL"
+
+
 def prop_bool(prop_id: str, value: bool) -> dict[str, Any]:
     return {"id": prop_id, "value_bool": value}
 
@@ -548,8 +558,14 @@ class DetectorArchiveSmoke:
         verified = registry.verify(plan["plan_id"])
         rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         rollback_verified = registry.verify(plan["plan_id"])
+        failed = (
+            lifecycle_failed(applied, expected_status="applied")
+            or lifecycle_failed(verified)
+            or lifecycle_failed(rolled_back, expected_status="rolled_back")
+            or lifecycle_failed(rollback_verified)
+        )
         return {
-            "status": "ok" if applied.get("status") == "applied" and rolled_back.get("status") == "rolled_back" else "error",
+            "status": "error" if failed else "ok",
             "plan": plan,
             "apply": applied,
             "verify": verified,
@@ -621,8 +637,16 @@ class DetectorArchiveSmoke:
         finally:
             rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
             rollback_verified = registry.verify(plan["plan_id"])
+        failed = (
+            lifecycle_failed(applied, expected_status="applied")
+            or lifecycle_failed(verified)
+            or lifecycle_failed(rolled_back, expected_status="rolled_back")
+            or lifecycle_failed(rollback_verified)
+            or nested_lifecycle_failed(update_result)
+            or nested_lifecycle_failed(visual_result)
+        )
         return {
-            "status": "ok" if applied.get("status") == "applied" and rolled_back.get("status") == "rolled_back" else "error",
+            "status": "error" if failed else "ok",
             "create": {"plan": plan, "apply": applied, "verify": verified},
             "scalar_update": update_result,
             "visual_update": visual_result,
@@ -687,7 +711,16 @@ class DetectorArchiveSmoke:
             results.append({"workflow": workflow, "plan": plan, "apply": applied, "verify": verified})
             if workflow == "archive_reindex":
                 results[-1]["rollback"] = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
-        failed = [item for item in results if (item.get("apply") or {}).get("status") not in ("applied", None)]
+        failed = [
+            item
+            for item in results
+            if "apply" in item
+            and (
+                lifecycle_failed(item.get("apply") or {}, expected_status="applied")
+                or lifecycle_failed(item.get("verify") or {})
+                or ("rollback" in item and lifecycle_failed(item.get("rollback") or {}, expected_status="rolled_back"))
+            )
+        ]
         return {
             "status": "ok" if not failed else "error",
             "access_point": access_point,

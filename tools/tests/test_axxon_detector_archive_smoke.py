@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 import datetime as dt
 import importlib
 import io
@@ -182,7 +182,8 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
             smoke.context = {}
             smoke.results = []
 
-            smoke.write_report(smoke.report())
+            with redirect_stdout(io.StringIO()):
+                smoke.write_report(smoke.report())
 
             json_text = (Path(tmp) / "phase-5e-detector-archive-smoke-latest.json").read_text(encoding="utf-8")
             md_text = (Path(tmp) / "phase-5e-detector-archive-smoke-latest.md").read_text(encoding="utf-8")
@@ -201,6 +202,93 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         self.assertEqual(self.module.result_status({"status": "warn"}), "WARN")
         self.assertEqual(self.module.result_status({"status": "warning"}), "WARN")
         self.assertEqual(self.module.result_status({"status": "partial"}), "WARN")
+
+    def test_apply_verify_rollback_fails_when_verify_errors(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        registry = mock.Mock()
+        registry.plan.return_value = {
+            "status": "planned",
+            "plan_id": "plan-1",
+            "confirmation_token": "CONFIRM",
+            "rollback_confirmation_token": "ROLLBACK",
+        }
+        registry.apply.return_value = {"status": "applied"}
+        registry.verify.side_effect = [{"status": "error"}, {"status": "verified"}]
+        registry.rollback.return_value = {"status": "rolled_back"}
+
+        result = smoke.apply_verify_rollback(registry, "update_detector_parameters", {"uid": "detector"})
+
+        self.assertEqual(result["status"], "error")
+
+    def test_mutate_av_detector_fails_when_attempted_nested_update_errors(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+        smoke.apply_verify_rollback = mock.Mock(return_value={"status": "error"})
+
+        registry = mock.Mock()
+        registry.plan.return_value = {
+            "status": "planned",
+            "plan_id": "plan-create",
+            "confirmation_token": "CONFIRM",
+            "rollback_confirmation_token": "ROLLBACK",
+        }
+        registry.apply.return_value = {"status": "applied", "created_uids": ["hosts/Server/AVDetector.1"]}
+        registry.verify.side_effect = [{"status": "verified"}, {"status": "verified"}]
+        registry.rollback.return_value = {"status": "rolled_back"}
+        registry.ensure_client.return_value.read_unit.return_value = {
+            "units": [{"uid": "hosts/Server/AVDetector.1", "properties": [{"id": "enabled", "value_bool": True}]}]
+        }
+
+        result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+
+        self.assertEqual(result["status"], "error")
+
+    def test_mutate_av_detector_allows_fixture_needed_nested_updates(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+
+        registry = mock.Mock()
+        registry.plan.return_value = {
+            "status": "planned",
+            "plan_id": "plan-create",
+            "confirmation_token": "CONFIRM",
+            "rollback_confirmation_token": "ROLLBACK",
+        }
+        registry.apply.return_value = {"status": "applied", "created_uids": ["hosts/Server/AVDetector.1"]}
+        registry.verify.side_effect = [{"status": "verified"}, {"status": "verified"}]
+        registry.rollback.return_value = {"status": "rolled_back"}
+        registry.ensure_client.return_value.read_unit.return_value = {
+            "units": [{"uid": "hosts/Server/AVDetector.1", "properties": []}]
+        }
+
+        result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["scalar_update"]["status"], "fixture-needed")
+
+    def test_archive_maintenance_noop_fails_when_verify_or_rollback_errors(self) -> None:
+        for verify_statuses, rollback_status in (
+            ([{"status": "error"}, {"status": "verified"}, {"status": "verified"}], {"status": "rolled_back"}),
+            ([{"status": "verified"}, {"status": "verified"}, {"status": "verified"}], {"status": "error"}),
+        ):
+            with self.subTest(verify_statuses=verify_statuses, rollback_status=rollback_status):
+                smoke = object.__new__(self.module.DetectorArchiveSmoke)
+                smoke.args = SimpleNamespace(archive_access_point="hosts/Server/MultimediaStorage.AliceBlue", noop_volume_prefix="codex-nonexistent-")
+                smoke.context = {}
+                smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+                registry = mock.Mock()
+                registry.plan.side_effect = [
+                    {"status": "planned", "plan_id": "format", "confirmation_token": "CONFIRM-format"},
+                    {"status": "planned", "plan_id": "reindex", "confirmation_token": "CONFIRM-reindex", "rollback_confirmation_token": "ROLLBACK-reindex"},
+                    {"status": "planned", "plan_id": "cancel", "confirmation_token": "CONFIRM-cancel"},
+                ]
+                registry.apply.return_value = {"status": "applied"}
+                registry.verify.side_effect = verify_statuses
+                registry.rollback.return_value = rollback_status
+
+                result = smoke.archive_maintenance_noop(registry)
+
+                self.assertEqual(result["status"], "error")
 
     def test_report_paths_use_phase_latest_names(self) -> None:
         paths = self.module.report_paths(Path("/tmp/reports"), stamp="20260525T120000Z")
