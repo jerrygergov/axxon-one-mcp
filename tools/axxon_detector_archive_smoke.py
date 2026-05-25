@@ -56,6 +56,7 @@ URL_USERINFO_RE = re.compile(r"(?P<prefix>\b[a-z][a-z0-9+.-]*://)(?P<userinfo>[^
 INTRINSIC_UID_RE = re.compile(r"\bhosts/[^\s,;}\])]+")
 USER_KEYS = {"username", "user", "login"}
 TLS_CN_KEYS = {"tls_cn", "tls-cn", "tls_common_name"}
+CA_KEYS = {"ca", "ca_path", "ca-file", "ca_file", "certificate_authority"}
 CLI_CONNECTION_FLAGS = {
     "--host",
     "--grpc-port",
@@ -81,6 +82,8 @@ def _identity_key(key: Any) -> str:
         return "user"
     if normalized in TLS_CN_KEYS:
         return "tls-cn"
+    if normalized in CA_KEYS:
+        return "ca"
     return ""
 
 
@@ -155,6 +158,8 @@ def sanitize_evidence(
                 out[key] = "<demo-user>" if item else item
             elif identity == "tls-cn":
                 out[key] = "<demo-tls-cn>" if item else item
+            elif identity == "ca":
+                out[key] = "<redacted-ca>" if item else item
             elif _secret_key(key):
                 if isinstance(item, str) and BEARER_RE.search(item):
                     out[key] = _sanitize_text(item, host, username, tls_cn, extra_hosts)

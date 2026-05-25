@@ -82,6 +82,7 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
             "tls_common_name": "Server",
             "password": "root",
             "root_password": "secret",
+            "ca": "/tmp/api.ngp.root-ca.crt",
             "nested": [
                 "demo.internal",
                 {"token": "abc", "uid": "hosts/Server/AVDetector.1"},
@@ -101,6 +102,7 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         self.assertEqual(sanitized["tls_common_name"], "<demo-tls-cn>")
         self.assertEqual(sanitized["password"], "<redacted>")
         self.assertEqual(sanitized["root_password"], "<redacted>")
+        self.assertEqual(sanitized["ca"], "<redacted-ca>")
         self.assertEqual(sanitized["nested"][0], "<demo-host>")
         self.assertEqual(sanitized["nested"][1]["token"], "<redacted>")
         self.assertEqual(sanitized["nested"][1]["uid"], "hosts/Server/AVDetector.1")
