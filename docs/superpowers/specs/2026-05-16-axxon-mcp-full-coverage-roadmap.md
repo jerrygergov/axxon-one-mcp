@@ -1,7 +1,7 @@
 # Axxon One MCP — Full-Coverage Roadmap
 
 **Date:** 2026-05-16
-**Status:** Draft for review
+**Status:** Active roadmap
 **Author:** brainstorming session
 **Spec type:** multi-phase roadmap (decomposition doc, not a single implementation spec)
 
@@ -20,7 +20,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 ---
 
-## 1b. Current phase status (updated 2026-05-18)
+## 1b. Current phase status (updated 2026-05-25)
 
 | Phase | State | Merged to main? | Artifacts |
 | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5B** PTZ + Tag&Track + control panels | ⏸ deferred (no PTZ fixture) | n/a | none |
 | **5C** Alarms (lifecycle + subscription) | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_alarms.py`, `tools/axxon_alarms_smoke.py`, `docs/api-audit/phase-5c-alarms-smoke-latest.md`, design + plan under `docs/superpowers/specs/` and `docs/superpowers/plans/` |
 | **5D** Videowall / layouts / maps | ✅ shipped | yes | `tools/axxon_mcp_view_objects.py`, `tools/axxon_view_objects_smoke.py`, `docs/api-audit/phase-5d-view-objects-smoke-latest.md`, design + plan under `docs/superpowers/` |
-| **5E** Detector depth + archive policies | 📝 planned | no | `docs/superpowers/specs/2026-05-19-phase-5e-detectors-archive-policies-design.md`, `docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md` |
+| **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | no | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F** Security / users / system health | ❌ not started | no | none |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
@@ -36,7 +36,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
-**Next concrete step:** execute the Phase 5E implementation plan task-by-task with TDD (`docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md`).
+**Next concrete step:** start Phase 5F security/users/system-health/schedules planning, while carrying the Phase 5E fixture debt: descriptor-backed archive policy fixture, AV detector writable visual child, and isolated `codex-*` archive/camera fixture.
 
 ---
 
@@ -49,7 +49,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | Axxon One product docs | https://docs.axxonsoft.com/confluence/spaces/ONE2025/pages/314535799/Documentation | Public product documentation — used for capability mapping, not embedded in repo. |
 | Integration APIs 3.0 PDF | `docs/integration-apis-3.0/` (local; gitignored) | AxxonSoft-copyrighted. Excluded from the public repo. Drives `api_methods.json` / `http_endpoints.json`. |
 | gRPC proto files | `docs/grpc-proto-files/` (local; gitignored) | AxxonSoft-copyrighted. Source for the 361-method catalog. |
-| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 36 rows, 30 verified, 6 fixture-blocked. |
+| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 37 rows, 31 verified, 6 fixture-blocked. |
 | Structured MCP corpus | `docs/api-audit/mcp-corpus/` | 7 JSON files (api_methods, http_endpoints, task_recipes, fixtures, safety_policies, known_behaviors, README). |
 
 ### 2.2 Demo / testing stand
@@ -58,14 +58,14 @@ The roadmap and all live verification work targets the user-provided stand:
 
 | Field | Value |
 | --- | --- |
-| Host | `100.76.150.18` |
+| Host | `<demo-host>` |
 | gRPC port | `20109` |
 | HTTP port | `80` |
-| Login | `root` |
-| Password | `root` |
+| Login | `<demo-user>` |
+| Password | `<redacted>` |
 | Use | All live smoke runs, fixture creation, mutation playbooks, and rollback verification. |
 
-These credentials are operator-test-only. They must **never** be committed in code, examples, or audit evidence — generators and smokes already read them from environment variables (`AXXON_HOST`, `AXXON_HTTP_URL`, `AXXON_USERNAME`, `AXXON_PASSWORD`, `AXXON_TLS_CN`). The sanitization rule from the existing repo (replace host with `<demo-host>`, TLS CN with `<your-tls-cn>`, replace `hosts/Server/...` UIDs as needed) carries forward to every phase below.
+These credentials are operator-test-only. They must **never** be committed in code, examples, or audit evidence — generators and smokes already read them from environment variables (`AXXON_HOST`, `AXXON_HTTP_URL`, `AXXON_USERNAME`, `AXXON_PASSWORD`, `AXXON_TLS_CN`). The sanitization rule from the existing repo (replace host with `<demo-host>`, user with `<demo-user>`, secrets/CA paths with `<redacted>`, TLS CN with `<your-tls-cn>`, and replace `hosts/Server/...` UIDs only when needed) carries forward to every phase below.
 
 ### 2.3 What is already shipped (verified)
 
@@ -78,8 +78,8 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 3 — Controlled operator (plan/apply/verify/rollback) | Shipped, 11 workflows (7 ephemeral, 4 persistent) | `axxon_mcp_operator.py` |
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 145 / 361 (124 tested-pass + 21 safe-record) | `mcp-corpus/api_methods.json` |
-| PDF coverage matrix | 27 / 33 verified, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 174 / 174 passing | `tools/tests/` |
+| PDF coverage matrix | 31 / 37 verified, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
+| Unit tests | 384 / 384 passing in the Phase 5E worktree | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 
@@ -126,7 +126,7 @@ These are existing project rules. The roadmap honors them in every phase.
 2. **Plan → apply → verify → rollback** for every mutation. No tool ever mutates state without a returned plan ID and a confirmation token.
 3. **Bounded streams.** Every subscription / media / export tool enforces byte caps, time caps, and frame caps.
 4. **Secrets in memory only.** Credentials come from environment variables. Generated code reads credentials from env, never from arguments. Static verifier already rejects embedded secrets.
-5. **Sanitized evidence.** Host IPs, TLS CNs, and `hosts/Server/...` UIDs are scrubbed before evidence is committed. The demo stand at `100.76.150.18` is sanitized to `<demo-host>` in any published report.
+5. **Sanitized evidence.** Host IPs, TLS CNs, and `hosts/Server/...` UIDs are scrubbed before evidence is committed. The private demo stand is sanitized to `<demo-host>` in any published report.
 6. **No copyrighted source in this repo.** `docs/integration-apis-3.0/` and `docs/grpc-proto-files/` stay gitignored. Only audit tooling and evidence authored in this project are public.
 7. **Reuse `AxxonApiClient`.** Direct gRPC with TLS override, HTTP `/grpc`, legacy HTTP, and `/v1` endpoints all share the same client.
 8. **No defensive programming unless justified.** Errors surface for debuggability; we add try/except only where a user-facing safety guarantee depends on it (rollback, byte cap, redaction).
@@ -188,7 +188,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 **Acceptance.**
 - All tools enforce documented caps and refuse calls without them.
-- Live smoke run against `100.76.150.18:20109` produces sanitized evidence under `docs/api-audit/phase-5a-*-latest.md`.
+- Live smoke run against `<demo-host>:20109` produces sanitized evidence under `docs/api-audit/phase-5a-*-latest.md`.
 - Unit tests cover cap enforcement, error redaction, and access-point resolution.
 
 ---
@@ -212,7 +212,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 **Acceptance.**
 - All mutations go through the plan/apply/verify/rollback flow.
-- If no fixture is available on `100.76.150.18`, smoke ends with a clean fixture-needed report. If a fixture is provided, smoke verifies one preset goto and one bounded move with rollback to start position.
+- If no fixture is available on `<demo-host>`, smoke ends with a clean fixture-needed report. If a fixture is provided, smoke verifies one preset goto and one bounded move with rollback to start position.
 - TelemetryService pending count drops to ≤ 5 (everything except mode-specific advanced calls).
 
 ---
@@ -255,11 +255,13 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 ### Phase 5E — Operator UX: Detector + analytics depth, archive policies
 
+**Status.** Shipped on `codex/phase-5e-detectors-archive` with fixture caveats. Latest evidence: `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` (PASS=12, WARN=3, FAIL=0).
+
 **Why.** Detector parameter list/read/edit is verified, but the catalog of detector kinds, the per-kind parameter schemas, and the archive-binding rules are not yet exposed as tools. This phase closes the gap so an LLM can author a full detector config from a natural-language description.
 
 **Scope.**
 - `detector_kind_catalog()` — full list of supported detector kinds with parameter schemas, derived from proto and config-model study (already partly verified).
-- `detector_create_full(plan)` — extension of `temp_av_detector` / `temp_appdata_detector` to non-temporary detectors with full parameter trees.
+- `create_av_detector_full(plan)` / `create_appdata_detector_full(plan)` — extension of `temp_av_detector` / `temp_appdata_detector` to non-temporary detectors with full parameter trees.
 - `detector_parameter_schema(kind)` — returns JSON schema for a detector kind so the caller (or LLM) can build a valid plan.
 - `archive_policy_get(camera_id)` / `archive_policy_update(plan)` — recording schedules and pre/post-event windows.
 - `archive_management_extended` — promotes the verified format/reindex/cancel-reindex/cloud/link operations from approval-gated maintenance to operator workflows (still gated on isolated storage fixture).
@@ -268,12 +270,15 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 **Out of scope.** Vendor-specific camera firmware tuning beyond what the proto exposes.
 
 **Acceptance.**
-- Detector parameter schemas are round-trip safe: a generated plan from `detector_parameter_schema` applied via `detector_create_full` produces a detector that `list_detectors` confirms.
-- Archive policy updates are diff-rendered before apply, ETag-guarded on apply (same pattern as `UpdateExportSettings`).
+- Detector parameter schemas are round-trip safe: a generated plan from `detector_parameter_schema` applied via `create_av_detector_full` or `create_appdata_detector_full` produces a detector that readback verification confirms.
+- Archive policy updates are diff-rendered before apply, descriptor-backed, and snapshot-rollback guarded.
 
 **Design and plan.**
 - Design/spec: `docs/superpowers/specs/2026-05-19-phase-5e-detectors-archive-policies-design.md`.
 - Implementation plan: `docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md`.
+- Live evidence: `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
+
+**Fixture debt.** `archive_policy_get` needs a descriptor that exposes policy-like fields, AV-detector visual mutation needs a writable visual child, and `archive_policy_update` needs an isolated `codex-*` archive/camera fixture. Archive maintenance no-op is verified only with `codex-nonexistent-*` volume ids; real maintenance remains approval-gated.
 
 ---
 
@@ -315,7 +320,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 - Bundle signing: optional `--sign` flag that emits a manifest with hashes so distributors can pin templates.
 
 **Acceptance.**
-- All 6 new templates produce runnable bundles in all 3 languages → 18 generator smokes pass against `100.76.150.18`.
+- All 6 new templates produce runnable bundles in all 3 languages → 18 generator smokes pass against `<demo-host>`.
 - Existing 8 templates also gain Node and C# variants (24 more smokes). Total smoke surface for generators: 8 + 6 = 14 templates × 3 languages = 42 bundles.
 
 ---
@@ -333,7 +338,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 **Out of scope.** Hosting / registry (that is a separate product decision).
 
 **Acceptance.**
-- A new contributor can run `scaffold_plugin → plugin_lint → plugin_package` and end up with a runnable plugin that connects to `100.76.150.18` and lists cameras within 5 minutes of clone.
+- A new contributor can run `scaffold_plugin → plugin_lint → plugin_package` and end up with a runnable plugin that connects to `<demo-host>` and lists cameras within 5 minutes of clone.
 
 ---
 
@@ -348,7 +353,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 - Recipe execution still goes through the existing `apply_operator_plan` per step. The translator never invents API shapes — it only composes known workflows.
 
 **Acceptance.**
-- For 10 reference intents (camera + detector, alarm responder, export schedule, layout + map, role + permission, etc.), `assemble_recipe → validate_recipe → apply` round-trips successfully against `100.76.150.18` with rollback verified.
+- For 10 reference intents (camera + detector, alarm responder, export schedule, layout + map, role + permission, etc.), `assemble_recipe → validate_recipe → apply` round-trips successfully against `<demo-host>` with rollback verified.
 
 ---
 
@@ -406,7 +411,7 @@ Open questions to confirm with the user before Phase 5A spec:
 
 1. Should `live_view` return media URLs the caller fetches, or should the MCP proxy bytes (and apply byte caps inline)? Existing media smokes use both shapes; we need to pick one default.
 2. Do we want Node/TypeScript and C# in Phase 6A, or just Node first?
-3. Is the demo stand at `100.76.150.18` the only verification target, or will partners be expected to bring their own stand for CI?
+3. Is the private demo stand the only verification target, or will partners be expected to bring their own stand for CI?
 
 ---
 
@@ -417,7 +422,7 @@ The full-coverage MCP is "done" when:
 1. `api_methods.json` shows ≤ 20 `pending` methods (the remainder are documented fixture-blocked, not unknown).
 2. PDF coverage matrix shows 33 / 33 verified or fixture-documented.
 3. Every desktop-client capability category in section 2.4 has a corresponding MCP tool (or a documented fixture-gated stub).
-4. The authoring kit ships at least one runnable reference plugin per supported language, all green against `100.76.150.18`.
+4. The authoring kit ships at least one runnable reference plugin per supported language, all green against `<demo-host>`.
 5. The NL translator passes its 10-reference-intent suite.
 6. Unit tests stay 100% green; smokes pass against the demo stand from a clean clone.
 
@@ -427,8 +432,6 @@ The full-coverage MCP is "done" when:
 
 This document is a roadmap, not an implementation plan. The next step is:
 
-1. **User reviews this document** and confirms phase ordering, language scope (Phase 6A), and the three open questions in section 8.
-2. **Open Phase 5A spec** — full design doc for live + archive viewing tools, written via the brainstorming flow.
-3. **Phase 5A implementation plan** — created via the writing-plans skill from the approved Phase 5A spec.
-4. Implementation, evidence, sanitization, coverage matrix update, merge.
-5. Repeat for 5B, 5C, ... 7.
+1. **Start Phase 5F planning** for security, users, roles, system health, and schedules.
+2. **Carry Phase 5E fixture debt** as a separate validation track: descriptor-backed archive policy fixture, writable visual detector child, and isolated `codex-*` archive/camera fixture.
+3. Keep the loop for each phase: implementation, evidence, sanitization, coverage matrix update, merge.

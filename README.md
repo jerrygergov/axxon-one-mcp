@@ -5,11 +5,11 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **281 / 281** unit tests passing on `main`.
-- **36** PDF gap-coverage matrix rows. 30 verified, 6 fixture-blocked
+- **384 / 384** unit tests passing in the Phase 5E worktree.
+- **37** PDF gap-coverage matrix rows. 31 verified, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
-- **22** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
+- **31** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
   workflows, with
   plan / apply / verify / rollback safety.
 - **15** Phase 2 read-only live tools covering inventory, events, metadata,
@@ -26,6 +26,12 @@ coverage matrix for Axxon One VMS.
   markers, and videowalls. Live-verified for map/videowall round-trips and
   read inventory; layout-image live fixture is absent on the demo stand — see
   `docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
+- **11 reads + 9 workflows** Phase 5E detector/archive coverage for detector
+  schemas, detector config snapshots, metadata sampling, archive policy/status
+  reads, full detector creation/update/delete, archive policy update, and
+  approval-gated archive maintenance no-ops. Live evidence PASS=12, WARN=3,
+  FAIL=0 — see
+  `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -44,7 +50,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5B — PTZ + Tag&Track | ⏸ deferred (no PTZ fixture) |
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
-| 5E — Detector depth + archive policies | 📝 planned |
+| 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
 | 5F — Security / users / system health + schedules | ❌ not started |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
@@ -65,6 +71,8 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_mcp_generator_smoke.py — static smoke that generates+verifies all templates
   axxon_mcp_view_objects.py  — phase-5D layouts/maps/videowalls read tools
   axxon_view_objects_smoke.py — phase-5D live read + mutation smoke
+  axxon_mcp_detector_archive.py — phase-5E detector/archive read tools
+  axxon_detector_archive_smoke.py — phase-5E live read + mutation smoke
   templates/                 — phase-4 string templates for generated bundles
   axxon_aux_topics_smoke.py  — aux topic coverage smoke (statistics, groups, alerts, ...)
   axxon_api_client.py        — gRPC + HTTP /grpc + legacy HTTP transport
@@ -125,6 +133,11 @@ python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --tran
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
 python tools/axxon_mcp_server.py --enable-view-objects --transport stdio
+
+# + detector/archive read tools (Phase 5E)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-detector-archive --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -145,7 +158,10 @@ Persistent (caller owns lifecycle): `create_camera`, `create_macro`,
 `create_layout`, `set_unit_properties`, `update_layout`, `delete_layout`,
 `videowall_register`, `videowall_change`, `videowall_set_control_data`,
 `videowall_unregister`, `create_map`, `update_map`, `delete_map`,
-`update_markers`.
+`update_markers`, `create_av_detector_full`, `create_appdata_detector_full`,
+`update_detector_parameters`, `update_detector_visual_element`,
+`delete_detector`, `archive_policy_update`, `archive_format_volume`,
+`archive_reindex`, `archive_cancel_reindex`.
 
 All workflows expose: `list_operator_workflows`, `plan_operator_workflow`,
 `apply_operator_plan`, `verify_operator_plan`, `rollback_operator_plan`. Plans
@@ -212,6 +228,33 @@ Schedules are deferred to Phase 5F. See
 `docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` and
 the live evidence at
 `docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
+
+### Detector/archive tools (Phase 5E)
+
+Reads (`--enable-detector-archive`): `detector_archive_connect_axxon_profile`,
+`detector_kind_catalog`, `detector_parameter_schema`, `detector_config_get`,
+`detector_visual_elements`, `metadata_schema_catalog`,
+`metadata_sample_bounded`, `archive_policy_get`, `archive_management_status`,
+`archive_volume_probe`, `analytics_fixture_report`.
+
+Operator workflows (under `--enable-operator` + `AXXON_OPERATOR_APPROVE=1`):
+`create_av_detector_full`, `create_appdata_detector_full`,
+`update_detector_parameters`, `update_detector_visual_element`,
+`delete_detector`, `archive_policy_update`, `archive_format_volume`,
+`archive_reindex`, `archive_cancel_reindex`. Full detector workflows are
+caller-owned persistent creations with explicit rollback tokens; AppData
+creation can derive a VMDA source by chain-creating a SceneDescription
+AVDetector. Archive policy updates require descriptor-backed property IDs and a
+snapshot rollback. Archive maintenance workflows require
+`AXXON_ARCHIVE_MAINTENANCE_APPROVE=1`; the live smoke only verifies no-op
+dispatch against `codex-nonexistent-*` volume ids.
+
+Combined live evidence is PASS=12, WARN=3, FAIL=0 for read-only, mutation, and
+archive-maintenance-no-op modes. Remaining warnings require a descriptor that
+exposes archive policy fields, an AV detector fixture with a writable visual
+child, and an isolated `codex-*` archive/camera fixture. See
+`docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md` and
+`docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
 
 ## Verification
 
