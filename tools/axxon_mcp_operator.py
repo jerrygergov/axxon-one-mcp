@@ -320,6 +320,7 @@ def _snapshot_unit_from_read(payload: dict[str, Any], target_uid: str, fallback_
 def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: bool) -> dict[str, Any]:
     unit = dict(snapshot["unit"])
     uid = str(snapshot["target_uid"])
+    restore_properties = list(snapshot.get("restore_properties") or unit.get("properties") or [])
     restore_unit = {
         "uid": uid,
         "type": unit.get("type", ""),
@@ -327,7 +328,7 @@ def _restore_payload_for_snapshot(snapshot: dict[str, Any], *, target_present: b
         "units": list(unit.get("units") or []),
     }
     if target_present:
-        return {"changed": [{"uid": uid, "properties": restore_unit["properties"]}]}
+        return {"changed": [{"uid": uid, "properties": restore_properties}]}
     return {"added": [{"uid": snapshot.get("parent_uid") or _infer_parent_uid(uid, ""), "units": [restore_unit]}]}
 
 
@@ -358,6 +359,17 @@ def _requested_property_checks(actual_properties: list[dict[str, Any]], requeste
         actual = _find_property(actual_properties, prop_id)
         checks[prop_id] = bool(actual and _property_matches(actual, requested))
     return checks
+
+
+def _snapshot_restore_properties(snapshot: dict[str, Any], requested_properties: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    original_properties = list(((snapshot.get("unit") or {}).get("properties")) or [])
+    restore_properties: list[dict[str, Any]] = []
+    for requested in requested_properties:
+        prop_id = _property_node_id(requested)
+        original = _find_property(original_properties, prop_id)
+        if original:
+            restore_properties.append(dict(original))
+    return restore_properties
 
 
 def _property_child_nodes(prop: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1946,10 +1958,14 @@ class OperatorRegistry:
                 # No new UID created; do not record for rollback.
             elif op in {"change_detector_snapshot_unit", "change_archive_policy_snapshot_unit"}:
                 target_uid = str(step.get("target_uid") or "")
-                if not capture_snapshot(target_uid):
+                snapshot = capture_snapshot(target_uid)
+                if not snapshot:
                     store_apply_state("error")
                     self._record("apply", plan_id=plan_id, status="error", reason="snapshot_missing")
                     return {"status": "error", "message": "target unit snapshot was not found", "plan_id": plan_id}
+                changed = (step.get("payload") or {}).get("changed") or []
+                requested_properties = list((changed[0] if changed else {}).get("properties") or [])
+                snapshot["restore_properties"] = _snapshot_restore_properties(snapshot, requested_properties)
                 response = client.change_config(step["payload"])
                 if response.get("failed"):
                     store_apply_state("error")

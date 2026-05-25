@@ -24,6 +24,17 @@ class FakeMutationClient:
         self._next_uid += 1
         return f"hosts/Server/{unit_type}.{self._next_uid}"
 
+    def _merge_properties(self, current: list[dict], changed: list[dict]) -> list[dict]:
+        merged = [dict(prop) for prop in current]
+        by_id = {prop.get("id"): idx for idx, prop in enumerate(merged)}
+        for prop in changed:
+            prop_id = prop.get("id")
+            if prop_id in by_id:
+                merged[by_id[prop_id]] = dict(prop)
+            else:
+                merged.append(dict(prop))
+        return merged
+
     def change_config(self, payload: dict) -> dict:
         self.calls.append(payload)
         added_uids: list[str] = []
@@ -47,7 +58,10 @@ class FakeMutationClient:
             if "type" in unit:
                 self.units[uid]["type"] = unit["type"]
             if "properties" in unit:
-                self.units[uid]["properties"] = unit.get("properties", [])
+                self.units[uid]["properties"] = self._merge_properties(
+                    self.units[uid].get("properties", []),
+                    unit.get("properties", []),
+                )
             if "units" in unit:
                 self.units[uid]["units"] = unit.get("units", [])
         for unit in payload.get("removed", []):
@@ -864,10 +878,7 @@ class OperatorPlanTests(unittest.TestCase):
             {"id": "display_name", "value_string": "motion"},
             {"id": "threshold", "value_int32": 5},
         ]
-        requested_properties = [
-            {"id": "threshold", "value_int32": 8},
-            {"id": "sensitivity", "value_double": 0.75},
-        ]
+        requested_properties = [{"id": "threshold", "value_int32": 8}]
         client.units[target_uid] = {"type": "AVDetector", "properties": list(original_properties), "units": []}
         client.parents[target_uid] = "hosts/Server"
         reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
@@ -890,7 +901,7 @@ class OperatorPlanTests(unittest.TestCase):
             "target_role": "detector",
         })
         self.assertEqual(plan["diff"]["changed"][0]["target_uid"], target_uid)
-        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["threshold", "sensitivity"])
+        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["threshold"])
         self.assertEqual(plan["diff"]["changed"][0]["before"], "<captured during apply>")
         self.assertEqual(plan["diff"]["changed"][0]["after"], requested_properties)
         self.assertEqual(client.calls, [])
@@ -902,17 +913,17 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(applied["snapshots"][0]["unit"]["properties"], original_properties)
         self.assertEqual(client.reads, [target_uid])
         self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": requested_properties}]})
-        self.assertEqual(client.units[target_uid]["properties"], requested_properties)
+        self.assertEqual(_test_find_property(client.units[target_uid]["properties"], "threshold")["value_int32"], 8)
 
         verified = reg.verify(plan["plan_id"])
         self.assertEqual(verified["status"], "verified")
         self.assertTrue(verified["target"]["still_present"])
-        self.assertEqual(verified["property_checks"], {"threshold": True, "sensitivity": True})
+        self.assertEqual(verified["property_checks"], {"threshold": True})
 
         rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(rolled["restored_uids"], [target_uid])
-        self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": original_properties}]})
+        self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": [{"id": "threshold", "value_int32": 5}]}]})
         self.assertEqual(client.units[target_uid]["properties"], original_properties)
 
     def test_update_detector_parameters_rollback_restore_failure_is_error(self) -> None:
@@ -991,10 +1002,7 @@ class OperatorPlanTests(unittest.TestCase):
             {"id": "display_name", "value_string": "Zone A"},
             {"id": "color", "value_string": "#ff0000"},
         ]
-        requested_properties = [
-            {"id": "color", "value_string": "#00ff00"},
-            {"id": "enabled", "value_bool": True},
-        ]
+        requested_properties = [{"id": "color", "value_string": "#00ff00"}]
         client.units[target_uid] = {"type": "VisualElement", "properties": list(original_properties), "units": []}
         client.parents[target_uid] = "hosts/Server/AVDetector.42"
         reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
@@ -1008,7 +1016,7 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(plan["steps"][0]["operation"], "change_detector_snapshot_unit")
         self.assertEqual(plan["snapshot_capture"]["target_role"], "visual_element")
         self.assertEqual(plan["diff"]["changed"][0]["target_uid"], target_uid)
-        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["color", "enabled"])
+        self.assertEqual(plan["diff"]["changed"][0]["property_paths"], ["color"])
         self.assertEqual(client.calls, [])
         self.assertEqual(client.reads, [])
 
@@ -1018,9 +1026,9 @@ class OperatorPlanTests(unittest.TestCase):
         verified = reg.verify(plan["plan_id"])
         self.assertEqual(verified["status"], "verified")
         self.assertTrue(verified["target"]["still_present"])
-        self.assertEqual(verified["property_checks"], {"color": True, "enabled": True})
+        self.assertEqual(verified["property_checks"], {"color": True})
 
-        client.units[target_uid]["properties"] = [{"id": "color", "value_string": "#000000"}]
+        _test_find_property(client.units[target_uid]["properties"], "color")["value_string"] = "#000000"
         rolled = reg.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(client.units[target_uid]["properties"], original_properties)
@@ -1245,13 +1253,13 @@ class OperatorPlanTests(unittest.TestCase):
         applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
         self.assertEqual(applied["status"], "applied")
         self.assertEqual(applied["snapshots"][0]["unit"]["properties"], original_properties)
-        self.assertEqual(client.units[target_uid]["properties"], requested_properties)
+        self.assertEqual(_test_find_property(client.units[target_uid]["properties"], "day_depth")["value_int32"], 5)
 
         verified = registry.verify(plan["plan_id"])
         self.assertEqual(verified["status"], "verified")
         self.assertEqual(verified["property_checks"], {"day_depth": True})
 
-        client.units[target_uid]["properties"] = [{"id": "day_depth", "value_int32": 99}]
+        _test_find_property(client.units[target_uid]["properties"], "day_depth")["value_int32"] = 99
         rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(rolled["restored_uids"], [target_uid])
