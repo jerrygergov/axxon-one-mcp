@@ -18,6 +18,7 @@ import re
 import sys
 import time
 from typing import Any, Callable
+import urllib.parse
 import uuid
 
 TOOLS_DIR = Path(__file__).resolve().parent
@@ -51,6 +52,7 @@ UNQUOTED_SECRET_ASSIGNMENT_RE = re.compile(
     r"(?P<sep>\s*[:=]\s*)[^,\s;}\]]+",
     re.IGNORECASE,
 )
+URL_USERINFO_RE = re.compile(r"(?P<prefix>\b[a-z][a-z0-9+.-]*://)(?P<userinfo>[^/@\s]+)@", re.IGNORECASE)
 INTRINSIC_UID_RE = re.compile(r"\bhosts/[^\s,;}\])]+")
 USER_KEYS = {"username", "user", "login"}
 TLS_CN_KEYS = {"tls_cn", "tls-cn", "tls_common_name"}
@@ -98,7 +100,22 @@ def _replace_identity_text(text: str, needle: str, replacement: str) -> str:
     return pattern.sub(replacement, text)
 
 
-def _sanitize_text(value: str, host: str = "", username: str = "", tls_cn: str = "") -> str:
+def _http_url_host(http_url: str = "") -> str:
+    if not http_url:
+        return ""
+    try:
+        return urllib.parse.urlsplit(http_url).hostname or ""
+    except ValueError:
+        return ""
+
+
+def _sanitize_text(
+    value: str,
+    host: str = "",
+    username: str = "",
+    tls_cn: str = "",
+    extra_hosts: tuple[str, ...] = (),
+) -> str:
     text = value
     uid_placeholders: dict[str, str] = {}
 
@@ -108,8 +125,10 @@ def _sanitize_text(value: str, host: str = "", username: str = "", tls_cn: str =
         return placeholder
 
     text = INTRINSIC_UID_RE.sub(protect_uid, text)
-    if host:
-        text = text.replace(host, "<demo-host>")
+    text = URL_USERINFO_RE.sub(lambda m: f"{m.group('prefix')}<redacted-userinfo>@", text)
+    for item in (host, *extra_hosts):
+        if item:
+            text = text.replace(item, "<demo-host>")
     text = _replace_identity_text(text, username, "<demo-user>")
     text = _replace_identity_text(text, tls_cn, "<demo-tls-cn>")
     text = BEARER_RE.sub("Bearer <redacted>", text)
@@ -120,7 +139,13 @@ def _sanitize_text(value: str, host: str = "", username: str = "", tls_cn: str =
     return text
 
 
-def sanitize_evidence(value: Any, host: str = "", username: str = "", tls_cn: str = "") -> Any:
+def sanitize_evidence(
+    value: Any,
+    host: str = "",
+    username: str = "",
+    tls_cn: str = "",
+    extra_hosts: tuple[str, ...] = (),
+) -> Any:
     """Sanitize report evidence while preserving intrinsic Axxon UIDs."""
     if isinstance(value, dict):
         out: dict[Any, Any] = {}
@@ -132,20 +157,20 @@ def sanitize_evidence(value: Any, host: str = "", username: str = "", tls_cn: st
                 out[key] = "<demo-tls-cn>" if item else item
             elif _secret_key(key):
                 if isinstance(item, str) and BEARER_RE.search(item):
-                    out[key] = _sanitize_text(item, host, username, tls_cn)
+                    out[key] = _sanitize_text(item, host, username, tls_cn, extra_hosts)
                 else:
                     out[key] = "<redacted>" if item else item
             else:
-                out[key] = sanitize_evidence(item, host, username, tls_cn)
+                out[key] = sanitize_evidence(item, host, username, tls_cn, extra_hosts)
         return out
     if isinstance(value, list):
-        return [sanitize_evidence(item, host, username, tls_cn) for item in value]
+        return [sanitize_evidence(item, host, username, tls_cn, extra_hosts) for item in value]
     if isinstance(value, tuple):
-        return [sanitize_evidence(item, host, username, tls_cn) for item in value]
+        return [sanitize_evidence(item, host, username, tls_cn, extra_hosts) for item in value]
     if isinstance(value, bytes):
         return f"<bytes:{len(value)}>"
     if isinstance(value, str):
-        return _sanitize_text(value, host, username, tls_cn)
+        return _sanitize_text(value, host, username, tls_cn, extra_hosts)
     return value
 
 
@@ -200,10 +225,12 @@ def result_status(payload: Any) -> str:
         status = str(payload.get("status") or "").lower()
         if status in {"ok", "applied", "verified", "rolled_back", "planned"}:
             return "PASS"
-        if status in {"fixture-needed", "skipped", "gap"}:
+        if status in {"fixture-needed", "skipped", "gap", "warn", "warning"}:
             return "WARN"
         if status in {"error", "fail", "failed", "rejected"}:
             return "FAIL"
+        if status:
+            return "WARN"
     return "PASS"
 
 
@@ -333,6 +360,30 @@ class DetectorArchiveSmoke:
         except Exception:
             return str(self.args.host)
 
+    def sanitize_extra_hosts(self) -> tuple[str, ...]:
+        http_host = _http_url_host(str(getattr(self.args, "http_url", "")))
+        return tuple(host for host in (http_host,) if host and host != self.host)
+
+    def sanitize(self, value: Any) -> Any:
+        return sanitize_evidence(
+            value,
+            self.host,
+            username=self.args.username,
+            tls_cn=self.args.tls_cn,
+            extra_hosts=self.sanitize_extra_hosts(),
+        )
+
+    def append_operator_audit_log(self, registry: Any) -> None:
+        existing = list(self.context.get("operator_audit_log", []))
+        seen = {json.dumps(item, sort_keys=True, default=str) for item in existing}
+        for item in registry.audit_log():
+            marker = json.dumps(item, sort_keys=True, default=str)
+            if marker in seen:
+                continue
+            existing.append(item)
+            seen.add(marker)
+        self.context["operator_audit_log"] = existing
+
     def record(self, group: str, func: Callable[[], Any]) -> Any:
         start = time.perf_counter()
         try:
@@ -345,7 +396,7 @@ class DetectorArchiveSmoke:
 
                 evidence["traceback"] = traceback.format_exc()
             status = "FAIL"
-        clean = sanitize_evidence(evidence, self.host, username=self.args.username, tls_cn=self.args.tls_cn)
+        clean = self.sanitize(evidence)
         self.results.append(
             {
                 "group": group,
@@ -519,12 +570,12 @@ class DetectorArchiveSmoke:
                 lambda: self.fixture_needed("create_appdata_detector_full", "No video SourceEndpoint fixture was discovered."),
             )
             self.record("mutation_archive_policy", lambda: self.mutate_archive_policy(registry))
-            self.context["operator_audit_log"] = registry.audit_log()
+            self.append_operator_audit_log(registry)
             return
         self.record("mutation_av_detector", lambda: self.mutate_av_detector(registry, video_source_ap))
         self.record("mutation_appdata_detector", lambda: self.mutate_appdata_detector(registry, video_source_ap))
         self.record("mutation_archive_policy", lambda: self.mutate_archive_policy(registry))
-        self.context["operator_audit_log"] = registry.audit_log()
+        self.append_operator_audit_log(registry)
 
     def mutate_av_detector(self, registry: Any, video_source_ap: str) -> dict[str, Any]:
         name = f"codex-detector-archive-av-{uuid.uuid4().hex[:8]}"
@@ -618,7 +669,7 @@ class DetectorArchiveSmoke:
     def run_archive_maintenance_noop(self) -> None:
         registry = self.operator_registry()
         self.record("archive_maintenance_noop", lambda: self.archive_maintenance_noop(registry))
-        self.context["operator_audit_log"] = registry.audit_log()
+        self.append_operator_audit_log(registry)
 
     def archive_maintenance_noop(self, registry: Any) -> dict[str, Any]:
         access_point = self.args.archive_access_point or (self.context.get("archive_management_status") or {}).get("archive_access_point")
@@ -670,19 +721,14 @@ class DetectorArchiveSmoke:
             },
             "summary": {"PASS": counts.get("PASS", 0), "WARN": counts.get("WARN", 0), "FAIL": counts.get("FAIL", 0)},
             "results": self.results,
-            "operator_audit_log": sanitize_evidence(
-                self.context.get("operator_audit_log", []),
-                self.host,
-                username=self.args.username,
-                tls_cn=self.args.tls_cn,
-            ),
+            "operator_audit_log": self.sanitize(self.context.get("operator_audit_log", [])),
         }
 
     def write_report(self, report: dict[str, Any]) -> None:
         self.args.report_dir.mkdir(parents=True, exist_ok=True)
         stamp = self.started_at.strftime("%Y%m%dT%H%M%SZ")
         paths = report_paths(self.args.report_dir, stamp)
-        clean = sanitize_evidence(report, self.host, username=self.args.username, tls_cn=self.args.tls_cn)
+        clean = self.sanitize(report)
         json_text = json.dumps(clean, indent=2, ensure_ascii=True, default=str) + "\n"
         paths["json"].write_text(json_text, encoding="utf-8")
         paths["latest_json"].write_text(json_text, encoding="utf-8")

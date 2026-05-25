@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from contextlib import redirect_stderr
+import datetime as dt
 import importlib
 import io
+import json
 from pathlib import Path
 import sys
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest import mock
@@ -141,6 +144,63 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
 
         smoke.run_mutation.assert_called_once_with()
         smoke.run_archive_maintenance_noop.assert_called_once_with()
+
+    def test_operator_audit_log_entries_are_appended_across_workflows(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.context = {"operator_audit_log": [{"action": "mutation"}]}
+        mutation_registry = mock.Mock()
+        mutation_registry.audit_log.return_value = [{"action": "mutation"}, {"action": "rollback"}]
+        maintenance_registry = mock.Mock()
+        maintenance_registry.audit_log.return_value = [{"action": "archive_format_volume"}]
+
+        smoke.append_operator_audit_log(mutation_registry)
+        smoke.append_operator_audit_log(maintenance_registry)
+
+        self.assertEqual(
+            smoke.context["operator_audit_log"],
+            [{"action": "mutation"}, {"action": "rollback"}, {"action": "archive_format_volume"}],
+        )
+
+    def test_write_report_sanitizes_distinct_http_url_host_and_userinfo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            smoke = object.__new__(self.module.DetectorArchiveSmoke)
+            smoke.started_at = dt.datetime(2026, 5, 25, tzinfo=dt.UTC)
+            smoke.args = SimpleNamespace(
+                host="grpc.internal",
+                grpc_port=20109,
+                http_url="https://root:secret@api.internal:8443/path",
+                username="root",
+                password="pw",
+                tls_cn="Server",
+                mutation=False,
+                archive_maintenance_noop=False,
+                metadata_sample_limit=20,
+                metadata_sample_timeout=5.0,
+                noop_volume_prefix="codex-nonexistent-",
+                report_dir=Path(tmp),
+            )
+            smoke.context = {}
+            smoke.results = []
+
+            smoke.write_report(smoke.report())
+
+            json_text = (Path(tmp) / "phase-5e-detector-archive-smoke-latest.json").read_text(encoding="utf-8")
+            md_text = (Path(tmp) / "phase-5e-detector-archive-smoke-latest.md").read_text(encoding="utf-8")
+            payload = json.loads(json_text)
+
+            self.assertNotIn("api.internal", json_text)
+            self.assertNotIn("secret", json_text)
+            self.assertNotIn("root", json_text)
+            self.assertIn("<demo-host>", payload["target"]["http_url"])
+            self.assertIn("<redacted-userinfo>", payload["target"]["http_url"])
+            self.assertNotIn("api.internal", md_text)
+            self.assertNotIn("secret", md_text)
+            self.assertNotIn("root", md_text)
+
+    def test_result_status_classifies_warnings_and_unknown_status_as_warn(self) -> None:
+        self.assertEqual(self.module.result_status({"status": "warn"}), "WARN")
+        self.assertEqual(self.module.result_status({"status": "warning"}), "WARN")
+        self.assertEqual(self.module.result_status({"status": "partial"}), "WARN")
 
     def test_report_paths_use_phase_latest_names(self) -> None:
         paths = self.module.report_paths(Path("/tmp/reports"), stamp="20260525T120000Z")
