@@ -28,17 +28,8 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     self.module.parse_args(["--mutation"])
 
-    def test_mutation_requires_archive_maintenance_env_approval(self) -> None:
+    def test_mutation_requires_only_operator_env_approval(self) -> None:
         with mock.patch.dict("os.environ", {"AXXON_OPERATOR_APPROVE": "1"}, clear=True):
-            with redirect_stderr(io.StringIO()):
-                with self.assertRaises(SystemExit):
-                    self.module.parse_args(["--mutation"])
-
-        with mock.patch.dict(
-            "os.environ",
-            {"AXXON_OPERATOR_APPROVE": "1", "AXXON_ARCHIVE_MAINTENANCE_APPROVE": "1"},
-            clear=True,
-        ):
             args = self.module.parse_args(["--mutation"])
 
         self.assertTrue(args.mutation)
@@ -126,7 +117,7 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
             "target <demo-user> tls <demo-tls-cn> uid hosts/Server/AVDetector.1 authorization Bearer <redacted>",
         )
 
-    def test_mutation_run_also_dispatches_archive_maintenance_noop(self) -> None:
+    def test_mutation_run_does_not_dispatch_archive_maintenance_noop(self) -> None:
         smoke = object.__new__(self.module.DetectorArchiveSmoke)
         smoke.args = SimpleNamespace(mutation=True, archive_maintenance_noop=False)
         smoke.context = {}
@@ -143,6 +134,25 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         smoke.run()
 
         smoke.run_mutation.assert_called_once_with()
+        smoke.run_archive_maintenance_noop.assert_not_called()
+
+    def test_archive_maintenance_noop_mode_dispatches_archive_maintenance(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.args = SimpleNamespace(mutation=False, archive_maintenance_noop=True)
+        smoke.context = {}
+        smoke.tool = mock.Mock()
+        smoke.record = mock.Mock(return_value={})
+        smoke.detector_uid = mock.Mock(return_value="")
+        smoke.vmda_source_ap = mock.Mock(return_value="")
+        smoke.archive_policy_target = mock.Mock(return_value="")
+        smoke.run_mutation = mock.Mock()
+        smoke.run_archive_maintenance_noop = mock.Mock()
+        smoke.report = mock.Mock(return_value={"summary": {}})
+        smoke.write_report = mock.Mock()
+
+        smoke.run()
+
+        smoke.run_mutation.assert_not_called()
         smoke.run_archive_maintenance_noop.assert_called_once_with()
 
     def test_operator_audit_log_entries_are_appended_across_workflows(self) -> None:
@@ -288,7 +298,7 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "error")
 
-    def test_mutate_av_detector_allows_fixture_needed_nested_updates(self) -> None:
+    def test_mutate_av_detector_warns_on_fixture_needed_nested_updates(self) -> None:
         smoke = object.__new__(self.module.DetectorArchiveSmoke)
         smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
 
@@ -308,8 +318,32 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
 
         result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
 
-        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["status"], "partial")
         self.assertEqual(result["scalar_update"]["status"], "fixture-needed")
+
+    def test_mutate_av_detector_warns_on_nested_update_gap(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+        smoke.apply_verify_rollback = mock.Mock(return_value={"status": "gap", "reason": "unsupported"})
+
+        registry = mock.Mock()
+        registry.plan.return_value = {
+            "status": "planned",
+            "plan_id": "plan-create",
+            "confirmation_token": "CONFIRM",
+            "rollback_confirmation_token": "ROLLBACK",
+        }
+        registry.apply.return_value = {"status": "applied", "created_uids": ["hosts/Server/AVDetector.1"]}
+        registry.verify.side_effect = [{"status": "verified"}, {"status": "verified"}]
+        registry.rollback.return_value = {"status": "rolled_back"}
+        registry.ensure_client.return_value.read_unit.return_value = {
+            "units": [{"uid": "hosts/Server/AVDetector.1", "properties": [{"id": "enabled", "value_bool": True}]}]
+        }
+
+        result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual(result["scalar_update"]["status"], "gap")
 
     def test_archive_maintenance_noop_fails_when_verify_or_rollback_errors(self) -> None:
         for verify_statuses, rollback_status in (
@@ -335,6 +369,19 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
                 result = smoke.archive_maintenance_noop(registry)
 
                 self.assertEqual(result["status"], "error")
+
+    def test_archive_maintenance_noop_warns_when_workflows_gap(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.args = SimpleNamespace(archive_access_point="hosts/Server/MultimediaStorage.AliceBlue", noop_volume_prefix="codex-nonexistent-")
+        smoke.context = {}
+        smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+        registry = mock.Mock()
+        registry.plan.return_value = {"status": "gap", "reason": "workflow unavailable"}
+
+        result = smoke.archive_maintenance_noop(registry)
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(registry.apply.call_count, 0)
 
     def test_report_paths_use_phase_latest_names(self) -> None:
         paths = self.module.report_paths(Path("/tmp/reports"), stamp="20260525T120000Z")

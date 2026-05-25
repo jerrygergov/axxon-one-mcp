@@ -213,10 +213,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(f"--noop-volume-prefix must start with {NOOP_VOLUME_PREFIX!r}")
     if (args.mutation or args.archive_maintenance_noop) and os.environ.get(OPERATOR_APPROVE_ENV) != "1":
         parser.error(f"mutation and archive maintenance modes require {OPERATOR_APPROVE_ENV}=1")
-    if (args.mutation or args.archive_maintenance_noop) and os.environ.get(ARCHIVE_MAINTENANCE_APPROVE_ENV) != "1":
-        parser.error(
-            f"mutation and archive maintenance modes require {ARCHIVE_MAINTENANCE_APPROVE_ENV}=1"
-        )
+    if args.archive_maintenance_noop and os.environ.get(ARCHIVE_MAINTENANCE_APPROVE_ENV) != "1":
+        parser.error(f"archive maintenance mode requires {ARCHIVE_MAINTENANCE_APPROVE_ENV}=1")
     return args
 
 
@@ -242,6 +240,10 @@ def lifecycle_failed(payload: dict[str, Any], *, expected_status: str | None = N
 
 def nested_lifecycle_failed(payload: dict[str, Any]) -> bool:
     return result_status(payload) == "FAIL"
+
+
+def nested_lifecycle_warned(payload: dict[str, Any]) -> bool:
+    return result_status(payload) == "WARN"
 
 
 def prop_bool(prop_id: str, value: bool) -> dict[str, Any]:
@@ -463,7 +465,7 @@ class DetectorArchiveSmoke:
 
         if self.args.mutation:
             self.run_mutation()
-        if self.args.mutation or self.args.archive_maintenance_noop:
+        if self.args.archive_maintenance_noop:
             self.run_archive_maintenance_noop()
 
         report = self.report()
@@ -645,8 +647,9 @@ class DetectorArchiveSmoke:
             or nested_lifecycle_failed(update_result)
             or nested_lifecycle_failed(visual_result)
         )
+        warned = nested_lifecycle_warned(update_result) or nested_lifecycle_warned(visual_result)
         return {
-            "status": "error" if failed else "ok",
+            "status": "error" if failed else "partial" if warned else "ok",
             "create": {"plan": plan, "apply": applied, "verify": verified},
             "scalar_update": update_result,
             "visual_update": visual_result,
@@ -721,8 +724,18 @@ class DetectorArchiveSmoke:
                 or ("rollback" in item and lifecycle_failed(item.get("rollback") or {}, expected_status="rolled_back"))
             )
         ]
+        attempted = [item for item in results if "apply" in item]
+        skipped = [item for item in results if "apply" not in item]
+        if failed:
+            status = "error"
+        elif not attempted:
+            status = "fixture-needed"
+        elif skipped:
+            status = "partial"
+        else:
+            status = "ok"
         return {
-            "status": "ok" if not failed else "error",
+            "status": status,
             "access_point": access_point,
             "noop_volume_id_prefix": self.args.noop_volume_prefix,
             "noop_volume_id_len": len(volume_id),
@@ -745,7 +758,7 @@ class DetectorArchiveSmoke:
             "modes": {
                 "read_only": True,
                 "mutation": bool(self.args.mutation),
-                "archive_maintenance_noop": bool(self.args.mutation or self.args.archive_maintenance_noop),
+                "archive_maintenance_noop": bool(self.args.archive_maintenance_noop),
             },
             "defaults": {
                 "metadata_sample_limit": self.args.metadata_sample_limit,
