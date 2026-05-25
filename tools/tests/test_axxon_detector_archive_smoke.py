@@ -345,6 +345,34 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         self.assertEqual(result["status"], "partial")
         self.assertEqual(result["scalar_update"]["status"], "gap")
 
+    def test_mutate_appdata_detector_uses_video_source_from_vmda_detector(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.vmda_source_ap = mock.Mock(return_value="hosts/Server/AVDetector.72/SourceEndpoint.vmda")
+        smoke.apply_verify_rollback = mock.Mock(return_value={"status": "ok"})
+        registry = mock.Mock()
+        registry.ensure_client.return_value.read_unit.return_value = {
+            "units": [{
+                "uid": "hosts/Server/AVDetector.72",
+                "type": "AVDetector",
+                "properties": [
+                    {
+                        "id": "streaming_id",
+                        "value_string": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0",
+                    }
+                ],
+            }]
+        }
+
+        result = smoke.mutate_appdata_detector(
+            registry,
+            "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0",
+        )
+
+        self.assertEqual(result["status"], "ok")
+        _, _, params = smoke.apply_verify_rollback.mock_calls[0].args
+        self.assertEqual(params["video_source_ap"], "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0")
+        self.assertEqual(params["vmda_source_ap"], "hosts/Server/AVDetector.72/SourceEndpoint.vmda")
+
     def test_archive_maintenance_noop_fails_when_verify_or_rollback_errors(self) -> None:
         for verify_statuses, rollback_status in (
             ([{"status": "error"}, {"status": "verified"}, {"status": "verified"}], {"status": "rolled_back"}),

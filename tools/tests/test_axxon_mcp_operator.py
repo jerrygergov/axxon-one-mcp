@@ -596,6 +596,46 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(post["still_present"], [])
         self.assertNotIn("detector_checks", post)
 
+    def test_create_av_detector_full_verify_accepts_live_normalized_readback(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        video_ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+        plan = registry.plan("create_av_detector_full", {
+            "display_name": "persistent-live-normalized",
+            "video_source_ap": video_ap,
+            "detector": "MotionDetection",
+        })
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        uid = applied["created_uids"][0]
+        client.units[uid]["properties"] = [
+            {"id": "display_name", "value_string": "persistent-live-normalized"},
+            {"id": "detector", "value_string": "MotionDetection", "readonly": True},
+            {"id": "streaming_id", "value_string": video_ap, "internal": True},
+            {
+                "id": "input",
+                "value_string": "Video",
+                "enum_constraint": {
+                    "items": [{
+                        "value_string": "Video",
+                        "properties": [
+                            {"id": "detector", "value_string": "MotionDetection"},
+                            {"id": "camera_ref", "value_string": video_ap},
+                        ],
+                    }]
+                },
+            },
+        ]
+
+        verified = registry.verify(plan["plan_id"])
+
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(verified["detector_checks"], {
+            "display_name": True,
+            "detector": True,
+            "video_source_ap": True,
+        })
+
     def test_create_appdata_detector_full_verify_requires_chained_vmda_uid(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         client = FakeMutationClient()
@@ -620,6 +660,58 @@ class OperatorPlanTests(unittest.TestCase):
         chained = registry.verify(plan["plan_id"])
         self.assertEqual(chained["status"], "verified")
         self.assertTrue(chained["detector_checks"]["vmda_source_ap"])
+
+    def test_create_appdata_detector_full_verify_accepts_live_normalized_readback(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        video_ap = "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0"
+        vmda_ap = "hosts/Server/AVDetector.72/SourceEndpoint.vmda"
+        plan = registry.plan("create_appdata_detector_full", {
+            "display_name": "persistent-appdata-live-normalized",
+            "video_source_ap": video_ap,
+            "vmda_source_ap": vmda_ap,
+            "detector": "MoveInZone",
+        })
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        uid = applied["created_uids"][0]
+        client.units[uid]["properties"] = [
+            {"id": "display_name", "value_string": "persistent-appdata-live-normalized"},
+            {"id": "detector", "value_string": "MoveInZone", "readonly": True},
+            {"id": "streaming_id", "value_string": vmda_ap, "internal": True},
+            {
+                "id": "input",
+                "value_string": "TargetList",
+                "enum_constraint": {
+                    "items": [{
+                        "value_string": "TargetList",
+                        "properties": [
+                            {"id": "detector", "value_string": "MoveInZone"},
+                            {
+                                "id": "camera_ref",
+                                "value_string": video_ap,
+                                "enum_constraint": {
+                                    "items": [{
+                                        "value_string": video_ap,
+                                        "properties": [{"id": "streaming_id", "value_string": vmda_ap}],
+                                    }]
+                                },
+                            },
+                        ],
+                    }]
+                },
+            },
+        ]
+
+        verified = registry.verify(plan["plan_id"])
+
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(verified["detector_checks"], {
+            "display_name": True,
+            "detector": True,
+            "video_source_ap": True,
+            "vmda_source_ap": True,
+        })
 
     def test_create_appdata_detector_full_partial_apply_records_scene_for_rollback(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")

@@ -202,6 +202,30 @@ def _property_string_value(prop: dict[str, Any] | None) -> str:
     return str(prop.get("value_string") or prop.get("value") or "")
 
 
+def _selected_property_children(prop: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not prop:
+        return []
+    direct = _property_child_nodes(prop)
+    if direct:
+        return direct
+    enum_items = ((prop.get("enum_constraint") or {}).get("items") or [])
+    selected = _property_string_value(prop)
+    for item in enum_items:
+        if not isinstance(item, dict):
+            continue
+        if selected and _property_string_value(item) != selected:
+            continue
+        children = _property_child_nodes(item)
+        if children:
+            return children
+    for item in enum_items:
+        if isinstance(item, dict):
+            children = _property_child_nodes(item)
+            if children:
+                return children
+    return []
+
+
 def _created_unit_uid_for_step(plan: dict[str, Any], created_uids: list[str], created_kinds: list[str], step_index: int) -> str:
     unit_uids = [uid for uid, kind in zip(created_uids, created_kinds) if kind == "unit"]
     unit_add_index = 0
@@ -243,21 +267,22 @@ def _detector_checks_for_plan(client: Any, plan: dict[str, Any], created_uids: l
     properties = target_unit.get("properties") or []
     display_prop = _find_property(properties, "display_name")
     input_prop = _find_property(properties, "input")
-    input_properties = input_prop.get("properties") if isinstance(input_prop, dict) else []
-    if not isinstance(input_properties, list):
-        input_properties = []
+    input_properties = _selected_property_children(input_prop)
     camera_ref = _find_property(input_properties, "camera_ref")
-    camera_ref_properties = camera_ref.get("properties") if isinstance(camera_ref, dict) else []
-    if not isinstance(camera_ref_properties, list):
-        camera_ref_properties = []
+    camera_ref_properties = _selected_property_children(camera_ref)
     streaming_id = _find_property(camera_ref_properties, "streaming_id")
-    detector_prop = _find_property(input_properties, "detector")
+    top_level_detector = _find_property(properties, "detector")
+    top_level_streaming_id = _find_property(properties, "streaming_id")
+    detector_prop = _find_property(input_properties, "detector") or top_level_detector
     checks["display_name"] = _property_string_value(display_prop) == str(expected.get("display_name") or "")
     checks["detector"] = _property_string_value(detector_prop) == str(expected.get("detector") or "")
-    checks["video_source_ap"] = _property_string_value(camera_ref) == str(expected.get("video_source_ap") or "")
+    actual_video_source = _property_string_value(camera_ref)
+    if not actual_video_source and target_type == "AVDetector":
+        actual_video_source = _property_string_value(top_level_streaming_id)
+    checks["video_source_ap"] = actual_video_source == str(expected.get("video_source_ap") or "")
     if target_type == "AppDataDetector":
         expected_vmda = str(expected.get("vmda_source_ap") or "")
-        actual_vmda = _property_string_value(streaming_id)
+        actual_vmda = _property_string_value(top_level_streaming_id) or _property_string_value(streaming_id)
         if expected_vmda == "<chain-created from step 0>":
             chained_uid = _created_unit_uid_for_step(plan, created_uids, created_kinds, 0)
             expected_vmda = f"{chained_uid}/SourceEndpoint.vmda" if chained_uid else ""

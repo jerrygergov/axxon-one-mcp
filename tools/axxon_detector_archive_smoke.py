@@ -331,6 +331,58 @@ def iter_units(unit: dict[str, Any]) -> list[dict[str, Any]]:
     return units
 
 
+def property_id(prop: dict[str, Any]) -> str:
+    return str(prop.get("id") or prop.get("property_id") or prop.get("propertyId") or prop.get("name") or "")
+
+
+def property_string_value(prop: dict[str, Any] | None) -> str:
+    if not prop:
+        return ""
+    return str(prop.get("value_string") or prop.get("value") or "")
+
+
+def find_property(properties: list[dict[str, Any]], prop_id: str) -> dict[str, Any] | None:
+    for prop in properties:
+        if isinstance(prop, dict) and property_id(prop) == prop_id:
+            return prop
+    return None
+
+
+def property_children(prop: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not prop:
+        return []
+    direct = prop.get("properties")
+    if isinstance(direct, list):
+        return [child for child in direct if isinstance(child, dict)]
+    enum_items = ((prop.get("enum_constraint") or {}).get("items") or [])
+    selected = property_string_value(prop)
+    for item in enum_items:
+        if not isinstance(item, dict):
+            continue
+        if selected and property_string_value(item) != selected:
+            continue
+        children = item.get("properties")
+        if isinstance(children, list):
+            return [child for child in children if isinstance(child, dict)]
+    return []
+
+
+def video_source_from_detector_unit(unit: dict[str, Any]) -> str:
+    properties = [prop for prop in unit.get("properties") or [] if isinstance(prop, dict)]
+    streaming_id = property_string_value(find_property(properties, "streaming_id"))
+    if "/SourceEndpoint.video" in streaming_id:
+        return streaming_id
+    input_prop = find_property(properties, "input")
+    camera_ref = find_property(property_children(input_prop), "camera_ref")
+    camera_ref_value = property_string_value(camera_ref)
+    if "/SourceEndpoint.video" in camera_ref_value:
+        return camera_ref_value
+    nested_streaming_id = property_string_value(find_property(property_children(camera_ref), "streaming_id"))
+    if "/SourceEndpoint.video" in nested_streaming_id:
+        return nested_streaming_id
+    return ""
+
+
 def nested_property_from_path(path: str, value_kind: str, value: Any) -> dict[str, Any] | None:
     if value_kind not in {"value_bool", "value_int32", "value_int64", "value_uint32", "value_uint64", "value_string"}:
         return None
@@ -659,13 +711,30 @@ class DetectorArchiveSmoke:
 
     def mutate_appdata_detector(self, registry: Any, video_source_ap: str) -> dict[str, Any]:
         name = f"codex-detector-archive-appdata-{uuid.uuid4().hex[:8]}"
+        vmda_source_ap = self.vmda_source_ap()
+        video_source_ap = self.video_source_for_vmda(registry, vmda_source_ap) or video_source_ap
         params = {
             "display_name": name,
             "video_source_ap": video_source_ap,
-            "vmda_source_ap": self.vmda_source_ap(),
+            "vmda_source_ap": vmda_source_ap,
             "detector": "MoveInZone",
         }
         return self.apply_verify_rollback(registry, "create_appdata_detector_full", params)
+
+    def video_source_for_vmda(self, registry: Any, vmda_source_ap: str) -> str:
+        if not vmda_source_ap or "/SourceEndpoint." not in vmda_source_ap:
+            return ""
+        detector_uid = vmda_source_ap.split("/SourceEndpoint.", 1)[0]
+        try:
+            payload = registry.ensure_client().read_unit(detector_uid)
+        except Exception:
+            return ""
+        for unit in payload.get("units") or []:
+            if isinstance(unit, dict):
+                video_source_ap = video_source_from_detector_unit(unit)
+                if video_source_ap:
+                    return video_source_ap
+        return ""
 
     def mutate_archive_policy(self, registry: Any) -> dict[str, Any]:
         uid = self.args.archive_policy_fixture_uid
