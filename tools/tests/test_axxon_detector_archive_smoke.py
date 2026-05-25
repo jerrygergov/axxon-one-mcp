@@ -220,6 +220,29 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "error")
 
+    def test_apply_verify_rollback_requires_verified_lifecycle_states(self) -> None:
+        for verify_statuses in (
+            [{"status": "planned"}, {"status": "verified"}],
+            [{"status": "partial"}, {"status": "verified"}],
+            [{"status": "verified"}, {"status": "partial"}],
+        ):
+            with self.subTest(verify_statuses=verify_statuses):
+                smoke = object.__new__(self.module.DetectorArchiveSmoke)
+                registry = mock.Mock()
+                registry.plan.return_value = {
+                    "status": "planned",
+                    "plan_id": "plan-1",
+                    "confirmation_token": "CONFIRM",
+                    "rollback_confirmation_token": "ROLLBACK",
+                }
+                registry.apply.return_value = {"status": "applied"}
+                registry.verify.side_effect = verify_statuses
+                registry.rollback.return_value = {"status": "rolled_back"}
+
+                result = smoke.apply_verify_rollback(registry, "update_detector_parameters", {"uid": "detector"})
+
+                self.assertEqual(result["status"], "error")
+
     def test_mutate_av_detector_fails_when_attempted_nested_update_errors(self) -> None:
         smoke = object.__new__(self.module.DetectorArchiveSmoke)
         smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
@@ -237,6 +260,28 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
         registry.rollback.return_value = {"status": "rolled_back"}
         registry.ensure_client.return_value.read_unit.return_value = {
             "units": [{"uid": "hosts/Server/AVDetector.1", "properties": [{"id": "enabled", "value_bool": True}]}]
+        }
+
+        result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
+
+        self.assertEqual(result["status"], "error")
+
+    def test_mutate_av_detector_requires_create_verify_state(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        smoke.fixture_needed = self.module.DetectorArchiveSmoke.fixture_needed.__get__(smoke)
+
+        registry = mock.Mock()
+        registry.plan.return_value = {
+            "status": "planned",
+            "plan_id": "plan-create",
+            "confirmation_token": "CONFIRM",
+            "rollback_confirmation_token": "ROLLBACK",
+        }
+        registry.apply.return_value = {"status": "applied", "created_uids": ["hosts/Server/AVDetector.1"]}
+        registry.verify.side_effect = [{"status": "planned"}, {"status": "verified"}]
+        registry.rollback.return_value = {"status": "rolled_back"}
+        registry.ensure_client.return_value.read_unit.return_value = {
+            "units": [{"uid": "hosts/Server/AVDetector.1", "properties": []}]
         }
 
         result = smoke.mutate_av_detector(registry, "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
@@ -269,6 +314,7 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
     def test_archive_maintenance_noop_fails_when_verify_or_rollback_errors(self) -> None:
         for verify_statuses, rollback_status in (
             ([{"status": "error"}, {"status": "verified"}, {"status": "verified"}], {"status": "rolled_back"}),
+            ([{"status": "partial"}, {"status": "verified"}, {"status": "verified"}], {"status": "rolled_back"}),
             ([{"status": "verified"}, {"status": "verified"}, {"status": "verified"}], {"status": "error"}),
         ):
             with self.subTest(verify_statuses=verify_statuses, rollback_status=rollback_status):

@@ -560,9 +560,9 @@ class DetectorArchiveSmoke:
         rollback_verified = registry.verify(plan["plan_id"])
         failed = (
             lifecycle_failed(applied, expected_status="applied")
-            or lifecycle_failed(verified)
+            or lifecycle_failed(verified, expected_status="verified")
             or lifecycle_failed(rolled_back, expected_status="rolled_back")
-            or lifecycle_failed(rollback_verified)
+            or lifecycle_failed(rollback_verified, expected_status="verified")
         )
         return {
             "status": "error" if failed else "ok",
@@ -639,9 +639,9 @@ class DetectorArchiveSmoke:
             rollback_verified = registry.verify(plan["plan_id"])
         failed = (
             lifecycle_failed(applied, expected_status="applied")
-            or lifecycle_failed(verified)
+            or lifecycle_failed(verified, expected_status="verified")
             or lifecycle_failed(rolled_back, expected_status="rolled_back")
-            or lifecycle_failed(rollback_verified)
+            or lifecycle_failed(rollback_verified, expected_status="verified")
             or nested_lifecycle_failed(update_result)
             or nested_lifecycle_failed(visual_result)
         )
@@ -717,7 +717,7 @@ class DetectorArchiveSmoke:
             if "apply" in item
             and (
                 lifecycle_failed(item.get("apply") or {}, expected_status="applied")
-                or lifecycle_failed(item.get("verify") or {})
+                or lifecycle_failed(item.get("verify") or {}, expected_status="verified")
                 or ("rollback" in item and lifecycle_failed(item.get("rollback") or {}, expected_status="rolled_back"))
             )
         ]
