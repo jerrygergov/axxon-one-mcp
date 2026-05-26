@@ -115,6 +115,24 @@ def _codex_role_allowed(params: dict[str, Any]) -> bool:
     return role_id.startswith("codex-") or role_name.startswith("codex-")
 
 
+def _policy_noop_params_allowed(params: dict[str, Any]) -> bool:
+    forbidden = {"pwd_policy", "ip_filters", "trusted_ip_list", "modified_pwd_policy", "modified_ip_filters"}
+    return not any(key in params for key in forbidden)
+
+
+def _temp_ldap_state(params: dict[str, Any]) -> dict[str, Any]:
+    ldap_id = str(uuid.uuid4())
+    suffix = ldap_id.replace("-", "")[:12]
+    hint = "".join(ch for ch in str(params.get("display_name_hint") or "").lower() if ch.isalnum())[:16]
+    name_suffix = f"{hint}-{suffix}" if hint else suffix
+    return {
+        "ldap_server_id": ldap_id,
+        "friendly_name_add": f"codex-temp-ldap-{name_suffix}-added",
+        "friendly_name_change": f"codex-temp-ldap-{name_suffix}-changed",
+        "password": _generated_password(),
+    }
+
+
 def _body(response: Any) -> dict[str, Any]:
     if isinstance(response, dict) and isinstance(response.get("body"), dict):
         return response["body"]
@@ -184,6 +202,15 @@ class AxxonAdminMutationRegistry:
             }
             self._audit("plan_rejected", result)
             return result
+        if workflow == "security_policy_noop_probe" and not _policy_noop_params_allowed(dict(params or {})):
+            result = {
+                "status": "rejected",
+                "workflow": workflow,
+                "reason": "caller-policy-payload-not-allowed",
+                "message": "5F-B1 policy probe replays the current snapshot only.",
+            }
+            self._audit("plan_rejected", result)
+            return result
         plan_id = f"admin-{workflow}-{uuid.uuid4()}"
         plan = {
             "status": "planned",
@@ -215,6 +242,16 @@ class AxxonAdminMutationRegistry:
                 "role_id": state["role_id"],
                 "role_name": state["role_name"],
                 "created_role": state["created_role"],
+            }
+        elif workflow == "security_policy_noop_probe":
+            plan["_state"] = {}
+            plan["expected"] = {"policy_payload": "current-snapshot-only"}
+        elif workflow == "security_ldap_temp_lifecycle":
+            state = _temp_ldap_state(dict(params or {}))
+            plan["_state"] = state
+            plan["expected"] = {
+                "ldap_server_id": state["ldap_server_id"],
+                "friendly_name_change": state["friendly_name_change"],
             }
         self.plans[plan_id] = plan
         self._audit("plan", _public_plan(plan))
@@ -251,6 +288,14 @@ class AxxonAdminMutationRegistry:
             result = self._apply_security_role_permissions_update(plan)
             self._audit("apply", result)
             return result
+        if plan["workflow"] == "security_policy_noop_probe":
+            result = self._apply_security_policy_noop_probe(plan)
+            self._audit("apply", result)
+            return result
+        if plan["workflow"] == "security_ldap_temp_lifecycle":
+            result = self._apply_security_ldap_temp_lifecycle(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -272,6 +317,14 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_role_permissions_update":
             result = self._verify_security_role_permissions_update(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_policy_noop_probe":
+            result = self._verify_security_policy_noop_probe(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_ldap_temp_lifecycle":
+            result = self._verify_security_ldap_temp_lifecycle(plan)
             self._audit("verify", result)
             return result
         result = {
@@ -306,6 +359,14 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_role_permissions_update":
             result = self._rollback_security_role_permissions_update(plan)
+            self._audit("rollback", result)
+            return result
+        if plan["workflow"] == "security_policy_noop_probe":
+            result = self._rollback_security_policy_noop_probe(plan)
+            self._audit("rollback", result)
+            return result
+        if plan["workflow"] == "security_ldap_temp_lifecycle":
+            result = self._rollback_security_ldap_temp_lifecycle(plan)
             self._audit("rollback", result)
             return result
         result = {
@@ -517,4 +578,128 @@ class AxxonAdminMutationRegistry:
             "workflow": plan["workflow"],
             "role_removed": not role_present if state.get("created_role") else False,
             "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _policy_counts(self) -> dict[str, int]:
+        data = _body(self.ensure_client().security_get_policies())
+        return {
+            "pwd_policy_count": len(data.get("pwd_policy", [])),
+            "ip_filter_count": len(data.get("ip_filters", [])),
+            "trusted_ip_count": len(data.get("trusted_ip_list", [])),
+        }
+
+    def _apply_security_policy_noop_probe(self, plan: dict[str, Any]) -> dict[str, Any]:
+        client = self.ensure_client()
+        before = _body(client.security_get_policies())
+        payload = {
+            "modified_pwd_policy": {"method": "MM_OVERWRITE_DATA", "data": list(before.get("pwd_policy", []))},
+            "modified_ip_filters": {"method": "MM_OVERWRITE_DATA", "data": list(before.get("ip_filters", []))},
+            "modified_trusted_ip_list": {
+                "method": "MM_OVERWRITE_DATA",
+                "data": list(before.get("trusted_ip_list", [])),
+            },
+        }
+        client.security_change_config(payload)
+        counts = self._policy_counts()
+        plan["_state"]["policy_counts"] = counts
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            **counts,
+        }
+
+    def _verify_security_policy_noop_probe(self, plan: dict[str, Any]) -> dict[str, Any]:
+        expected = dict((plan.get("_state") or {}).get("policy_counts") or {})
+        current = self._policy_counts()
+        return {
+            "status": "verified" if current == expected else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "policy_counts_restored": current == expected,
+            **current,
+        }
+
+    def _rollback_security_policy_noop_probe(self, plan: dict[str, Any]) -> dict[str, Any]:
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled-back",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "message": "Policy no-op probe already restored the current snapshot.",
+        }
+
+    def _ldap_server_payload(self, state: dict[str, Any], friendly_name: str) -> dict[str, Any]:
+        return {
+            "index": state["ldap_server_id"],
+            "server_name": "127.0.0.1",
+            "friendly_name": friendly_name,
+            "port": 389,
+            "base_dn": "dc=codex,dc=local",
+            "login": "cn=codex",
+            "password": state["password"],
+            "use_ssl": False,
+            "search_filter": "(objectClass=person)",
+            "username_attribute": "uid",
+            "dn_attribute": "dn",
+            "group_search_filter": "(objectClass=group)",
+        }
+
+    def _apply_security_ldap_temp_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        client.security_change_config(
+            {"added_ldap_servers": [self._ldap_server_payload(state, state["friendly_name_add"])]}
+        )
+        after_add = _body(client.security_list_ldap_servers()).get("ldap_servers", [])
+        client.security_change_config(
+            {"modified_ldap_servers": [self._ldap_server_payload(state, state["friendly_name_change"])]}
+        )
+        after_change = _body(client.security_list_ldap_servers()).get("ldap_servers", [])
+        present_after_add = any(item.get("index") == state["ldap_server_id"] for item in after_add if isinstance(item, dict))
+        present_after_change = any(
+            item.get("index") == state["ldap_server_id"]
+            and item.get("friendly_name") == state["friendly_name_change"]
+            for item in after_change
+            if isinstance(item, dict)
+        )
+        plan["applied"] = True
+        return {
+            "status": "applied" if present_after_add and present_after_change else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "ldap_server_id_len": len(state["ldap_server_id"]),
+            "present_after_add": present_after_add,
+            "present_after_change": present_after_change,
+        }
+
+    def _verify_security_ldap_temp_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        servers = _body(self.ensure_client().security_list_ldap_servers()).get("ldap_servers", [])
+        present_after_change = any(
+            item.get("index") == state["ldap_server_id"]
+            and item.get("friendly_name") == state["friendly_name_change"]
+            for item in servers
+            if isinstance(item, dict)
+        )
+        return {
+            "status": "verified" if present_after_change else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "present_after_change": present_after_change,
+        }
+
+    def _rollback_security_ldap_temp_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        client.security_change_config({"removed_ldap_servers": [state["ldap_server_id"]]})
+        servers = _body(client.security_list_ldap_servers()).get("ldap_servers", [])
+        present_after_remove = any(item.get("index") == state["ldap_server_id"] for item in servers if isinstance(item, dict))
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled-back" if not present_after_remove else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "ldap_removed": not present_after_remove,
         }

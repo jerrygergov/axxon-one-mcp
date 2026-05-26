@@ -20,6 +20,12 @@ class FakeAdminMutationClient:
         self.object_permissions: dict[str, dict] = {}
         self.group_permissions: list[dict] = []
         self.macros_permissions: dict[str, dict] = {}
+        self.policies: dict[str, list[dict]] = {
+            "pwd_policy": [{"min_len": 8}],
+            "ip_filters": [],
+            "trusted_ip_list": [{"address": "127.0.0.1"}],
+        }
+        self.ldap_servers: dict[str, dict] = {}
 
     def security_change_config(self, payload: dict) -> dict:
         self.calls.append(payload)
@@ -31,6 +37,18 @@ class FakeAdminMutationClient:
             self.assignments.append(dict(assignment))
         for assignment in payload.get("modified_user_passwords", []):
             self.password_assignments.append(dict(assignment))
+        for key in ("modified_pwd_policy", "modified_ip_filters", "modified_trusted_ip_list"):
+            if key in payload:
+                policy_key = {
+                    "modified_pwd_policy": "pwd_policy",
+                    "modified_ip_filters": "ip_filters",
+                    "modified_trusted_ip_list": "trusted_ip_list",
+                }[key]
+                self.policies[policy_key] = [dict(item) for item in payload[key].get("data", [])]
+        for server in payload.get("added_ldap_servers", []):
+            self.ldap_servers[server["index"]] = dict(server)
+        for server in payload.get("modified_ldap_servers", []):
+            self.ldap_servers[server["index"]] = dict(server)
         removed_assignments = {
             (item.get("user_id"), item.get("role_id"))
             for item in payload.get("removed_users_assignments", [])
@@ -45,6 +63,8 @@ class FakeAdminMutationClient:
             self.users.pop(user_id, None)
         for role_id in payload.get("removed_roles", []):
             self.roles.pop(role_id, None)
+        for ldap_id in payload.get("removed_ldap_servers", []):
+            self.ldap_servers.pop(ldap_id, None)
         return {"status": 200, "body": {"failed": []}}
 
     def security_list_roles(self, *, page_size: int = 100, page_token: str = "") -> dict:
@@ -92,6 +112,12 @@ class FakeAdminMutationClient:
     def security_set_macros_permissions(self, role_id: str, macros_access: dict) -> dict:
         self.macros_permissions[role_id] = dict(macros_access)
         return {"body": {"failed": []}}
+
+    def security_get_policies(self) -> dict:
+        return {"body": {key: [dict(item) for item in value] for key, value in self.policies.items()}}
+
+    def security_list_ldap_servers(self, *, page_size: int = 100, page_token: str = "") -> dict:
+        return {"body": {"ldap_servers": list(self.ldap_servers.values())[:page_size]}}
 
 
 class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
@@ -170,7 +196,7 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
 
     def test_scaffold_apply_verify_rollback_are_fixture_needed_for_later_workflow(self) -> None:
         registry = self.registry()
-        plan = registry.plan("security_policy_noop_probe", {})
+        plan = registry.plan("security_tfa_temp_user_lifecycle", {})
 
         applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
         verified = registry.verify(plan["plan_id"])
@@ -253,6 +279,50 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
         self.assertEqual(rolled_back["status"], "rolled-back")
         self.assertEqual(self.fake.roles, {})
         self.assertNotIn("camera_access", str(applied))
+
+    def test_policy_noop_rejects_caller_supplied_policy_payload(self) -> None:
+        registry = self.registry()
+
+        result = registry.plan("security_policy_noop_probe", {"pwd_policy": []})
+
+        self.assertEqual(result["status"], "rejected")
+        self.assertEqual(result["reason"], "caller-policy-payload-not-allowed")
+
+    def test_policy_noop_applies_verifies_and_rolls_back_without_changing_counts(self) -> None:
+        registry = self.registry()
+        plan = registry.plan("security_policy_noop_probe", {})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        verified = registry.verify(plan["plan_id"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["pwd_policy_count"], 1)
+        self.assertEqual(applied["ip_filter_count"], 0)
+        self.assertEqual(applied["trusted_ip_count"], 1)
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["policy_counts_restored"])
+        self.assertEqual(rolled_back["status"], "rolled-back")
+
+    def test_ldap_temp_lifecycle_applies_verifies_and_rolls_back_without_password_leak(self) -> None:
+        registry = self.registry()
+        plan = registry.plan("security_ldap_temp_lifecycle", {"display_name_hint": "ldap"})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        verified = registry.verify(plan["plan_id"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["ldap_server_id_len"], 36)
+        self.assertTrue(applied["present_after_add"])
+        self.assertTrue(applied["present_after_change"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(rolled_back["status"], "rolled-back")
+        self.assertTrue(rolled_back["ldap_removed"])
+        self.assertEqual(self.fake.ldap_servers, {})
+        self.assertNotIn("password", str(applied).lower())
+        self.assertNotIn("password", str(verified).lower())
+        self.assertNotIn("password", str(rolled_back).lower())
 
     def test_audit_log_redacts_sensitive_values(self) -> None:
         registry = self.registry()
