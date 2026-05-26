@@ -1,0 +1,870 @@
+{
+  "started_at": "2026-05-26T12:50:16.059358+00:00",
+  "finished_at": "2026-05-26T12:50:43.278393+00:00",
+  "target": {
+    "host": "<demo-host>",
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>",
+    "username": "<demo-user>",
+    "password": "<redacted>",
+    "tls_cn": "<demo-tls-cn>",
+    "ca": "<redacted-ca>"
+  },
+  "modes": {
+    "read_only": true,
+    "include_node_notifier": true
+  },
+  "defaults": {
+    "notifier_timeout": 5.0,
+    "notifier_limit": 25,
+    "role_page_size": 50,
+    "schedule_uid_provided": false
+  },
+  "summary": {
+    "PASS": 7,
+    "WARN": 4,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "connect",
+      "status": "PASS",
+      "elapsed_ms": 0,
+      "evidence": {
+        "connected": true,
+        "profile_name": "env",
+        "profile": {
+          "host": "<demo-host>",
+          "grpc_port": 20109,
+          "http_port": 80,
+          "http_url": "http://<demo-host>",
+          "username": "<demo-user>",
+          "password_present": "<redacted>",
+          "tls_cn": "<demo-tls-cn>",
+          "ca": "<redacted-ca>",
+          "timeout": 10.0
+        },
+        "mode": "read-only"
+      }
+    },
+    {
+      "group": "security_inventory",
+      "status": "PASS",
+      "elapsed_ms": 1688,
+      "evidence": {
+        "status": "ok",
+        "tool": "security_inventory",
+        "roles": {
+          "count": 4,
+          "items": [
+            {
+              "role_id": "<demo-role>",
+              "role_id_length": 36,
+              "name": "<demo-user>"
+            },
+            {
+              "role_id": "<demo-role>",
+              "role_id_length": 36,
+              "name": "<demo-user>",
+              "comment": "Super users role"
+            },
+            {
+              "role_id": "<demo-role>",
+              "role_id_length": 36,
+              "name": "<demo-user>"
+            },
+            {
+              "role_id": "<demo-role>",
+              "role_id_length": 36,
+              "name": "<demo-user>",
+              "comment": "Super users role"
+            }
+          ]
+        },
+        "users": {
+          "count": 35,
+          "enabled_count": 35,
+          "assignment_count": 35,
+          "items": [
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            },
+            {
+              "user_id": "<demo-user>",
+              "user_id_length": 36,
+              "login": "<demo-user>",
+              "name": "<demo-user>",
+              "enabled": true,
+              "role_ids": [
+                "<demo-role>"
+              ]
+            }
+          ]
+        },
+        "ldap_servers": {
+          "count": 0,
+          "items": []
+        }
+      }
+    },
+    {
+      "group": "security_policy_summary",
+      "status": "PASS",
+      "elapsed_ms": 737,
+      "evidence": {
+        "status": "ok",
+        "tool": "security_policy_summary",
+        "password_policy_count": "<redacted>",
+        "ip_filter_count": 0,
+        "trusted_ip_count": 0,
+        "system_integrity_modes_count": 1,
+        "cloud_public_key_present": false,
+        "ldap": {
+          "status": "fixture-needed",
+          "servers_count": 0,
+          "message": "No LDAP servers configured."
+        }
+      }
+    },
+    {
+      "group": "role_permissions",
+      "status": "PASS",
+      "elapsed_ms": 3690,
+      "evidence": {
+        "status": "ok",
+        "tool": "role_permissions",
+        "role_id": "<demo-role>",
+        "global": {
+          "roles_count": 1,
+          "permission_keys": [
+            "alert_access",
+            "archive_view_restrictions",
+            "bookmark_access",
+            "default_acfa_access",
+            "default_archive_access",
+            "default_camera_access",
+            "default_macros_access",
+            "default_microphone_access",
+            "default_plugin_access",
+            "default_telemetry_priority",
+            "default_videowall_access",
+            "feature_access",
+            "maps_access",
+            "restrictions",
+            "unrestricted_access",
+            "user_rights_setup_access"
+          ]
+        },
+        "objects": {
+          "count": 40,
+          "items": [
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.2/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.3/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.4/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.5/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.6/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.7/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.8/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.9/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.10/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.11/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.13/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.14/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.15/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.16/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.17/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.29/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.32/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.33/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.34/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.36/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.37/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.38/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.39/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.40/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.41/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.42/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.43/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.44/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.45/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.46/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.47/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.48/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.49/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.50/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.51/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/DeviceIpint.52/SourceEndpoint.video:0:0"
+            },
+            {
+              "display_name": "Archive AliceBlue",
+              "access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage"
+            },
+            {
+              "display_name": "Emulator ACFA",
+              "access_point": "hosts/Server/ACFA.2"
+            },
+            {
+              "display_name": "",
+              "access_point": "hosts/Server/VideowallCoordinator.0/Coordinator"
+            }
+          ]
+        },
+        "groups": {
+          "status": "not-in-task-scope"
+        },
+        "macros": {
+          "status": "not-in-task-scope"
+        }
+      }
+    },
+    {
+      "group": "current_user_security",
+      "status": "PASS",
+      "elapsed_ms": 378,
+      "evidence": {
+        "status": "ok",
+        "tool": "current_user_security",
+        "current_user": {
+          "user_id": "<demo-user>",
+          "user_id_length": 36,
+          "login": "<demo-user>",
+          "name": "<demo-user>",
+          "enabled": true,
+          "role_ids": []
+        },
+        "current_roles": {
+          "count": 1,
+          "items": [
+            {
+              "role_id": "<demo-role>",
+              "role_id_length": 36,
+              "name": "<demo-user>",
+              "comment": "Super users role"
+            }
+          ]
+        },
+        "all_roles_count": 4,
+        "all_users_count": 35,
+        "password_policy_count": "<redacted>",
+        "system_integrity_modes_count": 1
+      }
+    },
+    {
+      "group": "license_status",
+      "status": "WARN",
+      "elapsed_ms": 2598,
+      "evidence": {
+        "status": "warn",
+        "tool": "license_status",
+        "global_restrictions": {
+          "constraint_count": 0
+        },
+        "domain": {
+          "status": "",
+          "type": "",
+          "is_license_expiring": false,
+          "key_present": false
+        },
+        "key_info": {
+          "status": "LS_OK",
+          "type": 13,
+          "is_license_expiring": "<redacted>",
+          "key_present": false
+        },
+        "launch": {
+          "AVDetector": {
+            "is_possible": true
+          }
+        },
+        "applied_limit": 32,
+        "host_info": {
+          "status": "fixture-needed",
+          "error_type": "RemoteDisconnected",
+          "message": "Remote end closed connection without response"
+        },
+        "node_restrictions": {
+          "count": 0,
+          "nodes": [
+            "<demo-tls-cn>"
+          ],
+          "items": []
+        }
+      }
+    },
+    {
+      "group": "time_status",
+      "status": "PASS",
+      "elapsed_ms": 1550,
+      "evidence": {
+        "status": "ok",
+        "tool": "time_status",
+        "current_zone": {
+          "id": "",
+          "display_name": ""
+        },
+        "ntp": {},
+        "available_zones": {
+          "count": 1,
+          "items": [
+            {
+              "id": "27aac594-c2f1-489b-a785-d0aaf8d8a6ac",
+              "display_name": "Wellington Off"
+            }
+          ],
+          "batch_count": 0
+        }
+      }
+    },
+    {
+      "group": "system_health",
+      "status": "PASS",
+      "elapsed_ms": 6171,
+      "evidence": {
+        "status": "ok",
+        "tool": "system_health",
+        "security": {
+          "status": "ok",
+          "roles_count": 4,
+          "users_count": 35,
+          "ldap_status": "fixture-needed"
+        },
+        "license": "<redacted>",
+        "time": {
+          "status": "ok",
+          "tool": "time_status",
+          "current_zone": {
+            "id": "",
+            "display_name": ""
+          },
+          "ntp": {},
+          "available_zones": {
+            "count": 1,
+            "items": [
+              {
+                "id": "27aac594-c2f1-489b-a785-d0aaf8d8a6ac",
+                "display_name": "Wellington Off"
+              }
+            ],
+            "batch_count": 0
+          }
+        },
+        "archive": {
+          "status": "fixture-needed",
+          "message": "Archive storage aggregation is added with the live smoke fixture."
+        },
+        "session": {
+          "connected": true,
+          "profile_name": "env",
+          "mode": "read-only"
+        }
+      }
+    },
+    {
+      "group": "domain_event_subscribe",
+      "status": "WARN",
+      "elapsed_ms": 5209,
+      "evidence": {
+        "tool": "domain_event_subscribe",
+        "subjects": [],
+        "event_types": [],
+        "status": "warn",
+        "notifier": "domain",
+        "service": "DomainNotifier",
+        "detailed": false,
+        "count": 0,
+        "events": [],
+        "caps": {
+          "timeout_s": 5.0,
+          "limit": 25
+        },
+        "stream_error": "<_MultiThreadedRendezvous of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>"
+      }
+    },
+    {
+      "group": "node_event_subscribe",
+      "status": "WARN",
+      "elapsed_ms": 5194,
+      "evidence": {
+        "tool": "node_event_subscribe",
+        "subjects": [],
+        "event_types": [],
+        "status": "warn",
+        "notifier": "node",
+        "service": "NodeNotifier",
+        "detailed": false,
+        "count": 0,
+        "events": [],
+        "caps": {
+          "timeout_s": 5.0,
+          "limit": 25
+        },
+        "stream_error": "<_MultiThreadedRendezvous of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>"
+      }
+    },
+    {
+      "group": "schedule_descriptor_get",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "evidence": {
+        "status": "fixture-needed",
+        "tool": "schedule_descriptor_get",
+        "target": "hosts/Server/DeviceIpint.1",
+        "schedule_properties": [],
+        "confidence": "none",
+        "message": "Could not resolve descriptor with schedule-like fields; provide an isolated config fixture.",
+        "missing": [
+          "list_units wrapper or ConfigurationService.ListUnits descriptor",
+          "descriptor fields containing schedule, calendar, weekly, or daily properties"
+        ]
+      }
+    }
+  ]
+}
