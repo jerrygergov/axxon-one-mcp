@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 import datetime as dt
 import os
 from pathlib import Path
+import secrets
+import string
 from typing import Any, Callable
 import uuid
 
@@ -60,6 +62,37 @@ def _rollback_confirmation_token(workflow: str) -> str:
     return f"CONFIRM-admin-{workflow}-rollback"
 
 
+def _generated_password() -> str:
+    alphabet = string.ascii_letters + string.digits + "!#$_"
+    return "Aa" + "".join(secrets.choice(alphabet) for _ in range(14)) + "123"
+
+
+def _temp_security_ids(params: dict[str, Any]) -> dict[str, str]:
+    role_uuid = str(uuid.uuid4())
+    user_uuid = str(uuid.uuid4())
+    suffix = user_uuid.replace("-", "")[:12]
+    hint = "".join(ch for ch in str(params.get("display_name_hint") or "").lower() if ch.isalnum())[:16]
+    name_suffix = f"{hint}-{suffix}" if hint else suffix
+    return {
+        "role_id": role_uuid,
+        "user_id": user_uuid,
+        "role_name": f"codex-role-{name_suffix}",
+        "login": f"codex_user_{suffix[:8]}",
+    }
+
+
+def _body(response: Any) -> dict[str, Any]:
+    if isinstance(response, dict) and isinstance(response.get("body"), dict):
+        return response["body"]
+    if isinstance(response, dict):
+        return response
+    return {}
+
+
+def _public_plan(plan: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in plan.items() if not key.startswith("_")}
+
+
 @dataclass
 class AxxonAdminMutationRegistry:
     """In-memory plan/apply/verify/rollback scaffold for Phase 5F-B1."""
@@ -68,6 +101,7 @@ class AxxonAdminMutationRegistry:
     enabled: bool | None = None
     plans: dict[str, dict[str, Any]] = field(default_factory=dict)
     audit: list[dict[str, Any]] = field(default_factory=list)
+    client: Any | None = None
 
     def __post_init__(self) -> None:
         if self.enabled is None:
@@ -80,6 +114,11 @@ class AxxonAdminMutationRegistry:
             **redact_admin_secrets(payload),
         }
         self.audit.append(entry)
+
+    def ensure_client(self) -> Any:
+        if self.client is None:
+            self.client = self.client_factory()
+        return self.client
 
     def list_workflows(self) -> dict[str, Any]:
         return {
@@ -116,9 +155,19 @@ class AxxonAdminMutationRegistry:
             "applied": False,
             "rolled_back": False,
         }
+        if workflow == "security_user_role_lifecycle":
+            state = _temp_security_ids(clean_params)
+            state["password"] = _generated_password()
+            plan["_state"] = state
+            plan["expected"] = {
+                "role_id": state["role_id"],
+                "user_id": state["user_id"],
+                "role_name": state["role_name"],
+                "login": state["login"],
+            }
         self.plans[plan_id] = plan
-        self._audit("plan", plan)
-        return dict(plan)
+        self._audit("plan", _public_plan(plan))
+        return _public_plan(plan)
 
     def _plan_or_gap(self, plan_id: str) -> dict[str, Any]:
         plan = self.plans.get(plan_id)
@@ -143,6 +192,10 @@ class AxxonAdminMutationRegistry:
             result = {"status": "rejected", "plan_id": plan_id, "reason": "confirmation-token-mismatch"}
             self._audit("apply_rejected", result)
             return result
+        if plan["workflow"] == "security_user_role_lifecycle":
+            result = self._apply_security_user_role_lifecycle(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -158,6 +211,10 @@ class AxxonAdminMutationRegistry:
         if plan.get("status") == "gap":
             self._audit("verify_gap", plan)
             return plan
+        if plan["workflow"] == "security_user_role_lifecycle":
+            result = self._verify_security_user_role_lifecycle(plan)
+            self._audit("verify", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -184,6 +241,10 @@ class AxxonAdminMutationRegistry:
             result = {"status": "rejected", "plan_id": plan_id, "reason": "confirmation-token-mismatch"}
             self._audit("rollback_rejected", result)
             return result
+        if plan["workflow"] == "security_user_role_lifecycle":
+            result = self._rollback_security_user_role_lifecycle(plan)
+            self._audit("rollback", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -196,3 +257,93 @@ class AxxonAdminMutationRegistry:
 
     def audit_log(self) -> dict[str, Any]:
         return {"entries": list(self.audit)}
+
+    def _apply_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        payload = {
+            "added_roles": [
+                {
+                    "index": state["role_id"],
+                    "name": state["role_name"],
+                    "comment": "codex temporary role, remove after smoke",
+                }
+            ],
+            "added_users": [
+                {
+                    "index": state["user_id"],
+                    "login": state["login"],
+                    "name": "codex temporary user",
+                    "comment": "codex temporary user, remove after smoke",
+                    "enabled": True,
+                }
+            ],
+            "added_users_assignments": [{"user_id": state["user_id"], "role_id": state["role_id"]}],
+            "modified_user_passwords": [
+                {
+                    "user_index": state["user_id"],
+                    "password": state["password"],
+                    "must_change_password": False,
+                }
+            ],
+        }
+        response = _body(client.security_change_config(payload))
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": state["role_id"],
+            "user_id": state["user_id"],
+            "role_name": state["role_name"],
+            "login": state["login"],
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _verify_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        roles = _body(client.security_list_roles()).get("roles", [])
+        users_body = _body(client.security_list_users(role_ids=[state["role_id"]]))
+        users = users_body.get("users", [])
+        assignments = users_body.get("user_assignments", [])
+        role_present = any(item.get("index") == state["role_id"] for item in roles if isinstance(item, dict))
+        user_present = any(item.get("index") == state["user_id"] for item in users if isinstance(item, dict))
+        assigned_user_count = sum(
+            1
+            for item in assignments
+            if isinstance(item, dict)
+            and item.get("user_id") == state["user_id"]
+            and item.get("role_id") == state["role_id"]
+        )
+        return {
+            "status": "verified" if role_present and user_present and assigned_user_count == 1 else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_present": role_present,
+            "user_present": user_present,
+            "assigned_user_count": assigned_user_count,
+        }
+
+    def _rollback_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        payload = {
+            "removed_users_assignments": [{"user_id": state["user_id"], "role_id": state["role_id"]}],
+            "removed_users": [state["user_id"]],
+            "removed_roles": [state["role_id"]],
+        }
+        response = _body(client.security_change_config(payload))
+        roles = _body(client.security_list_roles()).get("roles", [])
+        users = _body(client.security_list_users()).get("users", [])
+        role_present = any(item.get("index") == state["role_id"] for item in roles if isinstance(item, dict))
+        user_present = any(item.get("index") == state["user_id"] for item in users if isinstance(item, dict))
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled-back" if not role_present and not user_present else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_removed": not role_present,
+            "user_removed": not user_present,
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
