@@ -5,8 +5,8 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **434 / 434** unit tests passing in the Phase 5F worktree.
-- **38** PDF gap-coverage matrix rows. 30 verified, 2 partial, and 6
+- **465 / 465** unit tests passing on `main`.
+- **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
 - **31** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
@@ -37,9 +37,13 @@ coverage matrix for Axxon One VMS.
   health, bounded DomainNotifier/NodeNotifier pulls, and schedule descriptor
   discovery. Live evidence PASS=7, WARN=4, FAIL=0 — see
   `docs/api-audit/phase-5f-admin-smoke-latest.md`.
-- Phase 5F-B1 is planned for approval-gated temporary `codex-*` security/admin
-  mutation workflows. License, timezone, NTP, production user/role edits, LDAP
-  sync, and schedule authoring remain deferred.
+- **5** Phase 5F-B1 admin mutation workflows cover temporary `codex-*`
+  user/role lifecycle, temp-role permissions, policy no-op replay, temporary
+  LDAP add/edit/remove, and temporary-user TFA enable/disable. Live evidence
+  PASS=5, WARN=0, FAIL=0 — see
+  `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`.
+  License, timezone, NTP, production user/role edits, LDAP sync against a real
+  directory, and schedule authoring remain deferred.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -60,7 +64,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
 | 5F-A — Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) |
-| 5F-B1 — Security/admin mutations | 📝 planned |
+| 5F-B1 — Security/admin mutations | ✅ shipped |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
 | 7 — NL → plan translator | ❌ not started |
@@ -84,6 +88,8 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_detector_archive_smoke.py — phase-5E live read + mutation smoke
   axxon_mcp_admin.py          — phase-5F-A security/health/notifier read tools
   axxon_admin_smoke.py        — phase-5F-A live read smoke
+  axxon_mcp_admin_mutations.py — phase-5F-B1 approval-gated admin mutation workflows
+  axxon_admin_mutation_smoke.py — phase-5F-B1 live mutation smoke
   templates/                 — phase-4 string templates for generated bundles
   axxon_aux_topics_smoke.py  — aux topic coverage smoke (statistics, groups, alerts, ...)
   axxon_api_client.py        — gRPC + HTTP /grpc + legacy HTTP transport
@@ -106,19 +112,23 @@ docs/
 
 The MCP server has optional capability sets:
 
+Set connection credentials through environment variables before starting a live
+server. Keep `AXXON_PASSWORD` in the shell/secret manager and out of command
+lines.
+
 ```bash
 # docs-only (no live connection)
 python tools/axxon_mcp_server.py --transport stdio
 
 # + read-only live inventory tools
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-live --transport stdio
 
 # + controlled operator (plan/apply/verify/rollback) workflows
 AXXON_OPERATOR_APPROVE=1 \
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-live --enable-operator --transport stdio
 
 # + integration code generator (list/plan/generate/verify_integration)
@@ -126,34 +136,40 @@ python tools/axxon_mcp_server.py --enable-generator --transport stdio
 
 # + live + archive viewing tools (Phase 5A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-view --transport stdio
 
 # + alarm read tools (Phase 5C)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-alarms --transport stdio
 
 # + alarm lifecycle mutations (Phase 5C) — requires per-call confirmation tokens
 AXXON_ALARMS_APPROVE=1 \
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio
 
 # + layouts/maps/videowalls read tools (Phase 5D)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-view-objects --transport stdio
 
 # + detector/archive read tools (Phase 5E)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-detector-archive --transport stdio
 
 # + security/system-health/notifier read tools (Phase 5F-A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
-AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-admin --transport stdio
+
+# + admin mutation workflows (Phase 5F-B1) — requires plan/apply/verify/rollback confirmations
+AXXON_ADMIN_MUTATION_APPROVE=1 \
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
+python tools/axxon_mcp_server.py --enable-admin-mutations --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -289,6 +305,28 @@ deadline after disconnect cleanup, and schedule descriptor discovery needs an
 isolated descriptor-backed schedule fixture. See
 `docs/superpowers/plans/2026-05-26-phase-5f-security-health-schedules.md` and
 `docs/api-audit/phase-5f-admin-smoke-latest.md`.
+
+### Admin mutation tools (Phase 5F-B1)
+
+Mutations (`--enable-admin-mutations` + `AXXON_ADMIN_MUTATION_APPROVE=1`):
+`list_admin_mutation_workflows`, `plan_admin_mutation_workflow`,
+`apply_admin_mutation_plan`, `verify_admin_mutation_plan`,
+`rollback_admin_mutation_plan`. Every workflow returns a plan id, an apply
+confirmation token, and a separate rollback confirmation token; `apply` and
+`rollback` reject mismatched tokens or missing approval.
+
+The shipped workflows are intentionally limited to temporary `codex-*`
+fixtures: `security_user_role_lifecycle`, `security_role_permissions_update`,
+`security_policy_noop_probe`, `security_ldap_temp_lifecycle`, and
+`security_tfa_temp_user_lifecycle`. Generated passwords, TFA secrets, OTP
+codes, bearer tokens, concrete host/user/CA values, licensing identifiers, and
+device identifiers are redacted from reports and audit output.
+
+Live evidence is PASS=5, WARN=0, FAIL=0 at
+`docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`. Deferred 5F-B2
+scope remains high-risk or fixture-dependent: license apply/drop, timezone and
+NTP changes, production user/role edits, LDAP sync against a real directory,
+and schedule authoring.
 
 ## Verification
 

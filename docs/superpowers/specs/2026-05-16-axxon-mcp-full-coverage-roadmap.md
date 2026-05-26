@@ -30,14 +30,14 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5D** Videowall / layouts / maps | ✅ shipped | yes | `tools/axxon_mcp_view_objects.py`, `tools/axxon_view_objects_smoke.py`, `docs/api-audit/phase-5d-view-objects-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | yes (`62a4b9b`) | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-A** Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | yes (`64d6477`) | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
-| **5F-B1** Security/admin mutations | 📝 planned | no | `docs/superpowers/specs/2026-05-26-phase-5f-b-security-admin-mutations-design.md`, `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md` |
+| **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
 | **7** NL → plan translator | ❌ not started | no | none |
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
-**Next concrete step:** execute Phase 5F-B1 Task 1 from `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md` on `main`, while carrying Phase 5E fixture debt and Phase 5F-A fixture caveats.
+**Next concrete step:** choose Phase 5F-B2 only if dedicated fixtures/maintenance-window approval exists for high-risk admin changes; otherwise start Phase 6A authoring-kit expansion.
 
 ---
 
@@ -50,7 +50,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | Axxon One product docs | https://docs.axxonsoft.com/confluence/spaces/ONE2025/pages/314535799/Documentation | Public product documentation — used for capability mapping, not embedded in repo. |
 | Integration APIs 3.0 PDF | `docs/integration-apis-3.0/` (local; gitignored) | AxxonSoft-copyrighted. Excluded from the public repo. Drives `api_methods.json` / `http_endpoints.json`. |
 | gRPC proto files | `docs/grpc-proto-files/` (local; gitignored) | AxxonSoft-copyrighted. Source for the 361-method catalog. |
-| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 38 rows, 30 verified, 1 partial, 6 fixture-blocked, 1 planned/not-verified MCP row. |
+| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 39 rows, 32 verified, 2 partial, 5 fixture-blocked. |
 | Structured MCP corpus | `docs/api-audit/mcp-corpus/` | 7 JSON files (api_methods, http_endpoints, task_recipes, fixtures, safety_policies, known_behaviors, README). |
 
 ### 2.2 Demo / testing stand
@@ -79,8 +79,8 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 3 — Controlled operator (plan/apply/verify/rollback) | Shipped, 11 workflows (7 ephemeral, 4 persistent) | `axxon_mcp_operator.py` |
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
-| PDF coverage matrix | 30 / 38 verified, 2 partial, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 434 / 434 passing on `main` | `tools/tests/` |
+| PDF coverage matrix | 32 / 39 verified, 2 partial, 5 fixture-blocked | `pdf-gap-coverage-matrix.md` |
+| Unit tests | 465 / 465 passing on `main` | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 
@@ -285,7 +285,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 ### Phase 5F — Operator UX: Security, users, roles, system health
 
-**Status.** 5F-A is shipped on `main` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=7, WARN=4, FAIL=0). Warnings are fixture/stand caveats: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams are quiet and end by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture. 5F-B1 is planned in `docs/superpowers/specs/2026-05-26-phase-5f-b-security-admin-mutations-design.md` and `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md`.
+**Status.** 5F-A is shipped on `main` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=7, WARN=4, FAIL=0). Warnings are fixture/stand caveats: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams are quiet and end by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture. 5F-B1 is shipped with sanitized live evidence at `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` (PASS=5, WARN=0, FAIL=0).
 
 **Why.** Closes 11 pending SecurityService methods, 10 pending AuthenticationService methods, 5 pending LicenseService methods, NodeNotifier (6 pending), and DomainNotifier (5 pending).
 
@@ -300,14 +300,14 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 - `domain_event_subscribe(filter, duration)` and `node_event_subscribe(filter, duration)` — bounded DomainNotifier/NodeNotifier reads with disconnect cleanup.
 - `schedule_descriptor_get(uid)` — fixture-aware schedule field discovery. No standalone schedule service is present in the current corpus/protos; schedule authoring stays fixture-needed until descriptor-backed schedule fields and an isolated config fixture exist.
 
-**5F-B1 planned mutation scope.**
+**5F-B1 implemented mutation scope.**
 - `list_admin_mutation_workflows()`
 - `plan_admin_mutation_workflow(workflow, params)`
 - `apply_admin_mutation_plan(plan_id, confirmation)`
 - `verify_admin_mutation_plan(plan_id)`
 - `rollback_admin_mutation_plan(plan_id, confirmation)`
 
-Initial workflows are limited to temporary `codex-*` security fixtures: user/role lifecycle, temp-role permission updates, policy no-op probe, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable.
+Workflows are limited to temporary `codex-*` security fixtures: user/role lifecycle, temp-role permission updates, policy no-op probe, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable. All require `--enable-admin-mutations`, `AXXON_ADMIN_MUTATION_APPROVE=1`, and per-plan apply/rollback confirmation tokens.
 
 **5F-B2 deferred mutation scope.**
 - Production `user_create`, `user_update`, `user_delete`, `change_password`, and `change_login`.
@@ -452,7 +452,7 @@ The full-coverage MCP is "done" when:
 
 This document is a roadmap, not an implementation plan. The next step is:
 
-1. **Execute Phase 5F-B1 Task 1** from `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md`.
+1. **Choose Phase 5F-B2 only with dedicated fixture/maintenance approval; otherwise start Phase 6A** authoring-kit expansion.
 2. **Carry Phase 5E fixture debt** as a separate validation track: descriptor-backed archive policy fixture, writable visual detector child, and isolated `codex-*` archive/camera fixture.
 3. **Carry Phase 5F-A caveats** as fixture debt: license host-info disconnect, quiet notifier streams, and descriptor-backed schedule fixture.
 4. Keep the loop for each phase: implementation, evidence, sanitization, coverage matrix update, merge.
