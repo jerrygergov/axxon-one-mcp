@@ -27,6 +27,22 @@ ADMIN_TOOL_NAMES = (
     "schedule_descriptor_get",
 )
 
+NOTIFIER_TIMEOUT_CAP_S = 30.0
+NOTIFIER_LIMIT_CAP = 100
+SCHEDULE_UNIT_TYPE_CANDIDATES = ("DeviceIpint", "MultimediaStorage", "AVDetector", "AppDataDetector")
+PROPERTY_ID_FIELDS = ("id", "property_id", "propertyId", "path", "name")
+PROPERTY_VALUE_FIELDS = (
+    "value",
+    "value_string",
+    "value_bool",
+    "value_int32",
+    "value_int64",
+    "value_uint32",
+    "value_uint64",
+    "value_float",
+    "value_double",
+)
+
 _SENSITIVE_KEY_TOKENS = (
     "password",
     "passwd",
@@ -230,6 +246,100 @@ def _zone_summary(zone: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": redacted.get("id") or redacted.get("time_zone_id") or redacted.get("name") or "",
         "display_name": redacted.get("display_name") or redacted.get("displayName") or redacted.get("name") or "",
+    }
+
+
+def _unit_type_from_uid(uid: str) -> str:
+    leaf = str(uid).rstrip("/").split("/")[-1]
+    return leaf.split(".", 1)[0] if "." in leaf else ""
+
+
+def _unit_uid(value: dict[str, Any]) -> str:
+    for field in ("uid", "unit_uid", "unitUid", "id"):
+        item = value.get(field)
+        if isinstance(item, str) and item:
+            return item
+    return ""
+
+
+def _property_id(value: dict[str, Any]) -> str:
+    for field in PROPERTY_ID_FIELDS:
+        item = value.get(field)
+        if isinstance(item, str) and item:
+            return item
+    return ""
+
+
+def _iter_property_nodes(properties: Any, prefix: str = "") -> list[tuple[str, dict[str, Any]]]:
+    nodes: list[tuple[str, dict[str, Any]]] = []
+    if not isinstance(properties, list):
+        return nodes
+    for prop in properties:
+        if not isinstance(prop, dict):
+            continue
+        prop_id = _property_id(prop)
+        path = f"{prefix}.{prop_id}" if prefix and prop_id else prop_id or prefix
+        if path:
+            nodes.append((path, prop))
+        nodes.extend(_iter_property_nodes(prop.get("properties"), path))
+    return nodes
+
+
+def _property_value(prop: dict[str, Any]) -> tuple[str, Any]:
+    redacted = redact_admin_secrets(prop)
+    for field in PROPERTY_VALUE_FIELDS:
+        if field in redacted:
+            return field, redacted[field]
+    return "", None
+
+
+def _schedule_like(path: str) -> bool:
+    text = "".join(ch.lower() if ch.isalnum() else "_" for ch in path)
+    return any(token in text for token in ("schedule", "calendar", "weekly", "daily"))
+
+
+def _schedule_property_summary(path: str, prop: dict[str, Any], source: str) -> dict[str, Any] | None:
+    value_kind, value = _property_value(prop)
+    if not value_kind:
+        return None
+    redacted = redact_admin_secrets(prop)
+    out: dict[str, Any] = {
+        "id": _property_id(redacted),
+        "path": path,
+        "value_kind": value_kind,
+        "value": value,
+        "readonly": bool(redacted.get("readonly", False)),
+        "source": source,
+    }
+    for field in ("name", "type", "category"):
+        if field in redacted:
+            out[field] = redacted[field]
+    return out
+
+
+def _schedule_properties(descriptor: dict[str, Any], source: str) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for path, prop in _iter_property_nodes(descriptor.get("properties")):
+        if not _schedule_like(path):
+            continue
+        summary = _schedule_property_summary(path, prop, source)
+        if summary is not None:
+            items.append(summary)
+    return items
+
+
+def _fixture_needed_schedule(uid: str, message: str) -> dict[str, Any]:
+    return {
+        "status": "fixture-needed",
+        "tool": "schedule_descriptor_get",
+        "target": uid,
+        "schedule_properties": [],
+        "confidence": "none",
+        "message": message,
+        "missing": [
+            "list_units wrapper or ConfigurationService.ListUnits descriptor",
+            "descriptor fields containing schedule, calendar, weekly, or daily properties",
+        ],
     }
 
 
@@ -507,3 +617,124 @@ class AxxonMcpAdmin:
             "mode": ADMIN_MODE,
         }
         return redact_admin_secrets(result)
+
+    def _notifier_subscribe(
+        self,
+        *,
+        notifier: str,
+        tool: str,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        timeout = max(1.0, min(float(timeout_s), NOTIFIER_TIMEOUT_CAP_S))
+        applied_limit = max(1, min(int(limit), NOTIFIER_LIMIT_CAP))
+        client = self.ensure_client()
+        result = client.pull_notifier_events_bounded(
+            notifier=notifier,
+            subjects=list(subjects or []),
+            event_types=list(event_types or []),
+            timeout_s=timeout,
+            limit=applied_limit,
+            detailed=detailed,
+        )
+        out = {
+            "tool": tool,
+            "subjects": list(subjects or []),
+            "event_types": list(event_types or []),
+            **redact_admin_secrets(result),
+        }
+        out["caps"] = {"timeout_s": timeout, "limit": applied_limit}
+        return out
+
+    def domain_event_subscribe(
+        self,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        return self._notifier_subscribe(
+            notifier="domain",
+            tool="domain_event_subscribe",
+            subjects=subjects,
+            event_types=event_types,
+            timeout_s=timeout_s,
+            limit=limit,
+            detailed=detailed,
+        )
+
+    def node_event_subscribe(
+        self,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        return self._notifier_subscribe(
+            notifier="node",
+            tool="node_event_subscribe",
+            subjects=subjects,
+            event_types=event_types,
+            timeout_s=timeout_s,
+            limit=limit,
+            detailed=detailed,
+        )
+
+    def _schedule_descriptor(self, uid: str) -> tuple[dict[str, Any] | None, str]:
+        client = self.ensure_client()
+        list_units = getattr(client, "list_units", None)
+        if not callable(list_units):
+            return None, ""
+        parsed = _unit_type_from_uid(uid)
+        unit_types = [parsed] if parsed else []
+        unit_types.extend(unit_type for unit_type in SCHEDULE_UNIT_TYPE_CANDIDATES if unit_type not in unit_types)
+        found: dict[str, Any] | None = None
+        source = ""
+        for unit_type in unit_types:
+            for unit in _items({"items": list_units(unit_type)}, "items"):
+                if _unit_uid(unit) == uid:
+                    found = unit
+                    source = "list_units"
+            if found is not None:
+                break
+        return found, source
+
+    def schedule_descriptor_get(self, uid: str) -> dict[str, Any]:
+        if not str(uid or "").strip():
+            return _fixture_needed_schedule(uid, "schedule_descriptor_get requires a concrete unit UID.")
+        descriptor, source = self._schedule_descriptor(uid)
+        if descriptor is None:
+            return _fixture_needed_schedule(
+                uid,
+                "Could not resolve descriptor with schedule-like fields; provide an isolated config fixture.",
+            )
+        schedule_properties = _schedule_properties(descriptor, source)
+        if not schedule_properties:
+            return _fixture_needed_schedule(
+                uid,
+                "Resolved descriptor did not expose schedule, calendar, weekly, or daily fields.",
+            )
+        return {
+            "status": "ok",
+            "tool": "schedule_descriptor_get",
+            "target": uid,
+            "schedule_properties": schedule_properties,
+            "confidence": "descriptor",
+            "descriptor_source": source,
+            "descriptor": redact_admin_secrets(
+                {
+                    "uid": descriptor.get("uid", ""),
+                    "type": descriptor.get("type", ""),
+                    "display_name": descriptor.get("display_name", descriptor.get("name", "")),
+                }
+            ),
+            "notes": [
+                "Read-only descriptor discovery only.",
+                "Schedule authoring is deferred until descriptor-backed fixtures are available.",
+            ],
+        }

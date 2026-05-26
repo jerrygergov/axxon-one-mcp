@@ -228,6 +228,77 @@ class FakeHealthClient(FakeSecurityClient):
         return {"body": {"time_zones": [{"id": zone_id} for zone_id in zone_ids]}}
 
 
+class FakeNotifierScheduleClient(FakeHealthClient):
+    unit_uid = "hosts/Server/DeviceIpint.1"
+
+    def pull_notifier_events_bounded(
+        self,
+        *,
+        notifier: str,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict:
+        self.calls.append(
+            (
+                "pull_notifier",
+                {
+                    "notifier": notifier,
+                    "subjects": list(subjects or []),
+                    "event_types": list(event_types or []),
+                    "timeout_s": timeout_s,
+                    "limit": limit,
+                    "detailed": detailed,
+                },
+            )
+        )
+        return {
+            "status": "ok",
+            "notifier": notifier,
+            "service": "DomainNotifier" if notifier == "domain" else "NodeNotifier",
+            "detailed": detailed,
+            "count": 1,
+            "events": [{"event_type": "ET_ConfigChangedEvent", "license_key": marker("LICENSE")}],
+            "caps": {"timeout_s": timeout_s, "limit": limit},
+        }
+
+    def list_units(self, unit_type: str) -> list[dict]:
+        self.calls.append(("list_units", {"unit_type": unit_type}))
+        return [
+            {
+                "uid": self.unit_uid,
+                "type": "DeviceIpint",
+                "display_name": "Camera",
+                "properties": [
+                    {
+                        "id": "schedule",
+                        "properties": [
+                            {"id": "weeklySchedule", "value_string": "24x7", "readonly": False},
+                            {"id": "dailyCalendar", "value_bool": True, "secret": marker("TFA")},
+                        ],
+                    },
+                    {"id": "displayName", "value_string": "Camera"},
+                ],
+            }
+        ]
+
+
+class FakeNoScheduleClient(FakeNotifierScheduleClient):
+    def list_units(self, unit_type: str) -> list[dict]:
+        self.calls.append(("list_units", {"unit_type": unit_type}))
+        return [
+            {
+                "uid": self.unit_uid,
+                "type": "DeviceIpint",
+                "properties": [
+                    {"id": "displayName", "value_string": "Camera"},
+                ],
+            }
+        ]
+
+
 class AxxonMcpAdminScaffoldTests(unittest.TestCase):
     def test_module_constants_name_phase_5f_a_tools(self) -> None:
         module = importlib.import_module("axxon_mcp_admin")
@@ -541,6 +612,96 @@ class AxxonMcpAdminHealthTests(unittest.TestCase):
         self.assertNotIn(marker("LICENSE"), str(result))
         self.assertNotIn(marker("SERIAL"), str(result))
         self.assertNotIn(marker("FINGERPRINT"), str(result))
+
+
+class AxxonMcpAdminNotifierScheduleTests(unittest.TestCase):
+    def test_domain_event_subscribe_clamps_caps_and_redacts_events(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.domain_event_subscribe(
+            subjects=["hosts/Server"],
+            event_types=["config"],
+            timeout_s=99,
+            limit=999,
+            detailed=True,
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "domain_event_subscribe")
+        self.assertEqual(result["notifier"], "domain")
+        self.assertEqual(result["caps"]["timeout_s"], module.NOTIFIER_TIMEOUT_CAP_S)
+        self.assertEqual(result["caps"]["limit"], module.NOTIFIER_LIMIT_CAP)
+        self.assertIn(
+            (
+                "pull_notifier",
+                {
+                    "notifier": "domain",
+                    "subjects": ["hosts/Server"],
+                    "event_types": ["config"],
+                    "timeout_s": module.NOTIFIER_TIMEOUT_CAP_S,
+                    "limit": module.NOTIFIER_LIMIT_CAP,
+                    "detailed": True,
+                },
+            ),
+            fake.calls,
+        )
+        self.assertNotIn(marker("LICENSE"), str(result))
+
+    def test_node_event_subscribe_selects_node_notifier(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.node_event_subscribe(subjects=[], event_types=[], timeout_s=0, limit=0)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "node_event_subscribe")
+        self.assertEqual(result["notifier"], "node")
+        self.assertEqual(result["caps"]["timeout_s"], 1.0)
+        self.assertEqual(result["caps"]["limit"], 1)
+        self.assertIn("NodeNotifier", result["service"])
+
+    def test_schedule_descriptor_get_discovers_schedule_like_fields(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.schedule_descriptor_get(FakeNotifierScheduleClient.unit_uid)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "schedule_descriptor_get")
+        self.assertEqual(result["target"], FakeNotifierScheduleClient.unit_uid)
+        fields = {item["path"]: item for item in result["schedule_properties"]}
+        self.assertEqual(fields["schedule.weeklySchedule"]["value"], "24x7")
+        self.assertTrue(fields["schedule.dailyCalendar"]["value"])
+        self.assertEqual(result["descriptor"]["uid"], FakeNotifierScheduleClient.unit_uid)
+        self.assertNotIn(marker("TFA"), str(result))
+
+    def test_schedule_descriptor_get_returns_fixture_needed_without_schedule_fields(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNoScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.schedule_descriptor_get(FakeNotifierScheduleClient.unit_uid)
+
+        self.assertEqual(result["status"], "fixture-needed")
+        self.assertEqual(result["tool"], "schedule_descriptor_get")
+        self.assertEqual(result["schedule_properties"], [])
+        self.assertIn("schedule", result["message"])
 
 
 if __name__ == "__main__":

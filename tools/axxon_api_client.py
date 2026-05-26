@@ -625,6 +625,75 @@ class AxxonApiClient:
                 pass
         return collected[:max_events]
 
+    def pull_notifier_events_bounded(
+        self,
+        *,
+        notifier: str,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        import uuid as _uuid
+        from axxon_subscription_smoke import build_pull_event_filters
+
+        service_by_notifier = {"domain": "DomainNotifier", "node": "NodeNotifier"}
+        if notifier not in service_by_notifier:
+            raise ValueError("notifier must be 'domain' or 'node'")
+        timeout = max(0.1, min(float(timeout_s), 30.0))
+        max_events = max(1, min(int(limit), 500))
+        if self.grpc_channel is None:
+            self.authenticate_grpc()
+        notify_pb2 = self.import_module("axxonsoft.bl.events.Notification_pb2")
+        events_pb2 = self.import_module("axxonsoft.bl.events.Events_pb2")
+        service_name = service_by_notifier[notifier]
+        notify = self.stub_from_proto("axxonsoft/bl/events/Notification.proto", service_name)
+        filters = build_pull_event_filters(
+            notify_pb2,
+            events_pb2,
+            subjects=list(subjects or []),
+            event_types=list(event_types or []),
+        )
+        subscription_id = f"codex-{_uuid.uuid4()}"
+        request = notify_pb2.PullEventsRequest(subscription_id=subscription_id, filters=filters)
+        collected: list[dict[str, Any]] = []
+        status = "ok"
+        stream_error = ""
+        try:
+            pull = notify.PullDetailedEvents if detailed else notify.PullEvents
+            for page in pull(request, timeout=timeout):
+                data = self.message_to_dict(page)
+                for item in data.get("items", []):
+                    collected.append(item)
+                    if len(collected) >= max_events:
+                        break
+                if len(collected) >= max_events:
+                    break
+        except Exception as exc:
+            status = "warn"
+            stream_error = str(exc)[:300]
+        finally:
+            try:
+                notify.DisconnectEventChannel(
+                    notify_pb2.DisconnectEventChannelRequest(subscription_id=subscription_id),
+                    timeout=min(timeout, 2.0),
+                )
+            except Exception:
+                pass
+        result: dict[str, Any] = {
+            "status": status,
+            "notifier": notifier,
+            "service": service_name,
+            "detailed": detailed,
+            "count": len(collected),
+            "events": collected[:max_events],
+            "caps": {"timeout_s": timeout, "limit": max_events},
+        }
+        if stream_error:
+            result["stream_error"] = stream_error
+        return result
+
     def get_active_alerts(self, camera_ap: str) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.logic.LogicService.GetActiveAlerts",

@@ -10,6 +10,63 @@ sys.path.insert(0, str(TOOLS_DIR))
 from axxon_api_client import AxxonApiClient, AxxonClientConfig
 
 
+class _FakePullEventsRequest:
+    def __init__(self, **kwargs) -> None:
+        self.subscription_id = kwargs.get("subscription_id", "")
+        self.filters = kwargs.get("filters")
+
+
+class _FakeDisconnectEventChannelRequest:
+    def __init__(self, **kwargs) -> None:
+        self.subscription_id = kwargs.get("subscription_id", "")
+
+
+class _FakeEventFilter:
+    def __init__(self, **kwargs) -> None:
+        self.kwargs = kwargs
+
+
+class _FakeEventFilters:
+    def __init__(self, **kwargs) -> None:
+        self.include = kwargs.get("include", [])
+
+
+class _FakeNotifyPb:
+    PullEventsRequest = _FakePullEventsRequest
+    DisconnectEventChannelRequest = _FakeDisconnectEventChannelRequest
+    EventFilter = _FakeEventFilter
+    EventFilters = _FakeEventFilters
+
+
+class _FakeEventsPb:
+    ET_Alert = 1
+    ET_ConfigChangedEvent = 2
+
+
+class _FakeNotifierStub:
+    def __init__(self, *, raise_on_pull: bool = False) -> None:
+        self.raise_on_pull = raise_on_pull
+        self.pull_requests: list[_FakePullEventsRequest] = []
+        self.detailed_requests: list[_FakePullEventsRequest] = []
+        self.disconnect_requests: list[_FakeDisconnectEventChannelRequest] = []
+
+    def PullEvents(self, request, timeout):
+        self.pull_requests.append(request)
+        if self.raise_on_pull:
+            raise RuntimeError("stream failed")
+        return [{"items": [{"event_type": "ET_Alert"}]}, {"items": [{"event_type": "ET_ConfigChangedEvent"}]}]
+
+    def PullDetailedEvents(self, request, timeout):
+        self.detailed_requests.append(request)
+        if self.raise_on_pull:
+            raise RuntimeError("stream failed")
+        return [{"items": [{"event_type": "ET_Alert", "details": {"a": 1}}]}]
+
+    def DisconnectEventChannel(self, request, timeout):
+        self.disconnect_requests.append(request)
+        return {}
+
+
 class _FakeClient(AxxonApiClient):
     def __init__(self) -> None:
         cfg = AxxonClientConfig(
@@ -31,6 +88,28 @@ class _FakeClient(AxxonApiClient):
     def http_grpc(self, fqmn, data=None):
         self.calls.append((fqmn, dict(data or {})))
         return {"status": 200, "body": {"ok": True}}
+
+
+class _FakeNotifierClient(_FakeClient):
+    def __init__(self, *, raise_on_pull: bool = False) -> None:
+        super().__init__()
+        self.grpc_channel = object()
+        self.stub = _FakeNotifierStub(raise_on_pull=raise_on_pull)
+        self.stub_calls: list[tuple[str, str]] = []
+
+    def import_module(self, name: str):
+        if name == "axxonsoft.bl.events.Notification_pb2":
+            return _FakeNotifyPb
+        if name == "axxonsoft.bl.events.Events_pb2":
+            return _FakeEventsPb
+        return super().import_module(name)
+
+    def stub_from_proto(self, proto_path: str, service_name: str):
+        self.stub_calls.append((proto_path, service_name))
+        return self.stub
+
+    def message_to_dict(self, message):
+        return dict(message)
 
 
 class AdminApiWrappersTests(unittest.TestCase):
@@ -230,6 +309,57 @@ class AdminApiWrappersTests(unittest.TestCase):
                 {"ids": ["Europe/Moscow", "UTC"]},
             ),
         )
+
+    def test_pull_notifier_events_bounded_selects_domain_notifier_and_disconnects(self) -> None:
+        c = _FakeNotifierClient()
+        result = c.pull_notifier_events_bounded(
+            notifier="domain",
+            subjects=["hosts/Server"],
+            event_types=["alert"],
+            timeout_s=5.0,
+            limit=1,
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["notifier"], "domain")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(c.stub_calls, [("axxonsoft/bl/events/Notification.proto", "DomainNotifier")])
+        self.assertEqual(len(c.stub.pull_requests), 1)
+        self.assertEqual(len(c.stub.disconnect_requests), 1)
+        self.assertEqual(c.stub.disconnect_requests[0].subscription_id, c.stub.pull_requests[0].subscription_id)
+
+    def test_pull_notifier_events_bounded_selects_node_notifier_and_detailed_pull(self) -> None:
+        c = _FakeNotifierClient()
+        result = c.pull_notifier_events_bounded(
+            notifier="node",
+            subjects=[],
+            event_types=[],
+            timeout_s=5.0,
+            limit=10,
+            detailed=True,
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["notifier"], "node")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(c.stub_calls, [("axxonsoft/bl/events/Notification.proto", "NodeNotifier")])
+        self.assertEqual(len(c.stub.detailed_requests), 1)
+        self.assertEqual(len(c.stub.disconnect_requests), 1)
+
+    def test_pull_notifier_events_bounded_disconnects_on_stream_error(self) -> None:
+        c = _FakeNotifierClient(raise_on_pull=True)
+        result = c.pull_notifier_events_bounded(
+            notifier="domain",
+            subjects=[],
+            event_types=[],
+            timeout_s=5.0,
+            limit=10,
+        )
+
+        self.assertEqual(result["status"], "warn")
+        self.assertEqual(result["count"], 0)
+        self.assertIn("stream_error", result)
+        self.assertEqual(len(c.stub.disconnect_requests), 1)
 
 
 if __name__ == "__main__":
