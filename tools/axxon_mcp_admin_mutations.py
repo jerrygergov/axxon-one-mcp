@@ -3,12 +3,17 @@
 
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass, field
 import datetime as dt
+import hashlib
+import hmac
 import os
 from pathlib import Path
 import secrets
 import string
+import struct
+import time
 from typing import Any, Callable
 import uuid
 
@@ -65,6 +70,27 @@ def _rollback_confirmation_token(workflow: str) -> str:
 def _generated_password() -> str:
     alphabet = string.ascii_letters + string.digits + "!#$_"
     return "Aa" + "".join(secrets.choice(alphabet) for _ in range(14)) + "123"
+
+
+def _totp_code(secret_key: str, *, for_time: int | None = None, step_seconds: int = 30, digits: int = 6) -> str:
+    if for_time is None:
+        for_time = int(time.time())
+    padded_secret = secret_key.upper() + "=" * ((8 - len(secret_key) % 8) % 8)
+    key = base64.b32decode(padded_secret, casefold=True)
+    counter = int(for_time // step_seconds)
+    digest = hmac.new(key, struct.pack(">Q", counter), hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF
+    return f"{value % (10 ** digits):0{digits}d}"
+
+
+def _tfa_verification_codes(secret_key: str) -> list[str]:
+    now = int(time.time())
+    return [
+        _totp_code(secret_key, for_time=now),
+        _totp_code(secret_key, for_time=now - 30),
+        _totp_code(secret_key, for_time=now + 30),
+    ]
 
 
 def _temp_security_ids(params: dict[str, Any]) -> dict[str, str]:
@@ -253,6 +279,16 @@ class AxxonAdminMutationRegistry:
                 "ldap_server_id": state["ldap_server_id"],
                 "friendly_name_change": state["friendly_name_change"],
             }
+        elif workflow == "security_tfa_temp_user_lifecycle":
+            state = _temp_security_ids(clean_params)
+            state["password"] = _generated_password()
+            plan["_state"] = state
+            plan["expected"] = {
+                "role_id": state["role_id"],
+                "user_id": state["user_id"],
+                "role_name": state["role_name"],
+                "login": state["login"],
+            }
         self.plans[plan_id] = plan
         self._audit("plan", _public_plan(plan))
         return _public_plan(plan)
@@ -296,6 +332,10 @@ class AxxonAdminMutationRegistry:
             result = self._apply_security_ldap_temp_lifecycle(plan)
             self._audit("apply", result)
             return result
+        if plan["workflow"] == "security_tfa_temp_user_lifecycle":
+            result = self._apply_security_tfa_temp_user_lifecycle(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -325,6 +365,10 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_ldap_temp_lifecycle":
             result = self._verify_security_ldap_temp_lifecycle(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_tfa_temp_user_lifecycle":
+            result = self._verify_security_tfa_temp_user_lifecycle(plan)
             self._audit("verify", result)
             return result
         result = {
@@ -369,6 +413,10 @@ class AxxonAdminMutationRegistry:
             result = self._rollback_security_ldap_temp_lifecycle(plan)
             self._audit("rollback", result)
             return result
+        if plan["workflow"] == "security_tfa_temp_user_lifecycle":
+            result = self._rollback_security_tfa_temp_user_lifecycle(plan)
+            self._audit("rollback", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -385,7 +433,22 @@ class AxxonAdminMutationRegistry:
     def _apply_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
         state = dict(plan.get("_state") or {})
         client = self.ensure_client()
-        payload = {
+        payload = self._add_user_role_payload(state)
+        response = _body(client.security_change_config(payload))
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": state["role_id"],
+            "user_id": state["user_id"],
+            "role_name": state["role_name"],
+            "login": state["login"],
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _add_user_role_payload(self, state: dict[str, Any]) -> dict[str, Any]:
+        return {
             "added_roles": [
                 {
                     "index": state["role_id"],
@@ -411,17 +474,12 @@ class AxxonAdminMutationRegistry:
                 }
             ],
         }
-        response = _body(client.security_change_config(payload))
-        plan["applied"] = True
+
+    def _remove_user_role_payload(self, state: dict[str, Any]) -> dict[str, Any]:
         return {
-            "status": "applied",
-            "plan_id": plan["plan_id"],
-            "workflow": plan["workflow"],
-            "role_id": state["role_id"],
-            "user_id": state["user_id"],
-            "role_name": state["role_name"],
-            "login": state["login"],
-            "response_keys": sorted(str(key) for key in response.keys()),
+            "removed_users_assignments": [{"user_id": state["user_id"], "role_id": state["role_id"]}],
+            "removed_users": [state["user_id"]],
+            "removed_roles": [state["role_id"]],
         }
 
     def _verify_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
@@ -452,12 +510,7 @@ class AxxonAdminMutationRegistry:
     def _rollback_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
         state = dict(plan.get("_state") or {})
         client = self.ensure_client()
-        payload = {
-            "removed_users_assignments": [{"user_id": state["user_id"], "role_id": state["role_id"]}],
-            "removed_users": [state["user_id"]],
-            "removed_roles": [state["role_id"]],
-        }
-        response = _body(client.security_change_config(payload))
+        response = _body(client.security_change_config(self._remove_user_role_payload(state)))
         roles = _body(client.security_list_roles()).get("roles", [])
         users = _body(client.security_list_users()).get("users", [])
         role_present = any(item.get("index") == state["role_id"] for item in roles if isinstance(item, dict))
@@ -703,3 +756,100 @@ class AxxonAdminMutationRegistry:
             "workflow": plan["workflow"],
             "ldap_removed": not present_after_remove,
         }
+
+    def _client_gen_google_auth_secret(self, client: Any) -> dict[str, Any]:
+        helper = getattr(client, "security_gen_google_auth_secret", None)
+        if callable(helper):
+            return _body(helper())
+        pb2 = client.import_module("axxonsoft.bl.security.SecurityService_pb2")
+        stub = client.stub_from_proto("axxonsoft/bl/security/SecurityService.proto", "SecurityService")
+        return client.message_to_dict(stub.GenGoogleAuthSecret(pb2.GenGoogleAuthSecretRequest(), timeout=client.config.timeout))
+
+    def _client_enable_google_auth(self, client: Any, user_index: str, secret_key: str) -> dict[str, Any]:
+        helper = getattr(client, "security_enable_google_auth", None)
+        if callable(helper):
+            return _body(helper(user_index, secret_key))
+        pb2 = client.import_module("axxonsoft.bl.security.SecurityService_pb2")
+        stub = client.stub_from_proto("axxonsoft/bl/security/SecurityService.proto", "SecurityService")
+        request = pb2.EnableGoogleAuthRequest(
+            assignments=[pb2.EnableGoogleAuthRequest.Assignment(user_index=user_index, secret_key=secret_key)]
+        )
+        return client.message_to_dict(stub.EnableGoogleAuth(request, timeout=client.config.timeout))
+
+    def _client_disable_google_auth(self, client: Any, user_index: str, verification_code: str) -> dict[str, Any]:
+        helper = getattr(client, "security_disable_google_auth", None)
+        if callable(helper):
+            return _body(helper(user_index, verification_code))
+        pb2 = client.import_module("axxonsoft.bl.security.SecurityService_pb2")
+        stub = client.stub_from_proto("axxonsoft/bl/security/SecurityService.proto", "SecurityService")
+        request = pb2.DisableGoogleAuthRequest(
+            assignments=[
+                pb2.DisableGoogleAuthRequest.Assignment(
+                    user_index=user_index,
+                    verification_code=verification_code,
+                )
+            ]
+        )
+        return client.message_to_dict(stub.DisableGoogleAuth(request, timeout=client.config.timeout))
+
+    def _assignment_results(self, data: dict[str, Any]) -> list[str]:
+        return [
+            str(item.get("result", ""))
+            for item in data.get("assignments", [])
+            if isinstance(item, dict)
+        ]
+
+    def _apply_security_tfa_temp_user_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        client.security_change_config(self._add_user_role_payload(state))
+        secret_data = self._client_gen_google_auth_secret(client)
+        secret_key = str(secret_data.get("secret_key") or "")
+        enable_results = self._assignment_results(
+            self._client_enable_google_auth(client, state["user_id"], secret_key)
+        )
+        disable_results: list[str] = []
+        attempts = 0
+        for verification_code in _tfa_verification_codes(secret_key):
+            attempts += 1
+            disable_results = self._assignment_results(
+                self._client_disable_google_auth(client, state["user_id"], verification_code)
+            )
+            if disable_results and all(result == "DTR_OK" for result in disable_results):
+                break
+        tfa_disabled = bool(disable_results and all(result == "DTR_OK" for result in disable_results))
+        plan["_state"]["tfa_disabled"] = tfa_disabled
+        plan["_state"]["enable_results"] = list(enable_results)
+        plan["_state"]["disable_results"] = list(disable_results)
+        plan["applied"] = True
+        return {
+            "status": "applied" if tfa_disabled else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "user_id": state["user_id"],
+            "role_id": state["role_id"],
+            "secret_len": len(secret_key),
+            "enable_results": enable_results,
+            "disable_results": disable_results,
+            "disable_attempts": attempts,
+        }
+
+    def _verify_security_tfa_temp_user_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        users_body = _body(self.ensure_client().security_list_users(role_ids=[state["role_id"]]))
+        user_present = any(
+            item.get("index") == state["user_id"]
+            for item in users_body.get("users", [])
+            if isinstance(item, dict)
+        )
+        tfa_disabled = bool(state.get("tfa_disabled"))
+        return {
+            "status": "verified" if user_present and tfa_disabled else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "user_present": user_present,
+            "tfa_disabled": tfa_disabled,
+        }
+
+    def _rollback_security_tfa_temp_user_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        return self._rollback_security_user_role_lifecycle(plan)

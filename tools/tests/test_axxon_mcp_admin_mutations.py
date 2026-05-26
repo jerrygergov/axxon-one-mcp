@@ -26,6 +26,11 @@ class FakeAdminMutationClient:
             "trusted_ip_list": [{"address": "127.0.0.1"}],
         }
         self.ldap_servers: dict[str, dict] = {}
+        self.tfa_secret = "JBSWY3DPEHPK3PXP"
+        self.tfa_enabled: dict[str, str] = {}
+        self.tfa_enable_calls: list[dict] = []
+        self.tfa_disable_calls: list[dict] = []
+        self.tfa_disable_results = ["DTR_OK"]
 
     def security_change_config(self, payload: dict) -> dict:
         self.calls.append(payload)
@@ -119,6 +124,21 @@ class FakeAdminMutationClient:
     def security_list_ldap_servers(self, *, page_size: int = 100, page_token: str = "") -> dict:
         return {"body": {"ldap_servers": list(self.ldap_servers.values())[:page_size]}}
 
+    def security_gen_google_auth_secret(self) -> dict:
+        return {"body": {"secret_key": self.tfa_secret}}
+
+    def security_enable_google_auth(self, user_index: str, secret_key: str) -> dict:
+        self.tfa_enable_calls.append({"user_index": user_index, "secret_key": secret_key})
+        self.tfa_enabled[user_index] = secret_key
+        return {"body": {"assignments": [{"result": "ETR_OK"}]}}
+
+    def security_disable_google_auth(self, user_index: str, verification_code: str) -> dict:
+        self.tfa_disable_calls.append({"user_index": user_index, "verification_code": verification_code})
+        result = self.tfa_disable_results.pop(0) if self.tfa_disable_results else "DTR_OK"
+        if result == "DTR_OK":
+            self.tfa_enabled.pop(user_index, None)
+        return {"body": {"assignments": [{"result": result}]}}
+
 
 class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -194,17 +214,16 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
         self.assertEqual(result["status"], "rejected")
         self.assertEqual(result["reason"], "confirmation-token-mismatch")
 
-    def test_scaffold_apply_verify_rollback_are_fixture_needed_for_later_workflow(self) -> None:
+    def test_unknown_plan_id_returns_gap_for_apply_verify_rollback(self) -> None:
         registry = self.registry()
-        plan = registry.plan("security_tfa_temp_user_lifecycle", {})
 
-        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
-        verified = registry.verify(plan["plan_id"])
-        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        applied = registry.apply("missing", "CONFIRM-admin-missing")
+        verified = registry.verify("missing")
+        rolled_back = registry.rollback("missing", "CONFIRM-admin-missing-rollback")
 
-        self.assertEqual(applied["status"], "fixture-needed")
-        self.assertEqual(verified["status"], "fixture-needed")
-        self.assertEqual(rolled_back["status"], "fixture-needed")
+        self.assertEqual(applied["status"], "gap")
+        self.assertEqual(verified["status"], "gap")
+        self.assertEqual(rolled_back["status"], "gap")
 
     def test_user_role_lifecycle_applies_verifies_and_rolls_back_without_password_leak(self) -> None:
         registry = self.registry()
@@ -323,6 +342,58 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
         self.assertNotIn("password", str(applied).lower())
         self.assertNotIn("password", str(verified).lower())
         self.assertNotIn("password", str(rolled_back).lower())
+
+    def test_tfa_temp_user_lifecycle_enables_disables_and_rolls_back_without_secret_leak(self) -> None:
+        registry = self.registry()
+        plan = registry.plan("security_tfa_temp_user_lifecycle", {"display_name_hint": "tfa"})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        verified = registry.verify(plan["plan_id"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["secret_len"], len(self.fake.tfa_secret))
+        self.assertEqual(applied["enable_results"], ["ETR_OK"])
+        self.assertEqual(applied["disable_results"], ["DTR_OK"])
+        self.assertEqual(applied["disable_attempts"], 1)
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(rolled_back["status"], "rolled-back")
+        self.assertEqual(self.fake.tfa_enabled, {})
+        self.assertEqual(self.fake.roles, {})
+        self.assertEqual(self.fake.users, {})
+        self.assertEqual(len(self.fake.tfa_disable_calls[0]["verification_code"]), 6)
+        combined = f"{applied} {verified} {rolled_back} {registry.audit_log()}"
+        self.assertNotIn(self.fake.tfa_secret, combined)
+        self.assertNotIn(self.fake.tfa_disable_calls[0]["verification_code"], combined)
+
+    def test_tfa_lifecycle_retries_adjacent_totp_windows_without_code_leak(self) -> None:
+        registry = self.registry()
+        self.fake.tfa_disable_results = ["DTR_INVALID_CODE", "DTR_INVALID_CODE", "DTR_OK"]
+        plan = registry.plan("security_tfa_temp_user_lifecycle", {})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["disable_results"], ["DTR_OK"])
+        self.assertEqual(applied["disable_attempts"], 3)
+        self.assertEqual(len(self.fake.tfa_disable_calls), 3)
+        emitted = f"{plan} {applied} {registry.audit_log()}"
+        for call in self.fake.tfa_disable_calls:
+            self.assertNotIn(call["verification_code"], emitted)
+
+    def test_tfa_rollback_removes_temp_user_role_after_disable_warning(self) -> None:
+        registry = self.registry()
+        self.fake.tfa_disable_results = ["DTR_INVALID_CODE", "DTR_INVALID_CODE", "DTR_INVALID_CODE"]
+        plan = registry.plan("security_tfa_temp_user_lifecycle", {})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "warn")
+        self.assertEqual(applied["disable_attempts"], 3)
+        self.assertEqual(rolled_back["status"], "rolled-back")
+        self.assertEqual(self.fake.roles, {})
+        self.assertEqual(self.fake.users, {})
 
     def test_audit_log_redacts_sensitive_values(self) -> None:
         registry = self.registry()
