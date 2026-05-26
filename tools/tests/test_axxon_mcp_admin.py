@@ -31,6 +31,128 @@ class FakeClient:
         self.config = config
 
 
+class FakeSecurityClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.calls: list[tuple[str, dict]] = []
+
+    def security_list_roles(self, *, page_size: int = 100, page_token: str = "") -> dict:
+        self.calls.append(("roles", {"page_size": page_size, "page_token": page_token}))
+        if not page_token:
+            return {
+                "body": {
+                    "roles": [
+                        {"index": "role-admin", "name": "admin", "comment": "Administrators"},
+                    ],
+                    "next_page_token": "roles-2",
+                }
+            }
+        return {"body": {"roles": [{"index": "role-operator", "name": "operator"}]}}
+
+    def security_list_users(
+        self,
+        *,
+        page_size: int = 100,
+        page_token: str = "",
+        role_ids: list[str] | None = None,
+    ) -> dict:
+        self.calls.append(
+            ("users", {"page_size": page_size, "page_token": page_token, "role_ids": list(role_ids or [])})
+        )
+        if not page_token:
+            return {
+                "body": {
+                    "users": [
+                        {
+                            "index": "user-root",
+                            "login": "root",
+                            "name": "Root",
+                            "email": "root@example.invalid",
+                            "password": marker("PASSWORD"),
+                            "enabled": True,
+                        },
+                    ],
+                    "user_assignments": [{"user_id": "user-root", "role_id": "role-admin"}],
+                    "next_page_token": "users-2",
+                }
+            }
+        return {
+            "body": {
+                "users": [{"index": "user-operator", "login": "operator", "enabled": False}],
+                "user_assignments": [{"user_id": "user-operator", "role_id": "role-operator"}],
+            }
+        }
+
+    def security_list_ldap_servers(self, *, page_size: int = 100, page_token: str = "") -> dict:
+        self.calls.append(("ldap", {"page_size": page_size, "page_token": page_token}))
+        return {"body": {"ldap_servers": []}}
+
+    def security_get_policies(self) -> dict:
+        self.calls.append(("policies", {}))
+        return {
+            "body": {
+                "pwd_policy": [{"min_length": 12, "password_sample": marker("PASSWORD")}],
+                "ip_filters": [{}, {}],
+                "trusted_ip_list": [{}],
+                "system_integrity_reaction_modes": ["notify"],
+                "cloud_public_key": marker("LICENSE"),
+            }
+        }
+
+    def security_list_global_permissions(self, role_ids: list[str]) -> dict:
+        self.calls.append(("global_permissions", {"role_ids": list(role_ids)}))
+        return {
+            "body": {
+                "permissions": {
+                    role_ids[0]: {
+                        "unrestricted_access": "UNRESTRICTED_ACCESS_NO",
+                        "license_key": marker("LICENSE"),
+                    }
+                }
+            }
+        }
+
+    def security_list_object_permissions_info(
+        self,
+        *,
+        role_id: str,
+        node_name: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict:
+        self.calls.append(
+            (
+                "object_permissions_info",
+                {"role_id": role_id, "node_name": node_name, "page_size": page_size, "page_token": page_token},
+            )
+        )
+        if not page_token:
+            return {"body": {"items": [{"id": "camera", "display_name": "Camera"}], "next_page_token": "objects-2"}}
+        return {"body": {"items": [{"id": "archive", "display_name": "Archive"}]}}
+
+    def security_get_restricted_config(self) -> dict:
+        self.calls.append(("restricted_config", {}))
+        return {
+            "body": {
+                "current_user": {
+                    "index": "user-root",
+                    "login": "root",
+                    "password": marker("PASSWORD"),
+                    "serialNumber": marker("SERIAL"),
+                },
+                "current_roles": [{"index": "role-admin", "name": "admin"}],
+                "all_roles": [{}, {}],
+                "all_users": [{}, {}, {}],
+                "pwd_policy": [{}],
+                "system_integrity_reaction_modes": ["notify"],
+            }
+        }
+
+    def node_name(self) -> str:
+        self.calls.append(("node_name", {}))
+        return "Server"
+
+
 class AxxonMcpAdminScaffoldTests(unittest.TestCase):
     def test_module_constants_name_phase_5f_a_tools(self) -> None:
         module = importlib.import_module("axxon_mcp_admin")
@@ -152,6 +274,109 @@ class AxxonMcpAdminScaffoldTests(unittest.TestCase):
         self.assertNotIn(marker("LICENSE"), redacted)
         self.assertNotIn(marker("SERIAL"), redacted)
         self.assertNotIn(marker("FINGERPRINT"), redacted)
+
+
+class AxxonMcpAdminSecurityReadTests(unittest.TestCase):
+    def test_security_inventory_paginates_and_summarizes_without_sensitive_payloads(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeSecurityClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.security_inventory(page_size=1)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["roles"]["count"], 2)
+        self.assertEqual(result["users"]["count"], 2)
+        self.assertEqual(result["users"]["enabled_count"], 1)
+        self.assertEqual(result["users"]["assignment_count"], 2)
+        self.assertEqual(result["ldap_servers"]["count"], 0)
+        self.assertEqual(result["roles"]["items"][0]["role_id"], "role-admin")
+        self.assertEqual(result["users"]["items"][0]["login"], "root")
+        self.assertIn(("roles", {"page_size": 1, "page_token": "roles-2"}), fake.calls)
+        self.assertIn(("users", {"page_size": 1, "page_token": "users-2", "role_ids": []}), fake.calls)
+        self.assertNotIn("root@example.invalid", str(result))
+        self.assertNotIn(marker("PASSWORD"), str(result))
+
+    def test_security_inventory_can_skip_sections(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeSecurityClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.security_inventory(include_users=False, include_ldap=False)
+
+        self.assertEqual(result["roles"]["count"], 2)
+        self.assertNotIn("users", result)
+        self.assertNotIn("ldap_servers", result)
+        self.assertFalse(any(call[0] == "users" for call in fake.calls))
+        self.assertFalse(any(call[0] == "ldap" for call in fake.calls))
+
+    def test_security_policy_summary_counts_sections_and_warns_without_ldap_fixture(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeSecurityClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.security_policy_summary()
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["password_policy_count"], 1)
+        self.assertEqual(result["ip_filter_count"], 2)
+        self.assertEqual(result["trusted_ip_count"], 1)
+        self.assertEqual(result["ldap"]["status"], "fixture-needed")
+        self.assertEqual(result["ldap"]["servers_count"], 0)
+        self.assertNotIn(marker("PASSWORD"), str(result))
+        self.assertNotIn(marker("LICENSE"), str(result))
+
+    def test_role_permissions_summarizes_global_and_object_permission_pages(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeSecurityClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.role_permissions("role-admin", page_size=1)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["role_id"], "role-admin")
+        self.assertEqual(result["global"]["roles_count"], 1)
+        self.assertEqual(result["objects"]["count"], 2)
+        self.assertEqual(result["objects"]["items"][0]["id"], "camera")
+        self.assertIn(
+            (
+                "object_permissions_info",
+                {"role_id": "role-admin", "node_name": "Server", "page_size": 1, "page_token": "objects-2"},
+            ),
+            fake.calls,
+        )
+        self.assertNotIn(marker("LICENSE"), str(result))
+
+    def test_current_user_security_summarizes_restricted_config(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeSecurityClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.current_user_security()
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["current_user"]["user_id"], "user-root")
+        self.assertEqual(result["current_user"]["login"], "root")
+        self.assertEqual(result["current_roles"]["count"], 1)
+        self.assertEqual(result["all_roles_count"], 2)
+        self.assertEqual(result["all_users_count"], 3)
+        self.assertNotIn(marker("PASSWORD"), str(result))
+        self.assertNotIn(marker("SERIAL"), str(result))
 
 
 if __name__ == "__main__":
