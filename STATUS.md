@@ -101,7 +101,7 @@ These are the rules every phase enforces — they are not optional:
 
 These were learned during 5A and 5C and apply to every future phase:
 
-- The gRPC client expects the stand root CA, not the `Tickets/ngp.ca` Sale CA. Keep the concrete CA path in local environment only and redact it from evidence.
+- The gRPC client expects the stand root CA, not the Sale CA file. Keep the concrete CA path in local environment only and redact it from evidence.
 - `BatchGetActiveAlerts` returns paginated `event_stream_items[]` where the first page can report `unreachable_nodes: ["hosts/Server"]` even though subsequent pages have data. The 5C `list_active_alerts` only surfaces `unreachable_nodes` when **every** page agrees.
 - New bearer token TTL on the stand is 5 minutes (`AuthenticationService.RenewSession2`).
 - `CompleteAlertReview` requires a non-empty `bookmark.message` because the stand's `LogicService.GetConfig` reports `required_comment: {confirmed_alarm: true, suspicious_situation: true, false_alarm: true}`.

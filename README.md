@@ -6,7 +6,7 @@ coverage matrix for Axxon One VMS.
 ## Status
 
 - **384 / 384** unit tests passing in the Phase 5E worktree.
-- **37** PDF gap-coverage matrix rows. 31 verified, 6 fixture-blocked
+- **37** PDF gap-coverage matrix rows. 30 verified, 1 partial, 6 fixture-blocked
   (hardware / process gates on the demo stand, documented under
   `docs/api-audit/`).
 - **31** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls

@@ -49,7 +49,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | Axxon One product docs | https://docs.axxonsoft.com/confluence/spaces/ONE2025/pages/314535799/Documentation | Public product documentation — used for capability mapping, not embedded in repo. |
 | Integration APIs 3.0 PDF | `docs/integration-apis-3.0/` (local; gitignored) | AxxonSoft-copyrighted. Excluded from the public repo. Drives `api_methods.json` / `http_endpoints.json`. |
 | gRPC proto files | `docs/grpc-proto-files/` (local; gitignored) | AxxonSoft-copyrighted. Source for the 361-method catalog. |
-| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 37 rows, 31 verified, 6 fixture-blocked. |
+| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 37 rows, 30 verified, 1 partial, 6 fixture-blocked. |
 | Structured MCP corpus | `docs/api-audit/mcp-corpus/` | 7 JSON files (api_methods, http_endpoints, task_recipes, fixtures, safety_policies, known_behaviors, README). |
 
 ### 2.2 Demo / testing stand
@@ -77,8 +77,8 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 2 — Read-only live | Shipped, 15 tools | `axxon_mcp_live.py` |
 | Phase 3 — Controlled operator (plan/apply/verify/rollback) | Shipped, 11 workflows (7 ephemeral, 4 persistent) | `axxon_mcp_operator.py` |
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
-| Verified API methods | 145 / 361 (124 tested-pass + 21 safe-record) | `mcp-corpus/api_methods.json` |
-| PDF coverage matrix | 31 / 37 verified, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
+| Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
+| PDF coverage matrix | 30 / 37 verified, 1 partial, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
 | Unit tests | 384 / 384 passing in the Phase 5E worktree | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
@@ -126,7 +126,7 @@ These are existing project rules. The roadmap honors them in every phase.
 2. **Plan → apply → verify → rollback** for every mutation. No tool ever mutates state without a returned plan ID and a confirmation token.
 3. **Bounded streams.** Every subscription / media / export tool enforces byte caps, time caps, and frame caps.
 4. **Secrets in memory only.** Credentials come from environment variables. Generated code reads credentials from env, never from arguments. Static verifier already rejects embedded secrets.
-5. **Sanitized evidence.** Host IPs, TLS CNs, and `hosts/Server/...` UIDs are scrubbed before evidence is committed. The private demo stand is sanitized to `<demo-host>` in any published report.
+5. **Sanitized evidence.** Concrete host IPs, users, CA paths, passwords, tokens, and TLS CNs are scrubbed before evidence is committed. Intrinsic `hosts/Server/...` UIDs may remain unless they identify sensitive customer data; the private demo stand is sanitized to `<demo-host>` in any published report.
 6. **No copyrighted source in this repo.** `docs/integration-apis-3.0/` and `docs/grpc-proto-files/` stay gitignored. Only audit tooling and evidence authored in this project are public.
 7. **Reuse `AxxonApiClient`.** Direct gRPC with TLS override, HTTP `/grpc`, legacy HTTP, and `/v1` endpoints all share the same client.
 8. **No defensive programming unless justified.** Errors surface for debuggability; we add try/except only where a user-facing safety guarantee depends on it (rollback, byte cap, redaction).
@@ -369,7 +369,7 @@ These items are not phases on their own — they are extended in every phase.
 | Unit tests | New tests under `tools/tests/` for every tool's argument validation, cap enforcement, and redaction. |
 | Smokes | New `axxon_*_smoke.py` script per phase, runnable against the demo stand. |
 | Docs corpus | `api_methods.json` `live_status` field flips from `pending` → `tested-pass` (or `tested-warn-fixture-needed`) as evidence lands. |
-| Sanitization | Every committed artifact scrubs host IP, TLS CN, `hosts/Server/...` UIDs. |
+| Sanitization | Every committed artifact scrubs concrete host IPs, users, CA paths, passwords, tokens, and TLS CNs; intrinsic `hosts/Server/...` UIDs may remain unless they identify sensitive customer data. |
 
 ---
 
@@ -420,7 +420,7 @@ Open questions to confirm with the user before Phase 5A spec:
 The full-coverage MCP is "done" when:
 
 1. `api_methods.json` shows ≤ 20 `pending` methods (the remainder are documented fixture-blocked, not unknown).
-2. PDF coverage matrix shows 33 / 33 verified or fixture-documented.
+2. PDF coverage matrix has no `not-verified` rows; any `partial` or `fixture-needed` rows are backed by explicit fixture debt and next steps.
 3. Every desktop-client capability category in section 2.4 has a corresponding MCP tool (or a documented fixture-gated stub).
 4. The authoring kit ships at least one runnable reference plugin per supported language, all green against `<demo-host>`.
 5. The NL translator passes its 10-reference-intent suite.
