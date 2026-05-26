@@ -1,0 +1,313 @@
+{
+  "started_at": "2026-05-26T19:22:04.034662+00:00",
+  "finished_at": "2026-05-26T19:22:24.837642+00:00",
+  "target": {
+    "host": "<demo-host>",
+    "grpc_target": "<demo-host>:20109",
+    "http_url": "http://<demo-host>",
+    "username": "<demo-user>",
+    "password": "<redacted>",
+    "tls_cn": "<demo-tls-cn>",
+    "ca": "<redacted-ca>"
+  },
+  "modes": {
+    "mutation_approval_env": "AXXON_ADMIN_MUTATION_APPROVE",
+    "mutation_approval_enabled": true
+  },
+  "workflow_catalog": {
+    "status": "ok",
+    "approval_env": "AXXON_ADMIN_MUTATION_APPROVE",
+    "enabled": true,
+    "workflows": [
+      {
+        "name": "<demo-user>",
+        "risk": "security-mutation",
+        "summary": "Add, edit, verify, and remove a temporary loopback LDAP server record."
+      },
+      {
+        "name": "<demo-user>",
+        "risk": "security-mutation",
+        "summary": "Replay current policy/IP-filter/trusted-IP config as a no-op write."
+      },
+      {
+        "name": "<demo-user>",
+        "risk": "security-mutation",
+        "summary": "Apply restrictive permissions to a temporary codex role and rollback."
+      },
+      {
+        "name": "<demo-user>",
+        "risk": "security-mutation",
+        "summary": "Enable and disable TFA on a temporary codex user with rollback."
+      },
+      {
+        "name": "<demo-user>",
+        "risk": "security-mutation",
+        "summary": "Create, verify, and rollback a temporary codex user/role assignment."
+      }
+    ]
+  },
+  "summary": {
+    "PASS": 5,
+    "WARN": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "security_user_role_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 5072,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "admin-security_user_role_lifecycle-36b0a7a3-fc69-45c2-a931-31c8d0a97596",
+          "workflow": "security_user_role_lifecycle",
+          "risk": "security-mutation",
+          "summary": "Create, verify, and rollback a temporary codex user/role assignment.",
+          "params": {
+            "display_name_hint": "smoke"
+          },
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": true,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "role_id": "<demo-role>",
+            "user_id": "<demo-user>",
+            "role_name": "codex-role-smoke-0bdd6e98d2a8",
+            "login": "<demo-user>"
+          }
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "admin-security_user_role_lifecycle-36b0a7a3-fc69-45c2-a931-31c8d0a97596",
+          "workflow": "security_user_role_lifecycle",
+          "role_id": "<demo-role>",
+          "user_id": "<demo-user>",
+          "role_name": "codex-role-smoke-0bdd6e98d2a8",
+          "login": "<demo-user>",
+          "response_keys": []
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "admin-security_user_role_lifecycle-36b0a7a3-fc69-45c2-a931-31c8d0a97596",
+          "workflow": "security_user_role_lifecycle",
+          "role_present": true,
+          "user_present": true,
+          "assigned_user_count": 1
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "admin-security_user_role_lifecycle-36b0a7a3-fc69-45c2-a931-31c8d0a97596",
+          "workflow": "security_user_role_lifecycle",
+          "role_removed": true,
+          "user_removed": true,
+          "response_keys": []
+        }
+      }
+    },
+    {
+      "group": "security_role_permissions_update",
+      "status": "PASS",
+      "elapsed_ms": 4008,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "admin-security_role_permissions_update-bc5b7243-a879-4114-a297-dafb783869b0",
+          "workflow": "security_role_permissions_update",
+          "risk": "security-mutation",
+          "summary": "Apply restrictive permissions to a temporary codex role and rollback.",
+          "params": {
+            "display_name_hint": "smoke"
+          },
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": true,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "role_id": "<demo-role>",
+            "role_name": "codex-role-smoke-bddcc2b55c0b",
+            "created_role": true
+          }
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "admin-security_role_permissions_update-bc5b7243-a879-4114-a297-dafb783869b0",
+          "workflow": "security_role_permissions_update",
+          "role_id": "<demo-role>",
+          "role_name": "codex-role-smoke-bddcc2b55c0b",
+          "global_role_present": false,
+          "object_failed_count": 0,
+          "group_permission_count": 0,
+          "macro_permission_count": 0
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "admin-security_role_permissions_update-bc5b7243-a879-4114-a297-dafb783869b0",
+          "workflow": "security_role_permissions_update",
+          "role_present": true,
+          "global_role_present": true,
+          "permission_key_count": 16
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "admin-security_role_permissions_update-bc5b7243-a879-4114-a297-dafb783869b0",
+          "workflow": "security_role_permissions_update",
+          "role_removed": true,
+          "response_keys": []
+        }
+      }
+    },
+    {
+      "group": "security_policy_noop_probe",
+      "status": "PASS",
+      "elapsed_ms": 2094,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "admin-security_policy_noop_probe-afa6db37-d182-418a-a3fa-38cf4cde482f",
+          "workflow": "security_policy_noop_probe",
+          "risk": "security-mutation",
+          "summary": "Replay current policy/IP-filter/trusted-IP config as a no-op write.",
+          "params": {},
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": true,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "policy_payload": "current-snapshot-only"
+          }
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "admin-security_policy_noop_probe-afa6db37-d182-418a-a3fa-38cf4cde482f",
+          "workflow": "security_policy_noop_probe",
+          "pwd_policy_count": "<redacted>",
+          "ip_filter_count": 0,
+          "trusted_ip_count": 0
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "admin-security_policy_noop_probe-afa6db37-d182-418a-a3fa-38cf4cde482f",
+          "workflow": "security_policy_noop_probe",
+          "policy_counts_restored": true,
+          "pwd_policy_count": "<redacted>",
+          "ip_filter_count": 0,
+          "trusted_ip_count": 0
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "admin-security_policy_noop_probe-afa6db37-d182-418a-a3fa-38cf4cde482f",
+          "workflow": "security_policy_noop_probe",
+          "message": "Policy no-op probe already restored the current snapshot."
+        }
+      }
+    },
+    {
+      "group": "security_ldap_temp_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 4196,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "admin-security_ldap_temp_lifecycle-1e01b926-b265-414f-a3a9-13fecf30be03",
+          "workflow": "security_ldap_temp_lifecycle",
+          "risk": "security-mutation",
+          "summary": "Add, edit, verify, and remove a temporary loopback LDAP server record.",
+          "params": {
+            "display_name_hint": "smoke"
+          },
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": true,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "ldap_server_id": "27db91f1-9085-422e-820e-4f21ff1163ff",
+            "friendly_name_change": "codex-temp-ldap-smoke-27db91f19085-changed"
+          }
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "admin-security_ldap_temp_lifecycle-1e01b926-b265-414f-a3a9-13fecf30be03",
+          "workflow": "security_ldap_temp_lifecycle",
+          "ldap_server_id_len": 36,
+          "present_after_add": true,
+          "present_after_change": true
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "admin-security_ldap_temp_lifecycle-1e01b926-b265-414f-a3a9-13fecf30be03",
+          "workflow": "security_ldap_temp_lifecycle",
+          "present_after_change": true
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "admin-security_ldap_temp_lifecycle-1e01b926-b265-414f-a3a9-13fecf30be03",
+          "workflow": "security_ldap_temp_lifecycle",
+          "ldap_removed": true
+        }
+      }
+    },
+    {
+      "group": "security_tfa_temp_user_lifecycle",
+      "status": "PASS",
+      "elapsed_ms": 5420,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "admin-security_tfa_temp_user_lifecycle-c05a4610-02c7-4b48-8ca5-e681698479b8",
+          "workflow": "security_tfa_temp_user_lifecycle",
+          "risk": "security-mutation",
+          "summary": "Enable and disable TFA on a temporary codex user with rollback.",
+          "params": {
+            "display_name_hint": "smoke"
+          },
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": true,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "role_id": "<demo-role>",
+            "user_id": "<demo-user>",
+            "role_name": "codex-role-smoke-577b8b4fc2ee",
+            "login": "<demo-user>"
+          }
+        },
+        "apply": {
+          "status": "applied",
+          "plan_id": "admin-security_tfa_temp_user_lifecycle-c05a4610-02c7-4b48-8ca5-e681698479b8",
+          "workflow": "security_tfa_temp_user_lifecycle",
+          "user_id": "<demo-user>",
+          "role_id": "<demo-role>",
+          "secret_len": "<redacted>",
+          "enable_results": [
+            "ETR_OK"
+          ],
+          "disable_results": [
+            "DTR_OK"
+          ],
+          "disable_attempts": 1
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "admin-security_tfa_temp_user_lifecycle-c05a4610-02c7-4b48-8ca5-e681698479b8",
+          "workflow": "security_tfa_temp_user_lifecycle",
+          "user_present": true,
+          "tfa_disabled": true
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "admin-security_tfa_temp_user_lifecycle-c05a4610-02c7-4b48-8ca5-e681698479b8",
+          "workflow": "security_tfa_temp_user_lifecycle",
+          "role_removed": true,
+          "user_removed": true,
+          "response_keys": []
+        }
+      }
+    }
+  ]
+}
