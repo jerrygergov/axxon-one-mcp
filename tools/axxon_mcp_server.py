@@ -43,6 +43,7 @@ def create_server(
     view_objects: Any | None = None,
     detector_archive: Any | None = None,
     admin: Any | None = None,
+    admin_mutator: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -121,7 +122,42 @@ def create_server(
     if admin is not None:
         register_admin_tools(server, admin)
 
+    if admin_mutator is not None:
+        register_admin_mutation_tools(server, admin_mutator)
+
     return server
+
+
+def register_admin_mutation_tools(server: Any, admin_mutator: Any) -> None:
+    @server.tool(name="list_admin_mutation_workflows")
+    def list_admin_mutation_workflows() -> dict[str, Any]:
+        """List approval-gated admin mutation workflows supported by this MCP server."""
+        return admin_mutator.list_workflows()
+
+    @server.tool(name="plan_admin_mutation_workflow")
+    def plan_admin_mutation_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Build an admin mutation plan without applying changes."""
+        return admin_mutator.plan(workflow, params or {})
+
+    @server.tool(name="apply_admin_mutation_plan")
+    def apply_admin_mutation_plan(plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Apply a planned admin mutation when confirmation matches and approval is enabled."""
+        return admin_mutator.apply(plan_id, confirmation)
+
+    @server.tool(name="verify_admin_mutation_plan")
+    def verify_admin_mutation_plan(plan_id: str) -> dict[str, Any]:
+        """Verify the current state for a planned admin mutation."""
+        return admin_mutator.verify(plan_id)
+
+    @server.tool(name="rollback_admin_mutation_plan")
+    def rollback_admin_mutation_plan(plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Rollback objects or settings changed by a planned admin mutation."""
+        return admin_mutator.rollback(plan_id, confirmation)
+
+    @server.resource("axxon://admin-mutations/audit-log")
+    def read_admin_mutation_audit_log() -> dict[str, Any]:
+        """Read the in-memory audit log for this admin-mutator session."""
+        return {"entries": admin_mutator.audit_log()}
 
 
 def register_admin_tools(server: Any, admin: Any) -> None:
@@ -768,6 +804,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5F-A read-only admin tools for security, health, notifiers, and schedule descriptors.",
     )
+    parser.add_argument(
+        "--enable-admin-mutations",
+        action="store_true",
+        help="Enable Phase 5F-B approval-gated admin mutation tools. Requires AXXON_ADMIN_MUTATION_APPROVE=1.",
+    )
     return parser
 
 
@@ -828,6 +869,13 @@ def main() -> int:
         from axxon_mcp_admin import AxxonMcpAdmin
 
         admin = AxxonMcpAdmin()
+    admin_mutator = None
+    if args.enable_admin_mutations:
+        from axxon_mcp_admin_mutations import AxxonAdminMutationRegistry
+
+        admin_mutator = AxxonAdminMutationRegistry(
+            enabled=os.environ.get("AXXON_ADMIN_MUTATION_APPROVE") == "1",
+        )
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -839,6 +887,7 @@ def main() -> int:
         view_objects=view_objects,
         detector_archive=detector_archive,
         admin=admin,
+        admin_mutator=admin_mutator,
     )
     server.run(transport=args.transport)
     return 0

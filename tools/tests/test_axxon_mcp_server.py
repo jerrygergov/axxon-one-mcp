@@ -217,6 +217,34 @@ class StubAdmin:
         return {"uid": uid, "tool": "schedule_descriptor_get"}
 
 
+class StubAdminMutator:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple[object, ...]]] = []
+
+    def list_workflows(self):
+        self.calls.append(("list_workflows", ()))
+        return {"status": "ok", "workflows": [{"name": "security_user_role_lifecycle"}]}
+
+    def plan(self, workflow: str, params: dict | None = None):
+        self.calls.append(("plan", (workflow, dict(params or {}))))
+        return {"status": "planned", "workflow": workflow, "params": dict(params or {})}
+
+    def apply(self, plan_id: str, confirmation: str):
+        self.calls.append(("apply", (plan_id, confirmation)))
+        return {"status": "applied", "plan_id": plan_id, "confirmation": confirmation}
+
+    def verify(self, plan_id: str):
+        self.calls.append(("verify", (plan_id,)))
+        return {"status": "verified", "plan_id": plan_id}
+
+    def rollback(self, plan_id: str, confirmation: str):
+        self.calls.append(("rollback", (plan_id, confirmation)))
+        return {"status": "rolled-back", "plan_id": plan_id, "confirmation": confirmation}
+
+    def audit_log(self):
+        return [{"action": name, "args": args} for name, args in self.calls]
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_phase_one_tools_and_resources(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -388,6 +416,54 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(domain["limit"], 7)
         self.assertEqual(server.tools["node_event_subscribe"]([], [], 1.0, 1, False)["notifier"], "node")
         self.assertEqual(server.tools["schedule_descriptor_get"]("hosts/Server/DeviceIpint.1")["uid"], "hosts/Server/DeviceIpint.1")
+
+    def test_create_server_registers_admin_mutation_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        admin_mutation_tools = {
+            "list_admin_mutation_workflows",
+            "plan_admin_mutation_workflow",
+            "apply_admin_mutation_plan",
+            "verify_admin_mutation_plan",
+            "rollback_admin_mutation_plan",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in admin_mutation_tools:
+            self.assertNotIn(name, docs_only.tools)
+        self.assertNotIn("axxon://admin-mutations/audit-log", docs_only.resources)
+
+        self.assertIn("admin_mutator", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-admin-mutations"])
+        self.assertTrue(args.enable_admin_mutations)
+
+        mutator = StubAdminMutator()
+        server = module.create_server(docs=StubDocs(), admin_mutator=mutator, fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(admin_mutation_tools, set(server.tools))
+        self.assertIn("axxon://admin-mutations/audit-log", server.resources)
+
+        workflows = server.tools["list_admin_mutation_workflows"]()
+        self.assertEqual(workflows["status"], "ok")
+        plan = server.tools["plan_admin_mutation_workflow"]("security_user_role_lifecycle", {"display_name_hint": "srv"})
+        self.assertEqual(plan["workflow"], "security_user_role_lifecycle")
+        self.assertEqual(plan["params"], {"display_name_hint": "srv"})
+        applied = server.tools["apply_admin_mutation_plan"]("admin-1", "CONFIRM-admin")
+        self.assertEqual(applied["confirmation"], "CONFIRM-admin")
+        verified = server.tools["verify_admin_mutation_plan"]("admin-1")
+        self.assertEqual(verified["status"], "verified")
+        rolled = server.tools["rollback_admin_mutation_plan"]("admin-1", "CONFIRM-admin-rollback")
+        self.assertEqual(rolled["status"], "rolled-back")
+        self.assertEqual(
+            mutator.calls,
+            [
+                ("list_workflows", ()),
+                ("plan", ("security_user_role_lifecycle", {"display_name_hint": "srv"})),
+                ("apply", ("admin-1", "CONFIRM-admin")),
+                ("verify", ("admin-1",)),
+                ("rollback", ("admin-1", "CONFIRM-admin-rollback")),
+            ],
+        )
+        audit = server.resources["axxon://admin-mutations/audit-log"]()
+        self.assertEqual(audit["entries"][-1]["action"], "rollback")
 
     def test_create_server_registers_view_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
