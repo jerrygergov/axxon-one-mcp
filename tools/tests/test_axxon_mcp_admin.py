@@ -64,15 +64,15 @@ class FakeSecurityClient(FakeClient):
                 "body": {
                     "users": [
                         {
-                            "index": "user-root",
-                            "login": "root",
-                            "name": "Root",
-                            "email": "root@example.invalid",
+                            "index": "fixture-user-admin",
+                            "login": "fixture-admin",
+                            "name": "Fixture Admin",
+                            "email": "fixture-admin@example.invalid",
                             "password": marker("PASSWORD"),
                             "enabled": True,
                         },
                     ],
-                    "user_assignments": [{"user_id": "user-root", "role_id": "role-admin"}],
+                    "user_assignments": [{"user_id": "fixture-user-admin", "role_id": "role-admin"}],
                     "next_page_token": "users-2",
                 }
             }
@@ -135,8 +135,8 @@ class FakeSecurityClient(FakeClient):
         return {
             "body": {
                 "current_user": {
-                    "index": "user-root",
-                    "login": "root",
+                    "index": "fixture-user-admin",
+                    "login": "fixture-admin",
                     "password": marker("PASSWORD"),
                     "serialNumber": marker("SERIAL"),
                 },
@@ -446,10 +446,10 @@ class AxxonMcpAdminSecurityReadTests(unittest.TestCase):
         self.assertEqual(result["users"]["assignment_count"], 2)
         self.assertEqual(result["ldap_servers"]["count"], 0)
         self.assertEqual(result["roles"]["items"][0]["role_id"], "role-admin")
-        self.assertEqual(result["users"]["items"][0]["login"], "root")
+        self.assertEqual(result["users"]["items"][0]["login"], "fixture-admin")
         self.assertIn(("roles", {"page_size": 1, "page_token": "roles-2"}), fake.calls)
         self.assertIn(("users", {"page_size": 1, "page_token": "users-2", "role_ids": []}), fake.calls)
-        self.assertNotIn("root@example.invalid", str(result))
+        self.assertNotIn("fixture-admin@example.invalid", str(result))
         self.assertNotIn(marker("PASSWORD"), str(result))
 
     def test_security_inventory_can_skip_sections(self) -> None:
@@ -522,8 +522,8 @@ class AxxonMcpAdminSecurityReadTests(unittest.TestCase):
         result = admin.current_user_security()
 
         self.assertEqual(result["status"], "ok")
-        self.assertEqual(result["current_user"]["user_id"], "user-root")
-        self.assertEqual(result["current_user"]["login"], "root")
+        self.assertEqual(result["current_user"]["user_id"], "fixture-user-admin")
+        self.assertEqual(result["current_user"]["login"], "fixture-admin")
         self.assertEqual(result["current_roles"]["count"], 1)
         self.assertEqual(result["all_roles_count"], 2)
         self.assertEqual(result["all_users_count"], 3)

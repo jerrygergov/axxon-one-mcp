@@ -197,10 +197,10 @@ class AxxonAdminSmokeTests(unittest.TestCase):
                     "elapsed_ms": 1,
                     "evidence": {
                         "url": "http://demo.internal/api",
-                        "username": "root",
-                        "user_id": "user-123",
-                        "role_id": "role-123",
-                        "role_ids": ["role-456"],
+                        "username": "fixture-admin",
+                        "user_id": "fixture-user-123",
+                        "role_id": "fixture-role-123",
+                        "role_ids": ["fixture-role-456"],
                         "name": "Alice Example",
                         "email": "alice@example.invalid",
                         "password": "secret",
@@ -221,9 +221,9 @@ class AxxonAdminSmokeTests(unittest.TestCase):
 
         self.assertNotIn("demo.internal", json_text)
         self.assertNotIn("root", json_text)
-        self.assertNotIn("user-123", json_text)
-        self.assertNotIn("role-123", json_text)
-        self.assertNotIn("role-456", json_text)
+        self.assertNotIn("fixture-user-123", json_text)
+        self.assertNotIn("fixture-role-123", json_text)
+        self.assertNotIn("fixture-role-456", json_text)
         self.assertNotIn("Alice Example", json_text)
         self.assertNotIn("alice@example.invalid", json_text)
         self.assertNotIn("bob@example.invalid", json_text)
