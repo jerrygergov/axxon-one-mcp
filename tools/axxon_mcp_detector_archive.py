@@ -1600,7 +1600,7 @@ class AxxonMcpDetectorArchive:
                 "access_point": access_point,
                 "requested": requested,
                 "applied": applied,
-                "message": str(exc)[:240],
+                "message": _redact_sensitive_text(exc),
                 "count": len(frames),
                 "frames": frames[:frame_limit],
             }

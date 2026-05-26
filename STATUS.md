@@ -16,7 +16,7 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. Latest combined live evidence: PASS=12, WARN=3, FAIL=0 across read-only, mutation, and archive-maintenance-no-op modes.
 - Phases 5F, 6A, 6B, 7 are not yet started.
 
-Test suite baseline in this worktree: 384 / 384 passing.
+Test suite baseline in this worktree: 386 / 386 passing.
 
 ---
 
@@ -31,7 +31,7 @@ Test suite baseline in this worktree: 384 / 384 passing.
    ```bash
    cd /Users/jerrygergov/Documents/GitHub/axxon-one-mcp/.claude/worktrees/phase-5e-detectors-archive
    python3.12 -m unittest discover -s tools/tests 2>&1 | tail -3
-   # current Phase 5E worktree: Ran 384 tests OK
+   # current Phase 5E worktree: Ran 386 tests OK
    ```
 3. **Set demo-stand env for any live verification:**
    ```bash

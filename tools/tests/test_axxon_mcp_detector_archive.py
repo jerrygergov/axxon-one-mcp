@@ -1844,6 +1844,31 @@ class AxxonMcpDetectorArchiveTests(unittest.TestCase):
         self.assertIn("password is required", result["message"])
         self.assertLessEqual(len(result["message"]), 240)
 
+    def test_metadata_sample_bounded_redacts_sensitive_setup_errors(self) -> None:
+        module = importlib.import_module("axxon_mcp_detector_archive")
+        bearer_prefix = "Bearer "
+        bearer_secret = "TOKEN_VALUE_SHOULD_NOT_LEAK"
+
+        def secret_bearing_config_factory() -> FakeConfig:
+            raise ValueError(f"password=REDACT_ME Authorization: {bearer_prefix}{bearer_secret}")
+
+        archive = module.AxxonMcpDetectorArchive(
+            client_factory=lambda config: FakeMetadataClient(config),
+            config_factory=secret_bearing_config_factory,
+        )
+
+        result = archive.metadata_sample_bounded(
+            "hosts/Server/AVDetector.1/SourceEndpoint.vmda",
+            timeout_s=1.0,
+            limit=1,
+        )
+
+        self.assertEqual(result["status"], "error")
+        self.assertIn("password=<redacted>", result["message"])
+        self.assertIn("Bearer <redacted>", result["message"])
+        self.assertNotIn("REDACT_ME", result["message"])
+        self.assertNotIn(bearer_secret, result["message"])
+
     def test_metadata_sample_bounded_reports_transport_errors_with_partial_frames(self) -> None:
         module = importlib.import_module("axxon_mcp_detector_archive")
         fake = FakeMetadataClient(

@@ -926,6 +926,28 @@ class OperatorPlanTests(unittest.TestCase):
         self.assertEqual(client.calls[-1], {"changed": [{"uid": target_uid, "properties": [{"id": "threshold", "value_int32": 5}]}]})
         self.assertEqual(client.units[target_uid]["properties"], original_properties)
 
+    def test_update_detector_parameters_rejects_new_property_without_rollback_snapshot(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        target_uid = "hosts/Server/AVDetector.42"
+        original_properties = [{"id": "display_name", "value_string": "motion"}]
+        requested_properties = [{"id": "new_threshold", "value_int32": 8}]
+        client.units[target_uid] = {"type": "AVDetector", "properties": list(original_properties), "units": []}
+        client.parents[target_uid] = "hosts/Server"
+        reg = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        plan = reg.plan(
+            "update_detector_parameters",
+            {"uid": target_uid, "properties": requested_properties},
+        )
+        applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
+
+        self.assertEqual(applied["status"], "error")
+        self.assertIn("cannot be safely rolled back", applied["message"])
+        self.assertEqual(applied["missing_properties"], ["new_threshold"])
+        self.assertEqual(client.calls, [])
+        self.assertEqual(client.units[target_uid]["properties"], original_properties)
+
     def test_update_detector_parameters_rollback_restore_failure_is_error(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
         client = FailDetectorSnapshotRestoreClient()

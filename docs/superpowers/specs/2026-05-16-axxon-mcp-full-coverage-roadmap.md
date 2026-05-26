@@ -79,7 +79,7 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
 | PDF coverage matrix | 30 / 37 verified, 1 partial, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 384 / 384 passing in the Phase 5E worktree | `tools/tests/` |
+| Unit tests | 386 / 386 passing in the Phase 5E worktree | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 

@@ -372,6 +372,16 @@ def _snapshot_restore_properties(snapshot: dict[str, Any], requested_properties:
     return restore_properties
 
 
+def _missing_restore_property_ids(requested_properties: list[dict[str, Any]], restore_properties: list[dict[str, Any]]) -> list[str]:
+    restore_ids = {_property_node_id(prop) for prop in restore_properties}
+    missing: list[str] = []
+    for requested in requested_properties:
+        prop_id = _property_node_id(requested)
+        if prop_id and prop_id not in restore_ids:
+            missing.append(prop_id)
+    return missing
+
+
 def _property_child_nodes(prop: dict[str, Any]) -> list[dict[str, Any]]:
     raw = prop.get("properties")
     if raw is None:
@@ -1965,7 +1975,23 @@ class OperatorRegistry:
                     return {"status": "error", "message": "target unit snapshot was not found", "plan_id": plan_id}
                 changed = (step.get("payload") or {}).get("changed") or []
                 requested_properties = list((changed[0] if changed else {}).get("properties") or [])
-                snapshot["restore_properties"] = _snapshot_restore_properties(snapshot, requested_properties)
+                restore_properties = _snapshot_restore_properties(snapshot, requested_properties)
+                missing_properties = _missing_restore_property_ids(requested_properties, restore_properties)
+                if missing_properties:
+                    store_apply_state("error")
+                    self._record(
+                        "apply",
+                        plan_id=plan_id,
+                        status="error",
+                        reason="snapshot_restore_missing_properties",
+                    )
+                    return {
+                        "status": "error",
+                        "message": "snapshot update would add properties that cannot be safely rolled back",
+                        "plan_id": plan_id,
+                        "missing_properties": missing_properties,
+                    }
+                snapshot["restore_properties"] = restore_properties
                 response = client.change_config(step["payload"])
                 if response.get("failed"):
                     store_apply_state("error")
