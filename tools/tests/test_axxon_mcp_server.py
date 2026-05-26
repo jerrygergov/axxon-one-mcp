@@ -143,6 +143,80 @@ class StubDetectorArchive:
         return {"fixtures": []}
 
 
+class StubAdmin:
+    def admin_connect_axxon_profile(self, profile: str = "env"):
+        return {"profile": profile, "mode": "read-only"}
+
+    def security_inventory(self, include_users: bool = True, include_roles: bool = True, include_ldap: bool = True):
+        return {"include_users": include_users, "include_roles": include_roles, "include_ldap": include_ldap}
+
+    def security_policy_summary(self):
+        return {"status": "ok", "tool": "security_policy_summary"}
+
+    def role_permissions(self, role_id: str, page_size: int = 50):
+        return {"role_id": role_id, "page_size": page_size}
+
+    def current_user_security(self):
+        return {"status": "ok", "tool": "current_user_security"}
+
+    def license_status(
+        self,
+        include_host_info: bool = True,
+        include_node_restrictions: bool = True,
+        node_names: list[str] | None = None,
+        limit: int = 32,
+    ):
+        return {
+            "include_host_info": include_host_info,
+            "include_node_restrictions": include_node_restrictions,
+            "node_names": list(node_names or []),
+            "limit": limit,
+        }
+
+    def time_status(self, include_available: bool = True):
+        return {"include_available": include_available}
+
+    def system_health(self):
+        return {"status": "ok", "tool": "system_health"}
+
+    def domain_event_subscribe(
+        self,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ):
+        return {
+            "notifier": "domain",
+            "subjects": list(subjects or []),
+            "event_types": list(event_types or []),
+            "timeout_s": timeout_s,
+            "limit": limit,
+            "detailed": detailed,
+        }
+
+    def node_event_subscribe(
+        self,
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ):
+        return {
+            "notifier": "node",
+            "subjects": list(subjects or []),
+            "event_types": list(event_types or []),
+            "timeout_s": timeout_s,
+            "limit": limit,
+            "detailed": detailed,
+        }
+
+    def schedule_descriptor_get(self, uid: str):
+        return {"uid": uid, "tool": "schedule_descriptor_get"}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_phase_one_tools_and_resources(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -273,6 +347,47 @@ class AxxonMcpServerTests(unittest.TestCase):
         )
         self.assertEqual(server.tools["metadata_sample_bounded"]("vmda", 2.5, 10)["limit"], 10)
         self.assertEqual(server.tools["archive_volume_probe"]("/archive")["path_or_volume_hint"], "/archive")
+
+    def test_create_server_registers_admin_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        admin_tools = {
+            "admin_connect_axxon_profile",
+            "security_inventory",
+            "security_policy_summary",
+            "role_permissions",
+            "current_user_security",
+            "license_status",
+            "time_status",
+            "system_health",
+            "domain_event_subscribe",
+            "node_event_subscribe",
+            "schedule_descriptor_get",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in admin_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("admin", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-admin"])
+        self.assertTrue(args.enable_admin)
+
+        server = module.create_server(docs=StubDocs(), admin=StubAdmin(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(admin_tools, set(server.tools))
+        self.assertEqual(
+            server.tools["admin_connect_axxon_profile"]("env"),
+            {"profile": "env", "mode": "read-only"},
+        )
+        self.assertEqual(server.tools["security_inventory"](False, True, False)["include_users"], False)
+        self.assertEqual(server.tools["role_permissions"]("role-a", 25)["page_size"], 25)
+        self.assertEqual(server.tools["license_status"](False, True, ["node-a"], 12)["include_host_info"], False)
+        self.assertEqual(server.tools["license_status"](False, True, ["node-a"], 12)["node_names"], ["node-a"])
+        self.assertEqual(server.tools["time_status"](False)["include_available"], False)
+        domain = server.tools["domain_event_subscribe"](["hosts/Server"], ["config"], 2.5, 7, True)
+        self.assertEqual(domain["notifier"], "domain")
+        self.assertEqual(domain["limit"], 7)
+        self.assertEqual(server.tools["node_event_subscribe"]([], [], 1.0, 1, False)["notifier"], "node")
+        self.assertEqual(server.tools["schedule_descriptor_get"]("hosts/Server/DeviceIpint.1")["uid"], "hosts/Server/DeviceIpint.1")
 
     def test_create_server_registers_view_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")

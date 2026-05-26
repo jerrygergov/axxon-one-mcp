@@ -42,6 +42,7 @@ def create_server(
     alarm_mutator: Any | None = None,
     view_objects: Any | None = None,
     detector_archive: Any | None = None,
+    admin: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -117,7 +118,109 @@ def create_server(
     if detector_archive is not None:
         register_detector_archive_tools(server, detector_archive)
 
+    if admin is not None:
+        register_admin_tools(server, admin)
+
     return server
+
+
+def register_admin_tools(server: Any, admin: Any) -> None:
+    @server.tool(name="admin_connect_axxon_profile")
+    def admin_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the admin layer to an Axxon profile (read-only, env-backed)."""
+        return admin.admin_connect_axxon_profile(profile)
+
+    @server.tool(name="security_inventory")
+    def security_inventory(
+        include_users: bool = True,
+        include_roles: bool = True,
+        include_ldap: bool = True,
+    ) -> dict[str, Any]:
+        """Return a redacted security inventory summary."""
+        return admin.security_inventory(
+            include_users=include_users,
+            include_roles=include_roles,
+            include_ldap=include_ldap,
+        )
+
+    @server.tool(name="security_policy_summary")
+    def security_policy_summary() -> dict[str, Any]:
+        """Return a redacted security policy summary."""
+        return admin.security_policy_summary()
+
+    @server.tool(name="role_permissions")
+    def role_permissions(role_id: str, page_size: int = 50) -> dict[str, Any]:
+        """Return global and object permission summaries for a role."""
+        return admin.role_permissions(role_id=role_id, page_size=page_size)
+
+    @server.tool(name="current_user_security")
+    def current_user_security() -> dict[str, Any]:
+        """Return the current user's redacted security context."""
+        return admin.current_user_security()
+
+    @server.tool(name="license_status")
+    def license_status(
+        include_host_info: bool = True,
+        include_node_restrictions: bool = True,
+        node_names: list[str] | None = None,
+        limit: int = 32,
+    ) -> dict[str, Any]:
+        """Return redacted license status and restriction summaries."""
+        return admin.license_status(
+            include_host_info=include_host_info,
+            include_node_restrictions=include_node_restrictions,
+            node_names=node_names,
+            limit=limit,
+        )
+
+    @server.tool(name="time_status")
+    def time_status(include_available: bool = True) -> dict[str, Any]:
+        """Return current timezone and NTP status."""
+        return admin.time_status(include_available=include_available)
+
+    @server.tool(name="system_health")
+    def system_health() -> dict[str, Any]:
+        """Return read-only admin health signals."""
+        return admin.system_health()
+
+    @server.tool(name="domain_event_subscribe")
+    def domain_event_subscribe(
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        """Pull bounded events from DomainNotifier and disconnect the subscription."""
+        return admin.domain_event_subscribe(
+            subjects=subjects,
+            event_types=event_types,
+            timeout_s=timeout_s,
+            limit=limit,
+            detailed=detailed,
+        )
+
+    @server.tool(name="node_event_subscribe")
+    def node_event_subscribe(
+        subjects: list[str] | None = None,
+        event_types: list[str] | None = None,
+        timeout_s: float = 5.0,
+        limit: int = 25,
+        detailed: bool = False,
+    ) -> dict[str, Any]:
+        """Pull bounded events from NodeNotifier and disconnect the subscription."""
+        return admin.node_event_subscribe(
+            subjects=subjects,
+            event_types=event_types,
+            timeout_s=timeout_s,
+            limit=limit,
+            detailed=detailed,
+        )
+
+    @server.tool(name="schedule_descriptor_get")
+    def schedule_descriptor_get(uid: str) -> dict[str, Any]:
+        """Discover schedule-like descriptor fields for a unit without mutation."""
+        return admin.schedule_descriptor_get(uid)
 
 
 def register_detector_archive_tools(server: Any, detector_archive: Any) -> None:
@@ -660,6 +763,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5E read tools for detectors, metadata, and archive policies.",
     )
+    parser.add_argument(
+        "--enable-admin",
+        action="store_true",
+        help="Enable Phase 5F-A read-only admin tools for security, health, notifiers, and schedule descriptors.",
+    )
     return parser
 
 
@@ -715,6 +823,11 @@ def main() -> int:
         from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
 
         detector_archive = AxxonMcpDetectorArchive()
+    admin = None
+    if args.enable_admin:
+        from axxon_mcp_admin import AxxonMcpAdmin
+
+        admin = AxxonMcpAdmin()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -725,6 +838,7 @@ def main() -> int:
         alarm_mutator=alarm_mutator,
         view_objects=view_objects,
         detector_archive=detector_archive,
+        admin=admin,
     )
     server.run(transport=args.transport)
     return 0
