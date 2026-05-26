@@ -36,8 +36,10 @@ coverage matrix for Axxon One VMS.
   policy/permission summaries, current-user security, license/time/system
   health, bounded DomainNotifier/NodeNotifier pulls, and schedule descriptor
   discovery. Live evidence PASS=7, WARN=4, FAIL=0 — see
-  `docs/api-audit/phase-5f-admin-smoke-latest.md`. Phase 5F-B holds admin
-  mutations.
+  `docs/api-audit/phase-5f-admin-smoke-latest.md`.
+- Phase 5F-B1 is planned for approval-gated temporary `codex-*` security/admin
+  mutation workflows. License, timezone, NTP, production user/role edits, LDAP
+  sync, and schedule authoring remain deferred.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -57,8 +59,8 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
-| 5F-A — Security / system-health reads + bounded notifiers | ✅ implemented (fixture caveats) |
-| 5F-B — Security/admin mutations | ❌ not started |
+| 5F-A — Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) |
+| 5F-B1 — Security/admin mutations | 📝 planned |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
 | 7 — NL → plan translator | ❌ not started |

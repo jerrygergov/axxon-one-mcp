@@ -29,15 +29,15 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5C** Alarms (lifecycle + subscription) | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_alarms.py`, `tools/axxon_alarms_smoke.py`, `docs/api-audit/phase-5c-alarms-smoke-latest.md`, design + plan under `docs/superpowers/specs/` and `docs/superpowers/plans/` |
 | **5D** Videowall / layouts / maps | ✅ shipped | yes | `tools/axxon_mcp_view_objects.py`, `tools/axxon_view_objects_smoke.py`, `docs/api-audit/phase-5d-view-objects-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | yes (`62a4b9b`) | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
-| **5F-A** Security / system-health reads + bounded notifiers | ✅ implemented (fixture caveats) | no | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
-| **5F-B** Security/admin mutations | ❌ not started | no | deferred until 5F-A is merged |
+| **5F-A** Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | yes (`64d6477`) | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
+| **5F-B1** Security/admin mutations | 📝 planned | no | `docs/superpowers/specs/2026-05-26-phase-5f-b-security-admin-mutations-design.md`, `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md` |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
 | **7** NL → plan translator | ❌ not started | no | none |
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
-**Next concrete step:** plan Phase 5F-B security/admin mutations in branch `codex/phase-5f-security-health-schedules`, while carrying Phase 5E fixture debt and Phase 5F-A fixture caveats.
+**Next concrete step:** execute Phase 5F-B1 Task 1 from `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md` on `main`, while carrying Phase 5E fixture debt and Phase 5F-A fixture caveats.
 
 ---
 
@@ -80,7 +80,7 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
 | PDF coverage matrix | 30 / 38 verified, 2 partial, 6 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 434 / 434 passing in the Phase 5F worktree | `tools/tests/` |
+| Unit tests | 434 / 434 passing on `main` | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 
@@ -285,7 +285,7 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 ### Phase 5F — Operator UX: Security, users, roles, system health
 
-**Status.** 5F-A is implemented in branch `codex/phase-5f-security-health-schedules` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=7, WARN=4, FAIL=0). Warnings are fixture/stand caveats: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams are quiet and end by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture.
+**Status.** 5F-A is shipped on `main` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=7, WARN=4, FAIL=0). Warnings are fixture/stand caveats: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams are quiet and end by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture. 5F-B1 is planned in `docs/superpowers/specs/2026-05-26-phase-5f-b-security-admin-mutations-design.md` and `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md`.
 
 **Why.** Closes 11 pending SecurityService methods, 10 pending AuthenticationService methods, 5 pending LicenseService methods, NodeNotifier (6 pending), and DomainNotifier (5 pending).
 
@@ -300,13 +300,19 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 - `domain_event_subscribe(filter, duration)` and `node_event_subscribe(filter, duration)` — bounded DomainNotifier/NodeNotifier reads with disconnect cleanup.
 - `schedule_descriptor_get(uid)` — fixture-aware schedule field discovery. No standalone schedule service is present in the current corpus/protos; schedule authoring stays fixture-needed until descriptor-backed schedule fields and an isolated config fixture exist.
 
-**5F-B deferred mutation scope.**
-- `users_list()` / `user_create(plan)` / `user_update(plan)` / `user_delete(id)` — promoted from `temp_user` smoke.
-- `roles_list()` / `role_create(plan)` / `role_update(plan)` / `role_delete(id)` — promoted from `temp_role` smoke.
-- `permission_set(target, role_id, plan)` — already verified shape.
-- `tfa_enable(user_id, plan)` / `tfa_disable(user_id, plan)` — fixture-needed unless OTP policy is explicitly approved.
-- `ldap_directory_add(plan)` / `update` / `remove` — already verified.
-- `ldap_sync(directory_id)` — fixture-needed.
+**5F-B1 planned mutation scope.**
+- `list_admin_mutation_workflows()`
+- `plan_admin_mutation_workflow(workflow, params)`
+- `apply_admin_mutation_plan(plan_id, confirmation)`
+- `verify_admin_mutation_plan(plan_id)`
+- `rollback_admin_mutation_plan(plan_id, confirmation)`
+
+Initial workflows are limited to temporary `codex-*` security fixtures: user/role lifecycle, temp-role permission updates, policy no-op probe, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable.
+
+**5F-B2 deferred mutation scope.**
+- Production `user_create`, `user_update`, `user_delete`, `change_password`, and `change_login`.
+- Production role/permission edits outside explicit `codex-*` fixtures.
+- LDAP synchronization against a real directory.
 - `license_apply(file)` / `license_drop(plan)` — license mutations are explicit maintenance-window work only.
 - `time_set_timezone(plan)` / `time_set_ntp(plan)` — operational mutations requiring a dedicated fixture.
 
@@ -446,7 +452,7 @@ The full-coverage MCP is "done" when:
 
 This document is a roadmap, not an implementation plan. The next step is:
 
-1. **Plan Phase 5F-B mutations** from the implemented 5F-A read surface and `mutation-playbooks/users-roles-security.md`.
+1. **Execute Phase 5F-B1 Task 1** from `docs/superpowers/plans/2026-05-26-phase-5f-b-security-admin-mutations.md`.
 2. **Carry Phase 5E fixture debt** as a separate validation track: descriptor-backed archive policy fixture, writable visual detector child, and isolated `codex-*` archive/camera fixture.
 3. **Carry Phase 5F-A caveats** as fixture debt: license host-info disconnect, quiet notifier streams, and descriptor-backed schedule fixture.
 4. Keep the loop for each phase: implementation, evidence, sanitization, coverage matrix update, merge.
