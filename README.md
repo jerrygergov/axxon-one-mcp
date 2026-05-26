@@ -5,10 +5,10 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **386 / 386** unit tests passing in the Phase 5F worktree.
-- **38** PDF gap-coverage matrix rows. 30 verified, 1 partial, 6 fixture-blocked,
-  and 1 planned/not-verified MCP row (hardware / process gates on the demo
-  stand are documented under `docs/api-audit/`).
+- **434 / 434** unit tests passing in the Phase 5F worktree.
+- **38** PDF gap-coverage matrix rows. 30 verified, 2 partial, and 6
+  fixture-blocked rows (hardware / process gates on the demo stand are
+  documented under `docs/api-audit/`).
 - **31** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
   workflows, with
   plan / apply / verify / rollback safety.
@@ -32,11 +32,12 @@ coverage matrix for Axxon One VMS.
   approval-gated archive maintenance no-ops. Live evidence PASS=12, WARN=3,
   FAIL=0 — see
   `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
-- Phase 5F-A is planned in
-  `docs/superpowers/plans/2026-05-26-phase-5f-security-health-schedules.md`:
-  read-only security inventory, policy/permission summaries, license/time/system
-  health, bounded notifiers, and schedule descriptor discovery. Phase 5F-B holds
-  admin mutations.
+- **11** Phase 5F-A admin read tools cover security inventory,
+  policy/permission summaries, current-user security, license/time/system
+  health, bounded DomainNotifier/NodeNotifier pulls, and schedule descriptor
+  discovery. Live evidence PASS=7, WARN=4, FAIL=0 — see
+  `docs/api-audit/phase-5f-admin-smoke-latest.md`. Phase 5F-B holds admin
+  mutations.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -56,7 +57,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
-| 5F-A — Security / system-health reads + bounded notifiers | 📝 planned |
+| 5F-A — Security / system-health reads + bounded notifiers | ✅ implemented (fixture caveats) |
 | 5F-B — Security/admin mutations | ❌ not started |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
@@ -79,6 +80,8 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_view_objects_smoke.py — phase-5D live read + mutation smoke
   axxon_mcp_detector_archive.py — phase-5E detector/archive read tools
   axxon_detector_archive_smoke.py — phase-5E live read + mutation smoke
+  axxon_mcp_admin.py          — phase-5F-A security/health/notifier read tools
+  axxon_admin_smoke.py        — phase-5F-A live read smoke
   templates/                 — phase-4 string templates for generated bundles
   axxon_aux_topics_smoke.py  — aux topic coverage smoke (statistics, groups, alerts, ...)
   axxon_api_client.py        — gRPC + HTTP /grpc + legacy HTTP transport
@@ -144,6 +147,11 @@ python tools/axxon_mcp_server.py --enable-view-objects --transport stdio
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
 python tools/axxon_mcp_server.py --enable-detector-archive --transport stdio
+
+# + security/system-health/notifier read tools (Phase 5F-A)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> AXXON_PASSWORD=<p> \
+python tools/axxon_mcp_server.py --enable-admin --transport stdio
 ```
 
 ### Live tools (read-only)
@@ -261,6 +269,24 @@ exposes archive policy fields, an AV detector fixture with a writable visual
 child, and an isolated `codex-*` archive/camera fixture. See
 `docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md` and
 `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
+
+### Admin tools (Phase 5F-A)
+
+Reads (`--enable-admin`): `admin_connect_axxon_profile`,
+`security_inventory`, `security_policy_summary`, `role_permissions`,
+`current_user_security`, `license_status`, `time_status`, `system_health`,
+`domain_event_subscribe`, `node_event_subscribe`, `schedule_descriptor_get`.
+The admin layer is read-only except for bounded notifier subscription channel
+creation/disconnect cleanup. The live smoke also keeps credentials env-only and
+redacts host, user, role, CA, token, license, serial, and hardware evidence.
+
+Live evidence is PASS=7, WARN=4, FAIL=0. Warnings are fixture or stand
+behavior: `LicenseService.GetHostInfo` closes the connection while other
+license reads succeed, both notifier streams are quiet and end by bounded
+deadline after disconnect cleanup, and schedule descriptor discovery needs an
+isolated descriptor-backed schedule fixture. See
+`docs/superpowers/plans/2026-05-26-phase-5f-security-health-schedules.md` and
+`docs/api-audit/phase-5f-admin-smoke-latest.md`.
 
 ## Verification
 
