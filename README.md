@@ -5,10 +5,10 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **386 / 386** unit tests passing in the Phase 5E worktree.
-- **37** PDF gap-coverage matrix rows. 30 verified, 1 partial, 6 fixture-blocked
-  (hardware / process gates on the demo stand, documented under
-  `docs/api-audit/`).
+- **386 / 386** unit tests passing in the Phase 5F worktree.
+- **38** PDF gap-coverage matrix rows. 30 verified, 1 partial, 6 fixture-blocked,
+  and 1 planned/not-verified MCP row (hardware / process gates on the demo
+  stand are documented under `docs/api-audit/`).
 - **31** MCP operator workflows, including 11 Phase 5D layouts/maps/videowalls
   workflows, with
   plan / apply / verify / rollback safety.
@@ -32,6 +32,11 @@ coverage matrix for Axxon One VMS.
   approval-gated archive maintenance no-ops. Live evidence PASS=12, WARN=3,
   FAIL=0 — see
   `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
+- Phase 5F-A is planned in
+  `docs/superpowers/plans/2026-05-26-phase-5f-security-health-schedules.md`:
+  read-only security inventory, policy/permission summaries, license/time/system
+  health, bounded notifiers, and schedule descriptor discovery. Phase 5F-B holds
+  admin mutations.
 - **8** integration generator templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
   webhook_bridge, inventory_sync) with a static verifier that rejects embedded
@@ -51,7 +56,8 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
-| 5F — Security / users / system health + schedules | ❌ not started |
+| 5F-A — Security / system-health reads + bounded notifiers | 📝 planned |
+| 5F-B — Security/admin mutations | ❌ not started |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started |
 | 6B — Partner SDK kit + distribution | ❌ not started |
 | 7 — NL → plan translator | ❌ not started |
@@ -224,10 +230,10 @@ mutations are offline-tested and intentionally not run against shared demo
 layouts. `list_layout_images` dispatch is offline-tested, but the demo stand
 has no readable layout-image fixture and reports `status: gap`.
 
-Schedules are deferred to Phase 5F. See
-`docs/superpowers/plans/2026-05-17-phase-5d-layouts-maps-videowalls.md` and
-the live evidence at
-`docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
+Schedules moved to Phase 5F-A descriptor discovery; authoring remains
+fixture-needed until an isolated descriptor-backed schedule fixture exists. See
+`docs/superpowers/plans/2026-05-26-phase-5f-security-health-schedules.md` and
+the Phase 5D live evidence at `docs/api-audit/phase-5d-view-objects-smoke-latest.md`.
 
 ### Detector/archive tools (Phase 5E)
 
