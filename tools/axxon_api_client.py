@@ -534,6 +534,63 @@ class AxxonApiClient:
             data["page_token"] = page_token
         return self.http_grpc("axxonsoft.bl.security.SecurityService.ListObjectsPermissionsInfo", data)
 
+    def security_change_config(self, data: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ChangeConfig", dict(data))
+
+    def security_set_global_permissions(self, role_id: str, permissions: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.SetGlobalPermissions",
+            {"permissions": {role_id: dict(permissions)}},
+        )
+
+    def security_set_object_permissions(self, role_id: str, permissions: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.SetObjectPermissions",
+            {"role_to_permissions": {role_id: dict(permissions)}},
+        )
+
+    def security_set_groups_permissions(self, permissions: list[dict[str, Any]]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.SetGroupsPermissions",
+            {"permissions": [dict(item) for item in permissions]},
+        )
+
+    def security_set_macros_permissions(self, role_id: str, macros_access: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.SetMacrosPermissions",
+            {"role_id": role_id, "macros_access": dict(macros_access)},
+        )
+
+    def security_list_groups_permissions_info(
+        self,
+        *,
+        role_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {"role_id": role_id, "page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListGroupsPermissionsInfo", data)
+
+    def security_list_macros_permissions_paged(
+        self,
+        *,
+        role_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {"role_id": role_id, "page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListMacrosPermissionsPaged", data)
+
+    def security_get_ldap_synchronization(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.GetLDAPSynchronization", {})
+
+    def security_get_ldap_synchronization_state(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.GetLDAPSynchronizationState", {})
+
     def license_get_global_restrictions(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.GetGlobalRestrictions", {})
 
