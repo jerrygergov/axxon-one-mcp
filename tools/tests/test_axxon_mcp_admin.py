@@ -153,6 +153,81 @@ class FakeSecurityClient(FakeClient):
         return "Server"
 
 
+class FakeHealthClient(FakeSecurityClient):
+    def license_get_global_restrictions(self) -> dict:
+        self.calls.append(("license_global_restrictions", {}))
+        return {"body": {"constraints": {"constraints": [{"name": "camera_count"}, {"name": "archive_count"}]}}}
+
+    def license_get_domain_key_info(self) -> dict:
+        self.calls.append(("license_domain_key_info", {}))
+        return {
+            "body": {
+                "status": "active",
+                "license_key": marker("LICENSE"),
+                "serial_number": marker("SERIAL"),
+            }
+        }
+
+    def license_key_info(self) -> dict:
+        self.calls.append(("license_key_info", {}))
+        return {
+            "body": {
+                "ls_status": "LS_VALID",
+                "type": "commercial",
+                "is_license_expiring": False,
+                "license_key": marker("LICENSE"),
+            }
+        }
+
+    def license_get_host_info(self) -> dict:
+        self.calls.append(("license_host_info", {}))
+        return {
+            "body": {
+                "host_name": "Server",
+                "hardware_fingerprint": marker("FINGERPRINT"),
+                "serialNumber": marker("SERIAL"),
+            }
+        }
+
+    def license_get_node_restrictions(self, node_names: list[str]) -> dict:
+        self.calls.append(("license_node_restrictions", {"node_names": list(node_names)}))
+        return {
+            "body": {
+                "items": [
+                    {"node": {"name": name}, "constraints": [{"name": "camera_count"}]}
+                    for name in node_names
+                ]
+            }
+        }
+
+    def license_is_possible_to_launch(self, service_name: str, quantity: int = 1) -> dict:
+        self.calls.append(("license_launch", {"service_name": service_name, "quantity": quantity}))
+        return {"body": {"is_possible": True, "service_name": service_name, "quantity": quantity}}
+
+    def time_get_time_zone(self) -> dict:
+        self.calls.append(("time_zone", {}))
+        return {"body": {"time_zone": {"id": "Europe/Moscow", "display_name": "Moscow"}}}
+
+    def time_get_ntp(self) -> dict:
+        self.calls.append(("ntp", {}))
+        return {"body": {"enabled": True, "servers": ["time.example.invalid"]}}
+
+    def time_list_time_zones(self) -> dict:
+        self.calls.append(("list_time_zones", {}))
+        return {
+            "body": {
+                "time_zones": [
+                    {"id": "Europe/Moscow", "display_name": "Moscow"},
+                    {"id": "UTC", "display_name": "UTC"},
+                ]
+            }
+        }
+
+    def time_batch_get_zones(self, zone_ids: list[str]) -> dict:
+        self.calls.append(("batch_get_zones", {"zone_ids": list(zone_ids)}))
+        return {"body": {"time_zones": [{"id": zone_id} for zone_id in zone_ids]}}
+
+
 class AxxonMcpAdminScaffoldTests(unittest.TestCase):
     def test_module_constants_name_phase_5f_a_tools(self) -> None:
         module = importlib.import_module("axxon_mcp_admin")
@@ -377,6 +452,95 @@ class AxxonMcpAdminSecurityReadTests(unittest.TestCase):
         self.assertEqual(result["all_users_count"], 3)
         self.assertNotIn(marker("PASSWORD"), str(result))
         self.assertNotIn(marker("SERIAL"), str(result))
+
+
+class AxxonMcpAdminHealthTests(unittest.TestCase):
+    def test_license_status_redacts_sensitive_facts_and_limits_node_restrictions(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeHealthClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.license_status(node_names=["Server", "Backup", "Ignored"], limit=2)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["global_restrictions"]["constraint_count"], 2)
+        self.assertEqual(result["domain"]["status"], "active")
+        self.assertEqual(result["key_info"]["status"], "LS_VALID")
+        self.assertEqual(result["host_info"]["host_name"], "Server")
+        self.assertEqual(result["node_restrictions"]["count"], 2)
+        self.assertEqual(result["launch"]["AVDetector"]["is_possible"], True)
+        self.assertIn(("license_node_restrictions", {"node_names": ["Server", "Backup"]}), fake.calls)
+        self.assertNotIn(marker("LICENSE"), str(result))
+        self.assertNotIn(marker("SERIAL"), str(result))
+        self.assertNotIn(marker("FINGERPRINT"), str(result))
+
+    def test_license_status_can_skip_host_and_node_sections(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeHealthClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.license_status(include_host_info=False, include_node_restrictions=False)
+
+        self.assertNotIn("host_info", result)
+        self.assertNotIn("node_restrictions", result)
+        self.assertFalse(any(call[0] == "license_host_info" for call in fake.calls))
+        self.assertFalse(any(call[0] == "license_node_restrictions" for call in fake.calls))
+
+    def test_time_status_summarizes_current_zone_available_zones_and_ntp(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeHealthClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.time_status(include_available=True)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["current_zone"]["id"], "Europe/Moscow")
+        self.assertEqual(result["available_zones"]["count"], 2)
+        self.assertEqual(result["ntp"]["enabled"], True)
+        self.assertIn(("batch_get_zones", {"zone_ids": ["Europe/Moscow", "UTC"]}), fake.calls)
+
+    def test_time_status_can_skip_available_zone_catalog(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeHealthClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.time_status(include_available=False)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertNotIn("available_zones", result)
+        self.assertFalse(any(call[0] == "list_time_zones" for call in fake.calls))
+
+    def test_system_health_aggregates_sections_and_marks_archive_fixture_needed(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeHealthClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.system_health()
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["security"]["status"], "ok")
+        self.assertEqual(result["license"]["status"], "ok")
+        self.assertEqual(result["time"]["status"], "ok")
+        self.assertEqual(result["archive"]["status"], "fixture-needed")
+        self.assertEqual(result["session"]["connected"], True)
+        self.assertNotIn(marker("LICENSE"), str(result))
+        self.assertNotIn(marker("SERIAL"), str(result))
+        self.assertNotIn(marker("FINGERPRINT"), str(result))
 
 
 if __name__ == "__main__":

@@ -118,7 +118,10 @@ def redact_admin_secrets(value: Any) -> Any:
     if isinstance(value, dict):
         out: dict[Any, Any] = {}
         for key, item in value.items():
-            out[key] = "<redacted>" if _is_sensitive_key(key) and item else redact_admin_secrets(item)
+            if _is_sensitive_key(key) and item and not isinstance(item, (dict, list, tuple)):
+                out[key] = "<redacted>"
+            else:
+                out[key] = redact_admin_secrets(item)
         return out
     if isinstance(value, list):
         return [redact_admin_secrets(item) for item in value]
@@ -185,6 +188,49 @@ def _permission_info_summary(item: dict[str, Any]) -> dict[str, Any]:
         if field in redacted:
             out[field] = redacted[field]
     return out or {"keys": sorted(str(key) for key in redacted.keys())}
+
+
+def _items(data: dict[str, Any], *keys: str) -> list[dict[str, Any]]:
+    for key in keys:
+        value = data.get(key)
+        if isinstance(value, list):
+            return [item for item in value if isinstance(item, dict)]
+    return []
+
+
+def _constraint_count(data: dict[str, Any]) -> int:
+    constraints = data.get("constraints")
+    if isinstance(constraints, dict):
+        nested = constraints.get("constraints")
+        return len(nested) if isinstance(nested, list) else len(constraints)
+    return len(constraints) if isinstance(constraints, list) else 0
+
+
+def _license_domain_summary(data: dict[str, Any]) -> dict[str, Any]:
+    redacted = redact_admin_secrets(data)
+    return {
+        "status": redacted.get("status") or redacted.get("ls_status") or redacted.get("state") or "",
+        "type": redacted.get("type", ""),
+        "is_license_expiring": bool(redacted.get("is_license_expiring", False)),
+        "key_present": bool(data.get("license_key") or data.get("key")),
+    }
+
+
+def _host_info_summary(data: dict[str, Any]) -> dict[str, Any]:
+    redacted = redact_admin_secrets(data)
+    return {
+        "host_name": redacted.get("host_name") or redacted.get("name") or redacted.get("node_name") or "",
+        "hardware_fingerprint_present": bool(data.get("hardware_fingerprint") or data.get("fingerprint")),
+        "serial_present": bool(data.get("serial_number") or data.get("serialNumber")),
+    }
+
+
+def _zone_summary(zone: dict[str, Any]) -> dict[str, Any]:
+    redacted = redact_admin_secrets(zone)
+    return {
+        "id": redacted.get("id") or redacted.get("time_zone_id") or redacted.get("name") or "",
+        "display_name": redacted.get("display_name") or redacted.get("displayName") or redacted.get("name") or "",
+    }
 
 
 @dataclass
@@ -352,3 +398,112 @@ class AxxonMcpAdmin:
             "password_policy_count": len(data.get("pwd_policy", [])),
             "system_integrity_modes_count": len(data.get("system_integrity_reaction_modes", [])),
         }
+
+    def license_status(
+        self,
+        include_host_info: bool = True,
+        include_node_restrictions: bool = True,
+        node_names: list[str] | None = None,
+        limit: int = 32,
+    ) -> dict[str, Any]:
+        client = self.ensure_client()
+        applied_limit = min(max(int(limit), 1), 128)
+        global_restrictions = redact_admin_secrets(_body(client.license_get_global_restrictions()))
+        domain_info = _body(client.license_get_domain_key_info())
+        key_info = _body(client.license_key_info())
+        result: dict[str, Any] = {
+            "status": "ok",
+            "tool": "license_status",
+            "global_restrictions": {"constraint_count": _constraint_count(global_restrictions)},
+            "domain": _license_domain_summary(domain_info),
+            "key_info": _license_domain_summary(key_info),
+            "launch": {
+                "AVDetector": redact_admin_secrets(_body(client.license_is_possible_to_launch("AVDetector", quantity=1)))
+            },
+            "applied_limit": applied_limit,
+        }
+        if include_host_info:
+            result["host_info"] = _host_info_summary(_body(client.license_get_host_info()))
+        if include_node_restrictions:
+            requested_nodes = list(node_names or [])
+            if not requested_nodes:
+                requested_nodes = [client.node_name() if hasattr(client, "node_name") else getattr(client.config, "tls_cn", "")]
+            requested_nodes = [name for name in requested_nodes if name][:applied_limit]
+            node_data = redact_admin_secrets(_body(client.license_get_node_restrictions(requested_nodes)))
+            restriction_items = _items(node_data, "items", "node_restrictions", "restrictions")
+            result["node_restrictions"] = {
+                "count": len(restriction_items),
+                "nodes": requested_nodes,
+                "items": restriction_items,
+            }
+        return redact_admin_secrets(result)
+
+    def time_status(self, include_available: bool = True) -> dict[str, Any]:
+        client = self.ensure_client()
+        current = redact_admin_secrets(_body(client.time_get_time_zone()))
+        ntp = redact_admin_secrets(_body(client.time_get_ntp()))
+        current_zone = current.get("time_zone") if isinstance(current.get("time_zone"), dict) else current
+        result: dict[str, Any] = {
+            "status": "ok",
+            "tool": "time_status",
+            "current_zone": _zone_summary(current_zone),
+            "ntp": ntp,
+        }
+        if include_available:
+            zones_body = redact_admin_secrets(_body(client.time_list_time_zones()))
+            zones = _items(zones_body, "time_zones", "zones", "items")
+            zone_ids = [str(_zone_summary(zone).get("id")) for zone in zones if _zone_summary(zone).get("id")]
+            batch = redact_admin_secrets(_body(client.time_batch_get_zones(zone_ids[:32]))) if zone_ids else {}
+            result["available_zones"] = {
+                "count": len(zones),
+                "items": [_zone_summary(zone) for zone in zones[:32]],
+                "batch_count": len(_items(batch, "time_zones", "zones", "items")),
+            }
+        return result
+
+    def _health_section(self, name: str, builder: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+        try:
+            return builder()
+        except Exception as exc:
+            return {
+                "status": "fixture-needed",
+                "section": name,
+                "message": redact_admin_text(exc),
+            }
+
+    def system_health(
+        self,
+        include_security: bool = True,
+        include_license: bool = True,
+        include_time: bool = True,
+        include_archive: bool = True,
+    ) -> dict[str, Any]:
+        self.ensure_client()
+        result: dict[str, Any] = {"status": "ok", "tool": "system_health"}
+        if include_security:
+            def security_builder() -> dict[str, Any]:
+                inventory = self.security_inventory()
+                policy = self.security_policy_summary()
+                return {
+                    "status": "ok",
+                    "roles_count": inventory.get("roles", {}).get("count", 0),
+                    "users_count": inventory.get("users", {}).get("count", 0),
+                    "ldap_status": policy.get("ldap", {}).get("status", ""),
+                }
+
+            result["security"] = self._health_section("security", security_builder)
+        if include_license:
+            result["license"] = self._health_section("license", lambda: self.license_status())
+        if include_time:
+            result["time"] = self._health_section("time", lambda: self.time_status())
+        if include_archive:
+            result["archive"] = {
+                "status": "fixture-needed",
+                "message": "Archive storage aggregation is added with the live smoke fixture.",
+            }
+        result["session"] = {
+            "connected": self.client is not None,
+            "profile_name": self.profile_name,
+            "mode": ADMIN_MODE,
+        }
+        return redact_admin_secrets(result)

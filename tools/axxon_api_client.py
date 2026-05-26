@@ -543,11 +543,32 @@ class AxxonApiClient:
     def license_get_host_info(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.GetHostInfo", {})
 
+    def license_key_info(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.license.LicenseService.LicenseKeyInfo", {})
+
+    def license_get_node_restrictions(self, node_names: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.license.LicenseService.GetNodeRestrictions",
+            {"nodes": [{"name": name} for name in node_names]},
+        )
+
+    def license_is_possible_to_launch(self, service_name: str, quantity: int = 1) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.license.LicenseService.IsPossibleToLaunch",
+            {"service_name": service_name, "quantity": quantity},
+        )
+
     def time_get_time_zone(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.GetTimeZone", {})
 
     def time_get_ntp(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.GetNTP", {})
+
+    def time_list_time_zones(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.ListTimeZones", {})
+
+    def time_batch_get_zones(self, zone_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.BatchGetZones", {"ids": list(zone_ids)})
 
     def http_get_json(self, path: str, max_items: int = 32) -> dict[str, Any]:
         """GET a legacy HTTP JSON endpoint with Bearer auth and return the parsed body."""
