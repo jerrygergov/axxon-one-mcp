@@ -591,6 +591,21 @@ class AxxonApiClient:
     def security_get_ldap_synchronization_state(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.security.SecurityService.GetLDAPSynchronizationState", {})
 
+    def security_gen_google_auth_secret(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.GenGoogleAuthSecret", {})
+
+    def security_enable_google_auth(self, user_index: str, secret_key: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.EnableGoogleAuth",
+            {"assignments": [{"user_index": user_index, "secret_key": secret_key}]},
+        )
+
+    def security_disable_google_auth(self, user_index: str, verification_code: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.DisableGoogleAuth",
+            {"assignments": [{"user_index": user_index, "verification_code": verification_code}]},
+        )
+
     def license_get_global_restrictions(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.GetGlobalRestrictions", {})
 

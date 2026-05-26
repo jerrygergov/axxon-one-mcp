@@ -140,6 +140,28 @@ class AdminMutationApiWrappersTests(unittest.TestCase):
             ],
         )
 
+    def test_security_google_auth_wrappers_use_http_grpc_payloads(self) -> None:
+        c = _FakeClient()
+
+        c.security_gen_google_auth_secret()
+        c.security_enable_google_auth("user-a", "SECRETKEY")
+        c.security_disable_google_auth("user-a", "123456")
+
+        self.assertEqual(
+            c.calls,
+            [
+                ("axxonsoft.bl.security.SecurityService.GenGoogleAuthSecret", {}),
+                (
+                    "axxonsoft.bl.security.SecurityService.EnableGoogleAuth",
+                    {"assignments": [{"user_index": "user-a", "secret_key": "SECRETKEY"}]},
+                ),
+                (
+                    "axxonsoft.bl.security.SecurityService.DisableGoogleAuth",
+                    {"assignments": [{"user_index": "user-a", "verification_code": "123456"}]},
+                ),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
