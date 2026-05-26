@@ -198,10 +198,15 @@ class AxxonAdminSmokeTests(unittest.TestCase):
                     "evidence": {
                         "url": "http://demo.internal/api",
                         "username": "root",
+                        "user_id": "user-123",
+                        "role_id": "role-123",
+                        "role_ids": ["role-456"],
+                        "name": "Alice Example",
+                        "email": "alice@example.invalid",
                         "password": "secret",
                         "ca": "/tmp/api.ngp.root-ca.crt",
                         "authorization": "Bearer live-token",
-                        "message": "certificate path /tmp/api.ngp.root-ca.crt",
+                        "message": "certificate path /tmp/api.ngp.root-ca.crt owned by bob@example.invalid",
                         "uid": "hosts/Server/DeviceIpint.1",
                     },
                 }
@@ -216,6 +221,12 @@ class AxxonAdminSmokeTests(unittest.TestCase):
 
         self.assertNotIn("demo.internal", json_text)
         self.assertNotIn("root", json_text)
+        self.assertNotIn("user-123", json_text)
+        self.assertNotIn("role-123", json_text)
+        self.assertNotIn("role-456", json_text)
+        self.assertNotIn("Alice Example", json_text)
+        self.assertNotIn("alice@example.invalid", json_text)
+        self.assertNotIn("bob@example.invalid", json_text)
         self.assertNotIn("secret", json_text)
         self.assertNotIn("live-token", json_text)
         self.assertNotIn("/tmp/api.ngp.root-ca.crt", json_text)

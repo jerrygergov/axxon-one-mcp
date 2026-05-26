@@ -228,6 +228,12 @@ class FakeHealthClient(FakeSecurityClient):
         return {"body": {"time_zones": [{"id": zone_id} for zone_id in zone_ids]}}
 
 
+class FakeLicenseHostErrorClient(FakeHealthClient):
+    def license_get_host_info(self) -> dict:
+        self.calls.append(("license_host_info", {}))
+        raise ConnectionError("Remote end closed connection without response")
+
+
 class FakeNotifierScheduleClient(FakeHealthClient):
     unit_uid = "hosts/Server/DeviceIpint.1"
 
@@ -562,6 +568,23 @@ class AxxonMcpAdminHealthTests(unittest.TestCase):
         self.assertNotIn("node_restrictions", result)
         self.assertFalse(any(call[0] == "license_host_info" for call in fake.calls))
         self.assertFalse(any(call[0] == "license_node_restrictions" for call in fake.calls))
+
+    def test_license_status_warns_when_optional_host_info_is_unavailable(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeLicenseHostErrorClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.license_status()
+
+        self.assertEqual(result["status"], "warn")
+        self.assertEqual(result["domain"]["status"], "active")
+        self.assertEqual(result["host_info"]["status"], "fixture-needed")
+        self.assertEqual(result["host_info"]["error_type"], "ConnectionError")
+        self.assertIn("Remote end closed", result["host_info"]["message"])
+        self.assertIn("node_restrictions", result)
 
     def test_time_status_summarizes_current_zone_available_zones_and_ntp(self) -> None:
         module = importlib.import_module("axxon_mcp_admin")

@@ -241,6 +241,14 @@ def _host_info_summary(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _section_unavailable(exc: Exception) -> dict[str, Any]:
+    return {
+        "status": "fixture-needed",
+        "error_type": exc.__class__.__name__,
+        "message": redact_admin_text(exc),
+    }
+
+
 def _zone_summary(zone: dict[str, Any]) -> dict[str, Any]:
     redacted = redact_admin_secrets(zone)
     return {
@@ -533,19 +541,27 @@ class AxxonMcpAdmin:
             "applied_limit": applied_limit,
         }
         if include_host_info:
-            result["host_info"] = _host_info_summary(_body(client.license_get_host_info()))
+            try:
+                result["host_info"] = _host_info_summary(_body(client.license_get_host_info()))
+            except Exception as exc:  # noqa: BLE001 - optional live license host data may be absent.
+                result["status"] = "warn"
+                result["host_info"] = _section_unavailable(exc)
         if include_node_restrictions:
             requested_nodes = list(node_names or [])
             if not requested_nodes:
                 requested_nodes = [client.node_name() if hasattr(client, "node_name") else getattr(client.config, "tls_cn", "")]
             requested_nodes = [name for name in requested_nodes if name][:applied_limit]
-            node_data = redact_admin_secrets(_body(client.license_get_node_restrictions(requested_nodes)))
-            restriction_items = _items(node_data, "items", "node_restrictions", "restrictions")
-            result["node_restrictions"] = {
-                "count": len(restriction_items),
-                "nodes": requested_nodes,
-                "items": restriction_items,
-            }
+            try:
+                node_data = redact_admin_secrets(_body(client.license_get_node_restrictions(requested_nodes)))
+                restriction_items = _items(node_data, "items", "node_restrictions", "restrictions")
+                result["node_restrictions"] = {
+                    "count": len(restriction_items),
+                    "nodes": requested_nodes,
+                    "items": restriction_items,
+                }
+            except Exception as exc:  # noqa: BLE001 - optional live node restrictions may be absent.
+                result["status"] = "warn"
+                result["node_restrictions"] = _section_unavailable(exc)
         return redact_admin_secrets(result)
 
     def time_status(self, include_available: bool = True) -> dict[str, Any]:

@@ -52,7 +52,9 @@ UNQUOTED_SECRET_ASSIGNMENT_RE = re.compile(
 URL_USERINFO_RE = re.compile(r"(?P<prefix>\b[a-z][a-z0-9+.-]*://)(?P<userinfo>[^/@\s]+)@", re.IGNORECASE)
 INTRINSIC_UID_RE = re.compile(r"\bhosts/[^\s,;}\])]+")
 CA_PATH_TEXT_RE = re.compile(r"(?<![A-Za-z0-9_.-])/[^\s,;}\]]+\.crt\b")
-USER_KEYS = {"username", "user", "login"}
+EMAIL_TEXT_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
+USER_KEYS = {"username", "user", "login", "name", "email", "user_id", "userid", "user_index", "userindex"}
+ROLE_KEYS = {"role_id", "roleid", "role_ids", "roleids", "role_index", "roleindex"}
 TLS_CN_KEYS = {"tls_cn", "tls-cn", "tls_common_name"}
 CA_KEYS = {"ca", "ca_path", "ca-file", "ca_file", "certificate_authority"}
 CLI_CONNECTION_FLAGS = {
@@ -86,6 +88,8 @@ def _identity_key(key: Any) -> str:
     normalized = str(key).lower()
     if normalized in USER_KEYS:
         return "user"
+    if normalized in ROLE_KEYS:
+        return "role"
     if normalized in TLS_CN_KEYS:
         return "tls-cn"
     if normalized in CA_KEYS:
@@ -142,6 +146,7 @@ def _sanitize_text(
     if ca_path:
         text = text.replace(ca_path, "<redacted-ca>")
     text = CA_PATH_TEXT_RE.sub("<redacted-ca>", text)
+    text = EMAIL_TEXT_RE.sub("<demo-user>", text)
     text = _replace_identity_text(text, username, "<demo-user>")
     text = _replace_identity_text(text, tls_cn, "<demo-tls-cn>")
     text = BEARER_RE.sub("Bearer <redacted>", text)
@@ -166,6 +171,11 @@ def sanitize_evidence(
             identity = _identity_key(key)
             if identity == "user":
                 out[key] = "<demo-user>" if item else item
+            elif identity == "role":
+                if isinstance(item, list):
+                    out[key] = ["<demo-role>" for _ in item]
+                else:
+                    out[key] = "<demo-role>" if item else item
             elif identity == "tls-cn":
                 out[key] = "<demo-tls-cn>" if item else item
             elif identity == "ca":
