@@ -81,6 +81,40 @@ def _temp_security_ids(params: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _temp_role_state(params: dict[str, Any]) -> dict[str, Any]:
+    role_id = str(params.get("role_id") or "")
+    role_name = str(params.get("role_name") or "")
+    if role_id:
+        return {
+            "role_id": role_id,
+            "role_name": role_name,
+            "created_role": False,
+            "camera_access_point": str(params.get("camera_access_point") or ""),
+            "group_id": str(params.get("group_id") or ""),
+            "macro_id": str(params.get("macro_id") or ""),
+        }
+    role_uuid = str(uuid.uuid4())
+    suffix = role_uuid.replace("-", "")[:12]
+    hint = "".join(ch for ch in str(params.get("display_name_hint") or "").lower() if ch.isalnum())[:16]
+    name_suffix = f"{hint}-{suffix}" if hint else suffix
+    return {
+        "role_id": role_uuid,
+        "role_name": f"codex-role-{name_suffix}",
+        "created_role": True,
+        "camera_access_point": str(params.get("camera_access_point") or ""),
+        "group_id": str(params.get("group_id") or ""),
+        "macro_id": str(params.get("macro_id") or ""),
+    }
+
+
+def _codex_role_allowed(params: dict[str, Any]) -> bool:
+    role_id = str(params.get("role_id") or "")
+    if not role_id:
+        return True
+    role_name = str(params.get("role_name") or "")
+    return role_id.startswith("codex-") or role_name.startswith("codex-")
+
+
 def _body(response: Any) -> dict[str, Any]:
     if isinstance(response, dict) and isinstance(response.get("body"), dict):
         return response["body"]
@@ -141,6 +175,15 @@ class AxxonAdminMutationRegistry:
             self._audit("plan_gap", result)
             return result
         clean_params = redact_admin_secrets(dict(params or {}))
+        if workflow == "security_role_permissions_update" and not _codex_role_allowed(dict(params or {})):
+            result = {
+                "status": "rejected",
+                "workflow": workflow,
+                "reason": "non-codex-role-target",
+                "message": "5F-B1 only mutates generated or explicitly codex-* roles.",
+            }
+            self._audit("plan_rejected", result)
+            return result
         plan_id = f"admin-{workflow}-{uuid.uuid4()}"
         plan = {
             "status": "planned",
@@ -164,6 +207,14 @@ class AxxonAdminMutationRegistry:
                 "user_id": state["user_id"],
                 "role_name": state["role_name"],
                 "login": state["login"],
+            }
+        elif workflow == "security_role_permissions_update":
+            state = _temp_role_state(dict(params or {}))
+            plan["_state"] = state
+            plan["expected"] = {
+                "role_id": state["role_id"],
+                "role_name": state["role_name"],
+                "created_role": state["created_role"],
             }
         self.plans[plan_id] = plan
         self._audit("plan", _public_plan(plan))
@@ -196,6 +247,10 @@ class AxxonAdminMutationRegistry:
             result = self._apply_security_user_role_lifecycle(plan)
             self._audit("apply", result)
             return result
+        if plan["workflow"] == "security_role_permissions_update":
+            result = self._apply_security_role_permissions_update(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -213,6 +268,10 @@ class AxxonAdminMutationRegistry:
             return plan
         if plan["workflow"] == "security_user_role_lifecycle":
             result = self._verify_security_user_role_lifecycle(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_role_permissions_update":
+            result = self._verify_security_role_permissions_update(plan)
             self._audit("verify", result)
             return result
         result = {
@@ -243,6 +302,10 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_user_role_lifecycle":
             result = self._rollback_security_user_role_lifecycle(plan)
+            self._audit("rollback", result)
+            return result
+        if plan["workflow"] == "security_role_permissions_update":
+            result = self._rollback_security_role_permissions_update(plan)
             self._audit("rollback", result)
             return result
         result = {
@@ -345,5 +408,113 @@ class AxxonAdminMutationRegistry:
             "workflow": plan["workflow"],
             "role_removed": not role_present,
             "user_removed": not user_present,
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _apply_security_role_permissions_update(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        if state.get("created_role"):
+            client.security_change_config(
+                {
+                    "added_roles": [
+                        {
+                            "index": state["role_id"],
+                            "name": state["role_name"],
+                            "comment": "codex temporary permission role, remove after smoke",
+                        }
+                    ]
+                }
+            )
+        global_permissions = {
+            "unrestricted_access": "UNRESTRICTED_ACCESS_NO",
+            "maps_access": "MAP_ACCESS_FORBID",
+            "alert_access": "ALERT_ACCESS_FORBID",
+            "bookmark_access": "BOOKMARK_ACCESS_NO",
+            "user_rights_setup_access": "USER_RIGHTS_SETUP_ACCESS_NO",
+            "feature_access": ["FEATURE_ACCESS_FORBID_ALL"],
+        }
+        global_response = _body(client.security_set_global_permissions(state["role_id"], global_permissions))
+        object_failed_count = 0
+        if state.get("camera_access_point"):
+            object_response = _body(
+                client.security_set_object_permissions(
+                    state["role_id"],
+                    {"camera_access": {state["camera_access_point"]: "CAMERA_ACCESS_FORBID"}},
+                )
+            )
+            object_failed_count = len(object_response.get("failed", []))
+        group_permission_count = 0
+        if state.get("group_id"):
+            group_response = _body(
+                client.security_set_groups_permissions(
+                    [
+                        {
+                            "role_id": state["role_id"],
+                            "groups_permissions": {
+                                state["group_id"]: {
+                                    "camera_access": "CAMERA_ACCESS_FORBID",
+                                    "microphone_access": "MICROPHONE_ACCESS_FORBID",
+                                    "telemetry_priority": "TELEMETRY_PRIORITY_NO_ACCESS",
+                                }
+                            },
+                        }
+                    ]
+                )
+            )
+            group_permission_count = 0 if group_response.get("failed") else 1
+        macro_permission_count = 0
+        if state.get("macro_id"):
+            macro_response = _body(
+                client.security_set_macros_permissions(
+                    state["role_id"],
+                    {state["macro_id"]: "MACROS_ACCESS_FORBID"},
+                )
+            )
+            macro_permission_count = 0 if macro_response.get("failed") else 1
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": state["role_id"],
+            "role_name": state["role_name"],
+            "global_role_present": state["role_id"] in (global_response.get("permissions") or {}),
+            "object_failed_count": object_failed_count,
+            "group_permission_count": group_permission_count,
+            "macro_permission_count": macro_permission_count,
+        }
+
+    def _verify_security_role_permissions_update(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        global_data = _body(client.security_list_global_permissions([state["role_id"]]))
+        permissions = global_data.get("permissions") if isinstance(global_data.get("permissions"), dict) else {}
+        roles = _body(client.security_list_roles()).get("roles", [])
+        role_present = any(item.get("index") == state["role_id"] for item in roles if isinstance(item, dict))
+        global_role_present = state["role_id"] in permissions
+        return {
+            "status": "verified" if global_role_present and (role_present or not state.get("created_role")) else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_present": role_present,
+            "global_role_present": global_role_present,
+            "permission_key_count": len(permissions.get(state["role_id"], {})) if global_role_present else 0,
+        }
+
+    def _rollback_security_role_permissions_update(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        response: dict[str, Any] = {}
+        if state.get("created_role"):
+            response = _body(client.security_change_config({"removed_roles": [state["role_id"]]}))
+        roles = _body(client.security_list_roles()).get("roles", [])
+        role_present = any(item.get("index") == state["role_id"] for item in roles if isinstance(item, dict))
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled-back" if not role_present or not state.get("created_role") else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_removed": not role_present if state.get("created_role") else False,
             "response_keys": sorted(str(key) for key in response.keys()),
         }

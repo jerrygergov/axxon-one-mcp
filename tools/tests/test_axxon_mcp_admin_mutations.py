@@ -16,6 +16,10 @@ class FakeAdminMutationClient:
         self.users: dict[str, dict] = {}
         self.assignments: list[dict] = []
         self.password_assignments: list[dict] = []
+        self.global_permissions: dict[str, dict] = {}
+        self.object_permissions: dict[str, dict] = {}
+        self.group_permissions: list[dict] = []
+        self.macros_permissions: dict[str, dict] = {}
 
     def security_change_config(self, payload: dict) -> dict:
         self.calls.append(payload)
@@ -61,6 +65,33 @@ class FakeAdminMutationClient:
             users = [item for item in users if item.get("index") in user_ids]
             assignments = [item for item in assignments if item.get("role_id") in role_set]
         return {"body": {"users": users[:page_size], "user_assignments": assignments}}
+
+    def security_set_global_permissions(self, role_id: str, permissions: dict) -> dict:
+        self.global_permissions[role_id] = dict(permissions)
+        return {"body": {"permissions": {role_id: dict(permissions)}}}
+
+    def security_list_global_permissions(self, role_ids: list[str]) -> dict:
+        return {
+            "body": {
+                "permissions": {
+                    role_id: self.global_permissions[role_id]
+                    for role_id in role_ids
+                    if role_id in self.global_permissions
+                }
+            }
+        }
+
+    def security_set_object_permissions(self, role_id: str, permissions: dict) -> dict:
+        self.object_permissions[role_id] = dict(permissions)
+        return {"body": {"failed": []}}
+
+    def security_set_groups_permissions(self, permissions: list[dict]) -> dict:
+        self.group_permissions = [dict(item) for item in permissions]
+        return {"body": {"failed": []}}
+
+    def security_set_macros_permissions(self, role_id: str, macros_access: dict) -> dict:
+        self.macros_permissions[role_id] = dict(macros_access)
+        return {"body": {"failed": []}}
 
 
 class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
@@ -183,6 +214,45 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
         self.assertEqual(result["status"], "rejected")
         self.assertIn(plan["plan_id"], registry.plans)
         self.assertNotEqual(self.fake.roles, {})
+
+    def test_permission_workflow_rejects_non_codex_existing_role(self) -> None:
+        registry = self.registry()
+
+        result = registry.plan(
+            "security_role_permissions_update",
+            {"role_id": "role-production", "role_name": "Administrators"},
+        )
+
+        self.assertEqual(result["status"], "rejected")
+        self.assertEqual(result["reason"], "non-codex-role-target")
+
+    def test_permission_workflow_applies_verifies_and_rolls_back_temp_role(self) -> None:
+        registry = self.registry()
+        plan = registry.plan(
+            "security_role_permissions_update",
+            {
+                "display_name_hint": "permissions",
+                "camera_access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+                "group_id": "group-fixture",
+                "macro_id": "macro-fixture",
+            },
+        )
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        verified = registry.verify(plan["plan_id"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(applied["workflow"], "security_role_permissions_update")
+        self.assertEqual(applied["object_failed_count"], 0)
+        self.assertEqual(applied["group_permission_count"], 1)
+        self.assertEqual(applied["macro_permission_count"], 1)
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["global_role_present"])
+        self.assertTrue(rolled_back["role_removed"])
+        self.assertEqual(rolled_back["status"], "rolled-back")
+        self.assertEqual(self.fake.roles, {})
+        self.assertNotIn("camera_access", str(applied))
 
     def test_audit_log_redacts_sensitive_values(self) -> None:
         registry = self.registry()
