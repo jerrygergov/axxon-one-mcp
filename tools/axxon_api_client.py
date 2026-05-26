@@ -483,6 +483,72 @@ class AxxonApiClient:
             {"volume_type": "local", "connection_params": {"path": path_or_volume_hint}},
         )
 
+    def security_list_roles(self, *, page_size: int = 100, page_token: str = "") -> dict[str, Any]:
+        data: dict[str, Any] = {"page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListRoles", data)
+
+    def security_list_users(
+        self,
+        *,
+        page_size: int = 100,
+        page_token: str = "",
+        role_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {"page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        if role_ids:
+            data["role_ids"] = list(role_ids)
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListUsers", data)
+
+    def security_list_ldap_servers(self, *, page_size: int = 100, page_token: str = "") -> dict[str, Any]:
+        data: dict[str, Any] = {"page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListLDAPServers", data)
+
+    def security_get_policies(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.GetPolicies", {})
+
+    def security_get_restricted_config(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.GetRestrictedConfig", {})
+
+    def security_list_global_permissions(self, role_ids: list[str]) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.security.SecurityService.ListGlobalPermissions",
+            {"role_ids": list(role_ids)},
+        )
+
+    def security_list_object_permissions_info(
+        self,
+        *,
+        role_id: str,
+        node_name: str,
+        page_size: int = 50,
+        page_token: str = "",
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {"role_id": role_id, "node_name": node_name, "page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.security.SecurityService.ListObjectsPermissionsInfo", data)
+
+    def license_get_global_restrictions(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.license.LicenseService.GetGlobalRestrictions", {})
+
+    def license_get_domain_key_info(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.license.LicenseService.GetDomainLicenseKeyInfo", {})
+
+    def license_get_host_info(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.license.LicenseService.GetHostInfo", {})
+
+    def time_get_time_zone(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.GetTimeZone", {})
+
+    def time_get_ntp(self) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.tz.TimeZoneManager.GetNTP", {})
+
     def http_get_json(self, path: str, max_items: int = 32) -> dict[str, Any]:
         """GET a legacy HTTP JSON endpoint with Bearer auth and return the parsed body."""
         response = self.http_request("GET", path, bearer=True, max_items=max_items)
