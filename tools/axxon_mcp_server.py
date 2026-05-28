@@ -45,6 +45,7 @@ def create_server(
     admin: Any | None = None,
     admin_mutator: Any | None = None,
     bookmarks: Any | None = None,
+    bookmark_mutator: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -129,6 +130,9 @@ def create_server(
     if bookmarks is not None:
         register_bookmark_tools(server, bookmarks)
 
+    if bookmark_mutator is not None:
+        register_bookmark_mutation_tools(server, bookmark_mutator)
+
     return server
 
 
@@ -147,6 +151,38 @@ def register_bookmark_tools(server: Any, bookmarks: Any) -> None:
     def bookmark_get(bookmark_id: str) -> dict[str, Any]:
         """Return a single bookmark by id."""
         return bookmarks.bookmark_get(bookmark_id)
+
+
+def register_bookmark_mutation_tools(server: Any, bookmark_mutator: Any) -> None:
+    @server.tool(name="list_bookmark_mutation_workflows")
+    def list_bookmark_mutation_workflows() -> dict[str, Any]:
+        """List approval-gated bookmark mutation workflows supported by this MCP server."""
+        return bookmark_mutator.list_workflows()
+
+    @server.tool(name="plan_bookmark_mutation_workflow")
+    def plan_bookmark_mutation_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Build a bookmark mutation plan without applying changes."""
+        return bookmark_mutator.plan(workflow, params or {})
+
+    @server.tool(name="apply_bookmark_mutation_plan")
+    def apply_bookmark_mutation_plan(plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Apply a planned bookmark mutation when confirmation matches and approval is enabled."""
+        return bookmark_mutator.apply(plan_id, confirmation)
+
+    @server.tool(name="verify_bookmark_mutation_plan")
+    def verify_bookmark_mutation_plan(plan_id: str) -> dict[str, Any]:
+        """Verify the current state for a planned bookmark mutation."""
+        return bookmark_mutator.verify(plan_id)
+
+    @server.tool(name="rollback_bookmark_mutation_plan")
+    def rollback_bookmark_mutation_plan(plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Roll back a planned bookmark mutation when confirmation matches and approval is enabled."""
+        return bookmark_mutator.rollback(plan_id, confirmation)
+
+    @server.tool(name="read_bookmark_mutation_audit_log")
+    def read_bookmark_mutation_audit_log() -> dict[str, Any]:
+        """Return the redacted in-memory bookmark mutation audit log."""
+        return bookmark_mutator.audit_log()
 
 
 def register_admin_mutation_tools(server: Any, admin_mutator: Any) -> None:
@@ -835,6 +871,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5G read-only BookmarkService tools backed by env config.",
     )
+    parser.add_argument(
+        "--enable-bookmark-mutations",
+        action="store_true",
+        help="Enable Phase 5G approval-gated bookmark lifecycle tools. Requires AXXON_BOOKMARK_MUTATION_APPROVE=1.",
+    )
     return parser
 
 
@@ -907,6 +948,13 @@ def main() -> int:
         from axxon_mcp_bookmarks import AxxonMcpBookmarks
 
         bookmarks = AxxonMcpBookmarks()
+    bookmark_mutator = None
+    if args.enable_bookmark_mutations:
+        from axxon_mcp_bookmark_mutations import AxxonBookmarkMutationRegistry
+
+        bookmark_mutator = AxxonBookmarkMutationRegistry(
+            enabled=os.environ.get("AXXON_BOOKMARK_MUTATION_APPROVE") == "1",
+        )
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -920,6 +968,7 @@ def main() -> int:
         admin=admin,
         admin_mutator=admin_mutator,
         bookmarks=bookmarks,
+        bookmark_mutator=bookmark_mutator,
     )
     server.run(transport=args.transport)
     return 0

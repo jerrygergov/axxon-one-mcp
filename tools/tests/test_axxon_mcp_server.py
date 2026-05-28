@@ -446,6 +446,31 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(server.tools["bookmark_list"](rng, 7, "")["limit"], 7)
         self.assertEqual(server.tools["bookmark_get"]("bm-1")["bookmark_id"], "bm-1")
 
+    def test_create_server_registers_bookmark_mutation_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        bookmark_mutation_tools = {
+            "list_bookmark_mutation_workflows",
+            "plan_bookmark_mutation_workflow",
+            "apply_bookmark_mutation_plan",
+            "verify_bookmark_mutation_plan",
+            "rollback_bookmark_mutation_plan",
+            "read_bookmark_mutation_audit_log",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in bookmark_mutation_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("bookmark_mutator", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-bookmark-mutations"])
+        self.assertTrue(args.enable_bookmark_mutations)
+
+        mutator = StubAdminMutator()
+        server = module.create_server(docs=StubDocs(), bookmark_mutator=mutator, fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(bookmark_mutation_tools, set(server.tools))
+        self.assertEqual(server.tools["plan_bookmark_mutation_workflow"]("bookmark_lifecycle")["status"], "planned")
+        self.assertEqual(server.tools["apply_bookmark_mutation_plan"]("p1", "tok")["status"], "applied")
+
     def test_create_server_registers_admin_mutation_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
         admin_mutation_tools = {
