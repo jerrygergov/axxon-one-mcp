@@ -20,7 +20,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 ---
 
-## 1b. Current phase status (updated 2026-05-26)
+## 1b. Current phase status (updated 2026-05-28)
 
 | Phase | State | Merged to main? | Artifacts |
 | --- | --- | --- | --- |
@@ -31,6 +31,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | yes (`62a4b9b`) | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-A** Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | yes (`64d6477`) | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
+| **5G** BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | yes | `tools/axxon_mcp_bookmark_mutations.py`, `tools/axxon_bookmarks_smoke.py`, `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
 | **7** NL → plan translator | ❌ not started | no | none |
@@ -80,7 +81,7 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
 | PDF coverage matrix | 32 / 39 verified, 2 partial, 5 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 465 / 465 passing on `main` | `tools/tests/` |
+| Unit tests | 495 / 495 passing on `main` | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 

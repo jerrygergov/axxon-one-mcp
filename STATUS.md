@@ -1,7 +1,7 @@
 # Axxon One MCP — Project Status & Handoff
 
-**Last updated:** 2026-05-26
-**Branch state:** `main` includes Phase 5F-B1 implementation and live evidence through commit `518a956`. Continue on `main` unless the user asks for a new worktree.
+**Last updated:** 2026-05-28
+**Branch state:** `main` includes Phase 5F-B1 and Phase 5G (BookmarkService) implementations with live evidence. Continue on `main` unless the user asks for a new worktree.
 
 This file is the single point of entry for any agent (Claude, Codex, human) continuing this project. Read it first, then jump into the linked roadmap and the next-phase plan.
 
@@ -16,8 +16,9 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. Latest combined live evidence: PASS=12, WARN=3, FAIL=0 across read-only, mutation, and archive-maintenance-no-op modes.
 - Phase 5F-A is shipped on `main` with 11 read-only admin tools and sanitized live evidence PASS=7, WARN=4, FAIL=0.
 - Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows and sanitized live evidence PASS=5, WARN=0, FAIL=0. License, timezone, NTP, production user/role edits, LDAP sync against a real directory, and schedule authoring remain deferred.
+- Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. `ListBookmarks` returned empty for a 24h window on the stand. Create/update/delete need a camera-access-point + range fixture, so the lifecycle stays fixture-gated. Sanitized live evidence PASS=1, WARN=1, FAIL=0. `RenderTrack` is out of scope.
 
-Test suite baseline on `main`: 465 / 465 passing.
+Test suite baseline on `main`: 495 / 495 passing.
 
 ---
 
@@ -31,7 +32,7 @@ Test suite baseline on `main`: 465 / 465 passing.
    ```bash
    cd /Users/jerrygergov/Documents/GitHub/axxon-one-mcp
    python3.12 -m unittest discover -s tools/tests 2>&1 | tail -3
-   # current main baseline: Ran 465 tests OK
+   # current main baseline: Ran 495 tests OK
    ```
 3. **Set demo-stand env for any live verification:**
    ```bash
@@ -62,6 +63,7 @@ Test suite baseline on `main`: 465 / 465 passing.
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) | 11 reads + 9 workflows | `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` |
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1 — Security/admin mutations | ✅ shipped | 5 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
+| 5G — BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
 | 6B — Partner SDK kit | ❌ not started | — | — |
 | 7 — NL → plan translator | ❌ not started | — | — |
@@ -84,6 +86,8 @@ Phase 5F-A fixture/stand caveats carried forward: `LicenseService.GetHostInfo` c
 Phase 5F-B1 live evidence: `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` verifies plan/apply/verify/rollback for temporary user/role lifecycle, temp-role permissions, policy no-op replay, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable.
 
 Phase 5F-B2 deferred scope: license apply/drop, timezone changes, NTP changes, production user/role edits, LDAP sync against a real directory, and schedule authoring.
+
+Phase 5G fixture debt carried forward: the stand returned no bookmarks for the 24h read window and exposes no HTTPS root CA, so camera-access-point and archive-range discovery is blocked. The `bookmark_lifecycle` workflow stays fixture-gated — supply a `camera_access_point` and `range` to exercise create/verify/delete against a real camera. `RenderTrack` remains out of scope.
 
 ---
 

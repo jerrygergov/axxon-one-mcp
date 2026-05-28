@@ -641,7 +641,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.ListBookmarks",
       "http_annotation": "POST /v1/bookmarks:list",
-      "live_status": "pending",
+      "live_status": "tested-pass-empty",
       "method": "ListBookmarks",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -654,7 +654,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.GetBookmark",
       "http_annotation": "POST /v1/bookmarks:get",
-      "live_status": "pending",
+      "live_status": "tested-pass-empty",
       "method": "GetBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -667,7 +667,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.CreateBookmark",
       "http_annotation": "POST /v1/bookmarks:create",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "CreateBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -680,7 +680,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.UpdateBookmark",
       "http_annotation": "POST /v1/bookmarks:update",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "UpdateBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -693,7 +693,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.DeleteBookmark",
       "http_annotation": "POST /v1/bookmarks:delete",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "DeleteBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -706,7 +706,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.SetExportedTime",
       "http_annotation": "POST /v1/bookmarks:setExportedTime",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SetExportedTime",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
