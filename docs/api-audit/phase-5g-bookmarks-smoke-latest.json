@@ -1,0 +1,60 @@
+{
+  "started_at": "2026-05-28T20:28:02.129334+00:00",
+  "finished_at": "2026-05-28T20:28:02.963555+00:00",
+  "target": {
+    "host": "<demo-host>",
+    "http_url": "http://<demo-host>",
+    "username": "<demo-user>",
+    "password": "<redacted>",
+    "tls_cn": "<demo-tls-cn>",
+    "ca": "<redacted-ca>"
+  },
+  "modes": {
+    "mutation_approval_env": "AXXON_BOOKMARK_MUTATION_APPROVE",
+    "mutation_approval_enabled": false,
+    "transport": "http-grpc"
+  },
+  "summary": {
+    "PASS": 1,
+    "WARN": 1,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "group": "bookmark_list",
+      "status": "PASS",
+      "elapsed_ms": 833,
+      "evidence": {
+        "status": "ok",
+        "range_hours": 24,
+        "bookmark_count": 0,
+        "next_page_token_present": false
+      }
+    },
+    {
+      "group": "bookmark_lifecycle",
+      "status": "WARN",
+      "elapsed_ms": 0,
+      "evidence": {
+        "plan": {
+          "status": "planned",
+          "plan_id": "bookmark-bookmark_lifecycle-05c95203-a257-4017-b7a2-74de2239f1b6",
+          "workflow": "bookmark_lifecycle",
+          "risk": "bookmark-mutation",
+          "summary": "Create a temporary codex bookmark, verify it, and delete it on rollback.",
+          "params": {},
+          "confirmation_token": "<redacted>",
+          "rollback_confirmation_token": "<redacted>",
+          "enabled": false,
+          "applied": false,
+          "rolled_back": false,
+          "expected": {
+            "message": "codex temporary bookmark 1d5cf2dbbe6c, remove after smoke"
+          }
+        },
+        "status": "skipped",
+        "message": "Set AXXON_BOOKMARK_MUTATION_APPROVE=1 to exercise the bookmark lifecycle."
+      }
+    }
+  ]
+}
