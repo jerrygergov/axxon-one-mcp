@@ -217,6 +217,17 @@ class StubAdmin:
         return {"uid": uid, "tool": "schedule_descriptor_get"}
 
 
+class StubBookmarks:
+    def bookmark_connect_axxon_profile(self, profile: str = "env"):
+        return {"profile": profile, "mode": "read-only"}
+
+    def bookmark_list(self, time_range: dict, limit: int = 100, page_token: str = ""):
+        return {"range": time_range, "limit": limit, "page_token": page_token}
+
+    def bookmark_get(self, bookmark_id: str):
+        return {"bookmark_id": bookmark_id}
+
+
 class StubAdminMutator:
     def __init__(self) -> None:
         self.calls: list[tuple[str, tuple[object, ...]]] = []
@@ -416,6 +427,24 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(domain["limit"], 7)
         self.assertEqual(server.tools["node_event_subscribe"]([], [], 1.0, 1, False)["notifier"], "node")
         self.assertEqual(server.tools["schedule_descriptor_get"]("hosts/Server/DeviceIpint.1")["uid"], "hosts/Server/DeviceIpint.1")
+
+    def test_create_server_registers_bookmark_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        bookmark_tools = {"bookmark_connect_axxon_profile", "bookmark_list", "bookmark_get"}
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in bookmark_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("bookmarks", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-bookmarks"])
+        self.assertTrue(args.enable_bookmarks)
+
+        server = module.create_server(docs=StubDocs(), bookmarks=StubBookmarks(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(bookmark_tools, set(server.tools))
+        rng = {"begin_time": "a", "end_time": "b"}
+        self.assertEqual(server.tools["bookmark_list"](rng, 7, "")["limit"], 7)
+        self.assertEqual(server.tools["bookmark_get"]("bm-1")["bookmark_id"], "bm-1")
 
     def test_create_server_registers_admin_mutation_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")

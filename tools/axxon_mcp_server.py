@@ -44,6 +44,7 @@ def create_server(
     detector_archive: Any | None = None,
     admin: Any | None = None,
     admin_mutator: Any | None = None,
+    bookmarks: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -125,7 +126,27 @@ def create_server(
     if admin_mutator is not None:
         register_admin_mutation_tools(server, admin_mutator)
 
+    if bookmarks is not None:
+        register_bookmark_tools(server, bookmarks)
+
     return server
+
+
+def register_bookmark_tools(server: Any, bookmarks: Any) -> None:
+    @server.tool(name="bookmark_connect_axxon_profile")
+    def bookmark_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the bookmark layer to an Axxon profile (read-only, env-backed)."""
+        return bookmarks.bookmark_connect_axxon_profile(profile)
+
+    @server.tool(name="bookmark_list")
+    def bookmark_list(time_range: dict[str, Any], limit: int = 100, page_token: str = "") -> dict[str, Any]:
+        """List archive bookmarks within a required time range (bounded page size)."""
+        return bookmarks.bookmark_list(time_range, limit, page_token)
+
+    @server.tool(name="bookmark_get")
+    def bookmark_get(bookmark_id: str) -> dict[str, Any]:
+        """Return a single bookmark by id."""
+        return bookmarks.bookmark_get(bookmark_id)
 
 
 def register_admin_mutation_tools(server: Any, admin_mutator: Any) -> None:
@@ -809,6 +830,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 5F-B approval-gated admin mutation tools. Requires AXXON_ADMIN_MUTATION_APPROVE=1.",
     )
+    parser.add_argument(
+        "--enable-bookmarks",
+        action="store_true",
+        help="Enable Phase 5G read-only BookmarkService tools backed by env config.",
+    )
     return parser
 
 
@@ -876,6 +902,11 @@ def main() -> int:
         admin_mutator = AxxonAdminMutationRegistry(
             enabled=os.environ.get("AXXON_ADMIN_MUTATION_APPROVE") == "1",
         )
+    bookmarks = None
+    if args.enable_bookmarks:
+        from axxon_mcp_bookmarks import AxxonMcpBookmarks
+
+        bookmarks = AxxonMcpBookmarks()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -888,6 +919,7 @@ def main() -> int:
         detector_archive=detector_archive,
         admin=admin,
         admin_mutator=admin_mutator,
+        bookmarks=bookmarks,
     )
     server.run(transport=args.transport)
     return 0
