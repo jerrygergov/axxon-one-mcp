@@ -606,6 +606,32 @@ class AxxonApiClient:
             {"assignments": [{"user_index": user_index, "verification_code": verification_code}]},
         )
 
+    def bookmark_list(
+        self, time_range: dict[str, Any], *, page_size: int = 100, page_token: str = ""
+    ) -> dict[str, Any]:
+        data: dict[str, Any] = {"range": time_range, "page_size": page_size}
+        if page_token:
+            data["page_token"] = page_token
+        return self.http_grpc("axxonsoft.bl.bookmarks.BookmarkService.ListBookmarks", data)
+
+    def bookmark_get(self, bookmark_id: str) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.bookmarks.BookmarkService.GetBookmark", {"id": bookmark_id})
+
+    def bookmark_create(self, bookmark: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.bookmarks.BookmarkService.CreateBookmark", {"bookmark": bookmark})
+
+    def bookmark_update(self, bookmark: dict[str, Any]) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.bookmarks.BookmarkService.UpdateBookmark", {"bookmark": bookmark})
+
+    def bookmark_delete(self, bookmark_id: str) -> dict[str, Any]:
+        return self.http_grpc("axxonsoft.bl.bookmarks.BookmarkService.DeleteBookmark", {"id": bookmark_id})
+
+    def bookmark_set_exported_time(self, bookmark_id: str, exported_time: str) -> dict[str, Any]:
+        return self.http_grpc(
+            "axxonsoft.bl.bookmarks.BookmarkService.SetExportedTime",
+            {"id": bookmark_id, "exported_time": exported_time},
+        )
+
     def license_get_global_restrictions(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.GetGlobalRestrictions", {})
 
