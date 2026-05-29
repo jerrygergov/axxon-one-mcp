@@ -2136,7 +2136,7 @@
     {
       "fqmn": "axxonsoft.bl.layout.LayoutImagesManager.RemoveLayoutImages",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RemoveLayoutImages",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutImagesManager.proto",
@@ -2149,7 +2149,7 @@
     {
       "fqmn": "axxonsoft.bl.layout.LayoutImagesManager.UploadLayoutImage",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UploadLayoutImage",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutImagesManager.proto",

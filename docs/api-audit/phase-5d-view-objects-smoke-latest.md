@@ -1,8 +1,8 @@
 # Phase 5D - Layouts / Maps / Videowalls Live Smoke Evidence
 
-**Date:** 2026-05-18
+**Date:** 2026-05-29
 **Stand:** `<demo-host>` (sanitized)
-**Auth mode:** Bearer (HTTP `/grpc`)
+**Auth mode:** Bearer (HTTP `/grpc`); `LayoutImagesManager` reads/mutations over direct gRPC (CN=Server)
 **Caps:** list limit = 200; map image bytes = 4 MiB; map image tool returns metadata only.
 
 ## Coverage
@@ -13,7 +13,8 @@
 | `list_layouts` | verified | `VIEW_MODE_ONLY_META`; 10 layouts returned in smoke |
 | `get_layout` | verified | `BatchGetLayouts` returned a full layout body |
 | `layouts_on_view` | offline-tested only | Dispatch shape covered; not run in live smoke because it pushes client view state |
-| `list_layout_images` | live fixture-gap; offline-tested | All listed demo layouts returned unreadable/not-found for `ListLayoutImages`; tool reports `status: gap` |
+| `list_layout_images` | verified | Routed over direct gRPC; HTTP `/grpc` returns HTTP 500 for `LayoutImagesManager`. Returns `status: ok` for layout `a7cf0082-...` (0 images on stand) |
+| `layout_image_roundtrip` | verified | Reversible `UploadLayoutImage` -> `ListLayoutImages` (image present) -> `RemoveLayoutImages` -> empty again; no residue on stand |
 | `list_maps` | verified | 5 maps returned in smoke |
 | `get_map` | verified | `BatchGetMaps` one-item path |
 | `get_map_image` | verified | Nested `image` response parsed; 161,057 bytes reported, not echoed |
@@ -34,7 +35,7 @@ Offline tests: `tools/tests/test_axxon_mcp_view_objects.py`, `tools/tests/test_a
 Full repo suite after this task:
 
 ```text
-Ran 281 tests in 0.152s
+Ran 500 tests in 0.193s
 OK
 ```
 
@@ -48,7 +49,13 @@ Read smoke summary from `tools/axxon_view_objects_smoke.py`:
   "reads": {
     "list_layouts_meta": {"status": "ok", "count": 10},
     "get_layout": {"status": "ok"},
-    "list_layout_images": {"status": "gap"},
+    "list_layout_images": {"status": "ok", "count": 0},
+    "layout_image_roundtrip": {
+      "status": "ok",
+      "uploaded": "OK",
+      "listed_after_upload": true,
+      "rolled_back": true
+    },
     "list_maps": {"status": "ok", "count": 5},
     "get_map": {"status": "ok"},
     "get_map_image": {
