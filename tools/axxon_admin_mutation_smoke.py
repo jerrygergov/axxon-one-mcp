@@ -157,9 +157,9 @@ def payload_status(payload: Any) -> str:
         status = str(payload.get("status") or "").lower()
         if status in {"ok", "pass", "planned", "applied", "verified", "rolled-back", "rolled_back"}:
             return "PASS"
-        if status in {"fixture-needed", "skipped", "gap", "warn", "warning", "partial"}:
+        if status in {"fixture-needed", "skipped", "gap", "warn", "warning", "partial", "rejected"}:
             return "WARN"
-        if status in {"error", "fail", "failed", "rejected"}:
+        if status in {"error", "fail", "failed"}:
             return "FAIL"
     return "PASS"
 
