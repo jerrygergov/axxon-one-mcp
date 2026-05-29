@@ -21,14 +21,14 @@ class FakeBookmarkMutationClient:
         stored = dict(bookmark)
         stored["id"] = bookmark_id
         self.store[bookmark_id] = stored
-        return {"body": {"id": bookmark_id}}
+        return {"body": {"bookmark": {"id": bookmark_id}}}
 
     def bookmark_get(self, bookmark_id):
         self.calls.append(("get", {"id": bookmark_id}))
         item = self.store.get(bookmark_id)
         if item is None:
-            return {"body": {}}
-        return {"body": dict(item)}
+            return {"body": {"errorMessage": "Bookmark was not found.", "grpcErrorCode": 5}}
+        return {"body": {"bookmark": dict(item)}}
 
     def bookmark_delete(self, bookmark_id):
         self.calls.append(("delete", {"id": bookmark_id}))
@@ -107,6 +107,11 @@ class BookmarkMutationAppliedTests(unittest.TestCase):
         self.assertEqual(result["status"], "applied")
         self.assertEqual(result["bookmark_id"], "bm-created-1")
         self.assertEqual(client.calls[0][0], "create")
+        sent = client.calls[0][1]["bookmark"]
+        self.assertEqual(
+            sent["camera_descriptions"],
+            {"descriptions": [{"camera_access_point": "hosts/X/Camera.1"}]},
+        )
 
     def test_verify_finds_created_bookmark(self) -> None:
         registry, _ = build_registry()

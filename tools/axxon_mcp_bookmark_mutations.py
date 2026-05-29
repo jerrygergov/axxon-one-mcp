@@ -25,6 +25,11 @@ BOOKMARK_MUTATION_WORKFLOWS: dict[str, dict[str, str]] = {
 _REQUIRED_FIXTURE_OBJECTS = ("camera_access_point", "range")
 
 
+def _bookmark_id(body: dict[str, Any]) -> str:
+    """Return the bookmark id from a CreateBookmark/GetBookmark body that nests it under `bookmark`."""
+    return str((body.get("bookmark") or {}).get("id") or body.get("id") or "")
+
+
 def default_config_factory() -> AxxonClientConfig:
     return AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
 
@@ -189,11 +194,11 @@ class AxxonBookmarkMutationRegistry:
         client = self.ensure_client()
         bookmark = {
             "message": state["message"],
-            "camera_descriptions": [{"camera_ap": state["camera_access_point"]}],
+            "camera_descriptions": {"descriptions": [{"camera_access_point": state["camera_access_point"]}]},
             "range": state["range"],
         }
         response = _body(client.bookmark_create(bookmark))
-        bookmark_id = str(response.get("id") or "")
+        bookmark_id = _bookmark_id(response)
         plan["_state"]["bookmark_id"] = bookmark_id
         plan["applied"] = True
         result = {
@@ -224,7 +229,7 @@ class AxxonBookmarkMutationRegistry:
             self._audit("verify_fixture_needed", result)
             return result
         item = _body(self.ensure_client().bookmark_get(bookmark_id))
-        bookmark_present = str(item.get("id") or "") == bookmark_id
+        bookmark_present = _bookmark_id(item) == bookmark_id
         result = {
             "status": "verified" if bookmark_present else "warn",
             "plan_id": plan_id,
@@ -267,7 +272,7 @@ class AxxonBookmarkMutationRegistry:
         client = self.ensure_client()
         client.bookmark_delete(bookmark_id)
         item = _body(client.bookmark_get(bookmark_id))
-        bookmark_removed = str(item.get("id") or "") != bookmark_id
+        bookmark_removed = _bookmark_id(item) != bookmark_id
         plan["rolled_back"] = True
         result = {
             "status": "rolled-back" if bookmark_removed else "warn",
