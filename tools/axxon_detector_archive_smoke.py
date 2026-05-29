@@ -591,6 +591,21 @@ class DetectorArchiveSmoke:
                     inventory = load_inventory()
                 except Exception:
                     inventory = {}
+        # Prefer a top-level MultimediaStorage archive unit (a standalone config
+        # unit with day_depth/retention) over embedded device storages, which are
+        # nested under a DeviceIpint and do not resolve via ListUnits.
+        archive_aps = [
+            value
+            for item in inventory.get("archives", [])
+            for field in ("uid", "access_point", "accessPoint")
+            if isinstance((value := item.get(field)), str) and value
+        ]
+        top_level = next(
+            (ap for ap in archive_aps if "/MultimediaStorage." in ap and "/DeviceIpint." not in ap),
+            "",
+        )
+        if top_level:
+            return top_level
         for collection in ("cameras", "archives"):
             for item in inventory.get(collection, []):
                 for field in ("uid", "access_point", "accessPoint"):

@@ -119,6 +119,37 @@ class AxxonDetectorArchiveSmokeTests(unittest.TestCase):
             "target <demo-user> tls <demo-tls-cn> uid hosts/Server/AVDetector.1 authorization Bearer <redacted>",
         )
 
+    def test_archive_policy_target_prefers_top_level_multimedia_storage(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        client = mock.Mock()
+        client.inventory = {
+            "archives": [
+                {"access_point": "hosts/Server/DeviceIpint.5/MultimediaStorage.0"},
+                {"access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage"},
+            ],
+            "cameras": [{"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"}],
+        }
+        smoke.tool = mock.Mock()
+        smoke.tool.ensure_client.return_value = client
+        self.assertEqual(
+            smoke.archive_policy_target(),
+            "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage",
+        )
+
+    def test_archive_policy_target_falls_back_when_no_top_level_storage(self) -> None:
+        smoke = object.__new__(self.module.DetectorArchiveSmoke)
+        client = mock.Mock()
+        client.inventory = {
+            "archives": [{"access_point": "hosts/Server/DeviceIpint.5/MultimediaStorage.0"}],
+            "cameras": [{"access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"}],
+        }
+        smoke.tool = mock.Mock()
+        smoke.tool.ensure_client.return_value = client
+        self.assertEqual(
+            smoke.archive_policy_target(),
+            "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+        )
+
     def test_mutation_run_does_not_dispatch_archive_maintenance_noop(self) -> None:
         smoke = object.__new__(self.module.DetectorArchiveSmoke)
         smoke.args = SimpleNamespace(mutation=True, archive_maintenance_noop=False)
