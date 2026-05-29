@@ -1109,7 +1109,10 @@ class AxxonApiClient:
         return str(value)
 
     def load_inventory(self) -> dict[str, Any]:
-        stubs = self.common_stubs()
+        try:
+            stubs = self.common_stubs()
+        except (FileNotFoundError, OSError):
+            return self.load_inventory_http()
         domain = stubs["domain"]
         config = stubs["config"]
         domain_pb2 = self.pb["domain_pb2"]
@@ -1146,6 +1149,51 @@ class AxxonApiClient:
             "cameras": cameras,
             "archives": archives,
             "components": components,
+            "host_unit": host_unit,
+        }
+        return self.inventory
+
+    def _http_grpc_body(self, fqmn: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
+        response = self.http_grpc(fqmn, data or {})
+        body = response.get("body") if isinstance(response, dict) else None
+        return body if isinstance(body, dict) else {}
+
+    def _http_grpc_stream_items(self, fqmn: str, page_size: int) -> list[dict[str, Any]]:
+        """Drain a server-streaming DomainService listing over HTTP /grpc into a flat items list."""
+        items: list[dict[str, Any]] = []
+        token = ""
+        while True:
+            body = self._http_grpc_body(fqmn, {"page_size": page_size, "page_token": token})
+            events = body.get("event_stream_items", []) if body.get("event_stream_items") is not None else [body]
+            next_token = ""
+            page_total = 0
+            for event in events:
+                page_items = event.get("items", []) if isinstance(event, dict) else []
+                items.extend(page_items)
+                page_total += len(page_items)
+                if isinstance(event, dict) and event.get("next_page_token"):
+                    next_token = event["next_page_token"]
+            if not next_token or page_total == 0:
+                break
+            token = next_token
+        return items
+
+    def load_inventory_http(self) -> dict[str, Any]:
+        """Build the inventory dict over HTTP /grpc only (no gRPC stubs, no CA)."""
+        domain = "axxonsoft.bl.domain.DomainService"
+        nodes = self._http_grpc_body(f"{domain}.ListNodes").get("nodes", [])
+        host_name = nodes[0].get("node_name") if nodes else self.config.tls_cn
+        host_unit = self._http_grpc_body(
+            "axxonsoft.bl.config.ConfigurationService.ListUnits",
+            {"unit_uids": [f"hosts/{host_name}"]},
+        )
+        self.inventory = {
+            "version": self._http_grpc_body(f"{domain}.GetVersion"),
+            "platform": self._http_grpc_body(f"{domain}.GetHostPlatformInfo"),
+            "nodes": nodes,
+            "cameras": self._http_grpc_stream_items(f"{domain}.ListCameras", 100),
+            "archives": self._http_grpc_stream_items(f"{domain}.ListArchives", 100),
+            "components": self._http_grpc_stream_items(f"{domain}.ListComponents", 200),
             "host_unit": host_unit,
         }
         return self.inventory
