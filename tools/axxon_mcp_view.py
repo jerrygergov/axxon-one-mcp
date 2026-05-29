@@ -217,8 +217,17 @@ class AxxonMcpView:
         applied_hours = min(max(hours, 1), 24)
         begin, end = self.client.archive_time_range_legacy(hours=applied_hours)
         legacy = self._legacy_ap(camera_access_point)
-        calendar = self.client.archive_calendar(camera_access_point, archive_ap)
         intervals = self.client.archive_intervals(legacy, begin, end, archive_ap=archive_ap)
+        if not intervals and archive_access_point is None:
+            for arc in inventory.get("archives", []):
+                candidate = arc.get("access_point")
+                if not candidate or candidate == archive_ap:
+                    continue
+                found = self.client.archive_intervals(legacy, begin, end, archive_ap=candidate)
+                if found:
+                    archive_ap, intervals = candidate, found
+                    break
+        calendar = self.client.archive_calendar(camera_access_point, archive_ap)
         sample_ts = (intervals[-1].get("end") if intervals else end)
         sample_ts_q = quote(sample_ts, safe="")
         base = self.client.config.http_url.rstrip("/")

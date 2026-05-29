@@ -212,6 +212,30 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertIn("/archive/media/", result["sample_frame_url"])
         self.assertEqual(result["caps"]["bytes"], module.DEFAULT_MAX_BYTES)
 
+    def test_archive_scrub_picks_archive_with_intervals(self) -> None:
+        class TwoArchiveClient(FakeClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.inventory["archives"] = [
+                    {"access_point": "hosts/Server/DeviceIpint.5/MultimediaStorage.0", "enabled": True},
+                    {"access_point": "hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage", "enabled": True},
+                ]
+
+            def archive_intervals(self, camera_legacy_ap, begin, end, archive_ap=None):
+                if "AliceBlue" in (archive_ap or ""):
+                    return [{"begin": "2026-05-29T07:56:53.451000", "end": "2026-05-29T08:56:56.550000"}]
+                return []
+
+        module = importlib.import_module("axxon_mcp_view")
+        view = module.AxxonMcpView(
+            client_factory=lambda _config: TwoArchiveClient(),
+            config_factory=lambda: FakeConfig(),
+        )
+        result = view.archive_scrub("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", hours=1)
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("AliceBlue", result["archive"])
+        self.assertEqual(len(result["intervals"]), 1)
+
     def test_archive_scrub_unknown_camera_returns_gap(self) -> None:
         module = importlib.import_module("axxon_mcp_view")
         view = module.AxxonMcpView(
