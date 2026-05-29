@@ -1,0 +1,50 @@
+{
+  "task_id": "phase-5a-to-5g-re-verify",
+  "verified_at": "2026-05-29T08:39:00Z",
+  "overall_verdict": "PASS",
+  "unit_tests": {"count": 495, "status": "OK"},
+  "phases": {
+    "5A": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=5 WARN=2 FAIL=0",
+      "impl": "ok",
+      "notes": "archive_frame and archive_mjpeg_bounded fixture-needed (no archive intervals on stand); live_view/snapshot/archive_scrub/stream_health all ok"
+    },
+    "5C": {
+      "verdict": "PASS",
+      "smoke": "PASS=6 WARN=0 FAIL=0",
+      "impl": "ok",
+      "notes": "all 6 read tools passed; mutation not exercised (no approval env per task instructions)"
+    },
+    "5D": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=8 WARN=1 FAIL=0",
+      "impl": "ok",
+      "notes": "list_layout_images gap (fixture-dependent); 8 layout/map/marker tools passed"
+    },
+    "5E": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=10 WARN=1 FAIL=0",
+      "impl": "ok",
+      "notes": "1 WARN archive_policy fixture caveat; 10 detector/archive tools passed"
+    },
+    "5F-A": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=7 WARN=3 FAIL=0",
+      "impl": "ok",
+      "notes": "3 WARNs are fixture-caveats (schedule/notifier/license); 7 read-only admin tools passed"
+    },
+    "5F-B1": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=0 WARN=5 FAIL=0",
+      "impl": "ok",
+      "notes": "all 5 workflows scored WARN (approval env not set per task instructions); rejection correctly maps to WARN not FAIL"
+    },
+    "5G": {
+      "verdict": "WARN-fixture",
+      "smoke": "PASS=1 WARN=1 FAIL=0",
+      "impl": "ok",
+      "notes": "bookmark_list PASS live HTTP /grpc; lifecycle WARN (AXXON_BOOKMARK_MUTATION_APPROVE not set per task instructions)"
+    }
+  }
+}
