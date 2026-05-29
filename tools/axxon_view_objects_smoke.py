@@ -26,6 +26,35 @@ sys.path.insert(0, str(TOOLS_DIR))
 
 from axxon_mcp_view_objects import AxxonMcpViewObjects  # noqa: E402
 
+# Minimal 1x1 transparent PNG used as a reversible layout-image probe.
+TINY_PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+    "0000000d4944415478da6360000002000154a24d3b0000000049454e44ae426082"
+)
+
+
+def layout_image_roundtrip(client: Any, layout_id: str) -> dict[str, Any]:
+    """Upload, list, then remove a throwaway layout image over direct gRPC.
+
+    Proves non-empty ListLayoutImages without leaving residue on the stand.
+    """
+    import uuid
+
+    image_id = f"codex-5d-img-{uuid.uuid4()}"
+    upload = client.upload_layout_image_grpc(layout_id, image_id, TINY_PNG)
+    listed = client.list_layout_images_grpc(layout_id)
+    present = any(img.get("id") == image_id for img in (listed.get("images") or []))
+    client.remove_layout_images_grpc(layout_id, [image_id])
+    after = client.list_layout_images_grpc(layout_id)
+    gone = all(img.get("id") != image_id for img in (after.get("images") or []))
+    return {
+        "status": "ok" if (present and gone) else "gap",
+        "layout_id": layout_id,
+        "uploaded": upload.get("status"),
+        "listed_after_upload": present,
+        "rolled_back": gone,
+    }
+
 
 def sanitize(obj: Any, host: str) -> Any:
     if isinstance(obj, dict):
@@ -83,6 +112,11 @@ def main() -> int:
         layout_id = layout_items[0]["layout_id"]
         reads["get_layout"] = vo.get_layout(layout_id)
         reads["list_layout_images"] = vo.list_layout_images(layout_id)
+        writable = next(
+            (it["layout_id"] for it in layout_items if it.get("has_write_access")),
+            layout_id,
+        )
+        reads["layout_image_roundtrip"] = layout_image_roundtrip(vo.client, writable)
 
     reads["list_maps"] = vo.list_maps(limit=10)
     map_id = ""

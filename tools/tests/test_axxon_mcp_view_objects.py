@@ -157,6 +157,12 @@ class FakeClient:
             return {"status": 500, "body": {}}
         return {"status": 200, "body": {"images": [{"id": "img-1", "etag": "ie-1"}]}}
 
+    def list_layout_images_grpc(self, layout_id: str) -> dict[str, Any]:
+        self.calls.append(("list_layout_images_grpc", (layout_id,), {}))
+        if layout_id in ("lid-grpc-down", "lid-unknown"):
+            raise RuntimeError("grpc transport unavailable")
+        return {"images": [{"id": "img-1", "etag": "ie-1"}]}
+
     def list_maps(self) -> dict[str, Any]:
         self.calls.append(("list_maps", (), {}))
         return {"status": 200, "body": {"items": list(self.map_pages)}}
@@ -388,7 +394,7 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(r["status"], "ok")
         self.assertEqual(r["pushed"], 1)
 
-    def test_list_layout_images_returns_meta(self) -> None:
+    def test_list_layout_images_uses_direct_grpc(self) -> None:
         module = importlib.import_module("axxon_mcp_view_objects")
         fake = FakeClient()
         vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
@@ -396,13 +402,15 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         self.assertEqual(r["status"], "ok")
         self.assertEqual(r["count"], 1)
         self.assertEqual(r["items"][0]["id"], "img-1")
+        self.assertIn(("list_layout_images_grpc", ("lid-1",), {}), fake.calls)
 
-    def test_list_layout_images_unknown_layout_returns_gap(self) -> None:
+    def test_list_layout_images_http_fallback_returns_gap(self) -> None:
         module = importlib.import_module("axxon_mcp_view_objects")
         fake = FakeClient()
         vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
         r = vo.list_layout_images("lid-unknown")
         self.assertEqual(r["status"], "gap")
+        self.assertIn(("list_layout_images", ("lid-unknown",), {}), fake.calls)
 
     def test_list_maps_returns_normalized_items(self) -> None:
         module = importlib.import_module("axxon_mcp_view_objects")

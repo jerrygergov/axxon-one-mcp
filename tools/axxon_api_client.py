@@ -891,11 +891,80 @@ class AxxonApiClient:
             {"layout_id": layout_id},
         )
 
+    def list_layout_images_grpc(self, layout_id: str) -> dict[str, Any]:
+        """Return LayoutImagesManager.ListLayoutImages over direct gRPC.
+
+        The HTTP /grpc bridge returns HTTP 500 for LayoutImagesManager, so layout
+        image enumeration must use the direct gRPC transport.
+
+        Args:
+            layout_id (str): Layout UID whose image metadata to list.
+
+        Returns:
+            (dict): MessageToDict of ListLayoutImagesResponse with an images list.
+        """
+        stub = self.stub_from_proto(
+            "axxonsoft/bl/layout/LayoutImagesManager.proto", "LayoutImagesManager"
+        )
+        pb2 = self.import_module("axxonsoft.bl.layout.LayoutImagesManager_pb2")
+        response = stub.ListLayoutImages(
+            pb2.ListLayoutImagesRequest(layout_id=layout_id), timeout=self.config.timeout
+        )
+        return self.message_to_dict(response)
+
     def remove_layout_images(self, layout_id: str, images_ids: list[str]) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.layout.LayoutImagesManager.RemoveLayoutImages",
             {"layout_id": layout_id, "images_ids": list(images_ids)},
         )
+
+    def upload_layout_image_grpc(
+        self, layout_id: str, image_id: str, chunk_data: bytes, etag: str = ""
+    ) -> dict[str, Any]:
+        """Upload a single-chunk layout image over direct gRPC.
+
+        Args:
+            layout_id (str): Target layout UID.
+            image_id (str): Client-generated image UID.
+            chunk_data (bytes): Full image payload (single chunk).
+            etag (str, optional): Last-seen revision, empty for a first upload.
+
+        Returns:
+            (dict): MessageToDict of UploadLayoutImageResponse (status, message, etag).
+        """
+        stub = self.stub_from_proto(
+            "axxonsoft/bl/layout/LayoutImagesManager.proto", "LayoutImagesManager"
+        )
+        pb2 = self.import_module("axxonsoft.bl.layout.LayoutImagesManager_pb2")
+        request = pb2.UploadLayoutImageRequest(
+            layout_id=layout_id,
+            image_id=image_id,
+            etag=etag,
+            total_size_bytes=len(chunk_data),
+            chunk_data=chunk_data,
+        )
+        response = stub.UploadLayoutImage(iter((request,)), timeout=self.config.timeout)
+        return self.message_to_dict(response)
+
+    def remove_layout_images_grpc(self, layout_id: str, images_ids: list[str]) -> dict[str, Any]:
+        """Remove layout images over direct gRPC.
+
+        Args:
+            layout_id (str): Target layout UID.
+            images_ids (list): Image UIDs to remove.
+
+        Returns:
+            (dict): MessageToDict of RemoveLayoutImagesResponse.
+        """
+        stub = self.stub_from_proto(
+            "axxonsoft/bl/layout/LayoutImagesManager.proto", "LayoutImagesManager"
+        )
+        pb2 = self.import_module("axxonsoft.bl.layout.LayoutImagesManager_pb2")
+        response = stub.RemoveLayoutImages(
+            pb2.RemoveLayoutImagesRequest(layout_id=layout_id, images_ids=list(images_ids)),
+            timeout=self.config.timeout,
+        )
+        return self.message_to_dict(response)
 
     def list_maps(self) -> dict[str, Any]:
         return self.http_grpc(

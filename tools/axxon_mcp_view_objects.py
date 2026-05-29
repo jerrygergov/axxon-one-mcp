@@ -185,15 +185,21 @@ class AxxonMcpViewObjects:
         return {"status": "ok", "tool": "layouts_on_view", "pushed": len(layouts)}
 
     def list_layout_images(self, layout_id: str) -> dict[str, Any]:
+        # The HTTP /grpc bridge returns HTTP 500 for LayoutImagesManager, so the
+        # read goes over direct gRPC; the HTTP path stays as a fallback when the
+        # gRPC transport (CA + proto files) is unavailable.
         client = self._ensure_client()
-        resp = client.list_layout_images(layout_id)
-        if not isinstance(resp, dict) or resp.get("status") != 200:
-            return {
-                "status": "gap",
-                "tool": "list_layout_images",
-                "message": f"Layout not found or unreadable: {layout_id}",
-            }
-        body = resp.get("body") or {}
+        try:
+            body = client.list_layout_images_grpc(layout_id)
+        except Exception:
+            resp = client.list_layout_images(layout_id)
+            if not isinstance(resp, dict) or resp.get("status") != 200:
+                return {
+                    "status": "gap",
+                    "tool": "list_layout_images",
+                    "message": f"Layout not found or unreadable: {layout_id}",
+                }
+            body = resp.get("body") or {}
         items = list(body.get("images", []))
         return {
             "status": "ok",
