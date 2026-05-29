@@ -43,21 +43,35 @@ class _FakeEventsPb:
     ET_ConfigChangedEvent = 2
 
 
+class _DeadlineCode:
+    name = "DEADLINE_EXCEEDED"
+
+
+class _FakeDeadlineError(Exception):
+    def code(self):
+        return _DeadlineCode()
+
+
 class _FakeNotifierStub:
-    def __init__(self, *, raise_on_pull: bool = False) -> None:
+    def __init__(self, *, raise_on_pull: bool = False, deadline_on_pull: bool = False) -> None:
         self.raise_on_pull = raise_on_pull
+        self.deadline_on_pull = deadline_on_pull
         self.pull_requests: list[_FakePullEventsRequest] = []
         self.detailed_requests: list[_FakePullEventsRequest] = []
         self.disconnect_requests: list[_FakeDisconnectEventChannelRequest] = []
 
     def PullEvents(self, request, timeout):
         self.pull_requests.append(request)
+        if self.deadline_on_pull:
+            raise _FakeDeadlineError("Deadline Exceeded")
         if self.raise_on_pull:
             raise RuntimeError("stream failed")
         return [{"items": [{"event_type": "ET_Alert"}]}, {"items": [{"event_type": "ET_ConfigChangedEvent"}]}]
 
     def PullDetailedEvents(self, request, timeout):
         self.detailed_requests.append(request)
+        if self.deadline_on_pull:
+            raise _FakeDeadlineError("Deadline Exceeded")
         if self.raise_on_pull:
             raise RuntimeError("stream failed")
         return [{"items": [{"event_type": "ET_Alert", "details": {"a": 1}}]}]
@@ -91,10 +105,10 @@ class _FakeClient(AxxonApiClient):
 
 
 class _FakeNotifierClient(_FakeClient):
-    def __init__(self, *, raise_on_pull: bool = False) -> None:
+    def __init__(self, *, raise_on_pull: bool = False, deadline_on_pull: bool = False) -> None:
         super().__init__()
         self.grpc_channel = object()
-        self.stub = _FakeNotifierStub(raise_on_pull=raise_on_pull)
+        self.stub = _FakeNotifierStub(raise_on_pull=raise_on_pull, deadline_on_pull=deadline_on_pull)
         self.stub_calls: list[tuple[str, str]] = []
 
     def import_module(self, name: str):
@@ -107,6 +121,35 @@ class _FakeNotifierClient(_FakeClient):
     def stub_from_proto(self, proto_path: str, service_name: str):
         self.stub_calls.append((proto_path, service_name))
         return self.stub
+
+    def message_to_dict(self, message):
+        return dict(message)
+
+
+class _FakeLicensePb:
+    class GetHostInfoRequest:
+        pass
+
+
+class _FakeLicenseStub:
+    def GetHostInfo(self, request, timeout):
+        return {"osname": "demo", "hwinfo": "xml"}
+
+
+class _FakeLicenseHostInfoClient(_FakeClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.grpc_channel = object()
+        self.stub_calls: list[tuple[str, str]] = []
+
+    def import_module(self, name: str):
+        if name == "axxonsoft.bl.license.LicenseService_pb2":
+            return _FakeLicensePb
+        return super().import_module(name)
+
+    def stub_from_proto(self, proto_path: str, service_name: str):
+        self.stub_calls.append((proto_path, service_name))
+        return _FakeLicenseStub()
 
     def message_to_dict(self, message):
         return dict(message)
@@ -222,16 +265,12 @@ class AdminApiWrappersTests(unittest.TestCase):
             ),
         )
 
-    def test_license_get_host_info_uses_empty_request(self) -> None:
-        c = _FakeClient()
-        c.license_get_host_info()
-        self.assertEqual(
-            c.calls[0],
-            (
-                "axxonsoft.bl.license.LicenseService.GetHostInfo",
-                {},
-            ),
-        )
+    def test_license_get_host_info_uses_direct_grpc(self) -> None:
+        c = _FakeLicenseHostInfoClient()
+        result = c.license_get_host_info()
+        self.assertEqual(c.stub_calls, [("axxonsoft/bl/license/LicenseService.proto", "LicenseService")])
+        self.assertEqual(result, {"status": 200, "body": {"osname": "demo", "hwinfo": "xml"}})
+        self.assertEqual(c.calls, [])
 
     def test_license_key_info_uses_empty_request(self) -> None:
         c = _FakeClient()
@@ -359,6 +398,22 @@ class AdminApiWrappersTests(unittest.TestCase):
         self.assertEqual(result["status"], "warn")
         self.assertEqual(result["count"], 0)
         self.assertIn("stream_error", result)
+        self.assertEqual(len(c.stub.disconnect_requests), 1)
+
+    def test_pull_notifier_events_bounded_reports_idle_on_clean_deadline(self) -> None:
+        c = _FakeNotifierClient(deadline_on_pull=True)
+        result = c.pull_notifier_events_bounded(
+            notifier="domain",
+            subjects=[],
+            event_types=[],
+            timeout_s=5.0,
+            limit=10,
+        )
+
+        self.assertEqual(result["status"], "idle")
+        self.assertEqual(result["count"], 0)
+        self.assertTrue(result["stream_idle"])
+        self.assertTrue(result["disconnect_clean"])
         self.assertEqual(len(c.stub.disconnect_requests), 1)
 
 

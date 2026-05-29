@@ -235,8 +235,11 @@ def _license_domain_summary(data: dict[str, Any]) -> dict[str, Any]:
 def _host_info_summary(data: dict[str, Any]) -> dict[str, Any]:
     redacted = redact_admin_secrets(data)
     return {
+        "os_name": redacted.get("osname") or redacted.get("os_name") or "",
         "host_name": redacted.get("host_name") or redacted.get("name") or redacted.get("node_name") or "",
-        "hardware_fingerprint_present": bool(data.get("hardware_fingerprint") or data.get("fingerprint")),
+        "hardware_fingerprint_present": bool(
+            data.get("hwinfo") or data.get("hardware_fingerprint") or data.get("fingerprint")
+        ),
         "serial_present": bool(data.get("serial_number") or data.get("serialNumber")),
     }
 

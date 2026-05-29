@@ -239,7 +239,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def result_status(payload: Any) -> str:
     if isinstance(payload, dict):
         status = str(payload.get("status") or "").lower()
-        if status in {"ok", "pass", "connected"}:
+        if status in {"ok", "pass", "connected", "idle"}:
             return "PASS"
         if status in {"fixture-needed", "skipped", "gap", "warn", "warning", "partial"}:
             return "WARN"

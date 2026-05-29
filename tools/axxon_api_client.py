@@ -639,7 +639,12 @@ class AxxonApiClient:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.GetDomainLicenseKeyInfo", {})
 
     def license_get_host_info(self) -> dict[str, Any]:
-        return self.http_grpc("axxonsoft.bl.license.LicenseService.GetHostInfo", {})
+        # HTTP /grpc closes the connection for GetHostInfo (RemoteDisconnected),
+        # so this read uses the direct gRPC transport.
+        stub = self.stub_from_proto("axxonsoft/bl/license/LicenseService.proto", "LicenseService")
+        pb2 = self.import_module("axxonsoft.bl.license.LicenseService_pb2")
+        response = stub.GetHostInfo(pb2.GetHostInfoRequest(), timeout=self.config.timeout)
+        return {"status": 200, "body": self.message_to_dict(response)}
 
     def license_key_info(self) -> dict[str, Any]:
         return self.http_grpc("axxonsoft.bl.license.LicenseService.LicenseKeyInfo", {})
@@ -758,6 +763,7 @@ class AxxonApiClient:
         collected: list[dict[str, Any]] = []
         status = "ok"
         stream_error = ""
+        deadline_reached = False
         try:
             pull = notify.PullDetailedEvents if detailed else notify.PullEvents
             for page in pull(request, timeout=timeout):
@@ -769,16 +775,22 @@ class AxxonApiClient:
                 if len(collected) >= max_events:
                     break
         except Exception as exc:
-            status = "warn"
+            # A bounded long-poll that stays open until the deadline raises
+            # DEADLINE_EXCEEDED with no events: the stream was established and
+            # simply idle, which is healthy, not a transport failure.
+            code = getattr(exc, "code", None)
+            deadline_reached = bool(callable(code) and getattr(code(), "name", "") == "DEADLINE_EXCEEDED")
+            status = "idle" if (deadline_reached and not collected) else "warn"
             stream_error = str(exc)[:300]
         finally:
+            disconnect_clean = True
             try:
                 notify.DisconnectEventChannel(
                     notify_pb2.DisconnectEventChannelRequest(subscription_id=subscription_id),
                     timeout=min(timeout, 2.0),
                 )
             except Exception:
-                pass
+                disconnect_clean = False
         result: dict[str, Any] = {
             "status": status,
             "notifier": notifier,
@@ -787,6 +799,8 @@ class AxxonApiClient:
             "count": len(collected),
             "events": collected[:max_events],
             "caps": {"timeout_s": timeout, "limit": max_events},
+            "stream_idle": deadline_reached and not collected,
+            "disconnect_clean": disconnect_clean,
         }
         if stream_error:
             result["stream_error"] = stream_error
