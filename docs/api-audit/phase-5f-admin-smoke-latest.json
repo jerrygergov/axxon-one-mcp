@@ -1,6 +1,6 @@
 {
-  "started_at": "2026-05-26T12:50:16.059358+00:00",
-  "finished_at": "2026-05-26T12:50:43.278393+00:00",
+  "started_at": "2026-05-29T14:02:30.813527+00:00",
+  "finished_at": "2026-05-29T14:02:58.954481+00:00",
   "target": {
     "host": "<demo-host>",
     "grpc_target": "<demo-host>:20109",
@@ -21,8 +21,8 @@
     "schedule_uid_provided": false
   },
   "summary": {
-    "PASS": 7,
-    "WARN": 4,
+    "PASS": 10,
+    "WARN": 1,
     "FAIL": 0
   },
   "results": [
@@ -36,7 +36,7 @@
         "profile": {
           "host": "<demo-host>",
           "grpc_port": 20109,
-          "http_port": 80,
+          "http_port": 8000,
           "http_url": "http://<demo-host>",
           "username": "<demo-user>",
           "password_present": "<redacted>",
@@ -50,7 +50,7 @@
     {
       "group": "security_inventory",
       "status": "PASS",
-      "elapsed_ms": 1688,
+      "elapsed_ms": 1974,
       "evidence": {
         "status": "ok",
         "tool": "security_inventory",
@@ -447,7 +447,7 @@
     {
       "group": "security_policy_summary",
       "status": "PASS",
-      "elapsed_ms": 737,
+      "elapsed_ms": 818,
       "evidence": {
         "status": "ok",
         "tool": "security_policy_summary",
@@ -466,7 +466,7 @@
     {
       "group": "role_permissions",
       "status": "PASS",
-      "elapsed_ms": 3690,
+      "elapsed_ms": 3676,
       "evidence": {
         "status": "ok",
         "tool": "role_permissions",
@@ -668,7 +668,7 @@
     {
       "group": "current_user_security",
       "status": "PASS",
-      "elapsed_ms": 378,
+      "elapsed_ms": 382,
       "evidence": {
         "status": "ok",
         "tool": "current_user_security",
@@ -699,10 +699,10 @@
     },
     {
       "group": "license_status",
-      "status": "WARN",
-      "elapsed_ms": 2598,
+      "status": "PASS",
+      "elapsed_ms": 2604,
       "evidence": {
-        "status": "warn",
+        "status": "ok",
         "tool": "license_status",
         "global_restrictions": {
           "constraint_count": 0
@@ -726,9 +726,10 @@
         },
         "applied_limit": 32,
         "host_info": {
-          "status": "fixture-needed",
-          "error_type": "RemoteDisconnected",
-          "message": "Remote end closed connection without response"
+          "os_name": "",
+          "host_name": "",
+          "hardware_fingerprint_present": "<redacted>",
+          "serial_present": false
         },
         "node_restrictions": {
           "count": 0,
@@ -742,7 +743,7 @@
     {
       "group": "time_status",
       "status": "PASS",
-      "elapsed_ms": 1550,
+      "elapsed_ms": 1618,
       "evidence": {
         "status": "ok",
         "tool": "time_status",
@@ -766,7 +767,7 @@
     {
       "group": "system_health",
       "status": "PASS",
-      "elapsed_ms": 6171,
+      "elapsed_ms": 6643,
       "evidence": {
         "status": "ok",
         "tool": "system_health",
@@ -809,13 +810,13 @@
     },
     {
       "group": "domain_event_subscribe",
-      "status": "WARN",
-      "elapsed_ms": 5209,
+      "status": "PASS",
+      "elapsed_ms": 5205,
       "evidence": {
         "tool": "domain_event_subscribe",
         "subjects": [],
         "event_types": [],
-        "status": "warn",
+        "status": "idle",
         "notifier": "domain",
         "service": "DomainNotifier",
         "detailed": false,
@@ -825,18 +826,20 @@
           "timeout_s": 5.0,
           "limit": 25
         },
+        "stream_idle": true,
+        "disconnect_clean": true,
         "stream_error": "<_MultiThreadedRendezvous of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>"
       }
     },
     {
       "group": "node_event_subscribe",
-      "status": "WARN",
-      "elapsed_ms": 5194,
+      "status": "PASS",
+      "elapsed_ms": 5214,
       "evidence": {
         "tool": "node_event_subscribe",
         "subjects": [],
         "event_types": [],
-        "status": "warn",
+        "status": "idle",
         "notifier": "node",
         "service": "NodeNotifier",
         "detailed": false,
@@ -846,7 +849,9 @@
           "timeout_s": 5.0,
           "limit": 25
         },
-        "stream_error": "<_MultiThreadedRendezvous of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_status:4, grpc_message:\"Deadline Exceeded\"}\"\n>"
+        "stream_idle": true,
+        "disconnect_clean": true,
+        "stream_error": "<_MultiThreadedRendezvous of RPC that terminated with:\n\tstatus = StatusCode.DEADLINE_EXCEEDED\n\tdetails = \"Deadline Exceeded\"\n\tdebug_error_string = \"UNKNOWN:Error received from peer  {grpc_message:\"Deadline Exceeded\", grpc_status:4}\"\n>"
       }
     },
     {
