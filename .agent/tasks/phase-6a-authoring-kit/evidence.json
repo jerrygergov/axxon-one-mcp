@@ -1,0 +1,26 @@
+{
+  "task_id": "phase-6a-authoring-kit",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    { "id": "AC1", "text": "GenerationRequest.language defaults to python", "status": "PASS", "proof": ["test_generation_request_defaults_language_python passes"] },
+    { "id": "AC2", "text": "event_consumer node returns bundle with src/index.ts, README.md, package.json", "status": "PASS", "proof": ["test_event_consumer_node_returns_bundle passes"] },
+    { "id": "AC3", "text": "src/index.ts contains DURATION_SECONDS and COUNT_CAP from params", "status": "PASS", "proof": ["test_event_consumer_node_bakes_in_caps passes"] },
+    { "id": "AC4", "text": "src/index.ts reads credentials from process.env", "status": "PASS", "proof": ["test_event_consumer_node_uses_process_env passes"] },
+    { "id": "AC5", "text": "Verifier passes clean TS bundle", "status": "PASS", "proof": ["test_verifier_accepts_clean_ts_bundle passes"] },
+    { "id": "AC6", "text": "Verifier rejects TS bundle with embedded secret", "status": "PASS", "proof": ["test_verifier_rejects_ts_embedded_secret passes"] },
+    { "id": "AC7", "text": "Verifier rejects TS bundle importing child_process", "status": "PASS", "proof": ["test_verifier_rejects_ts_child_process passes"] },
+    { "id": "AC8", "text": "Unsupported language returns GenerationRefusal(reason=unsupported_language)", "status": "PASS", "proof": ["test_unsupported_language_returns_refusal passes"] },
+    { "id": "AC9", "text": "All 505 pre-existing tests still pass", "status": "PASS", "proof": ["Ran 520 tests in 0.219s OK (505 + 15 new)"] },
+    { "id": "AC10", "text": "list_templates returns languages field for event_consumer", "status": "PASS", "proof": ["test_list_templates_includes_languages_for_event_consumer passes"] }
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_generator.py",
+    "tools/templates/event_consumer.ts.tmpl",
+    "tools/tests/test_axxon_mcp_generator_6a.py"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -m unittest tools/tests/test_axxon_mcp_generator_6a.py -v",
+    "python3.12 -m unittest discover -s tools/tests"
+  ],
+  "known_gaps": []
+}

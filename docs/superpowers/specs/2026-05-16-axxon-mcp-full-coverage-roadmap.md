@@ -33,7 +33,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-B2** Reversible production role edit | ✅ partial (role-comment edit/restore) | yes | `security_production_role_edit_lifecycle` in `tools/axxon_mcp_admin_mutations.py`; rest of 5F-B2 deferred |
 | **5G** BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | yes | `tools/axxon_mcp_bookmark_mutations.py`, `tools/axxon_bookmarks_smoke.py`, `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
-| **6A** Authoring kit expansion | ❌ not started | no | none |
+| **6A** Authoring kit expansion | 🔧 in progress (increment 1) | no | `tools/templates/event_consumer.ts.tmpl`, `tools/tests/test_axxon_mcp_generator_6a.py` |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
 | **7** NL → plan translator | ❌ not started | no | none |
 
@@ -334,6 +334,15 @@ Workflows are limited to temporary `codex-*` security fixtures: user/role lifecy
 ---
 
 ### Phase 6A — Authoring kit expansion: more templates, more languages
+
+**Status (2026-05-29).** Increment 1 shipped on `claude/focused-benz-eee61e` (commit `80b1e98`):
+- Language-agnostic renderer seam: `language` field on `GenerationRequest`, `languages` list on
+  `TemplateInfo`, `_render_ts_files` helper, `_scan_typescript` in `Verifier`.
+- Node/TypeScript variant of `event_consumer` (`tools/templates/event_consumer.ts.tmpl`).
+- 15 new tests; test suite at 520/520.
+- Continuation order: (a) TS variants for remaining 7 Python templates (grpc_consumer,
+  http_grpc_consumer, legacy_http_consumer, external_event_producer, export_job, webhook_bridge,
+  inventory_sync), (b) 6 new template kinds in Python first, then add Node variants.
 
 **Why.** Today's generator emits 8 Python templates. Customers want Node/TypeScript and C#, and they want higher-level templates than raw consumers.
 

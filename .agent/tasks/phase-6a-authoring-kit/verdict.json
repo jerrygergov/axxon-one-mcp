@@ -1,0 +1,24 @@
+{
+  "task_id": "phase-6a-authoring-kit",
+  "overall_verdict": "PASS",
+  "criteria": [
+    { "id": "AC1", "status": "PASS", "reason": "test_generation_request_defaults_language_python passes" },
+    { "id": "AC2", "status": "PASS", "reason": "test_event_consumer_node_returns_bundle passes" },
+    { "id": "AC3", "status": "PASS", "reason": "test_event_consumer_node_bakes_in_caps passes" },
+    { "id": "AC4", "status": "PASS", "reason": "test_event_consumer_node_uses_process_env passes" },
+    { "id": "AC5", "status": "PASS", "reason": "test_verifier_accepts_clean_ts_bundle passes" },
+    { "id": "AC6", "status": "PASS", "reason": "test_verifier_rejects_ts_embedded_secret passes" },
+    { "id": "AC7", "status": "PASS", "reason": "test_verifier_rejects_ts_child_process passes" },
+    { "id": "AC8", "status": "PASS", "reason": "test_unsupported_language_returns_refusal passes" },
+    { "id": "AC9", "status": "PASS", "reason": "Ran 520 tests in 0.219s OK (505 pre-existing + 15 new)" },
+    { "id": "AC10", "status": "PASS", "reason": "test_list_templates_includes_languages_for_event_consumer passes" }
+  ],
+  "commands_run": [
+    "python3.12 -m unittest tools/tests/test_axxon_mcp_generator_6a.py -v  # 15 tests OK",
+    "python3.12 -m unittest discover -s tools/tests  # 520 tests OK"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-6a-authoring-kit/evidence.md",
+    ".agent/tasks/phase-6a-authoring-kit/evidence.json"
+  ]
+}

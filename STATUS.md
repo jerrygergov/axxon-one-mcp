@@ -19,7 +19,7 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
 - Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
-Test suite baseline on `main`: 503 / 503 passing.
+Test suite baseline on `main`: 520 / 520 passing.
 
 ---
 
@@ -65,7 +65,7 @@ Test suite baseline on `main`: 503 / 503 passing.
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (only schedule fixture open) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1/B2 — Security/admin mutations | ✅ shipped (B2 partial) | 6 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
-| 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
+| 6A — Authoring kit expansion (Python + Node) | 🔧 in progress (increment 1 shipped) | Node/TS renderer seam + event_consumer TS template, 15 new tests | `tools/templates/event_consumer.ts.tmpl`, `tools/tests/test_axxon_mcp_generator_6a.py` |
 | 6B — Partner SDK kit | ❌ not started | — | — |
 | 7 — NL → plan translator | ❌ not started | — | — |
 
@@ -76,7 +76,12 @@ Test suite baseline on `main`: 503 / 503 passing.
 See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The remaining work, in dependency order:
 
 1. **Phase 5F-B2 — high-risk admin mutations (partially shipped).** The reversible production role-comment edit/restore (`security_production_role_edit_lifecycle`) is shipped and live-verified. Still deferred (need a dedicated fixture/maintenance window or are not safely reversible on a shared stand): license apply/drop, timezone/NTP changes, production user-account/password/login edits, and LDAP sync against a real directory.
-2. **Phase 6A — Authoring kit expansion.** Add Node/TypeScript templates and 6 new template kinds (alarm responder, PTZ controller, ML-detector bridge, scheduled exporter, dashboard backend, plugin scaffold).
+2. **Phase 6A — Authoring kit expansion.** In progress (commit `80b1e98`). Increment 1 shipped:
+   language-agnostic renderer seam (`language` field on `GenerationRequest`, `languages` on `TemplateInfo`),
+   Node/TypeScript variant of `event_consumer` (`tools/templates/event_consumer.ts.tmpl`), and
+   `_scan_typescript` in `Verifier`. Next: TS variants for the remaining 7 templates, then 6 new
+   template kinds (alarm_responder, ptz_controller, ml_detector_bridge, scheduled_exporter,
+   dashboard_backend, plugin_scaffold) starting in Python.
 3. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
 4. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
 
