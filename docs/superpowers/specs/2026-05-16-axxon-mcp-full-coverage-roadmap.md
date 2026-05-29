@@ -287,13 +287,13 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 - Implementation plan: `docs/superpowers/plans/2026-05-19-phase-5e-detectors-archive-policies.md`.
 - Live evidence: `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`.
 
-**Fixture debt.** `archive_policy_get` needs a descriptor that exposes policy-like fields, AV-detector visual mutation needs a writable visual child, and `archive_policy_update` needs an isolated `codex-*` archive/camera fixture. Archive maintenance no-op is verified only with `codex-nonexistent-*` volume ids; real maintenance remains approval-gated.
+**Fixture debt.** `archive_policy_get` is closed (2026-05-29): it resolves the top-level `MultimediaStorage.AliceBlue` config unit (retention `day_depth`, binding `storage_type`); the smoke now prefers a top-level `MultimediaStorage.<name>` over embedded device storages. Still open for mutation/maintenance modes only: AV-detector visual mutation needs a writable visual child, and `archive_policy_update` needs an isolated `codex-*` archive/camera fixture. Archive maintenance no-op is verified only with `codex-nonexistent-*` volume ids; real maintenance remains approval-gated.
 
 ---
 
 ### Phase 5F — Operator UX: Security, users, roles, system health
 
-**Status.** 5F-A is shipped on `main` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=7, WARN=4, FAIL=0). Warnings are fixture/stand caveats: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams are quiet and end by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture. 5F-B1 is shipped with sanitized live evidence at `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` (PASS=5, WARN=0, FAIL=0).
+**Status.** 5F-A is shipped on `main` with sanitized live evidence at `docs/api-audit/phase-5f-admin-smoke-latest.md` (PASS=10, WARN=1, FAIL=0 as of 2026-05-29). `LicenseService.GetHostInfo` is now read over direct gRPC (the HTTP `/grpc` bridge disconnects), so `license_status` is `ok`; DomainNotifier/NodeNotifier idle streams report `idle` (PASS-class) when a bounded long-poll reaches a clean `DEADLINE_EXCEEDED` with a clean disconnect. The only remaining WARN is `schedule_descriptor_get`: the stand has no config unit exposing schedule/calendar/weekly/daily fields (107 units sampled, zero matched), so schedule descriptor discovery stays fixture-needed until a stand-side schedule/calendar object is created. 5F-B1 is shipped with sanitized live evidence at `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` (PASS=5, WARN=0, FAIL=0).
 
 **Why.** Closes 11 pending SecurityService methods, 10 pending AuthenticationService methods, 5 pending LicenseService methods, NodeNotifier (6 pending), and DomainNotifier (5 pending).
 

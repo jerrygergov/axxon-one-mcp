@@ -1,7 +1,7 @@
 # Axxon One MCP — Project Status & Handoff
 
-**Last updated:** 2026-05-28
-**Branch state:** `main` includes Phase 5F-B1 and Phase 5G (BookmarkService) implementations with live evidence. Continue on `main` unless the user asks for a new worktree.
+**Last updated:** 2026-05-29
+**Branch state:** `main` includes Phase 5F-B1 and Phase 5G (BookmarkService) implementations with live evidence. Phases 5D, 5E, and 5F-A gaps are now closed against the live stand (see the gap-closing note below). Continue on `main` unless the user asks for a new worktree.
 
 This file is the single point of entry for any agent (Claude, Codex, human) continuing this project. Read it first, then jump into the linked roadmap and the next-phase plan.
 
@@ -13,13 +13,13 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - The shipped baseline includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms, Phase 5D videowall/layout/map tools, Phase 5E detector/archive tools, Phase 5F-A admin read tools, and Phase 5F-B1 admin mutation workflows on `main`.
 - Phase 5B (PTZ) is deferred — no PTZ camera on the demo stand.
 - Phase 5D (videowall / layouts / maps) is shipped on `main` with 11 read tools, 11 operator workflows, live map/videowall smoke evidence, and sanitized docs. Schedules moved to Phase 5F.
-- Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. Latest combined live evidence: PASS=12, WARN=3, FAIL=0 across read-only, mutation, and archive-maintenance-no-op modes.
-- Phase 5F-A is shipped on `main` with 11 read-only admin tools and sanitized live evidence PASS=7, WARN=4, FAIL=0.
+- Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. `archive_policy_get` is now live-verified: read-only evidence PASS=11, WARN=0, FAIL=0. It resolves `MultimediaStorage.AliceBlue` (retention `day_depth`, binding `storage_type`); the smoke now prefers a top-level `MultimediaStorage.<name>` unit over embedded device storages.
+- Phase 5F-A is shipped on `main` with 11 read-only admin tools. Latest sanitized live evidence PASS=10, WARN=1, FAIL=0. `license_status` is `ok` (`GetHostInfo` over direct gRPC), and `domain_event_subscribe` / `node_event_subscribe` return `idle` (healthy idle streams). The remaining WARN is `schedule_descriptor_get`, a genuine stand-side fixture gap.
 - Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows and sanitized live evidence PASS=5, WARN=0, FAIL=0. License, timezone, NTP, production user/role edits, LDAP sync against a real directory, and schedule authoring remain deferred.
 - Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
 - Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
-Test suite baseline on `main`: 500 / 500 passing.
+Test suite baseline on `main`: 503 / 503 passing.
 
 ---
 
@@ -60,9 +60,9 @@ Test suite baseline on `main`: 500 / 500 passing.
 | 5A — Viewing | ✅ shipped (archive live-verified) | 6 (live_view, snapshot_batch, archive_scrub, archive_frame, archive_mjpeg_bounded, stream_health) | `docs/api-audit/phase-5a-view-smoke-latest.md` |
 | 5B — PTZ | ⏸ deferred (no fixture) | — | — |
 | 5C — Alarms | ✅ shipped | 7 reads + 6 mutations | `docs/api-audit/phase-5c-alarms-smoke-latest.md` |
-| **5D — Videowall/layouts/maps** | ✅ shipped | 11 reads + 11 operator workflows | `docs/api-audit/phase-5d-view-objects-smoke-latest.md` |
-| 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) | 11 reads + 9 workflows | `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` |
-| 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
+| **5D — Videowall/layouts/maps** | ✅ shipped (gaps closed) | 11 reads + 11 operator workflows | `docs/api-audit/phase-5d-view-objects-smoke-latest.md` |
+| 5E — Detector depth + archive policies | ✅ shipped (archive policy closed) | 11 reads + 9 workflows | `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` |
+| 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (only schedule fixture open) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1 — Security/admin mutations | ✅ shipped | 5 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
@@ -80,9 +80,9 @@ See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-road
 3. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
 4. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
 
-Phase 5E fixture debt carried forward: provide a descriptor-backed archive policy fixture, an AV detector with a writable visual child, and an isolated `codex-*` archive/camera fixture to clear the three WARN rows in the latest live smoke.
+Phase 5E fixture debt carried forward: `archive_policy_get` is now closed (resolves `MultimediaStorage.AliceBlue`). Still open for the mutation/maintenance modes only: an AV detector with a writable visual child, and an isolated `codex-*` archive/camera fixture for `archive_policy_update`.
 
-Phase 5F-A fixture/stand caveats carried forward: `LicenseService.GetHostInfo` closes the connection while other license reads succeed, DomainNotifier/NodeNotifier streams were quiet and ended by bounded deadline after disconnect cleanup, and schedule descriptor discovery needs an isolated descriptor-backed schedule fixture.
+Phase 5F-A: `LicenseService.GetHostInfo` is now read over direct gRPC (HTTP `/grpc` disconnects), and DomainNotifier/NodeNotifier idle streams report `idle` (PASS). The only remaining caveat is `schedule_descriptor_get` — the stand exposes no schedule descriptor (see the gap-closing note for the exact fixture needed).
 
 Phase 5F-B1 live evidence: `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` verifies plan/apply/verify/rollback for temporary user/role lifecycle, temp-role permissions, policy no-op replay, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable.
 
@@ -90,7 +90,9 @@ Phase 5F-B2 deferred scope: license apply/drop, timezone changes, NTP changes, p
 
 Phase 5G status: the `bookmark_lifecycle` workflow is live-verified end to end (apply -> verify -> rollback) once camera 1 is bound to the `AliceBlue` archive and a `camera_access_point` + RFC3339 `range` are supplied. `CreateBookmark`/`GetBookmark`/`DeleteBookmark` are `tested-pass`. `UpdateBookmark`/`SetExportedTime` are not yet exercised; `RenderTrack` is out of scope.
 
-Gap-closing pass (2026-05-29) carried forward: the stand's gRPC cert CN is `Server` (not `axxon`) — use `AXXON_TLS_CN=Server` for direct-gRPC live runs. `load_inventory()` now falls back to an HTTP `/grpc` loader so camera/archive discovery works without the gRPC root CA. Closed gaps: 5A archive frame/MJPEG (camera 1 recording + `archive_scrub` archive selection) and the full 5G bookmark lifecycle (CreateBookmark shape fix). Genuine fixtures still open: 5D `list_layout_images` (no layout on stand), 5E `archive_policy_get` (no policy descriptor), 5F-A license/event/schedule.
+Gap-closing pass (2026-05-29) carried forward: the stand's gRPC cert CN is `Server` (not `axxon`) — use `AXXON_TLS_CN=Server` for direct-gRPC live runs. `load_inventory()` now falls back to an HTTP `/grpc` loader so camera/archive discovery works without the gRPC root CA. Closed gaps: 5A archive frame/MJPEG, the full 5G bookmark lifecycle, **5D `list_layout_images`** (the HTTP `/grpc` bridge returns 500 for `LayoutImagesManager`; routed over direct gRPC and proved with a reversible upload/list/remove round-trip — the stand has 20 layouts, contrary to the earlier "no layouts" assumption), **5E `archive_policy_get`** (resolves `MultimediaStorage.AliceBlue`; smoke now picks the top-level storage unit), and **5F-A `license_status` + notifiers** (`GetHostInfo` over direct gRPC; idle notifier streams report `idle`).
+
+The single genuinely open fixture is **5F-A `schedule_descriptor_get`**: the stand has no config unit exposing schedule/calendar/weekly/daily fields (107 units sampled, zero matched). To close it, create a stand-side recording schedule / arming calendar whose `ConfigurationService.ListUnits` descriptor exposes a weekly/daily schedule property, then run `axxon_admin_smoke.py --schedule-uid <that uid>`.
 
 ---
 
