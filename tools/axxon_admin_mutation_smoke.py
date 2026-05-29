@@ -33,6 +33,7 @@ WORKFLOWS = [
     "security_policy_noop_probe",
     "security_ldap_temp_lifecycle",
     "security_tfa_temp_user_lifecycle",
+    "security_production_role_edit_lifecycle",
 ]
 CLI_CONNECTION_FLAGS = {
     "--host",
@@ -128,6 +129,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--report-dir", type=Path, default=repo_root / "docs/api-audit")
     parser.add_argument("--i-understand-this-mutates", action="store_true")
     parser.add_argument("--confirm", default="")
+    parser.add_argument("--production-role-name", default="operator")
     parser.add_argument("--verbose", action="store_true")
     forbidden = _cli_connection_flags(raw_argv)
     if forbidden:
@@ -263,6 +265,8 @@ class AdminMutationSmoke:
         return evidence
 
     def params_for(self, workflow: str) -> dict[str, Any]:
+        if workflow == "security_production_role_edit_lifecycle":
+            return {"role_name": getattr(self.args, "production_role_name", "operator")}
         if workflow in {
             "security_user_role_lifecycle",
             "security_role_permissions_update",

@@ -44,6 +44,10 @@ ADMIN_MUTATION_WORKFLOWS: dict[str, dict[str, str]] = {
         "risk": "security-mutation",
         "summary": "Enable and disable TFA on a temporary codex user with rollback.",
     },
+    "security_production_role_edit_lifecycle": {
+        "risk": "security-mutation",
+        "summary": "Edit a production role's comment and restore the original record (5F-B2).",
+    },
 }
 
 
@@ -289,6 +293,23 @@ class AxxonAdminMutationRegistry:
                 "role_name": state["role_name"],
                 "login": state["login"],
             }
+        elif workflow == "security_production_role_edit_lifecycle":
+            original = self._find_production_role(dict(params or {}))
+            if original is None:
+                return {
+                    "status": "gap",
+                    "workflow": workflow,
+                    "reason": "production-role-not-found",
+                    "message": "Provide role_name or role_index for an existing production role.",
+                }
+            new_comment = f"codex-5fb2-edit-{uuid.uuid4().hex[:8]}"
+            plan["_state"] = {"original_role": original, "new_comment": new_comment}
+            plan["expected"] = {
+                "role_id": original.get("index"),
+                "role_name": original.get("name"),
+                "new_comment": new_comment,
+                "original_comment": original.get("comment", ""),
+            }
         self.plans[plan_id] = plan
         self._audit("plan", _public_plan(plan))
         return _public_plan(plan)
@@ -336,6 +357,10 @@ class AxxonAdminMutationRegistry:
             result = self._apply_security_tfa_temp_user_lifecycle(plan)
             self._audit("apply", result)
             return result
+        if plan["workflow"] == "security_production_role_edit_lifecycle":
+            result = self._apply_security_production_role_edit_lifecycle(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -369,6 +394,10 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_tfa_temp_user_lifecycle":
             result = self._verify_security_tfa_temp_user_lifecycle(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_production_role_edit_lifecycle":
+            result = self._verify_security_production_role_edit_lifecycle(plan)
             self._audit("verify", result)
             return result
         result = {
@@ -417,6 +446,10 @@ class AxxonAdminMutationRegistry:
             result = self._rollback_security_tfa_temp_user_lifecycle(plan)
             self._audit("rollback", result)
             return result
+        if plan["workflow"] == "security_production_role_edit_lifecycle":
+            result = self._rollback_security_production_role_edit_lifecycle(plan)
+            self._audit("rollback", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -429,6 +462,74 @@ class AxxonAdminMutationRegistry:
 
     def audit_log(self) -> dict[str, Any]:
         return {"entries": list(self.audit)}
+
+    def _find_production_role(self, params: dict[str, Any]) -> dict[str, Any] | None:
+        client = self.ensure_client()
+        roles = _body(client.security_list_roles()).get("roles", [])
+        role_index = str(params.get("role_index") or "")
+        role_name = str(params.get("role_name") or "")
+        for role in roles:
+            if not isinstance(role, dict):
+                continue
+            if role_index and role.get("index") == role_index:
+                return role
+            if role_name and role.get("name") == role_name:
+                return role
+        return None
+
+    def _apply_security_production_role_edit_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        original = dict(state["original_role"])
+        edited = dict(original)
+        edited["comment"] = state["new_comment"]
+        client = self.ensure_client()
+        response = _body(client.security_change_config({"modified_roles": [edited]}))
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": original.get("index"),
+            "role_name": original.get("name"),
+            "new_comment": state["new_comment"],
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _current_role(self, role_index: str) -> dict[str, Any] | None:
+        client = self.ensure_client()
+        roles = _body(client.security_list_roles()).get("roles", [])
+        return next(
+            (role for role in roles if isinstance(role, dict) and role.get("index") == role_index),
+            None,
+        )
+
+    def _verify_security_production_role_edit_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        original = dict(state["original_role"])
+        current = self._current_role(original.get("index", ""))
+        comment_applied = bool(current) and current.get("comment") == state["new_comment"]
+        return {
+            "status": "verified" if comment_applied else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": original.get("index"),
+            "comment_applied": comment_applied,
+        }
+
+    def _rollback_security_production_role_edit_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        original = dict(state["original_role"])
+        client = self.ensure_client()
+        _body(client.security_change_config({"modified_roles": [original]}))
+        restored = self._current_role(original.get("index", ""))
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled_back" if restored == original else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "role_id": original.get("index"),
+            "full_restore": restored == original,
+        }
 
     def _apply_security_user_role_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
         state = dict(plan.get("_state") or {})

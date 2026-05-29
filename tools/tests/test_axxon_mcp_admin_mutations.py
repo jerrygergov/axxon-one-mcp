@@ -54,6 +54,8 @@ class FakeAdminMutationClient:
             self.ldap_servers[server["index"]] = dict(server)
         for server in payload.get("modified_ldap_servers", []):
             self.ldap_servers[server["index"]] = dict(server)
+        for role in payload.get("modified_roles", []):
+            self.roles[role["index"]] = dict(role)
         removed_assignments = {
             (item.get("user_id"), item.get("role_id"))
             for item in payload.get("removed_users_assignments", [])
@@ -151,7 +153,7 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
             enabled=enabled,
         )
 
-    def test_list_workflows_reports_5f_b1_scope(self) -> None:
+    def test_list_workflows_reports_admin_mutation_scope(self) -> None:
         registry = self.registry()
 
         result = registry.list_workflows()
@@ -165,8 +167,41 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
                 "security_policy_noop_probe",
                 "security_ldap_temp_lifecycle",
                 "security_tfa_temp_user_lifecycle",
+                "security_production_role_edit_lifecycle",
             },
         )
+
+    def test_production_role_edit_lifecycle_edits_and_restores(self) -> None:
+        registry = self.registry()
+        original = {
+            "index": "prod-role-1",
+            "name": "operator",
+            "comment": "original",
+            "timezone_id": "tz-1",
+        }
+        self.fake.roles[original["index"]] = dict(original)
+
+        plan = registry.plan("security_production_role_edit_lifecycle", {"role_name": "operator"})
+        self.assertEqual(plan["status"], "planned")
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(self.fake.roles["prod-role-1"]["comment"], plan["expected"]["new_comment"])
+
+        verified = registry.verify(plan["plan_id"])
+        self.assertEqual(verified["status"], "verified")
+        self.assertTrue(verified["comment_applied"])
+
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled_back["status"], "rolled_back")
+        self.assertTrue(rolled_back["full_restore"])
+        self.assertEqual(self.fake.roles["prod-role-1"], original)
+
+    def test_production_role_edit_lifecycle_gaps_on_unknown_role(self) -> None:
+        registry = self.registry()
+        plan = registry.plan("security_production_role_edit_lifecycle", {"role_name": "nope"})
+        self.assertEqual(plan["status"], "gap")
+        self.assertEqual(plan["reason"], "production-role-not-found")
 
     def test_plan_records_tokens_and_redacted_params(self) -> None:
         registry = self.registry()
