@@ -38,6 +38,13 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
+**Gap-closing pass (2026-05-29).** Re-verified 5A-5G live against the stand and closed the closeable gaps. Key learnings carried forward:
+- The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs. Wrong CN was the cause of most prior fixture/WARN noise.
+- `AxxonApiClient.load_inventory()` now falls back to a streamed HTTP `/grpc` loader (`load_inventory_http`), so camera/archive discovery works without the gRPC root CA.
+- 5A archive frame/MJPEG are live-verified (camera 1 bound to the `AliceBlue` archive; `archive_scrub` now picks an archive that has intervals).
+- 5G bookmark lifecycle is live-verified end to end after a CreateBookmark request/response shape fix; CreateBookmark/GetBookmark/DeleteBookmark are tested-pass.
+- Remaining WARNs (5D `list_layout_images`, 5E `archive_policy_get`, 5F-A license/event/schedule) are genuine stand-config fixtures, not code gaps.
+
 **Next concrete step:** choose Phase 5F-B2 only if dedicated fixtures/maintenance-window approval exists for high-risk admin changes; otherwise start Phase 6A authoring-kit expansion.
 
 ---
@@ -79,21 +86,21 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 2 — Read-only live | Shipped, 15 tools | `axxon_mcp_live.py` |
 | Phase 3 — Controlled operator (plan/apply/verify/rollback) | Shipped, 11 workflows (7 ephemeral, 4 persistent) | `axxon_mcp_operator.py` |
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
-| Verified API methods | 146 / 361 (124 tested-pass + 21 tested-pass-safe-record + 1 tested-pass-empty) | `mcp-corpus/api_methods.json` |
+| Verified API methods | 150 / 361 (127 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty) | `mcp-corpus/api_methods.json` |
 | PDF coverage matrix | 32 / 39 verified, 2 partial, 5 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 495 / 495 passing on `main` | `tools/tests/` |
+| Unit tests | 500 / 500 passing on `main` | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 
 Quantified from `api_methods.json`:
 
-- **185 gRPC methods are still `pending`** (no live evidence). Largest pending services:
+- **179 gRPC methods are still `pending`** (no live evidence). Largest pending services:
   - TelemetryService — 26 pending (PTZ control, presets, Tag&Track)
   - LogicService — 19 pending (alarm lifecycle beyond reads, rule mutations)
   - SecurityService — 11 pending (TFA, deeper LDAP, advanced policies)
   - AuthenticationService — 10 pending (extended session / federated flows)
   - AuditEventInjector — 7 pending
-  - BookmarkService — 7 pending (additional shapes beyond create/update/delete)
+  - BookmarkService — additional shapes pending; CreateBookmark/GetBookmark/DeleteBookmark are tested-pass (lifecycle live-verified), UpdateBookmark/SetExportedTime fixture-needed, RenderTrack out of scope
   - NodeNotifier — 6 pending
   - HeatMapService — 6 pending (additional shapes)
   - MediaService — 6 pending
@@ -102,7 +109,7 @@ Quantified from `api_methods.json`:
   - RealtimeRecognizerService — 4 pending
   - LayoutManager / LayoutImagesManager — 7 pending combined
   - TagAndTrackService — 3 pending
-- **30 methods are `tested-warn-fixture-needed`** (PTZ device, water-level, control panels, Tag&Track tracker, TFA, WebSocket `/events`, client HTTP API for layouts/videowalls, embeddable video component browser render).
+- **32 methods are `tested-warn-fixture-needed`** (PTZ device, water-level, control panels, Tag&Track tracker, TFA, WebSocket `/events`, client HTTP API for layouts/videowalls, embeddable video component browser render, plus UpdateBookmark/SetExportedTime).
 - **Desktop-client features not yet surfaced as MCP tools** (even where the underlying API is verified):
   - Live multi-stream viewing flow (subscribe to multiple cameras, frame-accurate timestamps, snapshot batches).
   - Archive scrub with calendar + interval + frame review as a single tool.

@@ -88,7 +88,9 @@ Phase 5F-B1 live evidence: `docs/api-audit/phase-5f-b-admin-mutation-smoke-lates
 
 Phase 5F-B2 deferred scope: license apply/drop, timezone changes, NTP changes, production user/role edits, LDAP sync against a real directory, and schedule authoring.
 
-Phase 5G fixture debt carried forward: the stand returned no bookmarks for the 24h read window and exposes no HTTPS root CA, so camera-access-point and archive-range discovery is blocked. The `bookmark_lifecycle` workflow stays fixture-gated — supply a `camera_access_point` and `range` to exercise create/verify/delete against a real camera. `RenderTrack` remains out of scope.
+Phase 5G status: the `bookmark_lifecycle` workflow is live-verified end to end (apply -> verify -> rollback) once camera 1 is bound to the `AliceBlue` archive and a `camera_access_point` + RFC3339 `range` are supplied. `CreateBookmark`/`GetBookmark`/`DeleteBookmark` are `tested-pass`. `UpdateBookmark`/`SetExportedTime` are not yet exercised; `RenderTrack` is out of scope.
+
+Gap-closing pass (2026-05-29) carried forward: the stand's gRPC cert CN is `Server` (not `axxon`) — use `AXXON_TLS_CN=Server` for direct-gRPC live runs. `load_inventory()` now falls back to an HTTP `/grpc` loader so camera/archive discovery works without the gRPC root CA. Closed gaps: 5A archive frame/MJPEG (camera 1 recording + `archive_scrub` archive selection) and the full 5G bookmark lifecycle (CreateBookmark shape fix). Genuine fixtures still open: 5D `list_layout_images` (no layout on stand), 5E `archive_policy_get` (no policy descriptor), 5F-A license/event/schedule.
 
 ---
 
