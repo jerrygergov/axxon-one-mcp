@@ -1,0 +1,136 @@
+/**
+ * Generated bounded event consumer for $SUBJECT.
+ *
+ * Reads recent events from EventHistoryService.ReadEvents within a bounded time
+ * window using @grpc/grpc-js. Stops when either the count cap or duration cap fires.
+ * All credentials are read from process.env — never embed them in source.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+
+const DURATION_SECONDS = $DURATION;
+const COUNT_CAP = $COUNT;
+const SUBJECT = '$SUBJECT';
+const HISTORY_WINDOW_SECONDS = 3600;
+const APPDATA_HINT = $APPDATA_HINT;
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+async function authenticate(host: string, tlsCn: string, caData: Buffer | null): Promise<{ tokenName: string; tokenValue: string }> {
+  const PROTO_PATH = path.join(process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js', 'Authentication.proto');
+  const pkgDef = protoLoader.loadSync(PROTO_PATH, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  const proto = grpc.loadPackageDefinition(pkgDef) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = proto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData
+    ? grpc.credentials.createSsl(caData)
+    : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+  const client = new AuthService(host, sslCreds, channelOptions);
+
+  return new Promise((resolve, reject) => {
+    (client as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: process.env.AXXON_USERNAME, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, response: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (response['error_code'] !== 0 && response['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${response['error_code']}`));
+          return;
+        }
+        resolve({ tokenName: String(response['token_name']), tokenValue: String(response['token_value']) });
+      },
+    );
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+  if (APPDATA_HINT) {
+    console.info(`subject ${SUBJECT} is a parent AVDetector; semantic analytics live on AppDataDetector children`);
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} host=${host} subject=${SUBJECT}`);
+
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath) {
+    const fs = await import('fs');
+    if (fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+  }
+
+  let tokenName: string;
+  let tokenValue: string;
+  try {
+    ({ tokenName, tokenValue } = await authenticate(host, tlsCn, caData));
+  } catch (err) {
+    console.error(`authentication error: ${err}`);
+    return 3;
+  }
+
+  const PROTO_PATH = path.join(process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js', 'EventHistory.proto');
+  const pkgDef = protoLoader.loadSync(PROTO_PATH, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  const proto = grpc.loadPackageDefinition(pkgDef) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const EventService = proto['axxonsoft']?.['bl']?.['events']?.['EventHistoryService'] as unknown as grpc.ServiceClientConstructor;
+
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_params, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tokenName, tokenValue);
+    cb(null, meta);
+  });
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+  const client = new EventService(host, composite, channelOptions);
+
+  const nowMs = Date.now();
+  const beginMs = nowMs - HISTORY_WINDOW_SECONDS * 1000;
+  const request = {
+    range: { begin_time: String(beginMs), end_time: String(nowMs) },
+    filters: { filters: [{ subjects: [SUBJECT] }] },
+  };
+
+  return new Promise((resolve) => {
+    const deadline = Date.now() + DURATION_SECONDS * 1000;
+    let received = 0;
+    const call = (client as Record<string, Function>)['ReadEvents'](request, { deadline });
+
+    call.on('data', (response: Record<string, Array<unknown>>) => {
+      const items = response['items'] ?? [];
+      received += items.length;
+      if (received >= COUNT_CAP || Date.now() >= deadline) {
+        call.cancel();
+      }
+    });
+    call.on('error', (err: grpc.ServiceError) => {
+      if (err.code !== grpc.status.CANCELLED && err.code !== grpc.status.DEADLINE_EXCEEDED) {
+        console.warn(`rpc closed: ${err.code}`);
+      }
+      console.log(JSON.stringify({ subject: SUBJECT, received, duration_cap: DURATION_SECONDS, count_cap: COUNT_CAP }));
+      resolve(0);
+    });
+    call.on('end', () => {
+      console.log(JSON.stringify({ subject: SUBJECT, received, duration_cap: DURATION_SECONDS, count_cap: COUNT_CAP }));
+      resolve(0);
+    });
+  });
+}
+
+main().then(code => process.exit(code));

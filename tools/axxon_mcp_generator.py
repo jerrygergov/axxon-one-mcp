@@ -63,6 +63,7 @@ class GenerationRequest:
     params: dict[str, Any] = field(default_factory=dict)
     allow_mutation: bool = False
     allow_large: bool = False
+    language: str = "python"
 
 
 @dataclass
@@ -88,6 +89,7 @@ class TemplateInfo:
     required_params: list[str]
     required_fixtures: list[str]
     required_env: list[str]
+    languages: list[str] = field(default_factory=lambda: ["python"])
 
 
 TEMPLATE_CATALOG: list[TemplateInfo] = [
@@ -118,6 +120,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["subject"],
         required_fixtures=["event-supplier-subject"],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="external_event_producer",
@@ -179,6 +182,26 @@ def _read_aux_template(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _read_ts_template(name: str) -> str:
+    path = TEMPLATES_DIR / f"{name}.ts.tmpl"
+    return path.read_text(encoding="utf-8")
+
+
+def _ts_package_json(title: str) -> str:
+    return json.dumps(
+        {
+            "name": re.sub(r"[^a-z0-9\-]", "-", title.lower())[:50],
+            "version": "1.0.0",
+            "description": f"Generated Axxon One integration: {title}",
+            "main": "dist/index.js",
+            "scripts": {"build": "tsc", "start": "node dist/index.js"},
+            "dependencies": {"@grpc/grpc-js": "^1.10.0", "@grpc/proto-loader": "^0.7.0"},
+            "devDependencies": {"typescript": "^5.0.0", "@types/node": "^20.0.0"},
+        },
+        indent=2,
+    ) + "\n"
+
+
 def _render(template_text: str, values: dict[str, Any]) -> str:
     return Template(template_text).safe_substitute(values)
 
@@ -201,6 +224,7 @@ class Generator:
                 "required_params": info.required_params,
                 "required_fixtures": info.required_fixtures,
                 "required_env": info.required_env,
+                "languages": info.languages,
             }
             for info in TEMPLATE_CATALOG
         ]
@@ -231,6 +255,12 @@ class Generator:
         missing = [p for p in info.required_params if p not in request.params]
         if missing:
             return GenerationRefusal(request.template, "missing_params", ", ".join(missing))
+        if request.language not in info.languages:
+            return GenerationRefusal(
+                request.template,
+                "unsupported_language",
+                f"template {request.template!r} supports {info.languages}; got {request.language!r}",
+            )
         return self._dispatch(request, info)
 
     def generate(self, request: GenerationRequest) -> GeneratedBundle | GenerationRefusal:
@@ -376,20 +406,33 @@ class Generator:
                 "Subject is a parent AVDetector. Semantic analytics live on child AppDataDetector subjects; "
                 "the generated script logs this recommendation at startup."
             )
-        body = _render(
-            _read_template("event_consumer"),
-            {
-                "SUBJECT": subject,
-                "DURATION": str(duration),
-                "COUNT": str(count),
-                "APPDATA_HINT": "True" if notes else "False",
-            },
-        )
+        values = {
+            "SUBJECT": subject,
+            "DURATION": str(duration),
+            "COUNT": str(count),
+            "APPDATA_HINT": "True" if notes else "False",
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "event_consumer"})
+        if request.language == "node":
+            ts_values = dict(values)
+            ts_values["APPDATA_HINT"] = "true" if notes else "false"
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("event_consumer"), ts_values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(subject),
+                },
+                required_env=info.required_env,
+                required_fixtures=info.required_fixtures,
+                notes=notes,
+            )
+        body = _render(_read_template("event_consumer"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "event_consumer"}),
+                "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
             },
             required_env=info.required_env,
@@ -513,20 +556,32 @@ class VerificationResult:
     errors: list[str] = field(default_factory=list)
 
 
+TS_DISALLOWED_IMPORTS = re.compile(
+    r"""(?:import\s.*?from\s+['"]|require\s*\(\s*['"])(child_process|shelljs|execa|cross-spawn)['"]"""
+)
+TS_DISALLOWED_PATTERNS = re.compile(r"""\beval\s*\(|\bnew\s+Function\s*\(""")
+
+
 class Verifier:
     """Static verifier for generated bundles."""
 
-    REQUIRED_FILES = ("main.py", "README.md", "requirements.txt")
+    _PY_REQUIRED = ("main.py", "README.md", "requirements.txt")
+    _TS_REQUIRED = ("src/index.ts", "README.md", "package.json")
+
+    def _is_ts_bundle(self, files: dict[str, str]) -> bool:
+        return any(n.endswith(".ts") for n in files)
 
     def verify_bundle(self, files: dict[str, str]) -> VerificationResult:
         errors: list[str] = []
-        for name in self.REQUIRED_FILES:
+        required = self._TS_REQUIRED if self._is_ts_bundle(files) else self._PY_REQUIRED
+        for name in required:
             if name not in files:
                 errors.append(f"missing_file:{name}")
         for name, content in files.items():
-            if not name.endswith(".py"):
-                continue
-            errors.extend(self._scan_python(name, content))
+            if name.endswith(".py"):
+                errors.extend(self._scan_python(name, content))
+            elif name.endswith(".ts"):
+                errors.extend(self._scan_typescript(name, content))
         for name, content in files.items():
             errors.extend(self._scan_secrets(name, content))
         return VerificationResult(ok=not errors, errors=errors)
@@ -537,6 +592,14 @@ class Verifier:
             if child.is_file():
                 files[child.name] = child.read_text(encoding="utf-8")
         return self.verify_bundle(files)
+
+    def _scan_typescript(self, name: str, content: str) -> list[str]:
+        errors: list[str] = []
+        if TS_DISALLOWED_IMPORTS.search(content):
+            errors.append(f"disallowed_import:{name}:{TS_DISALLOWED_IMPORTS.pattern[:40]}")
+        if TS_DISALLOWED_PATTERNS.search(content):
+            errors.append(f"disallowed_import:{name}:eval/Function")
+        return errors
 
     def _scan_python(self, name: str, content: str) -> list[str]:
         errors: list[str] = []
