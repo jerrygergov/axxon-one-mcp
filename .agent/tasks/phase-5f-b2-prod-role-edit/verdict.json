@@ -1,0 +1,38 @@
+{
+  "task_id": "phase-5f-b2-prod-role-edit",
+  "overall_verdict": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "security_production_role_edit_lifecycle added with plan/apply/verify/rollback; plan snapshots the production role by role_name/role_index and stores the full original record."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "apply pushes modified_roles changing only comment; live verify confirms the codex-* comment present on the operator role."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "rollback restores the exact captured record; live rollback reports full_restore=true and the role matches the original byte-for-byte."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "Same gating as 5F-B1: AXXON_ADMIN_MUTATION_APPROVE=1 + CONFIRM tokens; apply rejected without env/token (existing tests cover rejection)."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "Unit tests cover edit/restore and unknown-role gap; full suite 505 OK. Live smoke PASS=6 WARN=0 FAIL=0 with the production role workflow."
+    }
+  ],
+  "commands_run": [
+    "python3.12 tools/axxon_admin_mutation_smoke.py --i-understand-this-mutates --confirm CONFIRM-admin-mutation-smoke",
+    "python3.12 -m unittest discover -s tools/tests"
+  ],
+  "artifacts_used": [
+    "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md"
+  ]
+}
