@@ -31,6 +31,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | yes (`62a4b9b`) | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-A** Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | yes (`64d6477`) | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
+| **5F-B2** Reversible production role edit | ✅ partial (role-comment edit/restore) | yes | `security_production_role_edit_lifecycle` in `tools/axxon_mcp_admin_mutations.py`; rest of 5F-B2 deferred |
 | **5G** BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | yes | `tools/axxon_mcp_bookmark_mutations.py`, `tools/axxon_bookmarks_smoke.py`, `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | **6A** Authoring kit expansion | ❌ not started | no | none |
 | **6B** Partner SDK kit + distribution | ❌ not started | no | none |
@@ -317,12 +318,13 @@ Each phase below is its own future spec → plan → implementation cycle. Order
 
 Workflows are limited to temporary `codex-*` security fixtures: user/role lifecycle, temp-role permission updates, policy no-op probe, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable. All require `--enable-admin-mutations`, `AXXON_ADMIN_MUTATION_APPROVE=1`, and per-plan apply/rollback confirmation tokens.
 
-**5F-B2 deferred mutation scope.**
-- Production `user_create`, `user_update`, `user_delete`, `change_password`, and `change_login`.
-- Production role/permission edits outside explicit `codex-*` fixtures.
+**5F-B2 partial — shipped 2026-05-29.** `security_production_role_edit_lifecycle` is the reversible slice of 5F-B2: it snapshots an existing production role, edits only the cosmetic `comment`, verifies, then restores the exact original record (`full_restore: true`), live-verified on the `operator` role. Same approval gates as 5F-B1.
+
+**5F-B2 still deferred** (not safely reversible on a shared stand, or out of approved scope):
+- Production `user_create`, `user_update`, `user_delete`, `change_password`, and `change_login` (live operator accounts).
 - LDAP synchronization against a real directory.
-- `license_apply(file)` / `license_drop(plan)` — license mutations are explicit maintenance-window work only.
-- `time_set_timezone(plan)` / `time_set_ntp(plan)` — operational mutations requiring a dedicated fixture.
+- `license_apply(file)` / `license_drop(plan)` — license mutations are explicit maintenance-window work only; dropping the license can disable the running server and is not safely reversible.
+- `time_set_timezone(plan)` / `time_set_ntp(plan)` — stand-wide clock changes requiring a dedicated fixture/window.
 
 **Acceptance.**
 - Security and admin mutations match the existing `mutation-playbooks/users-roles-security.md` flow.

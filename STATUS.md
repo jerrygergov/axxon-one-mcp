@@ -15,7 +15,7 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5D (videowall / layouts / maps) is shipped on `main` with 11 read tools, 11 operator workflows, live map/videowall smoke evidence, and sanitized docs. Schedules moved to Phase 5F.
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. `archive_policy_get` is now live-verified: read-only evidence PASS=11, WARN=0, FAIL=0. It resolves `MultimediaStorage.AliceBlue` (retention `day_depth`, binding `storage_type`); the smoke now prefers a top-level `MultimediaStorage.<name>` unit over embedded device storages.
 - Phase 5F-A is shipped on `main` with 11 read-only admin tools. Latest sanitized live evidence PASS=10, WARN=1, FAIL=0. `license_status` is `ok` (`GetHostInfo` over direct gRPC), and `domain_event_subscribe` / `node_event_subscribe` return `idle` (healthy idle streams). The remaining WARN is `schedule_descriptor_get`, a genuine stand-side fixture gap.
-- Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows and sanitized live evidence PASS=5, WARN=0, FAIL=0. License, timezone, NTP, production user/role edits, LDAP sync against a real directory, and schedule authoring remain deferred.
+- Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows. Phase 5F-B2 added a sixth, `security_production_role_edit_lifecycle` (the reversible slice of 5F-B2): it snapshots a real production role, edits only its cosmetic comment, verifies, then restores the exact original record (`full_restore: true`). Combined live evidence PASS=6, WARN=0, FAIL=0. Still deferred from 5F-B2 (not safely reversible on a shared stand or out of approved scope): license apply/drop, timezone/NTP changes, production user-account/password/login edits, LDAP sync against a real directory, and schedule authoring.
 - Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
 - Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
@@ -63,7 +63,7 @@ Test suite baseline on `main`: 503 / 503 passing.
 | **5D — Videowall/layouts/maps** | ✅ shipped (gaps closed) | 11 reads + 11 operator workflows | `docs/api-audit/phase-5d-view-objects-smoke-latest.md` |
 | 5E — Detector depth + archive policies | ✅ shipped (archive policy closed) | 11 reads + 9 workflows | `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` |
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (only schedule fixture open) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
-| 5F-B1 — Security/admin mutations | ✅ shipped | 5 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
+| 5F-B1/B2 — Security/admin mutations | ✅ shipped (B2 partial) | 6 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
 | 6B — Partner SDK kit | ❌ not started | — | — |
@@ -75,7 +75,7 @@ Test suite baseline on `main`: 503 / 503 passing.
 
 See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The remaining work, in dependency order:
 
-1. **Phase 5F-B2 — high-risk admin mutations, only with dedicated fixtures/approval.** License apply/drop, timezone/NTP changes, production user/role edits, LDAP sync, and schedule authoring remain out of 5F-B1.
+1. **Phase 5F-B2 — high-risk admin mutations (partially shipped).** The reversible production role-comment edit/restore (`security_production_role_edit_lifecycle`) is shipped and live-verified. Still deferred (need a dedicated fixture/maintenance window or are not safely reversible on a shared stand): license apply/drop, timezone/NTP changes, production user-account/password/login edits, and LDAP sync against a real directory.
 2. **Phase 6A — Authoring kit expansion.** Add Node/TypeScript templates and 6 new template kinds (alarm responder, PTZ controller, ML-detector bridge, scheduled exporter, dashboard backend, plugin scaffold).
 3. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
 4. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
@@ -86,7 +86,7 @@ Phase 5F-A: `LicenseService.GetHostInfo` is now read over direct gRPC (HTTP `/gr
 
 Phase 5F-B1 live evidence: `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` verifies plan/apply/verify/rollback for temporary user/role lifecycle, temp-role permissions, policy no-op replay, temporary LDAP add/edit/remove, and temporary-user TFA enable/disable.
 
-Phase 5F-B2 deferred scope: license apply/drop, timezone changes, NTP changes, production user/role edits, LDAP sync against a real directory, and schedule authoring.
+Phase 5F-B2: the reversible production role-comment edit/restore is shipped (`security_production_role_edit_lifecycle`). Still deferred: license apply/drop, timezone changes, NTP changes, production user-account/password/login edits, LDAP sync against a real directory, and schedule authoring.
 
 Phase 5G status: the `bookmark_lifecycle` workflow is live-verified end to end (apply -> verify -> rollback) once camera 1 is bound to the `AliceBlue` archive and a `camera_access_point` + RFC3339 `range` are supplied. `CreateBookmark`/`GetBookmark`/`DeleteBookmark` are `tested-pass`. `UpdateBookmark`/`SetExportedTime` are not yet exercised; `RenderTrack` is out of scope.
 
