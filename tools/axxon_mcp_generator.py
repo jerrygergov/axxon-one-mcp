@@ -99,6 +99,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["fqmn"],
         required_fixtures=[],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="http_grpc_consumer",
@@ -106,6 +107,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["fqmn"],
         required_fixtures=[],
         required_env=["AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="legacy_http_consumer",
@@ -113,6 +115,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["path"],
         required_fixtures=[],
         required_env=["AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="event_consumer",
@@ -128,6 +131,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["access_point", "event_type"],
         required_fixtures=["detector-ex"],
         required_env=["AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="export_job",
@@ -135,6 +139,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["camera_ap", "begin", "end"],
         required_fixtures=["mm-export-agent"],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="webhook_bridge",
@@ -142,6 +147,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["subject"],
         required_fixtures=["event-supplier-subject"],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD", "WEBHOOK_URL"],
+        languages=["python", "node"],
     ),
     TemplateInfo(
         name="inventory_sync",
@@ -149,6 +155,7 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_params=["output_path"],
         required_fixtures=[],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
     ),
 ]
 
@@ -302,23 +309,32 @@ class Generator:
         method_name = method.get("method", "")
         request_type = method.get("request", "")
         proto = method.get("proto", "")
-        body = _render(
-            _read_template("grpc_consumer"),
-            {
-                "FQMN": fqmn,
-                "PACKAGE": package,
-                "SERVICE": service,
-                "METHOD": method_name,
-                "REQUEST_TYPE": request_type,
-                "PROTO": proto,
-                "DURATION": str(DEFAULT_DURATION_SECONDS),
-            },
-        )
+        values = {
+            "FQMN": fqmn,
+            "PACKAGE": package,
+            "SERVICE": service,
+            "METHOD": method_name,
+            "REQUEST_TYPE": request_type,
+            "PROTO": proto,
+            "DURATION": str(DEFAULT_DURATION_SECONDS),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "grpc_consumer"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("grpc_consumer"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(fqmn),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("grpc_consumer"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "grpc_consumer"}),
+                "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
             },
             required_env=info.required_env,
@@ -336,21 +352,30 @@ class Generator:
                 "refused_mutation",
                 f"{fqmn} safety_class={safety}; pass allow_mutation=True to override",
             )
-        body = _render(
-            _read_template("http_grpc_consumer"),
-            {
-                "FQMN": fqmn,
-                "SERVICE_PATH": fqmn.rsplit(".", 1)[0],
-                "METHOD": fqmn.rsplit(".", 1)[1],
-                "DURATION": str(DEFAULT_DURATION_SECONDS),
-                "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
-            },
-        )
+        values = {
+            "FQMN": fqmn,
+            "SERVICE_PATH": fqmn.rsplit(".", 1)[0],
+            "METHOD": fqmn.rsplit(".", 1)[1],
+            "DURATION": str(DEFAULT_DURATION_SECONDS),
+            "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "http_grpc_consumer"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("http_grpc_consumer"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(fqmn),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("http_grpc_consumer"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "http_grpc_consumer"}),
+                "README.md": readme,
                 "requirements.txt": "requests>=2.31\n",
             },
             required_env=info.required_env,
@@ -370,21 +395,30 @@ class Generator:
             )
         verb = endpoint.get("verb", "GET")
         auth_mode = endpoint.get("auth_mode") or "bearer"
-        body = _render(
-            _read_template("legacy_http_consumer"),
-            {
-                "PATH": path,
-                "VERB": verb,
-                "AUTH_MODE": auth_mode,
-                "DURATION": str(DEFAULT_DURATION_SECONDS),
-                "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
-            },
-        )
+        values = {
+            "PATH": path,
+            "VERB": verb,
+            "AUTH_MODE": auth_mode,
+            "DURATION": str(DEFAULT_DURATION_SECONDS),
+            "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": path, "TEMPLATE": "legacy_http_consumer"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("legacy_http_consumer"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(path),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("legacy_http_consumer"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": path, "TEMPLATE": "legacy_http_consumer"}),
+                "README.md": readme,
                 "requirements.txt": "requests>=2.31\n",
             },
             required_env=info.required_env,
@@ -445,20 +479,30 @@ class Generator:
         event_type = request.params["event_type"]
         if event_type not in {"Event1", "Event2", "TargetList"}:
             return GenerationRefusal(request.template, "unknown_event_type", event_type)
-        body = _render(
-            _read_template("external_event_producer"),
-            {
-                "ACCESS_POINT": ap,
-                "EVENT_TYPE": event_type,
-                "DURATION": str(DEFAULT_DURATION_SECONDS),
-                "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
-            },
-        )
+        values = {
+            "ACCESS_POINT": ap,
+            "EVENT_TYPE": event_type,
+            "DURATION": str(DEFAULT_DURATION_SECONDS),
+            "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": ap, "TEMPLATE": "external_event_producer"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("external_event_producer"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(ap),
+                },
+                required_env=info.required_env,
+                required_fixtures=info.required_fixtures,
+            )
+        body = _render(_read_template("external_event_producer"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": ap, "TEMPLATE": "external_event_producer"}),
+                "README.md": readme,
                 "requirements.txt": "requests>=2.31\n",
             },
             required_env=info.required_env,
@@ -479,22 +523,32 @@ class Generator:
         fmt = request.params.get("format", "mp4")
         if fmt not in {"mp4", "jpeg"}:
             return GenerationRefusal(request.template, "unsupported_format", fmt)
-        body = _render(
-            _read_template("export_job"),
-            {
-                "CAMERA_AP": camera,
-                "BEGIN": begin,
-                "END": end,
-                "FORMAT": fmt,
-                "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
-                "WINDOW": str(window),
-            },
-        )
+        values = {
+            "CAMERA_AP": camera,
+            "BEGIN": begin,
+            "END": end,
+            "FORMAT": fmt,
+            "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
+            "WINDOW": str(window),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "export_job"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("export_job"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(camera),
+                },
+                required_env=info.required_env,
+                required_fixtures=info.required_fixtures,
+            )
+        body = _render(_read_template("export_job"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "export_job"}),
+                "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
             },
             required_env=info.required_env,
@@ -511,19 +565,29 @@ class Generator:
                 "cap_exceeded",
                 f"duration<= {DEFAULT_DURATION_SECONDS}s, count<= {DEFAULT_EVENT_COUNT}",
             )
-        body = _render(
-            _read_template("webhook_bridge"),
-            {
-                "SUBJECT": subject,
-                "DURATION": str(duration),
-                "COUNT": str(count),
-            },
-        )
+        values = {
+            "SUBJECT": subject,
+            "DURATION": str(duration),
+            "COUNT": str(count),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "webhook_bridge"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("webhook_bridge"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(subject),
+                },
+                required_env=info.required_env,
+                required_fixtures=info.required_fixtures,
+            )
+        body = _render(_read_template("webhook_bridge"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "webhook_bridge"}),
+                "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\nrequests>=2.31\n",
             },
             required_env=info.required_env,
@@ -532,18 +596,27 @@ class Generator:
 
     def _build_inventory_sync(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
         output_path = request.params["output_path"]
-        body = _render(
-            _read_template("inventory_sync"),
-            {
-                "OUTPUT_PATH": output_path,
-                "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
-            },
-        )
+        values = {
+            "OUTPUT_PATH": output_path,
+            "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "inventory_sync"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("inventory_sync"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(output_path),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("inventory_sync"), values)
         return GeneratedBundle(
             template=request.template,
             files={
                 "main.py": body,
-                "README.md": _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "inventory_sync"}),
+                "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
             },
             required_env=info.required_env,

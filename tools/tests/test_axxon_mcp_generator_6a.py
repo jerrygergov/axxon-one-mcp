@@ -118,7 +118,7 @@ class NodeRendererTests(unittest.TestCase):
         req = self.module.GenerationRequest(
             template="grpc_consumer",
             params={"fqmn": "axxonsoft.bl.config.ConfigurationService.ListUnits"},
-            language="node",
+            language="rust",
         )
         result = self.gen.generate(req)
         self.assertIsInstance(result, self.module.GenerationRefusal)

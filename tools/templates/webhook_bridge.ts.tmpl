@@ -1,0 +1,136 @@
+/**
+ * Generated webhook bridge for $SUBJECT.
+ *
+ * Reads recent domain events from DomainNotifier.PullEvents within a bounded
+ * window and POSTs each event as JSON to WEBHOOK_URL. Stops on first COUNT_CAP
+ * or DURATION_SECONDS cap. WEBHOOK_URL is never logged.
+ * All credentials are read from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as https from 'https';
+import * as http from 'http';
+import { URL } from 'url';
+
+const DURATION_SECONDS = $DURATION;
+const COUNT_CAP = $COUNT;
+const SUBJECT = '$SUBJECT';
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD', 'WEBHOOK_URL'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function postWebhook(webhookUrl: string, payload: object): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(webhookUrl);
+    const body = Buffer.from(JSON.stringify(payload));
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.request(
+      { hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: url.pathname + url.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': body.length } },
+      (res) => { res.resume(); resolve(res.statusCode ?? 0); },
+    );
+    req.on('error', reject);
+    req.setTimeout(10000, () => { req.destroy(new Error('webhook timeout')); });
+    req.write(body);
+    req.end();
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  // WEBHOOK_URL intentionally not logged to avoid secret leakage
+  console.info(`axxon-one-mcp generated webhook_bridge`);
+  console.info(`target=${host} subject=${SUBJECT} duration=${DURATION_SECONDS}s count_cap=${COUNT_CAP}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath) {
+    const fs = await import('fs');
+    if (fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+  }
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const notifProtoPath = path.join(stubsPath, 'Notification.proto');
+  const notifProto = loadProto(notifProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const DomainNotifier = notifProto['axxonsoft']?.['bl']?.['events']?.['DomainNotifier'] as unknown as grpc.ServiceClientConstructor;
+
+  const webhookUrl = process.env.WEBHOOK_URL!;
+  let forwarded = 0;
+
+  await new Promise<void>((resolve) => {
+    const client = new DomainNotifier(host, composite, channelOptions);
+    const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+    const call = (client as Record<string, Function>)['PullEvents'](
+      { subscription_id: `webhook-bridge-${Date.now()}`, filters: { include: [{ subject: SUBJECT }] } },
+      { deadline },
+    ) as NodeJS.EventEmitter & { cancel(): void };
+
+    call.on('data', async (page: Record<string, unknown[]>) => {
+      for (const item of (page['items'] as unknown[]) ?? []) {
+        if (forwarded >= COUNT_CAP) { call.cancel(); resolve(); return; }
+        const status = await postWebhook(webhookUrl, { subject: SUBJECT, event: item }).catch(() => 0);
+        console.info(`forwarded event_${forwarded} webhook_status=${status}`);
+        forwarded++;
+      }
+    });
+    call.on('error', () => resolve());
+    call.on('end', () => resolve());
+  });
+
+  console.log(JSON.stringify({ subject: SUBJECT, forwarded }));
+  return 0;
+}
+
+main().then(code => process.exit(code));
