@@ -44,7 +44,7 @@ Test suite baseline on `main`: 503 / 503 passing.
    export AXXON_TLS_CN=Server   # gRPC cert CN on this stand is "Server"; HTTP /grpc reads need no CA
    export AXXON_CA=<redacted-ca-path>
    ```
-4. **Choose the next track:** Phase 5F-B2 only if there is an isolated fixture/maintenance window for high-risk admin changes; otherwise start Phase 6A authoring-kit expansion.
+4. **Next track is Phase 6A — authoring-kit expansion.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A is net-new and large (14 templates × 3 languages = 42 generator bundles, a multi-language renderer, and an extended static verifier), so start it from a fresh brainstorming/design pass rather than extending this gap-closing session. The current generator ships 8 Python templates under `tools/templates/`.
 5. **For any new live verification**, sanitize evidence before committing (replace concrete host/user/CA values with `<demo-host>`, `<demo-user>`, `<redacted>`, never commit bearer tokens or passwords).
 
 ---
