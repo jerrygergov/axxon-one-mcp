@@ -1,6 +1,6 @@
 {
-  "started_at": "2026-05-28T20:28:02.129334+00:00",
-  "finished_at": "2026-05-28T20:28:02.963555+00:00",
+  "started_at": "2026-05-29T09:58:42.737778+00:00",
+  "finished_at": "2026-05-29T09:58:47.473570+00:00",
   "target": {
     "host": "<demo-host>",
     "http_url": "http://<demo-host>",
@@ -11,19 +11,19 @@
   },
   "modes": {
     "mutation_approval_env": "AXXON_BOOKMARK_MUTATION_APPROVE",
-    "mutation_approval_enabled": false,
+    "mutation_approval_enabled": true,
     "transport": "http-grpc"
   },
   "summary": {
-    "PASS": 1,
-    "WARN": 1,
+    "PASS": 2,
+    "WARN": 0,
     "FAIL": 0
   },
   "results": [
     {
       "group": "bookmark_list",
       "status": "PASS",
-      "elapsed_ms": 833,
+      "elapsed_ms": 1256,
       "evidence": {
         "status": "ok",
         "range_hours": 24,
@@ -33,27 +33,50 @@
     },
     {
       "group": "bookmark_lifecycle",
-      "status": "WARN",
-      "elapsed_ms": 0,
+      "status": "PASS",
+      "elapsed_ms": 3477,
       "evidence": {
         "plan": {
           "status": "planned",
-          "plan_id": "bookmark-bookmark_lifecycle-05c95203-a257-4017-b7a2-74de2239f1b6",
+          "plan_id": "bookmark-bookmark_lifecycle-e83aed7e-da9e-46af-8bc9-17e2fcacba02",
           "workflow": "bookmark_lifecycle",
           "risk": "bookmark-mutation",
           "summary": "Create a temporary codex bookmark, verify it, and delete it on rollback.",
-          "params": {},
+          "params": {
+            "camera_access_point": "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0",
+            "range": {
+              "begin_time": "2026-05-29T07:56:53.451Z",
+              "end_time": "2026-05-29T08:56:56.550Z"
+            }
+          },
           "confirmation_token": "<redacted>",
           "rollback_confirmation_token": "<redacted>",
-          "enabled": false,
+          "enabled": true,
           "applied": false,
           "rolled_back": false,
           "expected": {
-            "message": "codex temporary bookmark 1d5cf2dbbe6c, remove after smoke"
+            "message": "codex temporary bookmark 917cbe2701c9, remove after smoke"
           }
         },
-        "status": "skipped",
-        "message": "Set AXXON_BOOKMARK_MUTATION_APPROVE=1 to exercise the bookmark lifecycle."
+        "apply": {
+          "status": "applied",
+          "plan_id": "bookmark-bookmark_lifecycle-e83aed7e-da9e-46af-8bc9-17e2fcacba02",
+          "workflow": "bookmark_lifecycle",
+          "bookmark_id": "f9ddf33f-c2b5-43ad-926a-cae2c133b296",
+          "message": "codex temporary bookmark 917cbe2701c9, remove after smoke"
+        },
+        "verify": {
+          "status": "verified",
+          "plan_id": "bookmark-bookmark_lifecycle-e83aed7e-da9e-46af-8bc9-17e2fcacba02",
+          "workflow": "bookmark_lifecycle",
+          "bookmark_present": true
+        },
+        "rollback": {
+          "status": "rolled-back",
+          "plan_id": "bookmark-bookmark_lifecycle-e83aed7e-da9e-46af-8bc9-17e2fcacba02",
+          "workflow": "bookmark_lifecycle",
+          "bookmark_removed": true
+        }
       }
     }
   ]

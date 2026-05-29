@@ -654,7 +654,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.GetBookmark",
       "http_annotation": "POST /v1/bookmarks:get",
-      "live_status": "tested-pass-empty",
+      "live_status": "tested-pass",
       "method": "GetBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -667,7 +667,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.CreateBookmark",
       "http_annotation": "POST /v1/bookmarks:create",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "CreateBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -693,7 +693,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.DeleteBookmark",
       "http_annotation": "POST /v1/bookmarks:delete",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "DeleteBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",

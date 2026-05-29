@@ -16,9 +16,10 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. Latest combined live evidence: PASS=12, WARN=3, FAIL=0 across read-only, mutation, and archive-maintenance-no-op modes.
 - Phase 5F-A is shipped on `main` with 11 read-only admin tools and sanitized live evidence PASS=7, WARN=4, FAIL=0.
 - Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows and sanitized live evidence PASS=5, WARN=0, FAIL=0. License, timezone, NTP, production user/role edits, LDAP sync against a real directory, and schedule authoring remain deferred.
-- Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. `ListBookmarks` returned empty for a 24h window on the stand. Create/update/delete need a camera-access-point + range fixture, so the lifecycle stays fixture-gated. Sanitized live evidence PASS=1, WARN=1, FAIL=0. `RenderTrack` is out of scope.
+- Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
+- Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
-Test suite baseline on `main`: 495 / 495 passing.
+Test suite baseline on `main`: 500 / 500 passing.
 
 ---
 
@@ -32,7 +33,7 @@ Test suite baseline on `main`: 495 / 495 passing.
    ```bash
    cd /Users/jerrygergov/Documents/GitHub/axxon-one-mcp
    python3.12 -m unittest discover -s tools/tests 2>&1 | tail -3
-   # current main baseline: Ran 495 tests OK
+   # current main baseline: Ran 500 tests OK
    ```
 3. **Set demo-stand env for any live verification:**
    ```bash
@@ -40,7 +41,7 @@ Test suite baseline on `main`: 495 / 495 passing.
    export AXXON_HTTP_URL=http://<demo-host>
    export AXXON_USERNAME=<demo-user>
    # set AXXON_PASSWORD in your shell or secret manager; keep the value out of committed docs
-   export AXXON_TLS_CN=<demo-tls-cn>
+   export AXXON_TLS_CN=Server   # gRPC cert CN on this stand is "Server"; HTTP /grpc reads need no CA
    export AXXON_CA=<redacted-ca-path>
    ```
 4. **Choose the next track:** Phase 5F-B2 only if there is an isolated fixture/maintenance window for high-risk admin changes; otherwise start Phase 6A authoring-kit expansion.
@@ -56,14 +57,14 @@ Test suite baseline on `main`: 495 / 495 passing.
 | 2 — Live read | ✅ shipped | 15 | `tools/axxon_mcp_live.py` |
 | 3 — Operator | ✅ shipped | 11 workflows (7 ephemeral + 4 persistent) | `tools/axxon_mcp_operator.py` |
 | 4 — Generator | ✅ shipped | 8 templates | `tools/axxon_mcp_generator.py` |
-| 5A — Viewing | ✅ shipped | 6 (live_view, snapshot_batch, archive_scrub, archive_frame, archive_mjpeg_bounded, stream_health) | `docs/api-audit/phase-5a-view-smoke-latest.md` |
+| 5A — Viewing | ✅ shipped (archive live-verified) | 6 (live_view, snapshot_batch, archive_scrub, archive_frame, archive_mjpeg_bounded, stream_health) | `docs/api-audit/phase-5a-view-smoke-latest.md` |
 | 5B — PTZ | ⏸ deferred (no fixture) | — | — |
 | 5C — Alarms | ✅ shipped | 7 reads + 6 mutations | `docs/api-audit/phase-5c-alarms-smoke-latest.md` |
 | **5D — Videowall/layouts/maps** | ✅ shipped | 11 reads + 11 operator workflows | `docs/api-audit/phase-5d-view-objects-smoke-latest.md` |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) | 11 reads + 9 workflows | `docs/api-audit/phase-5e-detector-archive-smoke-latest.md` |
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1 — Security/admin mutations | ✅ shipped | 5 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
-| 5G — BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
+| 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | 6A — Authoring kit expansion (Python + Node) | ❌ not started | — | — |
 | 6B — Partner SDK kit | ❌ not started | — | — |
 | 7 — NL → plan translator | ❌ not started | — | — |

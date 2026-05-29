@@ -13,16 +13,16 @@
 | `live_view` (mjpeg) | verified | HTTP 200, content-type `multipart/x-mixed-replace; boundary=ngpboundary`, byte-cap truncation observed at 1,048,577 bytes (cap+1) |
 | `live_view` (hls) | verified | HTTP 200, JSON descriptor 282 bytes |
 | `snapshot_batch` | verified | 2 URLs returned for 2 cameras; cap of 8 applied |
-| `archive_scrub` | verified | Archive resolved to `hosts/Server/DeviceIpint.5/MultimediaStorage.0`; `intervals: []` for the chosen camera in the last hour |
-| `archive_frame` | gap (no archive intervals) | Fell through to `fixture-needed` because `archive_scrub` returned no intervals — correct fallback |
-| `archive_mjpeg_bounded` | gap (no archive intervals) | Same fallback as `archive_frame` |
+| `archive_scrub` | verified | Camera 1 bound to the `AliceBlue` archive; `archive_scrub` now selects the archive that actually has intervals and returns a recorded range |
+| `archive_frame` | verified | Resolves a real recorded frame URL from the scrub interval (camera 1 has a live recording on the stand) |
+| `archive_mjpeg_bounded` | verified | Bounded archive MJPEG URL resolved from the same recorded interval |
 | `stream_health` | verified | `bitrate=4,772,897`, `fps=23.99`, `width=1280`, `height=720`, `mediaType=2`, `streamType=875967048`; `/rtsp/stat` sessions empty |
 
 12 offline unit tests in `tools/tests/test_axxon_mcp_view.py` plus 1 MCP-server registration test in `tools/tests/test_axxon_mcp_server.py`. Full repo suite: 187 / 187 passing.
 
 ## Sanitized live smoke output
 
-`tools/axxon_view_smoke.py --fetch` against `<demo-host>` (env: `AXXON_HOST=<demo-host> AXXON_HTTP_URL=http://<demo-host> AXXON_USERNAME=root AXXON_PASSWORD=root AXXON_TLS_CN=Server AXXON_CA=docs/grpc-proto-files/api.ngp.root-ca.crt`):
+`tools/axxon_view_smoke.py --fetch` against `<demo-host>` (env: `AXXON_HOST=<demo-host> AXXON_HTTP_URL=http://<demo-host> AXXON_USERNAME=<demo-user> AXXON_PASSWORD=<redacted> AXXON_TLS_CN=Server AXXON_CA=<redacted-ca-path>`):
 
 ```json
 {
