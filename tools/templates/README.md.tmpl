@@ -13,3 +13,9 @@ python main.py
 ```
 
 Required env vars are listed at the top of `main.py`. Never embed credentials.
+
+## Safety
+
+Credentials are read only from the environment; copy `.env.example` and fill it in locally,
+never commit real values. All calls are bounded by duration, count, or byte caps. Mutating
+templates refuse to generate unless mutation was explicitly authorised.

@@ -47,6 +47,8 @@ ALLOWED_IMPORTS = {
     "datetime",
     "re",
     "uuid",
+    "unittest",
+    "main",
     "axxonsoft",
     "google",
     "__future__",
@@ -193,6 +195,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
     ),
+    TemplateInfo(
+        name="plugin_scaffold",
+        summary="Runnable plugin repo skeleton (auth + ListCameras, retry, env loader, test, CI, README, LICENSE).",
+        required_params=["name"],
+        required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
 ]
 
 
@@ -247,6 +257,57 @@ def _ts_package_json(title: str) -> str:
 
 def _render(template_text: str, values: dict[str, Any]) -> str:
     return Template(template_text).safe_substitute(values)
+
+
+def _env_example(env_names: list[str]) -> str:
+    lines = ["# Copy to .env and fill in. Never commit real credentials."]
+    placeholders = {
+        "AXXON_HOST": "<host>:20109",
+        "AXXON_TLS_CN": "Server",
+        "AXXON_USERNAME": "<username>",
+        "AXXON_PASSWORD": "<password>",
+        "AXXON_HTTP_URL": "http://<host>",
+        "AXXON_CA": "<path-to-ca.crt>",
+    }
+    lines.extend(f"{name}={placeholders.get(name, '<value>')}" for name in env_names)
+    return "\n".join(lines) + "\n"
+
+
+def _ci_workflow(name: str, language: str) -> str:
+    if language == "node":
+        steps = (
+            "      - uses: actions/setup-node@v4\n"
+            "        with:\n"
+            "          node-version: '20'\n"
+            "      - run: npm ci\n"
+            "      - run: npm test\n"
+        )
+    else:
+        steps = (
+            "      - uses: actions/setup-python@v5\n"
+            "        with:\n"
+            "          python-version: '3.12'\n"
+            "      - run: pip install -r requirements.txt\n"
+            "      - run: python -m unittest discover\n"
+        )
+    return (
+        f"name: {name}-ci\n"
+        "on: [push, pull_request]\n"
+        "jobs:\n"
+        "  test:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - uses: actions/checkout@v4\n"
+        f"{steps}"
+    )
+
+
+def _license_placeholder() -> str:
+    return (
+        "Copyright (c) 2026 <copyright holder>\n\n"
+        "Permission is hereby granted to use this generated scaffold. Replace this file with\n"
+        "your chosen license before distribution.\n"
+    )
 
 
 class Generator:
@@ -334,6 +395,8 @@ class Generator:
             return self._build_ml_detector_bridge(request, info)
         if request.template == "dashboard_backend":
             return self._build_dashboard_backend(request, info)
+        if request.template == "plugin_scaffold":
+            return self._build_plugin_scaffold(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -818,6 +881,40 @@ class Generator:
                 "main.py": body,
                 "README.md": readme,
                 "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_plugin_scaffold(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        name = request.params["name"]
+        values = {"NAME": name}
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": name, "TEMPLATE": "plugin_scaffold"})
+        env_example = _env_example(info.required_env)
+        license_text = _license_placeholder()
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("plugin_scaffold"), values),
+                    "test/smoke.test.ts": _render(_read_aux_template("plugin_scaffold.test.ts.tmpl"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(name),
+                    ".env.example": env_example,
+                    ".github/workflows/ci.yml": _ci_workflow(name, "node"),
+                    "LICENSE": license_text,
+                },
+                required_env=info.required_env,
+            )
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": _render(_read_template("plugin_scaffold"), values),
+                "test_smoke.py": _render(_read_aux_template("plugin_scaffold.test.py.tmpl"), values),
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+                ".env.example": env_example,
+                ".github/workflows/ci.yml": _ci_workflow(name, "python"),
+                "LICENSE": license_text,
             },
             required_env=info.required_env,
         )
