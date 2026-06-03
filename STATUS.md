@@ -19,7 +19,7 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
 - Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
-Test suite baseline on `main`: 578 / 578 passing.
+Test suite baseline on `main`: 588 / 588 passing.
 
 ---
 
@@ -44,7 +44,7 @@ Test suite baseline on `main`: 578 / 578 passing.
    export AXXON_TLS_CN=Server   # gRPC cert CN on this stand is "Server"; HTTP /grpc reads need no CA
    export AXXON_CA=<redacted-ca-path>
    ```
-4. **Next track is Phase 6A — authoring-kit expansion.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A is net-new and large. The multi-language renderer seam is in place and all 8 existing templates plus `alarm_responder` and `scheduled_exporter` support Python + Node/TypeScript (20 bundles). Next: 4 remaining new template kinds starting in Python then Node (target: 14 × 2 = 28 bundles, with C# as a future layer).
+4. **Next track is Phase 6A — authoring-kit expansion.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A is net-new and large. The multi-language renderer seam is in place and all 8 existing templates plus `alarm_responder`, `scheduled_exporter`, and `ml_detector_bridge` support Python + Node/TypeScript (22 bundles). Next: 3 remaining new template kinds starting in Python then Node (target: 14 × 2 = 28 bundles, with C# as a future layer).
 5. **For any new live verification**, sanitize evidence before committing (replace concrete host/user/CA values with `<demo-host>`, `<demo-user>`, `<redacted>`, never commit bearer tokens or passwords).
 
 ---
@@ -65,7 +65,7 @@ Test suite baseline on `main`: 578 / 578 passing.
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (only schedule fixture open) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1/B2 — Security/admin mutations | ✅ shipped (B2 partial) | 6 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
-| 6A — Authoring kit expansion (Python + Node) | 🔧 in progress (increment 4 shipped) | All 8 base templates Python+Node; new kinds `alarm_responder` + `scheduled_exporter` (py+node); 578 tests | `tools/templates/*.ts.tmpl` (10 files), `tools/tests/test_axxon_mcp_generator_6a*.py` |
+| 6A — Authoring kit expansion (Python + Node) | 🔧 in progress (increment 5 shipped) | All 8 base templates Python+Node; new kinds `alarm_responder` + `scheduled_exporter` + `ml_detector_bridge` (py+node); 588 tests | `tools/templates/*.ts.tmpl` (11 files), `tools/tests/test_axxon_mcp_generator_6a*.py` |
 | 6B — Partner SDK kit | ❌ not started | — | — |
 | 7 — NL → plan translator | ❌ not started | — | — |
 
@@ -76,14 +76,16 @@ Test suite baseline on `main`: 578 / 578 passing.
 See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The remaining work, in dependency order:
 
 1. **Phase 5F-B2 — high-risk admin mutations (partially shipped).** The reversible production role-comment edit/restore (`security_production_role_edit_lifecycle`) is shipped and live-verified. Still deferred (need a dedicated fixture/maintenance window or are not safely reversible on a shared stand): license apply/drop, timezone/NTP changes, production user-account/password/login edits, and LDAP sync against a real directory.
-2. **Phase 6A — Authoring kit expansion.** In progress (commit `dfa2c74`). Increments 1-4 shipped:
+2. **Phase 6A — Authoring kit expansion.** In progress (commit `a64986d`). Increments 1-5 shipped:
    language-agnostic renderer seam (`language` field on `GenerationRequest`, `languages` on `TemplateInfo`),
    Node/TypeScript variants for all 8 existing templates (`tools/templates/*.ts.tmpl`),
-   `_scan_typescript` in `Verifier`, and two new template kinds: `alarm_responder` (py+node, reads active
-   alerts then runs the BeginAlertReview->CompleteAlertReview lifecycle, mutation-gated) and
-   `scheduled_exporter` (py+node, bounded scheduled loop over ExportService.ListSessions, read-safe).
-   Next: 4 remaining new template kinds (ml_detector_bridge, dashboard_backend, plugin_scaffold,
-   ptz_controller) in Python, then their Node variants. (ptz_controller waits on a PTZ fixture.)
+   `_scan_typescript` in `Verifier`, and three new template kinds: `alarm_responder` (py+node, reads active
+   alerts then runs the BeginAlertReview->CompleteAlertReview lifecycle, mutation-gated),
+   `scheduled_exporter` (py+node, bounded scheduled loop over ExportService.ListSessions, read-safe), and
+   `ml_detector_bridge` (py+node, reads ML results from disk then raises a bounded
+   ExternalDetectorService.RaiseOccasionalEvent batch, mutation-gated).
+   Next: 3 remaining new template kinds (dashboard_backend, plugin_scaffold, ptz_controller) in Python,
+   then their Node variants. (ptz_controller waits on a PTZ fixture.)
 3. **Phase 6B — Partner SDK kit and distribution.** `scaffold_plugin`, `plugin_lint`, `plugin_package`, reference plugins in `customer-templates/`.
 4. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
 
