@@ -163,8 +163,8 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
     ),
     TemplateInfo(
         name="alarm_responder",
-        summary="Bounded alarm responder: read active alerts, run BeginAlertReview -> CompleteAlertReview lifecycle.",
-        required_params=["operator"],
+        summary="Bounded alarm responder: read a camera's active alerts, run BeginAlertReview -> CompleteAlertReview lifecycle.",
+        required_params=["camera_ap"],
         required_fixtures=[],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
@@ -673,7 +673,8 @@ class Generator:
                 "refused_mutation",
                 "alarm review lifecycle is mutating; pass allow_mutation=True to override",
             )
-        operator = request.params["operator"]
+        camera = request.params["camera_ap"]
+        operator = request.params.get("operator", "axxon-mcp")
         duration = int(request.params.get("duration", DEFAULT_DURATION_SECONDS))
         count = int(request.params.get("count", DEFAULT_EVENT_COUNT))
         if duration > DEFAULT_DURATION_SECONDS or count > DEFAULT_EVENT_COUNT:
@@ -683,18 +684,19 @@ class Generator:
                 f"duration<= {DEFAULT_DURATION_SECONDS}s, count<= {DEFAULT_EVENT_COUNT}",
             )
         values = {
+            "CAMERA_AP": camera,
             "OPERATOR": operator,
             "DURATION": str(duration),
             "COUNT": str(count),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": operator, "TEMPLATE": "alarm_responder"})
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "alarm_responder"})
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
                 files={
                     "src/index.ts": _render(_read_ts_template("alarm_responder"), values),
                     "README.md": readme,
-                    "package.json": _ts_package_json(operator),
+                    "package.json": _ts_package_json(camera),
                 },
                 required_env=info.required_env,
             )

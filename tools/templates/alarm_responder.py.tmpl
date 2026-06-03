@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Generated bounded alarm responder for operator $OPERATOR.
+"""Generated bounded alarm responder for camera $CAMERA_AP.
 
-Reads active alerts via LogicService.GetActiveAlerts, then for each alert runs the
-review lifecycle: BeginAlertReview -> CompleteAlertReview. The loop stops when either
-the count cap or the duration cap fires. All three lifecycle calls are mutating, so the
-generator only emits this bundle when mutation was explicitly authorised.
+Reads the camera's active alerts via LogicService.GetActiveAlerts, then for each alert
+runs the review lifecycle: BeginAlertReview -> CompleteAlertReview. The loop stops when
+either the count cap or the duration cap fires. The two lifecycle calls are mutating, so
+the generator only emits this bundle when mutation was explicitly authorised.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import time
 
 DURATION_SECONDS = $DURATION
 COUNT_CAP = $COUNT
+CAMERA_AP = "$CAMERA_AP"
 OPERATOR = "$OPERATOR"
 
 REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
@@ -53,10 +54,13 @@ def main() -> int:
     )
     from axxonsoft.bl.logic.LogicService_pb2_grpc import LogicServiceStub
 
+    # AlertState.ESeverity.SV_NOTICE; referenced as an int to avoid a nested-enum import.
+    SEVERITY_NOTICE = 2
+
     host = os.environ["AXXON_HOST"]
     tls_cn = os.environ["AXXON_TLS_CN"]
     user = os.environ["AXXON_USERNAME"]
-    logging.info("user=%s password=%s host=%s operator=%s", user, redact(os.environ["AXXON_PASSWORD"]), host, OPERATOR)
+    logging.info("user=%s password=%s host=%s camera=%s operator=%s", user, redact(os.environ["AXXON_PASSWORD"]), host, CAMERA_AP, OPERATOR)
 
     ca = load_ca()
     base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
@@ -78,22 +82,23 @@ def main() -> int:
     deadline = time.time() + DURATION_SECONDS
     with grpc.secure_channel(host, composite, options=options) as channel:
         stub = LogicServiceStub(channel)
-        active = stub.GetActiveAlerts(GetActiveAlertsRequest(), timeout=DURATION_SECONDS)
+        active = stub.GetActiveAlerts(GetActiveAlertsRequest(camera_ap=CAMERA_AP), timeout=DURATION_SECONDS)
         for alert in getattr(active, "alerts", []):
             if handled >= COUNT_CAP or time.time() >= deadline:
                 break
-            alert_id = getattr(alert, "id", "") or getattr(alert, "guid", "")
+            alert_id = alert.guid
             try:
                 stub.BeginAlertReview(
-                    BeginAlertReviewRequest(id=alert_id, operator=OPERATOR), timeout=DURATION_SECONDS
+                    BeginAlertReviewRequest(camera_ap=CAMERA_AP, alert_id=alert_id), timeout=DURATION_SECONDS
                 )
                 stub.CompleteAlertReview(
-                    CompleteAlertReviewRequest(id=alert_id, operator=OPERATOR), timeout=DURATION_SECONDS
+                    CompleteAlertReviewRequest(camera_ap=CAMERA_AP, alert_id=alert_id, severity=SEVERITY_NOTICE),
+                    timeout=DURATION_SECONDS,
                 )
                 handled += 1
             except grpc.RpcError as exc:
                 logging.warning("alert %s review failed: %s", alert_id, exc.code())
-    print(json.dumps({"operator": OPERATOR, "handled": handled, "duration_cap": DURATION_SECONDS, "count_cap": COUNT_CAP}))
+    print(json.dumps({"camera_ap": CAMERA_AP, "operator": OPERATOR, "handled": handled, "duration_cap": DURATION_SECONDS, "count_cap": COUNT_CAP}))
     return 0
 
 

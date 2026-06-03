@@ -1,8 +1,8 @@
 /**
- * Generated bounded alarm responder for operator $OPERATOR.
+ * Generated bounded alarm responder for camera $CAMERA_AP.
  *
- * Reads active alerts via LogicService.GetActiveAlerts, then for each alert runs the
- * review lifecycle BeginAlertReview -> CompleteAlertReview. Stops on the first
+ * Reads the camera's active alerts via LogicService.GetActiveAlerts, then for each alert
+ * runs the review lifecycle BeginAlertReview -> CompleteAlertReview. Stops on the first
  * COUNT_CAP or DURATION_SECONDS cap. All credentials are read from process.env.
  */
 
@@ -13,6 +13,7 @@ import * as fs from 'fs';
 
 const DURATION_SECONDS = $DURATION;
 const COUNT_CAP = $COUNT;
+const CAMERA_AP = '$CAMERA_AP';
 const OPERATOR = '$OPERATOR';
 
 const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
@@ -54,7 +55,7 @@ async function main(): Promise<number> {
   const tlsCn = process.env.AXXON_TLS_CN!;
   const user = process.env.AXXON_USERNAME!;
   console.info(`axxon-one-mcp generated alarm_responder`);
-  console.info(`target=${host} operator=${OPERATOR} duration=${DURATION_SECONDS}s count_cap=${COUNT_CAP}`);
+  console.info(`target=${host} camera=${CAMERA_AP} operator=${OPERATOR} duration=${DURATION_SECONDS}s count_cap=${COUNT_CAP}`);
   console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
 
   const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
@@ -98,21 +99,21 @@ async function main(): Promise<number> {
 
   const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
   const active = await unary<Record<string, Array<Record<string, string>>>>(
-    logicClient, 'GetActiveAlerts', {}, deadline,
+    logicClient, 'GetActiveAlerts', { camera_ap: CAMERA_AP }, deadline,
   ).catch(() => ({ alerts: [] }));
 
   let handled = 0;
   for (const alert of active['alerts'] ?? []) {
     if (handled >= COUNT_CAP || Date.now() >= deadline.getTime()) break;
-    const alertId = String(alert['id'] ?? alert['guid'] ?? '');
+    const alertId = String(alert['guid'] ?? '');
     const ok = await (async () => {
-      await unary(logicClient, 'BeginAlertReview', { id: alertId, operator: OPERATOR }, deadline);
-      await unary(logicClient, 'CompleteAlertReview', { id: alertId, operator: OPERATOR }, deadline);
+      await unary(logicClient, 'BeginAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId }, deadline);
+      await unary(logicClient, 'CompleteAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId, severity: 'SV_NOTICE' }, deadline);
     })().then(() => true).catch((err) => { console.warn(`alert ${alertId} review failed: ${err}`); return false; });
     if (ok) handled++;
   }
 
-  console.log(JSON.stringify({ operator: OPERATOR, handled, duration_cap: DURATION_SECONDS, count_cap: COUNT_CAP }));
+  console.log(JSON.stringify({ camera_ap: CAMERA_AP, operator: OPERATOR, handled, duration_cap: DURATION_SECONDS, count_cap: COUNT_CAP }));
   return 0;
 }
 

@@ -32,6 +32,7 @@ def load_generator(corpus: Path):
 
 
 LIFECYCLE = ("GetActiveAlerts", "BeginAlertReview", "CompleteAlertReview")
+CAMERA = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
 
 
 class AlarmResponderTests(unittest.TestCase):
@@ -46,7 +47,7 @@ class AlarmResponderTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def _request(self, language: str = "python", allow_mutation: bool = True, **params):
-        base = {"operator": "operator"}
+        base = {"camera_ap": CAMERA}
         base.update(params)
         return self.module.GenerationRequest(
             template="alarm_responder",
@@ -56,13 +57,13 @@ class AlarmResponderTests(unittest.TestCase):
         )
 
     def test_catalog_entry(self) -> None:
-        """AC1: alarm_responder is in the catalog with python+node and operator param."""
+        """AC1: alarm_responder is in the catalog with python+node and camera_ap param."""
         entries = {t["name"]: t for t in self.gen.list_templates()}
         self.assertIn("alarm_responder", entries)
         entry = entries["alarm_responder"]
         self.assertIn("python", entry["languages"])
         self.assertIn("node", entry["languages"])
-        self.assertIn("operator", entry["required_params"])
+        self.assertIn("camera_ap", entry["required_params"])
         self.assertIn("AXXON_HOST", entry["required_env"])
 
     def test_python_returns_bundle(self) -> None:
@@ -79,13 +80,14 @@ class AlarmResponderTests(unittest.TestCase):
         self.assertIsInstance(result, self.module.GenerationRefusal)
         self.assertEqual(result.reason, "refused_mutation")
 
-    def test_python_bakes_caps_and_operator(self) -> None:
-        """AC4: main.py bakes DURATION_SECONDS, COUNT_CAP, OPERATOR from params."""
+    def test_python_bakes_caps_and_camera(self) -> None:
+        """AC4: main.py bakes DURATION_SECONDS, COUNT_CAP, CAMERA_AP, OPERATOR from params."""
         result = self.gen.generate(self._request(operator="root", duration="20", count="50"))
         self.assertIsInstance(result, self.module.GeneratedBundle)
         body = result.files["main.py"]
         self.assertIn("DURATION_SECONDS = 20", body)
         self.assertIn("COUNT_CAP = 50", body)
+        self.assertIn(f'CAMERA_AP = "{CAMERA}"', body)
         self.assertIn('OPERATOR = "root"', body)
 
     def test_python_cap_exceeded(self) -> None:

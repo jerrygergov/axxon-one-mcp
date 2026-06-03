@@ -123,11 +123,15 @@ async function main(): Promise<number> {
     const logicProto = loadProto(path.join(stubsPath, 'LogicService.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
     const LogicService = logicProto['axxonsoft']?.['bl']?.['logic']?.['LogicService'] as unknown as grpc.ServiceClientConstructor;
     const logicClient = new LogicService(host, composite, channelOptions);
-    const alertsResp = await unary<Record<string, unknown[]>>(logicClient, 'GetActiveAlerts', {}, deadline).catch(() => ({ alerts: [] }));
-    for (const alert of alertsResp['alerts'] ?? []) {
-      byteState.total += JSON.stringify(alert).length;
-      activeAlerts.push(alert);
-      if (byteState.total >= BYTE_CAP) break;
+    for (const camera of cameras as Array<Record<string, string>>) {
+      const cameraAp = camera['access_point'] ?? '';
+      if (!cameraAp || byteState.total >= BYTE_CAP) break;
+      const alertsResp = await unary<Record<string, unknown[]>>(logicClient, 'GetActiveAlerts', { camera_ap: cameraAp }, deadline).catch(() => ({ alerts: [] }));
+      for (const alert of alertsResp['alerts'] ?? []) {
+        byteState.total += JSON.stringify(alert).length;
+        activeAlerts.push(alert);
+        if (byteState.total >= BYTE_CAP) break;
+      }
     }
   }
 

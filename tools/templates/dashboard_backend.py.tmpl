@@ -102,16 +102,22 @@ def main() -> int:
                 break
 
         if bytes_total < BYTE_CAP:
-            try:
-                alerts = LogicServiceStub(channel).GetActiveAlerts(GetActiveAlertsRequest(), timeout=DURATION_SECONDS)
+            logic = LogicServiceStub(channel)
+            for camera in snapshot["cameras"]:
+                camera_ap = camera.get("access_point", "")
+                if not camera_ap or bytes_total >= BYTE_CAP:
+                    break
+                try:
+                    alerts = logic.GetActiveAlerts(GetActiveAlertsRequest(camera_ap=camera_ap), timeout=DURATION_SECONDS)
+                except grpc.RpcError as exc:
+                    logging.warning("GetActiveAlerts(%s) closed: %s", camera_ap, exc.code())
+                    continue
                 for alert in getattr(alerts, "alerts", []):
                     entry = message_to_dict(alert)
                     bytes_total += len(json.dumps(entry))
                     snapshot["active_alerts"].append(entry)
                     if bytes_total >= BYTE_CAP:
                         break
-            except grpc.RpcError as exc:
-                logging.warning("GetActiveAlerts closed: %s", exc.code())
 
         if bytes_total < BYTE_CAP:
             now_ms = int(time.time() * 1000)
