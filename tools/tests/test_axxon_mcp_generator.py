@@ -110,6 +110,7 @@ class GeneratorTests(unittest.TestCase):
                     "inventory_sync",
                     "alarm_responder",
                     "scheduled_exporter",
+                    "ml_detector_bridge",
                 ]
             ),
         )

@@ -177,6 +177,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
     ),
+    TemplateInfo(
+        name="ml_detector_bridge",
+        summary="Bridge external ML inference results into Axxon via ExternalDetectorService.RaiseOccasionalEvent.",
+        required_params=["access_point", "results_path"],
+        required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
 ]
 
 
@@ -314,6 +322,8 @@ class Generator:
             return self._build_alarm_responder(request, info)
         if request.template == "scheduled_exporter":
             return self._build_scheduled_exporter(request, info)
+        if request.template == "ml_detector_bridge":
+            return self._build_ml_detector_bridge(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -717,6 +727,51 @@ class Generator:
                 required_env=info.required_env,
             )
         body = _render(_read_template("scheduled_exporter"), values)
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_ml_detector_bridge(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        if not request.allow_mutation:
+            return GenerationRefusal(
+                request.template,
+                "refused_mutation",
+                "raising detector events is mutating; pass allow_mutation=True to override",
+            )
+        access_point = request.params["access_point"]
+        results_path = request.params["results_path"]
+        duration = int(request.params.get("duration", DEFAULT_DURATION_SECONDS))
+        count = int(request.params.get("count", DEFAULT_EVENT_COUNT))
+        if duration > DEFAULT_DURATION_SECONDS or count > DEFAULT_EVENT_COUNT:
+            return GenerationRefusal(
+                request.template,
+                "cap_exceeded",
+                f"duration<= {DEFAULT_DURATION_SECONDS}s, count<= {DEFAULT_EVENT_COUNT}",
+            )
+        values = {
+            "ACCESS_POINT": access_point,
+            "RESULTS_PATH": results_path,
+            "DURATION": str(duration),
+            "COUNT": str(count),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": access_point, "TEMPLATE": "ml_detector_bridge"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("ml_detector_bridge"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(access_point),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("ml_detector_bridge"), values)
         return GeneratedBundle(
             template=request.template,
             files={
