@@ -728,6 +728,33 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(server.tools["list_maps"](7)["limit"], 7)
         self.assertEqual(server.tools["get_map_image"]("m-1", 1024)["max_bytes"], 1024)
 
+    def test_create_server_registers_partner_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        partner_tools = {"scaffold_plugin", "plugin_lint", "plugin_package"}
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in partner_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("partner", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-partner"])
+        self.assertTrue(args.enable_partner)
+
+        class StubPartner:
+            def scaffold_plugin(self, name, language="python"):
+                return {"status": "ok", "name": name, "language": language, "files": {"main.py": "x"}}
+
+            def plugin_lint(self, path):
+                return {"ok": True, "findings": []}
+
+            def plugin_package(self, path, fmt, output):
+                return {"status": "ok", "archive": str(output), "manifest": {"format": fmt}}
+
+        server = module.create_server(docs=StubDocs(), partner=StubPartner(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(partner_tools, set(server.tools))
+        self.assertEqual(server.tools["plugin_lint"]("/tmp/x")["ok"], True)
+        self.assertEqual(server.tools["plugin_package"]("/tmp/x", "/tmp/out.zip", "zip")["manifest"]["format"], "zip")
+
 
 if __name__ == "__main__":
     unittest.main()

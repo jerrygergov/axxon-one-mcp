@@ -37,6 +37,7 @@ def create_server(
     live: Any | None = None,
     operator: Any | None = None,
     generator: Any | None = None,
+    partner: Any | None = None,
     view: Any | None = None,
     alarms: Any | None = None,
     alarm_mutator: Any | None = None,
@@ -105,6 +106,9 @@ def create_server(
 
     if generator is not None:
         register_generator_tools(server, generator)
+
+    if partner is not None:
+        register_partner_tools(server, partner)
 
     if view is not None:
         register_view_tools(server, view)
@@ -685,6 +689,43 @@ def register_generator_tools(server: Any, generator: Any) -> None:
         return {"ok": result.ok, "errors": result.errors}
 
 
+def register_partner_tools(server: Any, kit: Any) -> None:
+    import os
+
+    from axxon_mcp_generator import allow_in_repo_write
+
+    @server.tool(name="scaffold_plugin")
+    def scaffold_plugin(name: str, output_dir: str, language: str = "python") -> dict[str, Any]:
+        """Generate a runnable partner plugin repo to a chosen directory."""
+        target = Path(output_dir).expanduser().resolve()
+        allow_in_repo = os.environ.get("AXXON_GENERATOR_ALLOW_IN_REPO") == "1"
+        if not allow_in_repo_write(target, allow=allow_in_repo):
+            return {
+                "status": "refused",
+                "reason": "in_repo_write_blocked",
+                "detail": f"{target} is inside the repo; set AXXON_GENERATOR_ALLOW_IN_REPO=1 to override",
+            }
+        result = kit.scaffold_plugin(name, language)
+        if result["status"] != "ok":
+            return result
+        target.mkdir(parents=True, exist_ok=True)
+        for rel, content in result["files"].items():
+            dest = target / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(content, encoding="utf-8")
+        return {"status": "ok", "output_dir": str(target), "name": name, "language": language, "files": sorted(result["files"])}
+
+    @server.tool(name="plugin_lint")
+    def plugin_lint(path: str) -> dict[str, Any]:
+        """Lint a plugin repo: static verifier plus env-example/test/README-safety checks."""
+        return kit.plugin_lint(path)
+
+    @server.tool(name="plugin_package")
+    def plugin_package(path: str, output: str, fmt: str = "zip") -> dict[str, Any]:
+        """Package a clean plugin repo into an archive with a SHA-256 manifest."""
+        return kit.plugin_package(path, fmt, output)
+
+
 def register_operator_tools(server: Any, operator: Any) -> None:
     @server.tool(name="list_operator_workflows")
     def list_operator_workflows() -> dict[str, Any]:
@@ -832,6 +873,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable integration generator tools (list/plan/generate/verify_integration).",
     )
     parser.add_argument(
+        "--enable-partner",
+        action="store_true",
+        help="Enable partner SDK tools (scaffold_plugin/plugin_lint/plugin_package).",
+    )
+    parser.add_argument(
         "--enable-view",
         action="store_true",
         help="Enable Phase 5A live/archive viewing tools (URL-only, byte/time/fps caps).",
@@ -906,6 +952,12 @@ def main() -> int:
         from axxon_mcp_generator import Generator
 
         generator = Generator(corpus_dir=args.corpus_dir)
+    partner = None
+    if args.enable_partner:
+        from axxon_mcp_generator import Generator
+        from axxon_mcp_partner import PartnerKit
+
+        partner = PartnerKit(generator=Generator(corpus_dir=args.corpus_dir))
     view = None
     if args.enable_view:
         from axxon_mcp_view import AxxonMcpView
@@ -960,6 +1012,7 @@ def main() -> int:
         live=live,
         operator=operator,
         generator=generator,
+        partner=partner,
         view=view,
         alarms=alarms,
         alarm_mutator=alarm_mutator,
