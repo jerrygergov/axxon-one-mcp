@@ -185,6 +185,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
     ),
+    TemplateInfo(
+        name="dashboard_backend",
+        summary="Read-only dashboard snapshot (ListCameras + GetActiveAlerts + ReadEvents) to a JSON file.",
+        required_params=["output_path"],
+        required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
 ]
 
 
@@ -324,6 +332,8 @@ class Generator:
             return self._build_scheduled_exporter(request, info)
         if request.template == "ml_detector_bridge":
             return self._build_ml_detector_bridge(request, info)
+        if request.template == "dashboard_backend":
+            return self._build_dashboard_backend(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -772,6 +782,34 @@ class Generator:
                 required_env=info.required_env,
             )
         body = _render(_read_template("ml_detector_bridge"), values)
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_dashboard_backend(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        output_path = request.params["output_path"]
+        values = {
+            "OUTPUT_PATH": output_path,
+            "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "dashboard_backend"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("dashboard_backend"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(output_path),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("dashboard_backend"), values)
         return GeneratedBundle(
             template=request.template,
             files={

@@ -1,0 +1,167 @@
+/**
+ * Generated read-only dashboard backend for an Axxon One server.
+ *
+ * Collects a single dashboard snapshot from three read-safe sources and writes it as
+ * JSON to OUTPUT_PATH: DomainService.ListCameras, LogicService.GetActiveAlerts, and
+ * EventHistoryService.ReadEvents (recent window). Bounded by BYTE_CAP on the serialised
+ * output. No mutation. All credentials are read from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const BYTE_CAP = $BYTE_CAP;
+const OUTPUT_PATH = '$OUTPUT_PATH';
+const EVENTS_WINDOW_SECONDS = 3600;
+const DURATION_SECONDS = 60;
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function unary<T>(client: grpc.Client, method: string, request: object, deadline: Date): Promise<T> {
+  return new Promise((resolve, reject) => {
+    (client as Record<string, Function>)[method](
+      request,
+      { deadline },
+      (err: grpc.ServiceError | null, res: T) => {
+        if (err) reject(err); else resolve(res);
+      },
+    );
+  });
+}
+
+function collectStream(client: grpc.Client, method: string, request: object, deadline: Date, itemsKey: string, sink: unknown[], byteState: { total: number }): Promise<void> {
+  return new Promise((resolve) => {
+    const call = (client as Record<string, Function>)[method](request, { deadline }) as NodeJS.EventEmitter & { cancel(): void };
+    call.on('data', (page: Record<string, unknown[]>) => {
+      for (const item of (page[itemsKey] as unknown[]) ?? []) {
+        byteState.total += JSON.stringify(item).length;
+        sink.push(item);
+        if (byteState.total >= BYTE_CAP) { call.cancel(); resolve(); return; }
+      }
+    });
+    call.on('error', () => resolve());
+    call.on('end', () => resolve());
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated dashboard_backend`);
+  console.info(`target=${host} output=${OUTPUT_PATH} byte_cap=${BYTE_CAP}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+  const byteState = { total: 0 };
+  const cameras: unknown[] = [];
+  const activeAlerts: unknown[] = [];
+  const recentEvents: unknown[] = [];
+
+  const domainProto = loadProto(path.join(stubsPath, 'Domain.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const DomainService = domainProto['axxonsoft']?.['bl']?.['domain']?.['DomainService'] as unknown as grpc.ServiceClientConstructor;
+  const domainClient = new DomainService(host, composite, channelOptions);
+  await collectStream(domainClient, 'ListCameras', { view: 0 }, deadline, 'items', cameras, byteState);
+
+  if (byteState.total < BYTE_CAP) {
+    const logicProto = loadProto(path.join(stubsPath, 'LogicService.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+    const LogicService = logicProto['axxonsoft']?.['bl']?.['logic']?.['LogicService'] as unknown as grpc.ServiceClientConstructor;
+    const logicClient = new LogicService(host, composite, channelOptions);
+    const alertsResp = await unary<Record<string, unknown[]>>(logicClient, 'GetActiveAlerts', {}, deadline).catch(() => ({ alerts: [] }));
+    for (const alert of alertsResp['alerts'] ?? []) {
+      byteState.total += JSON.stringify(alert).length;
+      activeAlerts.push(alert);
+      if (byteState.total >= BYTE_CAP) break;
+    }
+  }
+
+  if (byteState.total < BYTE_CAP) {
+    const eventsProto = loadProto(path.join(stubsPath, 'EventHistory.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+    const EventHistoryService = eventsProto['axxonsoft']?.['bl']?.['events']?.['EventHistoryService'] as unknown as grpc.ServiceClientConstructor;
+    const eventsClient = new EventHistoryService(host, composite, channelOptions);
+    const nowMs = Date.now();
+    const request = {
+      range: { begin_time: String(nowMs - EVENTS_WINDOW_SECONDS * 1000), end_time: String(nowMs) },
+      filters: { filters: [{}] },
+    };
+    await collectStream(eventsClient, 'ReadEvents', request, deadline, 'items', recentEvents, byteState);
+  }
+
+  const snapshot = {
+    timestamp_ms: Date.now(),
+    host,
+    cameras,
+    active_alerts: activeAlerts,
+    recent_events: recentEvents,
+  };
+  const payload = JSON.stringify(snapshot, null, 2);
+  const outputPath = OUTPUT_PATH;
+  fs.mkdirSync(path.dirname(outputPath) || '.', { recursive: true });
+  fs.writeFileSync(outputPath, payload.slice(0, BYTE_CAP), 'utf8');
+  console.log(JSON.stringify({
+    output: outputPath,
+    cameras: cameras.length,
+    active_alerts: activeAlerts.length,
+    recent_events: recentEvents.length,
+    bytes: byteState.total,
+  }));
+  return 0;
+}
+
+main().then(code => process.exit(code));

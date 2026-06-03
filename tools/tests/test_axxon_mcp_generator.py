@@ -111,6 +111,7 @@ class GeneratorTests(unittest.TestCase):
                     "alarm_responder",
                     "scheduled_exporter",
                     "ml_detector_bridge",
+                    "dashboard_backend",
                 ]
             ),
         )
