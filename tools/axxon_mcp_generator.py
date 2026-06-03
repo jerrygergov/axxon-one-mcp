@@ -27,6 +27,10 @@ DEFAULT_EVENT_COUNT = 500
 DEFAULT_HTTP_BYTE_CAP = 1_048_576
 DEFAULT_EXPORT_WINDOW_SECONDS = 3600
 DEFAULT_EXPORT_BYTE_CAP = 50 * 1024 * 1024
+DEFAULT_SCHEDULE_INTERVAL_SECONDS = 300
+MIN_INTERVAL_SECONDS = 60
+MAX_SCHEDULED_RUNS = 100
+DEFAULT_SCHEDULED_RUNS = 12
 
 ALLOWED_IMPORTS = {
     "grpc",
@@ -161,6 +165,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         name="alarm_responder",
         summary="Bounded alarm responder: read active alerts, run BeginAlertReview -> CompleteAlertReview lifecycle.",
         required_params=["operator"],
+        required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
+    TemplateInfo(
+        name="scheduled_exporter",
+        summary="Bounded scheduled loop that polls ExportService.ListSessions for a camera every interval.",
+        required_params=["camera_ap"],
         required_fixtures=[],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
@@ -300,6 +312,8 @@ class Generator:
             return self._build_inventory_sync(request, info)
         if request.template == "alarm_responder":
             return self._build_alarm_responder(request, info)
+        if request.template == "scheduled_exporter":
+            return self._build_scheduled_exporter(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -665,6 +679,44 @@ class Generator:
                 required_env=info.required_env,
             )
         body = _render(_read_template("alarm_responder"), values)
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_scheduled_exporter(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        camera = request.params["camera_ap"]
+        interval = int(request.params.get("interval", DEFAULT_SCHEDULE_INTERVAL_SECONDS))
+        max_runs = int(request.params.get("max_runs", DEFAULT_SCHEDULED_RUNS))
+        if interval < MIN_INTERVAL_SECONDS or max_runs > MAX_SCHEDULED_RUNS:
+            return GenerationRefusal(
+                request.template,
+                "cap_exceeded",
+                f"interval>= {MIN_INTERVAL_SECONDS}s, max_runs<= {MAX_SCHEDULED_RUNS}",
+            )
+        values = {
+            "CAMERA_AP": camera,
+            "INTERVAL": str(interval),
+            "MAX_RUNS": str(max_runs),
+            "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "scheduled_exporter"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("scheduled_exporter"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(camera),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("scheduled_exporter"), values)
         return GeneratedBundle(
             template=request.template,
             files={

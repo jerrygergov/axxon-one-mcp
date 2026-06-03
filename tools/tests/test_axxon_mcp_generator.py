@@ -109,6 +109,7 @@ class GeneratorTests(unittest.TestCase):
                     "webhook_bridge",
                     "inventory_sync",
                     "alarm_responder",
+                    "scheduled_exporter",
                 ]
             ),
         )
