@@ -157,6 +157,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
     ),
+    TemplateInfo(
+        name="alarm_responder",
+        summary="Bounded alarm responder: read active alerts, run BeginAlertReview -> CompleteAlertReview lifecycle.",
+        required_params=["operator"],
+        required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
 ]
 
 
@@ -290,6 +298,8 @@ class Generator:
             return self._build_webhook_bridge(request, info)
         if request.template == "inventory_sync":
             return self._build_inventory_sync(request, info)
+        if request.template == "alarm_responder":
+            return self._build_alarm_responder(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -612,6 +622,49 @@ class Generator:
                 required_env=info.required_env,
             )
         body = _render(_read_template("inventory_sync"), values)
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_alarm_responder(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        if not request.allow_mutation:
+            return GenerationRefusal(
+                request.template,
+                "refused_mutation",
+                "alarm review lifecycle is mutating; pass allow_mutation=True to override",
+            )
+        operator = request.params["operator"]
+        duration = int(request.params.get("duration", DEFAULT_DURATION_SECONDS))
+        count = int(request.params.get("count", DEFAULT_EVENT_COUNT))
+        if duration > DEFAULT_DURATION_SECONDS or count > DEFAULT_EVENT_COUNT:
+            return GenerationRefusal(
+                request.template,
+                "cap_exceeded",
+                f"duration<= {DEFAULT_DURATION_SECONDS}s, count<= {DEFAULT_EVENT_COUNT}",
+            )
+        values = {
+            "OPERATOR": operator,
+            "DURATION": str(duration),
+            "COUNT": str(count),
+        }
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": operator, "TEMPLATE": "alarm_responder"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("alarm_responder"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(operator),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("alarm_responder"), values)
         return GeneratedBundle(
             template=request.template,
             files={

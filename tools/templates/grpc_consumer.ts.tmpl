@@ -1,0 +1,106 @@
+/**
+ * Generated direct gRPC consumer for $FQMN.
+ *
+ * Authenticates via AuthenticationService.AuthenticateEx2, then calls
+ * the target method once with a hard deadline. All credentials are read
+ * from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+
+const DURATION_SECONDS = $DURATION;
+const FQMN = '$FQMN';
+const SERVICE = '$SERVICE';
+const METHOD = '$METHOD';
+const PROTO = '$PROTO';
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated grpc_consumer`);
+  console.info(`target=${host} method=${FQMN}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath) {
+    const fs = await import('fs');
+    if (fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+  }
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenName: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenName.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const targetProtoPath = path.join(stubsPath, PROTO);
+  const targetProto = loadProto(targetProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const parts = FQMN.split('.');
+  let obj: Record<string, unknown> = targetProto as Record<string, unknown>;
+  for (const part of parts.slice(0, -1)) obj = (obj[part] ?? {}) as Record<string, unknown>;
+  const ServiceCls = obj[SERVICE] as unknown as grpc.ServiceClientConstructor;
+
+  return new Promise((resolve) => {
+    const client = new ServiceCls(host, composite, channelOptions);
+    const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+    (client as Record<string, Function>)[METHOD]({}, { deadline }, (err: grpc.ServiceError | null, response: unknown) => {
+      if (err) { console.warn(`rpc error: ${err.code}`); resolve(1); return; }
+      const preview = JSON.stringify(response ?? {}).slice(0, 4000);
+      console.info(`response_chars=${preview.length}`);
+      console.log(JSON.stringify({ fqmn: FQMN, preview_chars: preview.length }));
+      resolve(0);
+    });
+  });
+}
+
+main().then(code => process.exit(code));

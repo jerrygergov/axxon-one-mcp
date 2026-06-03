@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Generated bounded alarm responder for operator $OPERATOR.
+
+Reads active alerts via LogicService.GetActiveAlerts, then for each alert runs the
+review lifecycle: BeginAlertReview -> CompleteAlertReview. The loop stops when either
+the count cap or the duration cap fires. All three lifecycle calls are mutating, so the
+generator only emits this bundle when mutation was explicitly authorised.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import time
+
+DURATION_SECONDS = $DURATION
+COUNT_CAP = $COUNT
+OPERATOR = "$OPERATOR"
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.logic.LogicService_pb2 import (
+        BeginAlertReviewRequest,
+        CompleteAlertReviewRequest,
+        GetActiveAlertsRequest,
+    )
+    from axxonsoft.bl.logic.LogicService_pb2_grpc import LogicServiceStub
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    logging.info("user=%s password=%s host=%s operator=%s", user, redact(os.environ["AXXON_PASSWORD"]), host, OPERATOR)
+
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=DURATION_SECONDS,
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    handled = 0
+    deadline = time.time() + DURATION_SECONDS
+    with grpc.secure_channel(host, composite, options=options) as channel:
+        stub = LogicServiceStub(channel)
+        active = stub.GetActiveAlerts(GetActiveAlertsRequest(), timeout=DURATION_SECONDS)
+        for alert in getattr(active, "alerts", []):
+            if handled >= COUNT_CAP or time.time() >= deadline:
+                break
+            alert_id = getattr(alert, "id", "") or getattr(alert, "guid", "")
+            try:
+                stub.BeginAlertReview(
+                    BeginAlertReviewRequest(id=alert_id, operator=OPERATOR), timeout=DURATION_SECONDS
+                )
+                stub.CompleteAlertReview(
+                    CompleteAlertReviewRequest(id=alert_id, operator=OPERATOR), timeout=DURATION_SECONDS
+                )
+                handled += 1
+            except grpc.RpcError as exc:
+                logging.warning("alert %s review failed: %s", alert_id, exc.code())
+    print(json.dumps({"operator": OPERATOR, "handled": handled, "duration_cap": DURATION_SECONDS, "count_cap": COUNT_CAP}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
