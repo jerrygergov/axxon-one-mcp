@@ -1,0 +1,18 @@
+{
+  "task_id": "phase-6-gap-closure",
+  "verdict": "PASS",
+  "verified_at": "2026-06-04",
+  "test_command": "python3.12 -m unittest discover -s tools/tests",
+  "test_result": "Ran 621 tests, OK",
+  "gaps": {
+    "ml_detector_bridge_raise": "CLOSED (generated bundle raised 2 Event1 events live)",
+    "alarm_responder_lifecycle": "CLOSED (handled 5 real alerts; severity bug fixed SV_NOTICE->SV_ALARM)",
+    "admin_mutations_5fb": "VERIFIED (PASS=6)",
+    "alarms_mutation_5c": "VERIFIED (raise/begin/continue/cancel ok)",
+    "bookmark_lifecycle_5g": "VERIFIED (gRPC Create/Get/Delete PASS)",
+    "operator_full_cycle": "VERIFIED (8 ephemeral workflows apply+rollback)",
+    "recent_events": "HARD STAND-CONFIG GAP (event archiving disabled; 0 events across all types over 30d)",
+    "schedule_descriptor_get": "HARD FIXTURE GAP (no schedule descriptor on stand)",
+    "ptz_controller": "EXCLUDED (no PTZ camera; user-excluded)"
+  }
+}

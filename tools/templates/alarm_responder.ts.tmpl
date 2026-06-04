@@ -108,7 +108,7 @@ async function main(): Promise<number> {
     const alertId = String(alert['guid'] ?? '');
     const ok = await (async () => {
       await unary(logicClient, 'BeginAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId }, deadline);
-      await unary(logicClient, 'CompleteAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId, severity: 'SV_NOTICE' }, deadline);
+      await unary(logicClient, 'CompleteAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId, severity: 'SV_ALARM' }, deadline);
     })().then(() => true).catch((err) => { console.warn(`alert ${alertId} review failed: ${err}`); return false; });
     if (ok) handled++;
   }

@@ -54,8 +54,10 @@ def main() -> int:
     )
     from axxonsoft.bl.logic.LogicService_pb2_grpc import LogicServiceStub
 
-    # AlertState.ESeverity.SV_NOTICE; referenced as an int to avoid a nested-enum import.
-    SEVERITY_NOTICE = 2
+    # AlertState.ESeverity.SV_ALARM; referenced as an int to avoid a nested-enum import.
+    # Servers reject SV_NOTICE(2) on CompleteAlertReview; SV_ALARM(4) is accepted and is the
+    # correct "this was a real alarm" completion.
+    SEVERITY_ALARM = 4
 
     host = os.environ["AXXON_HOST"]
     tls_cn = os.environ["AXXON_TLS_CN"]
@@ -92,7 +94,7 @@ def main() -> int:
                     BeginAlertReviewRequest(camera_ap=CAMERA_AP, alert_id=alert_id), timeout=DURATION_SECONDS
                 )
                 stub.CompleteAlertReview(
-                    CompleteAlertReviewRequest(camera_ap=CAMERA_AP, alert_id=alert_id, severity=SEVERITY_NOTICE),
+                    CompleteAlertReviewRequest(camera_ap=CAMERA_AP, alert_id=alert_id, severity=SEVERITY_ALARM),
                     timeout=DURATION_SECONDS,
                 )
                 handled += 1
