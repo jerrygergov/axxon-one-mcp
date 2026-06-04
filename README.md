@@ -52,9 +52,12 @@ coverage matrix for Axxon One VMS.
   plugin_scaffold). A static verifier rejects embedded secrets, disallowed
   imports, and missing safety caps in both languages. The 8 base templates are
   verified end-to-end against the demo stand
-  (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`); 8 generated bundles
+  (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`); generated bundles
   (including the new kinds) were live-verified — see
-  `.agent/tasks/phase-6a-live-verify/evidence.md`.
+  `.agent/tasks/phase-6a-live-verify/evidence.md`. A destructive gap-closure pass
+  also exercised the mutating kinds live: `ml_detector_bridge` raised real events
+  and `alarm_responder` completed review on real alerts (which fixed the
+  CompleteAlertReview severity), see `.agent/tasks/phase-6-gap-closure/`.
 - **Phase 6B partner SDK kit**: `scaffold_plugin`, `plugin_lint`,
   `plugin_package` (`tools/axxon_mcp_partner.py`), with reference Python + Node
   plugins under `customer-templates/` kept lint-clean and packageable by CI.

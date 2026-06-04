@@ -54,7 +54,17 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 - 6A: 8 generated bundles live-verified (dashboard_backend returns active_alerts>0 after the GetActiveAlerts-needs-camera_ap fix); 6B: scaffold->lint->package->run lists cameras on the stand.
 - A live finding during 6A fixed the `GetActiveAlerts` request shape (it requires `camera_ap`).
 
-**Open stand-side fixture gaps (cannot be closed from the client):** `ptz_controller` (needs a PTZ camera), `schedule_descriptor_get` (no schedule/calendar config object), an ExternalDetector unit (for ml_detector_bridge raises), events in the history DB (for recent_events), and an active alert on a camera (to exercise the alarm_responder review lifecycle).
+**Destructive gap-closure pass (2026-06-04, `00ec63d`, `.agent/tasks/phase-6-gap-closure/`).** Exercised every non-PTZ mutating path live (test-only stand, destructive testing authorized):
+- `ml_detector_bridge` raised real `Event1` events into `DetectorEx.1` via the generated bundle (`raised: 2`). (Accepted event type on this stand is `Event1`; others return `BAD_EVENT_TYPE`.)
+- `alarm_responder` Began + Completed review on 5 real alerts (`handled: 5`). This surfaced and fixed a template bug: the server rejects `SV_NOTICE(2)` on CompleteAlertReview, so completion now uses `SV_ALARM(4)`.
+- Admin mutations (5F-B1 + 5F-B2 reversible role edit): PASS=6. Alarms mutation (raise/begin/continue/cancel): ok. gRPC bookmark lifecycle (Create/Get/Delete): PASS. Operator full apply/verify/rollback: all 8 ephemeral workflows applied + rolled back.
+
+**Remaining gaps (cannot be closed from the API client):**
+- `ptz_controller` — needs a PTZ camera (user-excluded).
+- `recent_events` / EventHistory — the stand persists no events (ReadCount = 0 across all 20 event types over 30 days; event archiving is disabled in its server config). `dashboard_backend recent_events: 0` is correct stand state.
+- `schedule_descriptor_get` — no schedule/calendar/weekly/daily descriptor field exists on any of the 38 devices; Axxon schedules are authored in the desktop client and not creatable via this API.
+
+**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`).
 
 **Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`).
 
