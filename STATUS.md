@@ -18,9 +18,10 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 - Phase 5F-A is shipped on `main` with 11 read-only admin tools. Latest sanitized live evidence PASS=10, WARN=1, FAIL=0. `license_status` is `ok` (`GetHostInfo` over direct gRPC), and `domain_event_subscribe` / `node_event_subscribe` return `idle` (healthy idle streams). The remaining WARN is `schedule_descriptor_get`, a genuine stand-side fixture gap.
 - Phase 5F-B1 is shipped with five approval-gated `codex-*` security/admin mutation workflows. Phase 5F-B2 added a sixth, `security_production_role_edit_lifecycle` (the reversible slice of 5F-B2): it snapshots a real production role, edits only its cosmetic comment, verifies, then restores the exact original record (`full_restore: true`). Combined live evidence PASS=6, WARN=0, FAIL=0. Still deferred from 5F-B2 (not safely reversible on a shared stand or out of approved scope): license apply/drop, timezone/NTP changes, production user-account/password/login edits, LDAP sync against a real directory, and schedule authoring.
 - Phase 5G (BookmarkService) is shipped with live-verified reads over HTTP `/grpc` and an approval-gated `bookmark_lifecycle` mutation workflow. The full lifecycle (create -> verify -> delete) is now live-verified against the stand once a camera access point and an archive range are supplied (PASS=2, WARN=0, FAIL=0). `RenderTrack` is out of scope.
+- Phase 5H (metadata/VMDA search) is shipped: `list_vmda_sources`, `live_track_sample` (live `MetadataService.PullMetadata` tracklets — verified live, caught 14 moving objects on camera 1's tracker), and `vmda_query` (`VMDAService.ExecuteQueryTyped` MotionInArea, bound with `camera_ID == access_point`) behind `--enable-metadata`. This is the gRPC equivalent of the desktop "Metadata search". `vmda_query` returns 0 intervals on this stand because it does not persist VMDA tracks to the queryable archive DB (same class as the empty EventHistory); the call is correct and returns data on any stand that records metadata.
 - Inventory discovery has an HTTP `/grpc` fallback (`load_inventory_http`) so camera/archive enumeration works even when the gRPC root CA is unavailable. The stand's gRPC cert CN is `Server` (not `axxon`); use `AXXON_TLS_CN=Server` for direct-gRPC live runs.
 
-Test suite baseline on `main`: 621 / 621 passing.
+Test suite baseline on `main`: 629 / 629 passing.
 
 ---
 
@@ -70,6 +71,7 @@ A destructive live gap-closure pass (2026-06-04, `00ec63d`, see `.agent/tasks/ph
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) | 13 template kinds Python+Node (26 bundles); 5 new kinds added (alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend, plugin_scaffold); 8 bundles live-verified on stand | `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*` |
 | 6B — Partner SDK kit | 🟢 complete | yes (scaffold->run on stand) | `tools/axxon_mcp_partner.py`, `customer-templates/`, `tools/tests/test_axxon_mcp_partner.py`, `test_customer_templates.py` |
+| 5H — Metadata / VMDA search | ✅ shipped (live tracklets verified; archived query 0 on unarchived stand) | 4 read tools (`--enable-metadata`) | `tools/axxon_mcp_metadata.py`, `tools/tests/test_axxon_mcp_metadata.py`, `.agent/tasks/phase-5h-metadata-search/` |
 | 7 — NL → plan translator | ❌ not started | — | — |
 
 ---

@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **621 / 621** unit tests passing on `main`.
+- **629 / 629** unit tests passing on `main`.
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
@@ -80,6 +80,7 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5F-B1 — Security/admin mutations | ✅ shipped |
 | 5F-B2 — Reversible production role edit | ✅ partial (rest deferred) |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped |
+| 5H — Metadata / VMDA object-track search | ✅ shipped (live tracklets verified) |
 | 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) |
 | 6B — Partner SDK kit + distribution | ✅ shipped |
 | 7 — NL → plan translator | ❌ not started (next) |
@@ -99,6 +100,7 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_mcp_generator_smoke.py — static smoke that generates+verifies all templates
   axxon_mcp_generator_runtime_smoke.py — live runtime smoke for the 8 base templates
   axxon_mcp_partner.py       — phase-6B partner SDK kit (scaffold/lint/package)
+  axxon_mcp_metadata.py      — phase-5H metadata/VMDA search (live tracklets + archived query)
   axxon_mcp_view_objects.py  — phase-5D layouts/maps/videowalls read tools
   axxon_view_objects_smoke.py — phase-5D live read + mutation smoke
   axxon_mcp_detector_archive.py — phase-5E detector/archive read tools
@@ -156,6 +158,11 @@ python tools/axxon_mcp_server.py --enable-generator --transport stdio
 
 # + partner SDK kit (scaffold_plugin/plugin_lint/plugin_package, Phase 6B)
 python tools/axxon_mcp_server.py --enable-partner --transport stdio
+
+# + metadata / VMDA object-track search (Phase 5H)
+AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
+AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
+python tools/axxon_mcp_server.py --enable-metadata --transport stdio
 
 # + live + archive viewing tools (Phase 5A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
@@ -266,6 +273,21 @@ refuses to package a repo that does not lint clean. Reference Python + Node
 plugins live in `customer-templates/` and are kept lint-clean and packageable by
 `tools/tests/test_customer_templates.py`. See
 `.agent/tasks/phase-6b-partner-sdk/evidence.md`.
+
+### Metadata / VMDA search (Phase 5H)
+
+Reads (`--enable-metadata`): `metadata_connect_axxon_profile`, `list_vmda_sources`,
+`live_track_sample`, `vmda_query`. This is the gRPC equivalent of the desktop client's
+"Metadata search". `list_vmda_sources` enumerates the stand's `*/SourceEndpoint.vmda`
+endpoints. `live_track_sample(access_point, seconds, limit)` streams bounded live object
+tracklets via `MetadataService.PullMetadata` (id, state, behavior, bbox), clamped to module
+caps and stopped cleanly at the duration/limit cap. `vmda_query(access_point, query_type,
+object_types, behaviours, hours)` runs an archived forensic search via
+`VMDAService.ExecuteQueryTyped` (MotionInArea full-frame by default), binding
+`camera_ID == access_point` (the form the server accepts). The query is correct and returns
+intervals on any stand that records metadata; on a stand that does not persist VMDA tracks it
+returns zero intervals (status ok). Credentials are env-only and the module never mutates
+stand config. See `.agent/tasks/phase-5h-metadata-search/evidence.md`.
 
 ### View tools (Phase 5A)
 
