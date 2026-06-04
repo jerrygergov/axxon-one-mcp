@@ -1,7 +1,7 @@
 # Axxon One MCP — Project Status & Handoff
 
 **Last updated:** 2026-06-04
-**Branch state:** `main` includes everything through Phase 6B. Phase 6A (5 new template kinds, Python + Node) and Phase 6B (PartnerKit + reference plugins) are shipped, and a full 0->6B live re-verification pass ran on 2026-06-04 (621/621 tests; every phase live-verified against the stand). Continue on `main` unless the user asks for a new worktree.
+**Branch state:** `main` includes everything through Phase 6B plus Phase 5H (metadata/VMDA search). On 2026-06-04 a full 0->6B live re-verification pass ran, then a destructive live gap-closure pass exercised every non-PTZ mutating path, and Phase 5H shipped the live object-track search. Test suite: 629/629. Continue on `main` unless the user asks for a new worktree. Only Phase 7 (NL -> plan translator) remains unbuilt.
 
 This file is the single point of entry for any agent (Claude, Codex, human) continuing this project. Read it first, then jump into the linked roadmap and the next-phase plan.
 
@@ -10,8 +10,8 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 ## TL;DR
 
 - The MCP is real and live-verified against a private demo stand (`<demo-host>`, `<demo-user>`, gRPC `20109`, HTTP `80`; credentials and CA paths stay out of committed docs).
-- The shipped baseline includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms, Phase 5D videowall/layout/map tools, Phase 5E detector/archive tools, Phase 5F-A admin read tools, Phase 5F-B1 admin mutation workflows, Phase 5G bookmarks, Phase 6A authoring-kit expansion (13 template kinds × Python+Node), and Phase 6B partner SDK kit on `main`.
-- Phase 6 is complete except `ptz_controller` (PTZ fixture gap). Next track is Phase 7 (NL -> plan translator).
+- The shipped baseline includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms, Phase 5D videowall/layout/map tools, Phase 5E detector/archive tools, Phase 5F-A admin read tools, Phase 5F-B1 admin mutation workflows, Phase 5G bookmarks, Phase 5H metadata/VMDA search, Phase 6A authoring-kit expansion (13 template kinds × Python+Node), and Phase 6B partner SDK kit on `main`.
+- Everything planned is shipped except: Phase 7 (NL -> plan translator, not started) and `ptz_controller` (the one 6A template blocked on a PTZ-camera fixture). Next track is Phase 7.
 - Phase 5B (PTZ) is deferred — no PTZ camera on the demo stand.
 - Phase 5D (videowall / layouts / maps) is shipped on `main` with 11 read tools, 11 operator workflows, live map/videowall smoke evidence, and sanitized docs. Schedules moved to Phase 5F.
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. `archive_policy_get` is now live-verified: read-only evidence PASS=11, WARN=0, FAIL=0. It resolves `MultimediaStorage.AliceBlue` (retention `day_depth`, binding `storage_type`); the smoke now prefers a top-level `MultimediaStorage.<name>` unit over embedded device storages.
@@ -46,7 +46,7 @@ Test suite baseline on `main`: 629 / 629 passing.
    export AXXON_TLS_CN=Server   # gRPC cert CN on this stand is "Server"; HTTP /grpc reads need no CA
    export AXXON_CA=<redacted-ca-path>
    ```
-4. **Phase 6 is complete; next track is Phase 7 — NL -> plan translator.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A: the multi-language renderer seam is in place and 13 template kinds support Python + Node/TypeScript (26 bundles) — the 8 base templates plus `alarm_responder`, `scheduled_exporter`, `ml_detector_bridge`, `dashboard_backend`, and `plugin_scaffold`; 8 generated bundles were live-verified against the demo stand. 6B: the `PartnerKit` (scaffold/lint/package) shipped with reference plugins in `customer-templates/`, verified live scaffold->run (lists the stand's cameras).
+4. **Phases 1-6B and 5H are shipped; next track is Phase 7 — NL -> plan translator.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A: the multi-language renderer seam is in place and 13 template kinds support Python + Node/TypeScript (26 bundles) — the 8 base templates plus `alarm_responder`, `scheduled_exporter`, `ml_detector_bridge`, `dashboard_backend`, and `plugin_scaffold`; 8 generated bundles were live-verified against the demo stand. 6B: the `PartnerKit` (scaffold/lint/package) shipped with reference plugins in `customer-templates/`, verified live scaffold->run (lists the stand's cameras). A destructive live gap-closure pass (`.agent/tasks/phase-6-gap-closure/`) exercised every non-PTZ mutating path on the stand: `ml_detector_bridge` raised real events, `alarm_responder` reviewed 5 real alerts (fixing a `SV_NOTICE`->`SV_ALARM` severity bug), and admin/alarms/bookmark/operator mutations all passed with clean rollback. 5H: metadata/VMDA object-track search (`tools/axxon_mcp_metadata.py`) shipped behind `--enable-metadata` — `live_track_sample` is live-verified (caught 14 moving objects), and `vmda_query` (ExecuteQueryTyped MotionInArea) is proto-faithful and returns data on any stand that records metadata.
 
 A destructive live gap-closure pass (2026-06-04, `00ec63d`, see `.agent/tasks/phase-6-gap-closure/`) exercised every non-PTZ mutating path against the stand: `ml_detector_bridge` raised real `Event1` events into `DetectorEx.1` (`raised: 2`); `alarm_responder` Began+Completed review on 5 real alerts (which surfaced and fixed a template bug — the server rejects `SV_NOTICE(2)`, so completion now uses `SV_ALARM(4)`); admin mutations PASS=6; alarms raise/begin/continue/cancel ok; gRPC bookmark Create/Get/Delete PASS; and the operator full apply/verify/rollback cycle ran all 8 ephemeral workflows. Remaining in Phase 6: only `ptz_controller`, blocked on a live PTZ-camera fixture (C# remains a future layer). Two confirmed hard stand-config gaps that cannot be closed via the API: `recent_events` (the stand archives no events — 0 across all 20 event types over 30 days), and `schedule_descriptor_get` (no schedule descriptor object exists on the stand; schedules are desktop-client authored).
 5. **For any new live verification**, sanitize evidence before committing (replace concrete host/user/CA values with `<demo-host>`, `<demo-user>`, `<redacted>`, never commit bearer tokens or passwords).
@@ -78,31 +78,17 @@ A destructive live gap-closure pass (2026-06-04, `00ec63d`, see `.agent/tasks/ph
 
 ## What's left in the roadmap
 
-See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The remaining work, in dependency order:
+See [the roadmap](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md) for the full breakdown. The only unbuilt phase is **Phase 7**. Everything else is shipped; what follows is the deferred/fixture-blocked tail plus completed-phase notes.
 
-1. **Phase 5F-B2 — high-risk admin mutations (partially shipped).** The reversible production role-comment edit/restore (`security_production_role_edit_lifecycle`) is shipped and live-verified. Still deferred (need a dedicated fixture/maintenance window or are not safely reversible on a shared stand): license apply/drop, timezone/NTP changes, production user-account/password/login edits, and LDAP sync against a real directory.
-2. **Phase 6A — Authoring kit expansion.** Substantially complete (commit `6ee1b8d`). Increments 1-7 shipped:
-   language-agnostic renderer seam (`language` field on `GenerationRequest`, `languages` on `TemplateInfo`),
-   Node/TypeScript variants for all 8 existing templates, `_scan_typescript` in `Verifier`, and five new
-   template kinds (all py+node): `alarm_responder` (reads a camera's active alerts then runs
-   BeginAlertReview->CompleteAlertReview, mutation-gated), `scheduled_exporter` (bounded scheduled loop over
-   ExportService.ListSessions, read-safe), `ml_detector_bridge` (reads ML results then raises a bounded
-   ExternalDetectorService.RaiseOccasionalEvent batch, mutation-gated), `dashboard_backend` (read-only
-   snapshot of ListCameras + per-camera GetActiveAlerts + ReadEvents to a byte-capped JSON file), and
-   `plugin_scaffold` (full runnable plugin repo: auth+ListCameras with retry, env loader, test, CI,
-   README+Safety, LICENSE). Live-verified 8 generated bundles against the demo stand; a live finding fixed
-   the GetActiveAlerts request shape (needs camera_ap). See `.agent/tasks/phase-6a-live-verify/evidence.md`.
-   Remaining: `ptz_controller` is blocked on a live PTZ-camera fixture on the stand (genuine fixture gap).
-   Stand-side fixtures still needed to exercise the mutating paths: an ExternalDetector unit
-   (for ml_detector_bridge raises), events in the history DB (for recent_events), and an active alert on a
-   camera (for the alarm_responder review lifecycle).
-3. **Phase 6B — Partner SDK kit and distribution.** Complete (commit `da13181`). `PartnerKit`
-   in `tools/axxon_mcp_partner.py` exposes `scaffold_plugin` / `plugin_lint` / `plugin_package`
-   as MCP tools behind `--enable-partner`; reference python + node plugins live in
-   `customer-templates/` and are kept lint-clean + packageable by `test_customer_templates.py`.
-   Verified live end-to-end: scaffold -> lint -> package -> the scaffolded plugin connects to
-   the stand and lists 37 cameras. See `.agent/tasks/phase-6b-partner-sdk/evidence.md`.
-4. **Phase 7 — NL → plan translator.** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows.
+1. **Phase 7 — NL → plan translator (NOT STARTED, next).** `assemble_recipe`, `validate_recipe`, `explain_recipe`; composes existing operator workflows from natural-language intent.
+2. **`ptz_controller` (the one unbuilt 6A template).** Blocked on a live PTZ-camera fixture on the stand. Phase 5B (PTZ + Tag&Track) is deferred for the same reason.
+3. **Phase 5F-B2 high-risk admin mutations (deferred tail).** The reversible production role-comment edit/restore (`security_production_role_edit_lifecycle`) is shipped and live-verified. Still deferred (need a dedicated fixture/maintenance window or are not safely reversible on a shared stand): license apply/drop, timezone/NTP changes, production user-account/password/login edits, and LDAP sync against a real directory.
+4. **Stand-config gaps that cannot be closed via the API** (documented, not code work): `schedule_descriptor_get` (no schedule descriptor object on the stand), and `recent_events`/archived `vmda_query` returning 0 because this stand does not persist events/VMDA tracks to its queryable archive DBs. These return data on any stand with archiving enabled.
+
+Completed-phase notes:
+- **Phase 6A — Authoring kit (shipped, `6ee1b8d`).** Renderer seam + Node/TS for all 8 base templates + 5 new kinds (alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend, plugin_scaffold) = 13 kinds × 2 langs. A destructive live pass (`.agent/tasks/phase-6-gap-closure/`) exercised the mutating kinds for real: `ml_detector_bridge` raised live `Event1` events into `DetectorEx.1`, and `alarm_responder` Began+Completed review on 5 real alerts (fixing `SV_NOTICE`->`SV_ALARM`).
+- **Phase 6B — Partner SDK kit (shipped, `da13181`).** `PartnerKit` (`scaffold_plugin`/`plugin_lint`/`plugin_package`) behind `--enable-partner`; reference py+node plugins in `customer-templates/` kept green by `test_customer_templates.py`; verified live scaffold->lint->package->run.
+- **Phase 5H — Metadata/VMDA search (shipped, `380c63f`).** `tools/axxon_mcp_metadata.py` behind `--enable-metadata`: `list_vmda_sources`, `live_track_sample` (live `PullMetadata` tracklets — verified live, 14 moving objects), `vmda_query` (`ExecuteQueryTyped` MotionInArea, `camera_ID==access_point`). See `.agent/tasks/phase-5h-metadata-search/evidence.md`.
 
 Phase 5E fixture debt carried forward: `archive_policy_get` is now closed (resolves `MultimediaStorage.AliceBlue`). Still open for the mutation/maintenance modes only: an AV detector with a writable visual child, and an isolated `codex-*` archive/camera fixture for `archive_policy_update`.
 

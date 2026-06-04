@@ -60,14 +60,14 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 - `alarm_responder` Began + Completed review on 5 real alerts (`handled: 5`). This surfaced and fixed a template bug: the server rejects `SV_NOTICE(2)` on CompleteAlertReview, so completion now uses `SV_ALARM(4)`.
 - Admin mutations (5F-B1 + 5F-B2 reversible role edit): PASS=6. Alarms mutation (raise/begin/continue/cancel): ok. gRPC bookmark lifecycle (Create/Get/Delete): PASS. Operator full apply/verify/rollback: all 8 ephemeral workflows applied + rolled back.
 
+**Phase 5H — Metadata / VMDA search (2026-06-04, `380c63f`, `.agent/tasks/phase-5h-metadata-search/`).** Added `tools/axxon_mcp_metadata.py` (`--enable-metadata`): `list_vmda_sources`, `live_track_sample` (live `MetadataService.PullMetadata` tracklets — verified live, caught 14 moving objects on camera 1's tracker `AVDetector.112`), and `vmda_query` (`VMDAService.ExecuteQueryTyped` MotionInArea, bound `camera_ID == access_point`). The gRPC equivalent of the desktop "Metadata search". Test suite now 629/629.
+
 **Remaining gaps (cannot be closed from the API client):**
-- `ptz_controller` — needs a PTZ camera (user-excluded).
-- `recent_events` / EventHistory — the stand persists no events (ReadCount = 0 across all 20 event types over 30 days; event archiving is disabled in its server config). `dashboard_backend recent_events: 0` is correct stand state.
+- `ptz_controller` + Phase 5B — need a PTZ camera (deferred).
+- `recent_events` / EventHistory and archived `vmda_query` — the stand persists no events/VMDA tracks to its queryable archive DBs (ReadCount = 0 across all 20 event types over 30 days; no archived VMDA intervals on any of 20 endpoints). The live metadata path (`PullMetadata`) works; the archived queries return data on any stand with archiving enabled.
 - `schedule_descriptor_get` — no schedule/calendar/weekly/daily descriptor field exists on any of the 38 devices; Axxon schedules are authored in the desktop client and not creatable via this API.
 
-**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`).
-
-**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`).
+**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`). This is the only unbuilt phase.
 
 ---
 

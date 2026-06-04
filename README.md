@@ -410,7 +410,7 @@ and schedule authoring.
 ## Verification
 
 ```bash
-# Unit tests (621 / 621)
+# Unit tests (629 / 629)
 python3.12 -m unittest discover -s tools/tests
 
 # Generator runtime smoke against a stand (set AXXON_HOST to host:GRPC_PORT for
