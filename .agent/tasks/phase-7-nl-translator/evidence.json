@@ -1,0 +1,17 @@
+{
+  "task_id": "phase-7-nl-translator",
+  "test_command": "python3.12 -m unittest discover -s tools/tests",
+  "test_result": "Ran 668 tests, OK",
+  "suite_growth": "629 -> 668 (+39)",
+  "live_verification": "3 ephemeral recipes assemble->validate(valid)->apply->verify(present)->rollback(rolled_back)->verify(absent) on the demo stand; all post_verify_still_present empty",
+  "criteria": [
+    {"id": "AC1", "status": "PASS"},
+    {"id": "AC2", "status": "PASS"},
+    {"id": "AC3", "status": "PASS"},
+    {"id": "AC4", "status": "PASS"},
+    {"id": "AC5", "status": "PASS"},
+    {"id": "AC6", "status": "PASS"},
+    {"id": "AC7", "status": "PASS"},
+    {"id": "AC8", "status": "PASS"}
+  ]
+}
