@@ -20,7 +20,7 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 ---
 
-## 1b. Current phase status (updated 2026-05-28)
+## 1b. Current phase status (updated 2026-06-04)
 
 | Phase | State | Merged to main? | Artifacts |
 | --- | --- | --- | --- |
@@ -33,9 +33,9 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 | **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-B2** Reversible production role edit | ✅ partial (role-comment edit/restore) | yes | `security_production_role_edit_lifecycle` in `tools/axxon_mcp_admin_mutations.py`; rest of 5F-B2 deferred |
 | **5G** BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | yes | `tools/axxon_mcp_bookmark_mutations.py`, `tools/axxon_bookmarks_smoke.py`, `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
-| **6A** Authoring kit expansion | 🔧 in progress (increment 1) | no | `tools/templates/event_consumer.ts.tmpl`, `tools/tests/test_axxon_mcp_generator_6a.py` |
-| **6B** Partner SDK kit + distribution | ❌ not started | no | none |
-| **7** NL → plan translator | ❌ not started | no | none |
+| **6A** Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) | yes (`6ee1b8d`) | 13 template kinds × 2 langs (26 bundles): `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*`; 8 bundles live-verified (`.agent/tasks/phase-6a-live-verify/evidence.md`) |
+| **6B** Partner SDK kit + distribution | ✅ shipped | yes (`da13181`) | `tools/axxon_mcp_partner.py`, `customer-templates/`, `tools/tests/test_axxon_mcp_partner.py`, `tools/tests/test_customer_templates.py`, `.agent/tasks/phase-6b-partner-sdk/evidence.md` |
+| **7** NL → plan translator | ❌ not started (next) | no | none |
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
@@ -46,7 +46,17 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 - 5G bookmark lifecycle is live-verified end to end after a CreateBookmark request/response shape fix; CreateBookmark/GetBookmark/DeleteBookmark are tested-pass.
 - Remaining WARNs (5D `list_layout_images`, 5E `archive_policy_get`, 5F-A license/event/schedule) are genuine stand-config fixtures, not code gaps.
 
-**Next concrete step:** choose Phase 5F-B2 only if dedicated fixtures/maintenance-window approval exists for high-risk admin changes; otherwise start Phase 6A authoring-kit expansion.
+**Phase 6 complete + full re-verification pass (2026-06-04).** Shipped Phase 6A (5 new template kinds: alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend, plugin_scaffold; 13 kinds × Python+Node = 26 bundles) and Phase 6B (PartnerKit: scaffold_plugin/plugin_lint/plugin_package + reference plugins in `customer-templates/`). Re-verified every phase (0->6B) live against the stand:
+- Unit suite: 621/621 passing.
+- Phases 1-4: live read smoke PASS; generator runtime smoke 8/8 `ok` (direct-gRPC bundles need `AXXON_HOST=<host>:20109`; HTTP bundles use `AXXON_HTTP_URL`).
+- 5A/5C/5D reads PASS (media-stream HTTP 401/403 WARNs are the stand's auth config, not code).
+- 5E reads 11/0/0 PASS; 5F-A 9 PASS/1 WARN; 5G read PASS.
+- 6A: 8 generated bundles live-verified (dashboard_backend returns active_alerts>0 after the GetActiveAlerts-needs-camera_ap fix); 6B: scaffold->lint->package->run lists cameras on the stand.
+- A live finding during 6A fixed the `GetActiveAlerts` request shape (it requires `camera_ap`).
+
+**Open stand-side fixture gaps (cannot be closed from the client):** `ptz_controller` (needs a PTZ camera), `schedule_descriptor_get` (no schedule/calendar config object), an ExternalDetector unit (for ml_detector_bridge raises), events in the history DB (for recent_events), and an active alert on a camera (to exercise the alarm_responder review lifecycle).
+
+**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`).
 
 ---
 

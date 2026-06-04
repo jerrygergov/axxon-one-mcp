@@ -1,7 +1,7 @@
 # Axxon One MCP — Project Status & Handoff
 
-**Last updated:** 2026-05-29
-**Branch state:** `main` includes Phase 5F-B1 and Phase 5G (BookmarkService) implementations with live evidence. Phases 5D, 5E, and 5F-A gaps are now closed against the live stand (see the gap-closing note below). Continue on `main` unless the user asks for a new worktree.
+**Last updated:** 2026-06-04
+**Branch state:** `main` includes everything through Phase 6B. Phase 6A (5 new template kinds, Python + Node) and Phase 6B (PartnerKit + reference plugins) are shipped, and a full 0->6B live re-verification pass ran on 2026-06-04 (621/621 tests; every phase live-verified against the stand). Continue on `main` unless the user asks for a new worktree.
 
 This file is the single point of entry for any agent (Claude, Codex, human) continuing this project. Read it first, then jump into the linked roadmap and the next-phase plan.
 
@@ -10,7 +10,8 @@ This file is the single point of entry for any agent (Claude, Codex, human) cont
 ## TL;DR
 
 - The MCP is real and live-verified against a private demo stand (`<demo-host>`, `<demo-user>`, gRPC `20109`, HTTP `80`; credentials and CA paths stay out of committed docs).
-- The shipped baseline includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms, Phase 5D videowall/layout/map tools, Phase 5E detector/archive tools, Phase 5F-A admin read tools, and Phase 5F-B1 admin mutation workflows on `main`.
+- The shipped baseline includes docs (Phase 1), live read-only (Phase 2), operator workflows (Phase 3), integration generator (Phase 4), Phase 5A view tools, Phase 5C alarms, Phase 5D videowall/layout/map tools, Phase 5E detector/archive tools, Phase 5F-A admin read tools, Phase 5F-B1 admin mutation workflows, Phase 5G bookmarks, Phase 6A authoring-kit expansion (13 template kinds × Python+Node), and Phase 6B partner SDK kit on `main`.
+- Phase 6 is complete except `ptz_controller` (PTZ fixture gap). Next track is Phase 7 (NL -> plan translator).
 - Phase 5B (PTZ) is deferred — no PTZ camera on the demo stand.
 - Phase 5D (videowall / layouts / maps) is shipped on `main` with 11 read tools, 11 operator workflows, live map/videowall smoke evidence, and sanitized docs. Schedules moved to Phase 5F.
 - Phase 5E is implemented with 11 detector/archive read tools and 9 operator workflows. `archive_policy_get` is now live-verified: read-only evidence PASS=11, WARN=0, FAIL=0. It resolves `MultimediaStorage.AliceBlue` (retention `day_depth`, binding `storage_type`); the smoke now prefers a top-level `MultimediaStorage.<name>` unit over embedded device storages.
@@ -44,7 +45,7 @@ Test suite baseline on `main`: 621 / 621 passing.
    export AXXON_TLS_CN=Server   # gRPC cert CN on this stand is "Server"; HTTP /grpc reads need no CA
    export AXXON_CA=<redacted-ca-path>
    ```
-4. **Phase 6 is complete; next track is Phase 7 — NL -> plan translator.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A: the multi-language renderer seam is in place and 13 template kinds support Python + Node/TypeScript (26 bundles) — the 8 base templates plus `alarm_responder`, `scheduled_exporter`, `ml_detector_bridge`, `dashboard_backend`, and `plugin_scaffold`; 8 generated bundles were live-verified against the demo stand. 6B: the `PartnerKit` (scaffold/lint/package) shipped with reference plugins in `customer-templates/`, verified live scaffold->run (37 cameras). Remaining in Phase 6: only `ptz_controller`, blocked on a live PTZ-camera fixture on the stand (C# remains a future layer). Stand-side fixtures still needed to exercise mutating paths: an ExternalDetector unit (ml_detector_bridge raises), events in the history DB (recent_events), and an active alert on a camera (alarm_responder review lifecycle).
+4. **Phase 6 is complete; next track is Phase 7 — NL -> plan translator.** All of 5D/5E/5F are closed against the live stand (the reversible 5F-B2 role-edit slice shipped; the rest of 5F-B2 stays deferred, and `schedule_descriptor_get` needs the stand-side schedule fixture above). 6A: the multi-language renderer seam is in place and 13 template kinds support Python + Node/TypeScript (26 bundles) — the 8 base templates plus `alarm_responder`, `scheduled_exporter`, `ml_detector_bridge`, `dashboard_backend`, and `plugin_scaffold`; 8 generated bundles were live-verified against the demo stand. 6B: the `PartnerKit` (scaffold/lint/package) shipped with reference plugins in `customer-templates/`, verified live scaffold->run (lists the stand's cameras). Remaining in Phase 6: only `ptz_controller`, blocked on a live PTZ-camera fixture on the stand (C# remains a future layer). Stand-side fixtures still needed to exercise mutating paths: an ExternalDetector unit (ml_detector_bridge raises), events in the history DB (recent_events), and an active alert on a camera (alarm_responder review lifecycle).
 5. **For any new live verification**, sanitize evidence before committing (replace concrete host/user/CA values with `<demo-host>`, `<demo-user>`, `<redacted>`, never commit bearer tokens or passwords).
 
 ---
@@ -65,7 +66,7 @@ Test suite baseline on `main`: 621 / 621 passing.
 | 5F-A — Security/system-health reads + bounded notifiers | ✅ shipped (only schedule fixture open) | 11 reads | `docs/api-audit/phase-5f-admin-smoke-latest.md` |
 | 5F-B1/B2 — Security/admin mutations | ✅ shipped (B2 partial) | 6 workflows | `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md` |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped (lifecycle live-verified) | 2 reads + 1 lifecycle workflow | `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
-| 6A — Authoring kit expansion (Python + Node) | 🟢 substantially complete (increment 7 shipped) | 13 template kinds Python+Node (26 bundles); 5 new kinds added (alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend, plugin_scaffold); 8 bundles live-verified on stand; only `ptz_controller` left (PTZ fixture gap); 604 tests | `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*` |
+| 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) | 13 template kinds Python+Node (26 bundles); 5 new kinds added (alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend, plugin_scaffold); 8 bundles live-verified on stand | `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*` |
 | 6B — Partner SDK kit | 🟢 complete | yes (scaffold->run on stand) | `tools/axxon_mcp_partner.py`, `customer-templates/`, `tools/tests/test_axxon_mcp_partner.py`, `test_customer_templates.py` |
 | 7 — NL → plan translator | ❌ not started | — | — |
 

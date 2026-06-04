@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **465 / 465** unit tests passing on `main`.
+- **621 / 621** unit tests passing on `main`.
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
@@ -44,12 +44,22 @@ coverage matrix for Axxon One VMS.
   `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`.
   License, timezone, NTP, production user/role edits, LDAP sync against a real
   directory, and schedule authoring remain deferred.
-- **8** integration generator templates (grpc_consumer, http_grpc_consumer,
+- **13** integration generator template kinds, each in **Python + Node/TypeScript**
+  (26 bundles). The 8 base templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
-  webhook_bridge, inventory_sync) with a static verifier that rejects embedded
-  secrets, disallowed imports, and missing safety caps. All 8 verified
-  end-to-end against the demo stand
-  (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`).
+  webhook_bridge, inventory_sync) plus 5 higher-level kinds added in Phase 6A
+  (alarm_responder, scheduled_exporter, ml_detector_bridge, dashboard_backend,
+  plugin_scaffold). A static verifier rejects embedded secrets, disallowed
+  imports, and missing safety caps in both languages. The 8 base templates are
+  verified end-to-end against the demo stand
+  (`docs/api-audit/mcp-generation-runtime-smoke-latest.md`); 8 generated bundles
+  (including the new kinds) were live-verified — see
+  `.agent/tasks/phase-6a-live-verify/evidence.md`.
+- **Phase 6B partner SDK kit**: `scaffold_plugin`, `plugin_lint`,
+  `plugin_package` (`tools/axxon_mcp_partner.py`), with reference Python + Node
+  plugins under `customer-templates/` kept lint-clean and packageable by CI.
+  Verified live end-to-end: scaffold -> lint -> package -> the scaffolded plugin
+  connects to the stand and lists cameras.
 
 See `docs/api-audit/pdf-gap-coverage-matrix.md` for the canonical coverage matrix
 and [`STATUS.md`](STATUS.md) for the current handoff document and remaining roadmap.
@@ -65,9 +75,11 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
 | 5F-A — Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) |
 | 5F-B1 — Security/admin mutations | ✅ shipped |
-| 6A — Authoring kit expansion (Python + Node) | ❌ not started |
-| 6B — Partner SDK kit + distribution | ❌ not started |
-| 7 — NL → plan translator | ❌ not started |
+| 5F-B2 — Reversible production role edit | ✅ partial (rest deferred) |
+| 5G — BookmarkService reads + lifecycle | ✅ shipped |
+| 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) |
+| 6B — Partner SDK kit + distribution | ✅ shipped |
+| 7 — NL → plan translator | ❌ not started (next) |
 
 Full plan: [`docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md).
 
@@ -80,8 +92,10 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_mcp_live.py          — phase-2 read-only live inspection
   axxon_mcp_operator.py      — phase-3 controlled mutation workflows
   axxon_mcp_operator_smoke.py — live smoke harness for all operator workflows
-  axxon_mcp_generator.py     — phase-4 integration code generator
+  axxon_mcp_generator.py     — phase-4/6A integration code generator (python + node)
   axxon_mcp_generator_smoke.py — static smoke that generates+verifies all templates
+  axxon_mcp_generator_runtime_smoke.py — live runtime smoke for the 8 base templates
+  axxon_mcp_partner.py       — phase-6B partner SDK kit (scaffold/lint/package)
   axxon_mcp_view_objects.py  — phase-5D layouts/maps/videowalls read tools
   axxon_view_objects_smoke.py — phase-5D live read + mutation smoke
   axxon_mcp_detector_archive.py — phase-5E detector/archive read tools
@@ -95,6 +109,9 @@ tools/                       — runnable smokes, MCP server, operator workflows
   axxon_api_client.py        — gRPC + HTTP /grpc + legacy HTTP transport
   axxon_*_smoke.py           — per-area runnable verification scripts
   tests/                     — unit tests
+
+customer-templates/          — phase-6B reference plugins (python + node), CI-green
+.agent/tasks/                — repo-task-proof-loop artifacts (spec/evidence/verdict per task)
 
 docs/
   AXXON_ONE_API_BOOK.md      — primary API book (verified examples only)
@@ -133,6 +150,9 @@ python tools/axxon_mcp_server.py --enable-live --enable-operator --transport std
 
 # + integration code generator (list/plan/generate/verify_integration)
 python tools/axxon_mcp_server.py --enable-generator --transport stdio
+
+# + partner SDK kit (scaffold_plugin/plugin_lint/plugin_package, Phase 6B)
+python tools/axxon_mcp_server.py --enable-partner --transport stdio
 
 # + live + archive viewing tools (Phase 5A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
@@ -199,16 +219,50 @@ All workflows expose: `list_operator_workflows`, `plan_operator_workflow`,
 `apply_operator_plan`, `verify_operator_plan`, `rollback_operator_plan`. Plans
 require a confirmation token before apply; rollback uses a separate token.
 
-### Integration generator (Phase 4)
+### Integration generator (Phase 4 + 6A)
 
 `list_integration_templates`, `plan_integration`, `generate_integration`,
-`verify_integration`. Templates: `grpc_consumer`, `http_grpc_consumer`,
-`legacy_http_consumer`, `event_consumer`, `external_event_producer`,
-`export_job`, `webhook_bridge`, `inventory_sync`. Generated bundles read credentials only from environment, apply
-duration/byte/count caps, and refuse `output_dir` paths inside this repo
-unless `AXXON_GENERATOR_ALLOW_IN_REPO=1`. See
-`docs/plans/2026-05-15-mcp-phase-4-integration-generation.md` and the static
-smoke evidence at `docs/api-audit/mcp-generation-smoke-latest.md`.
+`verify_integration`. Each template generates in `language="python"` (default)
+or `language="node"`.
+
+Base templates: `grpc_consumer`, `http_grpc_consumer`, `legacy_http_consumer`,
+`event_consumer`, `external_event_producer`, `export_job`, `webhook_bridge`,
+`inventory_sync`.
+
+Phase 6A higher-level kinds: `alarm_responder` (reads a camera's active alerts
+then runs the `BeginAlertReview`->`CompleteAlertReview` lifecycle,
+mutation-gated), `scheduled_exporter` (bounded scheduled loop over
+`ExportService.ListSessions`), `ml_detector_bridge` (reads ML results from disk
+then raises a bounded `RaiseOccasionalEvent` batch, mutation-gated),
+`dashboard_backend` (read-only snapshot of `ListCameras` + per-camera
+`GetActiveAlerts` + `ReadEvents` to a byte-capped JSON file), and
+`plugin_scaffold` (a full runnable plugin repo: auth + `ListCameras` with retry,
+env loader, test, CI, README + Safety section, LICENSE).
+
+`ptz_controller` is the only planned 6A kind not yet shipped; it is blocked on a
+live PTZ-camera fixture on the demo stand. C# remains a future renderer layer.
+
+Generated bundles read credentials only from environment, apply
+duration/byte/count caps, and refuse `output_dir` paths inside this repo unless
+`AXXON_GENERATOR_ALLOW_IN_REPO=1`. The static verifier covers both Python and
+TypeScript. See
+`docs/plans/2026-05-15-mcp-phase-4-integration-generation.md`, the static smoke
+evidence at `docs/api-audit/mcp-generation-smoke-latest.md`, and the 6A
+increment artifacts under `.agent/tasks/phase-6a-*`.
+
+### Partner SDK kit (Phase 6B)
+
+`scaffold_plugin`, `plugin_lint`, `plugin_package` (enable with
+`--enable-partner`; `tools/axxon_mcp_partner.py`). `scaffold_plugin(name,
+output_dir, language)` emits a runnable plugin repo (reusing the
+`plugin_scaffold` template). `plugin_lint(path)` runs the static verifier plus
+repo-level checks (`.env.example` present, a test file present, README has a
+Safety section, no committed secrets). `plugin_package(path, output, fmt)`
+produces a `zip` or `tar.gz` plus a manifest with a SHA-256 of every file, and
+refuses to package a repo that does not lint clean. Reference Python + Node
+plugins live in `customer-templates/` and are kept lint-clean and packageable by
+`tools/tests/test_customer_templates.py`. See
+`.agent/tasks/phase-6b-partner-sdk/evidence.md`.
 
 ### View tools (Phase 5A)
 
@@ -331,14 +385,18 @@ and schedule authoring.
 ## Verification
 
 ```bash
-# Unit tests
-ls tools/tests/test_*.py | sed 's|/|.|g; s|.py$||' | xargs python -m unittest
+# Unit tests (621 / 621)
+python3.12 -m unittest discover -s tools/tests
+
+# Generator runtime smoke against a stand (set AXXON_HOST to host:GRPC_PORT for
+# the direct-gRPC bundles, e.g. AXXON_HOST=<host>:20109)
+python3.12 tools/axxon_mcp_generator_runtime_smoke.py
 
 # Operator live smoke (plan-only by default)
-python tools/axxon_mcp_operator_smoke.py
+python3.12 tools/axxon_mcp_operator_smoke.py
 
 # Operator live smoke (full apply/verify/rollback cycle)
-python tools/axxon_mcp_operator_smoke.py --enable-live
+python3.12 tools/axxon_mcp_operator_smoke.py --enable-live
 ```
 
 ## Demo stand notes
