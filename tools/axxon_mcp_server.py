@@ -715,14 +715,19 @@ def register_metadata_tools(server: Any, metadata: Any) -> None:
 
     @server.tool(name="vmda_query")
     def vmda_query(
-        access_point: str,
+        camera_id: str,
         query_type: str = "motion_in_area",
-        object_types: list[str] | None = None,
-        behaviours: list[str] | None = None,
+        database: str | None = None,
         hours: int = 24,
+        max_intervals: int = 500,
+        timeout: float = 60.0,
     ) -> dict[str, Any]:
-        """Archived VMDA forensic search (MotionInArea + object-type/behaviour constraints)."""
-        return metadata.vmda_query(access_point, query_type=query_type, object_types=object_types, behaviours=behaviours, hours=hours)
+        """Archived VMDA forensic search via ExecuteQuery MomentQuest motion-in-area.
+
+        camera_id is a detector VMDA source (e.g. hosts/Server/AVDetector.1/SourceEndpoint.vmda);
+        database (*/VMDA_DB.N/Database) is discovered when omitted.
+        """
+        return metadata.vmda_query(camera_id, query_type=query_type, database=database, hours=hours, max_intervals=max_intervals, timeout=timeout)
 
 
 def register_partner_tools(server: Any, kit: Any) -> None:

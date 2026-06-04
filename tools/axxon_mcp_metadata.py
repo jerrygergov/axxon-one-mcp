@@ -28,10 +28,22 @@ MAX_INTERVALS = 500
 DEFAULT_SECONDS = 5.0
 DEFAULT_TRACKLETS = 40
 DEFAULT_QUERY_HOURS = 24
+MAX_QUERY_SECONDS = 120.0
+DEFAULT_QUERY_SECONDS = 60.0
 
 OBJECT_TYPE_NAMES = {"face": "FACE", "human": "HUMAN", "group": "GROUP", "vehicle": "VEHICLE"}
 BEHAVIOUR_NAMES = {"moving": "MOVING", "abandoned": "ABANDONED"}
 QUERY_TYPES = {"motion_in_area"}
+
+# MomentQuest "motion in area" smart-search program. The polygon is a full-frame box in
+# normalized [0,1] coordinates; objects whose foot point falls inside it match. This mirrors the
+# desktop client's VMDA search documented in the Integration APIs guide.
+_MOMENTQUEST_TEMPLATE = (
+    "figure fZone=polygon({points}); set r = group[obj=vmda_object] "
+    "{{ res = or(fZone((obj.left + obj.right) / 2, obj.bottom)) }}; result = r.res;"
+)
+VMDA_SCHEMA_ID = "vmda_schema"
+VMDA_QUERY_LANGUAGE = "EVENT_BASIC"
 
 
 def default_config_factory() -> AxxonClientConfig:
@@ -60,7 +72,22 @@ def _clamp(value: float, lo: float, hi: float) -> float:
 
 
 def _axxon_ts(value: dt.datetime) -> str:
-    return value.strftime("%Y%m%dT%H%M%S.%f")
+    return value.strftime("%Y%m%dT%H%M%S.%f")[:-3]
+
+
+def _momentquest_motion_in_area(polygon: list[tuple[float, float]] | None) -> str:
+    """Return a MomentQuest program for a motion-in-area search over a normalized polygon."""
+    box = polygon or [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+    points = ",".join(f"{x},{y}" for x, y in box)
+    return _MOMENTQUEST_TEMPLATE.format(points=points)
+
+
+def _vmda_database_ap(inventory: dict[str, Any]) -> str:
+    """Return the first VMDA database endpoint (`*/VMDA_DB.N/Database`) in the inventory."""
+    for text in sorted(_flatten_strings(inventory)):
+        if "VMDA_DB" in text and text.endswith("/Database"):
+            return text
+    return ""
 
 
 def _flatten_strings(value: Any) -> list[str]:
@@ -74,6 +101,17 @@ def _flatten_strings(value: Any) -> list[str]:
         for item in value:
             out.extend(_flatten_strings(item))
     return out
+
+
+def _interval_summary(interval: Any, client: Any) -> dict[str, Any]:
+    """Summarize one VMDA interval: its time range and object bounding boxes."""
+    data = client.message_to_dict(interval) if hasattr(client, "message_to_dict") else {}
+    limit = data.get("limit") or {}
+    objects = [
+        {k: obj.get(k) for k in ("id", "left", "top", "right", "bottom")}
+        for obj in data.get("objects", [])
+    ]
+    return {"begin": limit.get("begin_time"), "end": limit.get("end_time"), "object_count": len(objects), "objects": objects}
 
 
 def _tracklet_summary(tracklet: dict[str, Any]) -> dict[str, Any]:
@@ -174,19 +212,38 @@ class AxxonMcpMetadata:
 
     def vmda_query(
         self,
-        access_point: str,
+        camera_id: str,
         query_type: str = "motion_in_area",
-        object_types: list[str] | None = None,
-        behaviours: list[str] | None = None,
+        database: str | None = None,
+        polygon: list[tuple[float, float]] | None = None,
         begin: str | None = None,
         end: str | None = None,
         hours: int | None = None,
         max_intervals: int | None = None,
+        timeout: float | None = None,
     ) -> dict[str, Any]:
-        """Archived VMDA forensic search via VMDAService.ExecuteQueryTyped (camera_ID==access_point)."""
+        """Archived VMDA forensic search via VMDAService.ExecuteQuery (MomentQuest motion-in-area).
+
+        Args:
+            camera_id: Detector VMDA source, e.g. ``hosts/Server/AVDetector.1/SourceEndpoint.vmda``
+                (the host prefix is stripped to the relative id the service expects).
+            query_type: Smart-search kind; only ``motion_in_area`` is supported.
+            database: VMDA database endpoint (``*/VMDA_DB.N/Database``); discovered when omitted.
+            polygon: Search area as normalized [0,1] (x, y) points; full frame when omitted.
+            begin: Explicit ``YYYYMMDDThhmmss.mmm`` start; derived from ``hours`` when omitted.
+            end: Explicit end timestamp; defaults to one hour ahead of now.
+            hours: Lookback window when ``begin`` is omitted.
+            max_intervals: Cap on returned intervals.
+            timeout: Per-call deadline in seconds; clamped to MAX_QUERY_SECONDS.
+
+        Returns:
+            (dict) Status, resolved binding, time range, interval/object counts, and a bounded
+            list of intervals with their object bounding boxes.
+        """
         if query_type not in QUERY_TYPES:
-            return {"status": "gap", "tool": "vmda_query", "access_point": access_point, "message": f"query_type must be one of {sorted(QUERY_TYPES)}; got {query_type!r}"}
+            return {"status": "gap", "tool": "vmda_query", "camera_id": camera_id, "message": f"query_type must be one of {sorted(QUERY_TYPES)}; got {query_type!r}"}
         cap = int(_clamp(float(max_intervals if max_intervals is not None else MAX_INTERVALS), 1, MAX_INTERVALS))
+        deadline = _clamp(float(timeout if timeout is not None else DEFAULT_QUERY_SECONDS), 1.0, MAX_QUERY_SECONDS)
         intervals: list[dict[str, Any]] = []
         object_total = 0
         try:
@@ -194,48 +251,36 @@ class AxxonMcpMetadata:
             if hasattr(client, "authenticate_grpc"):
                 client.authenticate_grpc()
             vmda_pb2 = client.import_module("axxonsoft.bl.vmda.VMDA_pb2")
-            query_pb2 = client.import_module("axxonsoft.bl.vmda.Query_pb2")
-            primitive_pb2 = client.import_module("axxonsoft.bl.primitive.Primitives_pb2")
             stub = client.stub_from_proto("axxonsoft/bl/vmda/VMDA.proto", "VMDAService")
+
+            db = database or _vmda_database_ap(client.load_inventory() if hasattr(client, "load_inventory") else {})
+            if not db:
+                return {"status": "gap", "tool": "vmda_query", "camera_id": camera_id, "message": "no VMDA database (*/VMDA_DB.N/Database) found; pass database explicitly"}
+            relative_camera = camera_id.split("/", 2)[-1] if camera_id.startswith("hosts/") else camera_id
 
             now = dt.datetime.now()
             window = int(hours if hours is not None else DEFAULT_QUERY_HOURS)
             begin_ts = begin or _axxon_ts(now - dt.timedelta(hours=window))
             end_ts = end or _axxon_ts(now + dt.timedelta(hours=1))
 
-            full_frame = primitive_pb2.Polyline(
-                points=[primitive_pb2.Point(x=0.0, y=0.0), primitive_pb2.Point(x=1.0, y=0.0),
-                        primitive_pb2.Point(x=1.0, y=1.0), primitive_pb2.Point(x=0.0, y=1.0)],
-                closed=True,
-            )
-            constraint_kwargs: dict[str, Any] = {}
-            ot = [getattr(query_pb2, OBJECT_TYPE_NAMES[name]) for name in (object_types or []) if name in OBJECT_TYPE_NAMES]
-            bh = [getattr(query_pb2, BEHAVIOUR_NAMES[name]) for name in (behaviours or []) if name in BEHAVIOUR_NAMES]
-            if ot:
-                constraint_kwargs["object_types"] = ot
-            if bh:
-                constraint_kwargs["behaviours"] = bh
-            description_kwargs: dict[str, Any] = {"motion_in_area": query_pb2.MotionInArea(area=full_frame)}
-            if constraint_kwargs:
-                description_kwargs["additional_filters"] = query_pb2.Constraints(**constraint_kwargs)
-            query = query_pb2.QueryDescription(**description_kwargs)
-
-            request = vmda_pb2.ExecuteQueryTypedRequest(
-                access_point=access_point,
-                camera_ID=access_point,
+            request = vmda_pb2.ExecuteQueryRequest(
+                access_point=db,
+                camera_ID=relative_camera,
+                schema_ID=VMDA_SCHEMA_ID,
                 dt_posix_start_time=begin_ts,
                 dt_posix_end_time=end_ts,
-                query=query,
+                query=_momentquest_motion_in_area(polygon),
+                language=VMDA_QUERY_LANGUAGE,
             )
-            for response in stub.ExecuteQueryTyped(request, timeout=MAX_SECONDS):
+            for response in stub.ExecuteQuery(request, timeout=deadline):
                 for interval in getattr(response, "intervals", []):
                     objects = list(getattr(interval, "objects", []))
                     object_total += len(objects)
-                    intervals.append({"object_count": len(objects)})
+                    intervals.append(_interval_summary(interval, client))
                     if len(intervals) >= cap:
                         break
                 if len(intervals) >= cap:
                     break
-            return {"status": "ok", "tool": "vmda_query", "access_point": access_point, "query_type": query_type, "time_range": {"begin": begin_ts, "end": end_ts}, "interval_count": len(intervals), "object_count": object_total, "intervals": intervals[:cap]}
+            return {"status": "ok", "tool": "vmda_query", "camera_id": camera_id, "database": db, "query_type": query_type, "time_range": {"begin": begin_ts, "end": end_ts}, "interval_count": len(intervals), "object_count": object_total, "intervals": intervals[:cap]}
         except Exception as exc:  # noqa: BLE001 - clean error dict for MCP callers
-            return {"status": "error", "tool": "vmda_query", "access_point": access_point, "query_type": query_type, "message": _redact(exc), "interval_count": len(intervals), "object_count": object_total, "intervals": intervals}
+            return {"status": "error", "tool": "vmda_query", "camera_id": camera_id, "query_type": query_type, "message": _redact(exc), "interval_count": len(intervals), "object_count": object_total, "intervals": intervals}

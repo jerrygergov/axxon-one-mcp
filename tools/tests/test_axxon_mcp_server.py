@@ -777,8 +777,8 @@ class AxxonMcpServerTests(unittest.TestCase):
             def live_track_sample(self, access_point, seconds=5.0, limit=40):
                 return {"status": "ok", "access_point": access_point, "count": 0, "tracklets": []}
 
-            def vmda_query(self, access_point, query_type="motion_in_area", object_types=None, behaviours=None, hours=24):
-                return {"status": "ok", "access_point": access_point, "query_type": query_type, "interval_count": 0, "object_count": 0}
+            def vmda_query(self, camera_id, query_type="motion_in_area", database=None, hours=24, max_intervals=500, timeout=60.0):
+                return {"status": "ok", "camera_id": camera_id, "query_type": query_type, "interval_count": 0, "object_count": 0}
 
         server = module.create_server(docs=StubDocs(), metadata=StubMetadata(), fastmcp_factory=FakeFastMCP)
         self.assertLessEqual(metadata_tools, set(server.tools))
