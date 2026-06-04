@@ -48,6 +48,7 @@ def create_server(
     admin_mutator: Any | None = None,
     bookmarks: Any | None = None,
     bookmark_mutator: Any | None = None,
+    translator: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -140,6 +141,9 @@ def create_server(
 
     if bookmark_mutator is not None:
         register_bookmark_mutation_tools(server, bookmark_mutator)
+
+    if translator is not None:
+        register_translator_tools(server, translator)
 
     return server
 
@@ -889,6 +893,11 @@ def register_live_tools(server: Any, live: Any) -> None:
         return live.pull_metadata_bounded(access_point=access_point, timeout=timeout, limit=limit)
 
 
+def register_translator_tools(server: Any, translator: Any) -> None:
+    from axxon_mcp_translator import register_translator_tools as _register
+    _register(server, translator)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the docs-only Axxon One MCP server.")
     parser.add_argument("--corpus-dir", type=Path, default=DEFAULT_CORPUS_DIR)
@@ -958,6 +967,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--enable-bookmark-mutations",
         action="store_true",
         help="Enable Phase 5G approval-gated bookmark lifecycle tools. Requires AXXON_BOOKMARK_MUTATION_APPROVE=1.",
+    )
+    parser.add_argument(
+        "--enable-translator",
+        action="store_true",
+        help="Enable Phase 7 NL-to-plan translator tools (assemble_recipe/validate_recipe/explain_recipe).",
     )
     return parser
 
@@ -1049,6 +1063,23 @@ def main() -> int:
         bookmark_mutator = AxxonBookmarkMutationRegistry(
             enabled=os.environ.get("AXXON_BOOKMARK_MUTATION_APPROVE") == "1",
         )
+    translator = None
+    if args.enable_translator:
+        from axxon_api_client import AxxonApiClient, AxxonClientConfig
+        from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
+        from axxon_mcp_translator import AxxonMcpTranslator
+
+        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
+        api_client = AxxonApiClient(config)
+
+        def _make_operator() -> OperatorRegistry:
+            return OperatorRegistry(
+                client_factory=lambda: AxxonOperatorClient(api_client),
+                host=f"hosts/{config.tls_cn}",
+                enabled=False,
+            )
+
+        translator = AxxonMcpTranslator(operator_factory=_make_operator)
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1065,6 +1096,7 @@ def main() -> int:
         admin_mutator=admin_mutator,
         bookmarks=bookmarks,
         bookmark_mutator=bookmark_mutator,
+        translator=translator,
     )
     server.run(transport=args.transport)
     return 0

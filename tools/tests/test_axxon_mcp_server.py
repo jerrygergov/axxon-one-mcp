@@ -786,5 +786,50 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(server.tools["vmda_query"]("hosts/Server/AVDetector.1/SourceEndpoint.vmda")["query_type"], "motion_in_area")
 
 
+    def test_create_server_registers_translator_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        translator_tools = {"assemble_recipe", "validate_recipe", "explain_recipe"}
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in translator_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("translator", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-translator"])
+        self.assertTrue(args.enable_translator)
+
+        class StubTranslator:
+            def assemble_recipe(self, intent_text, context=None):
+                return {"intent_text": intent_text, "steps": []}
+
+            def validate_recipe(self, recipe):
+                return {"valid": True, "steps": [], "risk_classes": [], "required_approvals": [], "gaps": []}
+
+            def explain_recipe(self, recipe):
+                return {"text": "stub explanation"}
+
+        # register_translator_tools is defined in axxon_mcp_translator — server delegates to it
+        from axxon_mcp_translator import AxxonMcpTranslator
+
+        KNOWN_WFS = ["create_camera"]
+
+        class StubOp:
+            def known_workflows(self):
+                return KNOWN_WFS
+            def plan(self, wf, params=None):
+                return {"status": "planned", "plan_id": "stub-1", "workflow": wf, "risk": "mutation",
+                        "confirmation_token": f"CONFIRM-{wf}", "rollback_confirmation_token": f"CONFIRM-{wf}-rollback"}
+
+        stub_translator = AxxonMcpTranslator(operator_factory=lambda: StubOp())
+        server = module.create_server(docs=StubDocs(), translator=stub_translator, fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(translator_tools, set(server.tools))
+        result = server.tools["assemble_recipe"]("Create layout named X", {"name": "X"})
+        self.assertIn("steps", result)
+        validate_result = server.tools["validate_recipe"]([])
+        self.assertIn("valid", validate_result)
+        explain_result = server.tools["explain_recipe"]([])
+        self.assertIsNotNone(explain_result)
+
+
 if __name__ == "__main__":
     unittest.main()
