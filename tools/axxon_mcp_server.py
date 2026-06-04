@@ -38,6 +38,7 @@ def create_server(
     operator: Any | None = None,
     generator: Any | None = None,
     partner: Any | None = None,
+    metadata: Any | None = None,
     view: Any | None = None,
     alarms: Any | None = None,
     alarm_mutator: Any | None = None,
@@ -109,6 +110,9 @@ def create_server(
 
     if partner is not None:
         register_partner_tools(server, partner)
+
+    if metadata is not None:
+        register_metadata_tools(server, metadata)
 
     if view is not None:
         register_view_tools(server, view)
@@ -689,6 +693,34 @@ def register_generator_tools(server: Any, generator: Any) -> None:
         return {"ok": result.ok, "errors": result.errors}
 
 
+def register_metadata_tools(server: Any, metadata: Any) -> None:
+    @server.tool(name="metadata_connect_axxon_profile")
+    def metadata_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the read-only metadata/VMDA layer to the env profile."""
+        return metadata.connect_axxon_profile(profile)
+
+    @server.tool(name="list_vmda_sources")
+    def list_vmda_sources(limit: int = 64) -> dict[str, Any]:
+        """List the stand's VMDA-capable endpoints (*/SourceEndpoint.vmda)."""
+        return metadata.list_vmda_sources(limit)
+
+    @server.tool(name="live_track_sample")
+    def live_track_sample(access_point: str, seconds: float = 5.0, limit: int = 40) -> dict[str, Any]:
+        """Stream bounded live object tracklets from a VMDA endpoint (id/state/behavior/bbox)."""
+        return metadata.live_track_sample(access_point, seconds, limit)
+
+    @server.tool(name="vmda_query")
+    def vmda_query(
+        access_point: str,
+        query_type: str = "motion_in_area",
+        object_types: list[str] | None = None,
+        behaviours: list[str] | None = None,
+        hours: int = 24,
+    ) -> dict[str, Any]:
+        """Archived VMDA forensic search (MotionInArea + object-type/behaviour constraints)."""
+        return metadata.vmda_query(access_point, query_type=query_type, object_types=object_types, behaviours=behaviours, hours=hours)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -878,6 +910,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable partner SDK tools (scaffold_plugin/plugin_lint/plugin_package).",
     )
     parser.add_argument(
+        "--enable-metadata",
+        action="store_true",
+        help="Enable read-only metadata/VMDA search tools (list_vmda_sources/live_track_sample/vmda_query).",
+    )
+    parser.add_argument(
         "--enable-view",
         action="store_true",
         help="Enable Phase 5A live/archive viewing tools (URL-only, byte/time/fps caps).",
@@ -958,6 +995,11 @@ def main() -> int:
         from axxon_mcp_partner import PartnerKit
 
         partner = PartnerKit(generator=Generator(corpus_dir=args.corpus_dir))
+    metadata = None
+    if args.enable_metadata:
+        from axxon_mcp_metadata import AxxonMcpMetadata
+
+        metadata = AxxonMcpMetadata()
     view = None
     if args.enable_view:
         from axxon_mcp_view import AxxonMcpView
@@ -1013,6 +1055,7 @@ def main() -> int:
         operator=operator,
         generator=generator,
         partner=partner,
+        metadata=metadata,
         view=view,
         alarms=alarms,
         alarm_mutator=alarm_mutator,

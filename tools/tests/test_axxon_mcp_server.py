@@ -755,6 +755,36 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(server.tools["plugin_lint"]("/tmp/x")["ok"], True)
         self.assertEqual(server.tools["plugin_package"]("/tmp/x", "/tmp/out.zip", "zip")["manifest"]["format"], "zip")
 
+    def test_create_server_registers_metadata_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        metadata_tools = {"metadata_connect_axxon_profile", "list_vmda_sources", "live_track_sample", "vmda_query"}
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in metadata_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("metadata", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-metadata"])
+        self.assertTrue(args.enable_metadata)
+
+        class StubMetadata:
+            def connect_axxon_profile(self, profile="env"):
+                return {"connected": True, "profile_name": profile}
+
+            def list_vmda_sources(self, limit=64):
+                return {"status": "ok", "count": 1, "sources": ["hosts/Server/AVDetector.1/SourceEndpoint.vmda"]}
+
+            def live_track_sample(self, access_point, seconds=5.0, limit=40):
+                return {"status": "ok", "access_point": access_point, "count": 0, "tracklets": []}
+
+            def vmda_query(self, access_point, query_type="motion_in_area", object_types=None, behaviours=None, hours=24):
+                return {"status": "ok", "access_point": access_point, "query_type": query_type, "interval_count": 0, "object_count": 0}
+
+        server = module.create_server(docs=StubDocs(), metadata=StubMetadata(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(metadata_tools, set(server.tools))
+        self.assertEqual(server.tools["list_vmda_sources"](8)["status"], "ok")
+        self.assertEqual(server.tools["vmda_query"]("hosts/Server/AVDetector.1/SourceEndpoint.vmda")["query_type"], "motion_in_area")
+
 
 if __name__ == "__main__":
     unittest.main()

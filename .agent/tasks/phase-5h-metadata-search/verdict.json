@@ -1,0 +1,18 @@
+{
+  "task_id": "phase-5h-metadata-search",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-04",
+  "test_command": "python3.12 -m unittest discover -s tools/tests",
+  "test_result": "Ran 629 tests, OK",
+  "live_verification": "list_vmda_sources=16; live_track_sample caught 14 real tracklets (status ok); vmda_query executes (0 intervals on this unarchived stand)",
+  "criteria": [
+    {"id": "AC1", "status": "PASS"},
+    {"id": "AC2", "status": "PASS"},
+    {"id": "AC3", "status": "PASS"},
+    {"id": "AC4", "status": "PASS"},
+    {"id": "AC5", "status": "PASS"},
+    {"id": "AC6", "status": "PASS"},
+    {"id": "AC7", "status": "PASS"},
+    {"id": "AC8", "status": "PASS"}
+  ]
+}
