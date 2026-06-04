@@ -62,12 +62,14 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Phase 5H — Metadata / VMDA search (2026-06-04, `380c63f`, `.agent/tasks/phase-5h-metadata-search/`).** Added `tools/axxon_mcp_metadata.py` (`--enable-metadata`): `list_vmda_sources`, `live_track_sample` (live `MetadataService.PullMetadata` tracklets — verified live, caught 14 moving objects on camera 1's tracker `AVDetector.112`), and `vmda_query` (`VMDAService.ExecuteQueryTyped` MotionInArea, bound `camera_ID == access_point`). The gRPC equivalent of the desktop "Metadata search". Test suite now 629/629.
 
+**Phase 7 — NL -> plan translator (2026-06-04, `827e3b0`, `.agent/tasks/phase-7-nl-translator/`).** Added `tools/axxon_mcp_translator.py` (`--enable-translator`): `assemble_recipe` (English intent -> ordered steps over existing operator workflows, refuses to invent API shapes; PTZ/role/permission intents return a structured `unsupported_intent` gap), `validate_recipe` (dry-run each step via `OperatorRegistry.plan`, aggregate risk/approvals/gaps), and `explain_recipe` (offline risk + rollback + wall-clock preview). Live-verified: 3 ephemeral recipes (`create_camera`, `create_macro`, `external_event_inject`) round-trip assemble->validate->apply->verify->rollback->verify-absent on the stand. Test suite now 668/668.
+
 **Remaining gaps (cannot be closed from the API client):**
 - `ptz_controller` + Phase 5B — need a PTZ camera (deferred).
 - `recent_events` / EventHistory and archived `vmda_query` — the stand persists no events/VMDA tracks to its queryable archive DBs (ReadCount = 0 across all 20 event types over 30 days; no archived VMDA intervals on any of 20 endpoints). The live metadata path (`PullMetadata`) works; the archived queries return data on any stand with archiving enabled.
 - `schedule_descriptor_get` — no schedule/calendar/weekly/daily descriptor field exists on any of the 38 devices; Axxon schedules are authored in the desktop client and not creatable via this API.
 
-**Next concrete step:** Phase 7 — NL -> plan translator (`assemble_recipe`, `validate_recipe`, `explain_recipe`). This is the only unbuilt phase.
+**Next concrete step:** Every planned phase is now built. The only open items are stand-fixture-blocked (PTZ/Phase 5B, archived event + VMDA stores, schedule descriptor) and the high-risk 5F-B2 mutations held out of scope; all unblock with a differently-provisioned stand, not new code.
 
 ---
 
@@ -402,7 +404,7 @@ Workflows are limited to temporary `codex-*` security fixtures: user/role lifecy
 
 ---
 
-### Phase 7 — NL → plan translator and recipe assembler
+### Phase 7 — NL → plan translator and recipe assembler (SHIPPED)
 
 **Why.** The headline value of the MCP for an LLM-using customer: "describe in English, get a verified plan."
 

@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **629 / 629** unit tests passing on `main`.
+- **668 / 668** unit tests passing on `main`.
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
@@ -163,6 +163,9 @@ python tools/axxon_mcp_server.py --enable-partner --transport stdio
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-metadata --transport stdio
+
+# + NL -> plan translator / recipe assembler (Phase 7)
+python tools/axxon_mcp_server.py --enable-translator --transport stdio
 
 # + live + archive viewing tools (Phase 5A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
@@ -410,7 +413,7 @@ and schedule authoring.
 ## Verification
 
 ```bash
-# Unit tests (629 / 629)
+# Unit tests (668 / 668)
 python3.12 -m unittest discover -s tools/tests
 
 # Generator runtime smoke against a stand (set AXXON_HOST to host:GRPC_PORT for
