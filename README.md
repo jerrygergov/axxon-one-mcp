@@ -5,7 +5,7 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **668 / 668** unit tests passing on `main`.
+- **669 / 669** unit tests passing on `main`.
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
@@ -80,10 +80,10 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 5F-B1 — Security/admin mutations | ✅ shipped |
 | 5F-B2 — Reversible production role edit | ✅ partial (rest deferred) |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped |
-| 5H — Metadata / VMDA object-track search | ✅ shipped (live tracklets verified) |
+| 5H — Metadata / VMDA object-track search | ✅ shipped (live tracklets + archived objects verified) |
 | 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) |
 | 6B — Partner SDK kit + distribution | ✅ shipped |
-| 7 — NL → plan translator | ❌ not started (next) |
+| 7 — NL → plan translator | ✅ shipped |
 
 Full plan: [`docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md).
 
@@ -284,13 +284,15 @@ Reads (`--enable-metadata`): `metadata_connect_axxon_profile`, `list_vmda_source
 "Metadata search". `list_vmda_sources` enumerates the stand's `*/SourceEndpoint.vmda`
 endpoints. `live_track_sample(access_point, seconds, limit)` streams bounded live object
 tracklets via `MetadataService.PullMetadata` (id, state, behavior, bbox), clamped to module
-caps and stopped cleanly at the duration/limit cap. `vmda_query(access_point, query_type,
-object_types, behaviours, hours)` runs an archived forensic search via
-`VMDAService.ExecuteQueryTyped` (MotionInArea full-frame by default), binding
-`camera_ID == access_point` (the form the server accepts). The query is correct and returns
-intervals on any stand that records metadata; on a stand that does not persist VMDA tracks it
-returns zero intervals (status ok). Credentials are env-only and the module never mutates
-stand config. See `.agent/tasks/phase-5h-metadata-search/evidence.md`.
+caps and stopped cleanly at the duration/limit cap. `vmda_query(camera_id, query_type,
+database, hours, max_intervals, timeout)` runs an archived forensic search via
+`VMDAService.ExecuteQuery` MomentQuest motion-in-area: it binds `access_point` to the VMDA
+database (`*/VMDA_DB.N/Database`, auto-discovered), `camera_ID` to the host-relative detector
+source, `schema_ID="vmda_schema"`, and a MomentQuest `query` string with
+`language="EVENT_BASIC"` (per Integration APIs 3.0). It returns intervals with object bounding
+boxes, and is live-verified against real recorded objects on camera 1's tracker. Credentials are
+env-only and the module never mutates stand config. See
+`.agent/tasks/phase-5h-metadata-search/evidence.md` and `.agent/tasks/phase-5h-vmda-fix/`.
 
 ### View tools (Phase 5A)
 
@@ -413,7 +415,7 @@ and schedule authoring.
 ## Verification
 
 ```bash
-# Unit tests (668 / 668)
+# Unit tests (669 / 669)
 python3.12 -m unittest discover -s tools/tests
 
 # Generator runtime smoke against a stand (set AXXON_HOST to host:GRPC_PORT for
