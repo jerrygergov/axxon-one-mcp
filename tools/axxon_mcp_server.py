@@ -52,6 +52,7 @@ def create_server(
     ptz: Any | None = None,
     audit: Any | None = None,
     recognizer: Any | None = None,
+    recognizer_write: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -157,6 +158,9 @@ def create_server(
 
     if recognizer is not None:
         register_recognizer_tools(server, recognizer)
+
+    if recognizer_write is not None:
+        register_recognizer_write_tools(server, recognizer_write)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -883,9 +887,41 @@ def register_recognizer_tools(server: Any, recognizer: Any) -> None:
         return recognizer.get_recognizer_list(list_id)
 
     @server.tool(name="list_recognizer_items")
-    def list_recognizer_items(list_ids: list[str] | None = None, limit: int = 200) -> dict[str, Any]:
-        """List enrolled items (people/plates) as privacy-safe metadata: no images, no biometric vectors."""
-        return recognizer.list_recognizer_items(list_ids, limit)
+    def list_recognizer_items(limit: int = 200) -> dict[str, Any]:
+        """List enrolled items (people/plates) node-wide as privacy-safe metadata: no images, no biometric vectors."""
+        return recognizer.list_recognizer_items(limit)
+
+
+def register_recognizer_write_tools(server: Any, recognizer_write: Any) -> None:
+    @server.tool(name="recognizer_write_connect_axxon_profile")
+    def recognizer_write_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the approval-gated watchlist write layer to the env profile."""
+        return recognizer_write.recognizer_write_connect_axxon_profile(profile)
+
+    @server.tool(name="recognizer_change_lists")
+    def recognizer_change_lists(
+        added: list[dict[str, Any]] | None = None,
+        changed: list[dict[str, Any]] | None = None,
+        removed_ids: list[str] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Add/change/remove watchlists via ChangeLists. Gated by approval env + confirmation token."""
+        return recognizer_write.recognizer_change_lists(added, changed, removed_ids, confirmation)
+
+    @server.tool(name="recognizer_change_items")
+    def recognizer_change_items(
+        list_id: str = "",
+        added: list[dict[str, Any]] | None = None,
+        removed_item_ids: list[str] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Add/remove LPR items via ChangeItems (string plates only, no biometric payloads). Gated."""
+        return recognizer_write.recognizer_change_items(list_id, added, removed_item_ids, confirmation)
+
+    @server.tool(name="recognizer_clear")
+    def recognizer_clear(node_name: str = "", confirmation: str = "", clear_ack: str = "") -> dict[str, Any]:
+        """Wipe ALL lists/items on a node via Clear. Irreversible: needs confirmation + clear_ack tokens."""
+        return recognizer_write.recognizer_clear(node_name, confirmation, clear_ack)
 
 
 def register_partner_tools(server: Any, kit: Any) -> None:
@@ -1152,6 +1188,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 11 read-only RealtimeRecognizerService watchlist tools (face/LPR lists).",
     )
     parser.add_argument(
+        "--enable-recognizer-write",
+        action="store_true",
+        help="Enable Phase 14 RealtimeRecognizer watchlist write tools. Writes need AXXON_RECOGNIZER_WRITE_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1278,6 +1319,11 @@ def main() -> int:
         from axxon_mcp_recognizer import AxxonMcpRecognizer
 
         recognizer = AxxonMcpRecognizer()
+    recognizer_write = None
+    if args.enable_recognizer_write:
+        from axxon_mcp_recognizer_write import AxxonMcpRecognizerWrite
+
+        recognizer_write = AxxonMcpRecognizerWrite()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1303,6 +1349,7 @@ def main() -> int:
         ptz=ptz,
         audit=audit,
         recognizer=recognizer,
+        recognizer_write=recognizer_write,
         discovery=discovery,
     )
     server.run(transport=args.transport)

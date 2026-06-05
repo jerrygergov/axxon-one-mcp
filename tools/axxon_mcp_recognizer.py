@@ -114,13 +114,13 @@ class AxxonMcpRecognizer:
                 descriptor = page_dict["list"]
         return {"status": "ok", "list": descriptor}
 
-    def list_recognizer_items(self, list_ids: list[str] | None = None, limit: int = 200) -> dict[str, Any]:
+    def list_recognizer_items(self, limit: int = 200) -> dict[str, Any]:
         limit = min(max(int(limit), 1), ITEM_CAP)
         stub, pb2 = self._stub_and_pb2()
-        # Empty required_items => server returns metadata only (no images/vectors).
+        # Empty required_items => server returns every item, metadata only (no
+        # images/vectors). GetItemsRequest has no list-scoped filter, so items
+        # are node-wide; callers narrow by list via get_recognizer_list item_ids.
         req_kwargs: dict[str, Any] = {"required_items": [], "load_images": False, "load_vectors": False}
-        if list_ids:
-            req_kwargs["list_ids"] = list(list_ids)
         request = pb2.GetItemsRequest(**req_kwargs)
         items: list[dict[str, Any]] = []
         truncated = False

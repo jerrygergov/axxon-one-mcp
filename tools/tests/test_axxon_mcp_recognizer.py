@@ -121,6 +121,8 @@ class RecognizerListsTests(unittest.TestCase):
         self.assertEqual(out["_req"].get("required_items", []), [])
         self.assertFalse(out["_req"].get("load_images"))
         self.assertFalse(out["_req"].get("load_vectors"))
+        # GetItemsRequest has no list_ids field; the request must never carry one.
+        self.assertNotIn("list_ids", out["_req"])
         items = out["items"]
         self.assertEqual(items[0]["id"], "a")
         self.assertEqual(items[0]["name"], "Alice")

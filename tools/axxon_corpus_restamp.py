@@ -126,6 +126,16 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"),
     ("NodeNotifier", "DisconnectEventChannel"): (
         "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (disconnect_clean=true)"),
+    # Phase 14: RealtimeRecognizer watchlist write tools live-verified through the
+    # MCP tools (recognizer_change_lists/items/clear). ChangeLists add/rename/remove
+    # round-tripped; ChangeItems added an LPR plate confirmed by readback; Clear
+    # wiped the node (authorized destructive). ChangeListsStream stays pending.
+    ("RealtimeRecognizerService", "ChangeLists"): (
+        "tested-pass", ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (add/rename/remove round-trip)"),
+    ("RealtimeRecognizerService", "ChangeItems"): (
+        "tested-pass", ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (LPR plate add confirmed by readback)"),
+    ("RealtimeRecognizerService", "Clear"): (
+        "tested-pass", ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (authorized node wipe, node empty after)"),
 }
 
 

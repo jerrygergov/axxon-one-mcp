@@ -3736,7 +3736,7 @@
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeLists",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeLists",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3744,7 +3744,8 @@
       "response": "ChangeListsResponse",
       "safety_class": "mutating",
       "service": "RealtimeRecognizerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (add/rename/remove round-trip)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeListsStream",
@@ -3762,7 +3763,7 @@
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeItems",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeItems",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3770,7 +3771,8 @@
       "response": "ChangeItemsResponse",
       "safety_class": "mutating",
       "service": "RealtimeRecognizerService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (LPR plate add confirmed by readback)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.GetLists",
@@ -3817,7 +3819,7 @@
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.Clear",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Clear",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3825,7 +3827,8 @@
       "response": "ClearResponse",
       "safety_class": "mutating",
       "service": "RealtimeRecognizerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (authorized node wipe, node empty after)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerExternalService.GetData",

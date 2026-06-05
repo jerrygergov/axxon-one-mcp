@@ -1,0 +1,33 @@
+Phase 14 — RealtimeRecognizer watchlist write tools
+Live evidence against the demo stand (host/creds redacted; AXXON_TLS_CN=Server).
+Exercised through the actual MCP tools with AXXON_RECOGNIZER_WRITE_APPROVE=1.
+
+Node: Server (single node on this stand).
+
+[recognizer_change_lists] ChangeLists — reversible lifecycle
+  ADD    temp LPR list (mcp-p14-temp)      -> status=applied failed_lists=[]  present=True
+  CHANGE rename to mcp-p14-renamed          -> status=applied failed_lists=[]
+  REMOVE temp list (rollback)               -> status=applied failed_lists=[]  gone=True
+
+[recognizer_change_items] ChangeItems (bidi) — reversible lifecycle
+  temp LPR list mcp-p14-itemtest2 created via change_lists
+  ADD    plate item data_string=P14XYZ      -> status=applied failed_items=[]
+  READBACK via list_recognizer_items        -> P14XYZ present (server-assigned id)
+  REMOVE item + temp list (rollback)        -> applied / applied
+  Note: server returns an empty response stream on success and assigns its own
+  item id; success confirmed by content readback, not id echo.
+
+[recognizer_clear] Clear — gating + AUTHORIZED destructive wipe
+  GATE   wrong clear_ack                     -> status=gap (no wire call)
+  PRE-CLEAR node lists (metadata only, no biometric data):
+    [ {id=<guid> name="Intersec Face List" type=ELT_Face item_count=6} ]
+  CLEAR  recognizer_clear(node=Server, confirmation+clear_ack)
+         -> status=cleared, warning="all lists and items on the node were deleted"
+  POST-CLEAR node lists: []   (node empty == True)
+
+  The Intersec Face List and its 6 enrolled faces were permanently deleted. This
+  is irreversible and was explicitly authorized for this test stand. No biometric
+  images or vectors were read, emitted, or committed at any point.
+
+NOT exercised (stays pending): ChangeListsStream (bidi list mutation; ChangeLists
+covers the same intent).

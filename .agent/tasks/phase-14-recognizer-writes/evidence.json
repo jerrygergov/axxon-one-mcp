@@ -1,0 +1,98 @@
+{
+  "task_id": "phase-14-recognizer-writes",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "text": "module + dataclass + gating (approval env + confirmation token)",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_recognizer_write.py AxxonMcpRecognizerWrite._gate",
+        "tools/tests/test_axxon_mcp_recognizer_write.py GatingTests"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC2",
+      "text": "recognizer_change_lists add/change/remove via ChangeLists",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_recognizer_write.py ChangeListsTests",
+        ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC3",
+      "text": "recognizer_change_items add/remove LPR items via bidi ChangeItems, no biometrics",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_recognizer_write.py ChangeItemsTests",
+        ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC4",
+      "text": "recognizer_clear double-gated destructive node wipe",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_recognizer_write.py ClearTests",
+        ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (pre=1 list/6 faces, post=[])"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC5",
+      "text": "server registration behind --enable-recognizer-write",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_server.py register_recognizer_write_tools + 6-edit wiring",
+        ".agent/tasks/phase-14-recognizer-writes/raw/test-unit.txt (server import OK)"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC6",
+      "text": "unit tests + full suite green; phase-11 list_ids bug fixed",
+      "status": "PASS",
+      "proof": [
+        ".agent/tasks/phase-14-recognizer-writes/raw/test-unit.txt (Ran 718 ... OK)",
+        "tools/axxon_mcp_recognizer.py list_recognizer_items (list_ids removed)",
+        "tools/tests/test_axxon_mcp_recognizer.py (no-list_ids regression assertion)"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC7",
+      "text": "corpus restamp ChangeLists/ChangeItems/Clear pending->tested-pass; doc updated",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_corpus_restamp.py RESTAMP entries",
+        "docs/api-audit/mcp-corpus/api_methods.json",
+        "docs/api-audit/capability-vs-coverage-2026-06-05.md (181/145/35, RealtimeRecognizer 6/7)"
+      ],
+      "gaps": []
+    }
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_recognizer_write.py",
+    "tools/tests/test_axxon_mcp_recognizer_write.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_mcp_recognizer.py",
+    "tools/tests/test_axxon_mcp_recognizer.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_recognizer_write.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "ChangeListsStream (bidi list mutation) stays pending; ChangeLists covers the same intent.",
+    "ChangeItems supports LPR string items only; face/food image and vector ingestion is an explicit non-goal."
+  ]
+}
