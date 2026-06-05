@@ -55,14 +55,19 @@
 
 These have **zero** MCP surface — not stale evidence, actually absent:
 
-1. **AuditEventInjector (0/7)** — programmatic audit-log writes; needed for compliance integrations.
-2. **EMailNotifier / GSMNotifier (0/5)** — configure email/SMS notification actions. A desktop
-   operator can wire "on alarm → send email"; the MCP cannot.
+1. ~~**AuditEventInjector (0/7)**~~ CLOSED `0c16bb2` — `audit_inject` (6/7 live-verified, see C3).
+2. **EMailNotifier / GSMNotifier (0/5)** — configure email/SMS notification actions. FIXTURE-BLOCKED
+   on this stand: the reads error with "Can't resolve reference to /NotifyService" (no NotifyService
+   configured). Needs a stand with email/SMS notification actions wired.
 3. **TextEventSupportService** — POS/ACS/text-event ingestion has no direct
    `raise_text_event` tool yet. (`ExternalDetectorService` is now CLOSED — see below.)
 4. **BackupSourceService (0/5)** — archive backup source config.
 5. **CloudService (0/4)** — cloud connection / Axxon Cloud pairing.
-6. **StateControlService (0/3)** — arm/disarm state control of objects.
+6. **StateControlService (0/3)** — arm/disarm state control. FIXTURE-BLOCKED on this stand: the only
+   StateControl endpoints are relays on the virtual `DeviceIpint.53` (`StateControl.relay0:0/1`) and
+   they fail with "Can't resolve reference" (the virtual device's relays aren't instantiated, same dead
+   fixture as the PTZ presets). ACFA emulator objects expose 0 actions via `AcfaService.ListUnitsActions`.
+   Needs a stand with a real I/O device (relay/ray) or an action-capable ACFA controller.
 7. **GenericSettingsService (0/3)** — generic per-object settings get/set.
 8. **DynamicParametersService (0/2)** — dynamic device parameter discovery (drives detector schemas).
 9. **HeatMapService (0/6)** — heat-map analytics retrieval (only referenced in detector_archive).
@@ -99,16 +104,33 @@ event type on this stand is `TargetList` (vs `Event1` for occasional events).
 
 ---
 
+## C3. Build pass 2 — AuditEventInjector closed (2026-06-05, `0c16bb2`)
+
+`tools/axxon_mcp_audit.py` (`--enable-audit`) adds `audit_inject` for audit-trail
+writes: camera/ptz/archive viewing, journal export, client-app option, LDAP setup.
+AuditEventInjector moved **0/7 → 6/7** (all 6 supported kinds live-verified;
+`InjectMMExportEvent` stays fixture-warn, needs a live MM export job). Write-only and
+irreversible, so it is approval-gated (`AXXON_AUDIT_INJECT_APPROVE=1` +
+`CONFIRM-audit-inject`) rather than plan/apply/verify/rollback.
+
+Fixture findings this pass (recorded so they aren't re-probed): StateControlService
+and ACFA actions are dead on this stand (see B.6); EMail/GSM notifiers need a
+`NotifyService` (see B.2).
+
+---
+
 ## D. Recommended next moves (priority order)
 
 1. ~~**Reconcile the ledger.**~~ DONE (pass 1, `a61d363`): `tools/axxon_corpus_restamp.py`
    flipped 14 evidence-cited methods and added the `evidence` field. Coverage 152 → 160 pass.
 2. **Close the true zero-coverage families** that have real operator value:
-   notification actions (email/SMS), StateControl (arm/disarm), CloudService (pairing),
-   RealtimeRecognizer (face/LPR), HeatMapService, AuditEventInjector.
+   ~~AuditEventInjector~~ DONE (`0c16bb2`). Still open and live-exercisable here:
+   CloudService (pairing), RealtimeRecognizer (face/LPR), HeatMapService.
+   Fixture-blocked on this stand (defer until a richer stand): notification actions
+   (email/SMS, need NotifyService), StateControl/ACFA arm-disarm (need real I/O device).
 3. ~~**Promote external-event ingestion** (ExternalDetector)~~ DONE for periodical events
    (`dbaebbc`, ExternalDetectorService 2/2). Still open: a first-class `raise_text_event`
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **162 tested-pass / 162 pending / 37 fixture-warn** (361 total).
+Current honest coverage: **168 tested-pass / 155 pending / 38 fixture-warn** (361 total).
