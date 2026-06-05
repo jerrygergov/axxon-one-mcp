@@ -71,7 +71,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
    Needs a stand with a real I/O device (relay/ray) or an action-capable ACFA controller.
 7. **GenericSettingsService (0/3)** — generic per-object settings get/set.
 8. **DynamicParametersService (0/2)** — dynamic device parameter discovery (drives detector schemas).
-9. **HeatMapService (0/6)** — heat-map analytics retrieval (only referenced in detector_archive).
+9. **HeatMapService (0/6)** — heat-map analytics. FIXTURE-BLOCKED: every Build* RPC
+   (BuildHeatmap/BuildEventsHeatmap, all camera/db/detector bindings) returns "Failed to
+   execute command". The service needs a heat-map analytics module/license not provisioned
+   on this stand (same dead-fixture class as PTZ hardware / Cloud pairing).
 10. **RealtimeRecognizerService** — reads CLOSED `496bd70` (3/7: GetLists/GetListStream/GetItems,
     live face watchlist). Mutations (ChangeLists/ChangeItems/Clear) still open (bidi-streaming).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
@@ -134,14 +137,27 @@ Fixture finding: CloudService is not cloud-paired here (see B.5).
 
 ---
 
+## C5. Build pass 4 — DiscoveryService device discovery (2026-06-05, `c240043`)
+
+`tools/axxon_mcp_discovery.py` (`--enable-discovery`, read-only) adds `discover_devices`:
+starts a network scan (`Discover`) and consumes the `GetDiscoveryProgress` stream,
+returning found IP cameras (driver/vendor/model/mac/ip), bounded by device/time caps with
+the stream cancelled on exit. Live-verified: found 3 real cameras (Hikvision/Dahua) on the
+stand's LAN. `Discover` flipped `pending → tested-pass`; DiscoveryService now 4/5.
+
+Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build* RPC returns
+"Failed to execute command" regardless of binding (needs a heat-map analytics module).
+
+---
+
 ## D. Recommended next moves (priority order)
 
 1. ~~**Reconcile the ledger.**~~ DONE (pass 1, `a61d363`): `tools/axxon_corpus_restamp.py`
    flipped 14 evidence-cited methods and added the `evidence` field. Coverage 152 → 160 pass.
 2. **Close the true zero-coverage families** that have real operator value:
    ~~AuditEventInjector~~ DONE (`0c16bb2`). Still open and live-exercisable here:
-   HeatMapService (retail analytics). Done: RealtimeRecognizer reads (`496bd70`).
-   Fixture-blocked here: CloudService (not cloud-paired).
+   Done: RealtimeRecognizer reads (`496bd70`), DiscoveryService (`c240043`).
+   Fixture-blocked here: CloudService (not paired), HeatMapService (no analytics module).
    Fixture-blocked on this stand (defer until a richer stand): notification actions
    (email/SMS, need NotifyService), StateControl/ACFA arm-disarm (need real I/O device).
 3. ~~**Promote external-event ingestion** (ExternalDetector)~~ DONE for periodical events
@@ -149,4 +165,4 @@ Fixture finding: CloudService is not cloud-paired here (see B.5).
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **171 tested-pass / 155 pending / 35 fixture-warn** (361 total).
+Current honest coverage: **172 tested-pass / 154 pending / 35 fixture-warn** (361 total).
