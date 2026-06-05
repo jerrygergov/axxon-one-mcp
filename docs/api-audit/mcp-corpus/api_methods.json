@@ -3293,7 +3293,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AcquireSessionId",
       "http_annotation": "GET /v1/telemetry/sessions",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AcquireSessionId",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3301,12 +3301,13 @@
       "response": "AcquireSessionResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (live session acquire)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.KeepAlive",
       "http_annotation": "POST /v1/telemetry/sessions:keepAlive",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "KeepAlive",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3314,12 +3315,13 @@
       "response": "KeepAliveResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; not exercised on emulator, needs hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.ReleaseSessionId",
       "http_annotation": "POST /v1/telemetry/sessions:release",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ReleaseSessionId",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3327,12 +3329,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.IsSessionAvailable",
       "http_annotation": "POST /v1/telemetry/sessions:checkAvailability",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "IsSessionAvailable",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3340,12 +3343,13 @@
       "response": "IsSessionAvailableResponse",
       "safety_class": "review",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (session availability checked live)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Move",
       "http_annotation": "POST /v1/telemetry:move",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "Move",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3353,7 +3357,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects continuous mode, needs hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Zoom",
@@ -3423,7 +3428,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMove",
       "http_annotation": "POST /v1/telemetry:absoluteMove",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AbsoluteMove",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3431,7 +3436,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (moved pan 675->120, restored)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMoveNormalized",
@@ -3449,7 +3455,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformation",
       "http_annotation": "GET /v1/telemetry/position",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetPositionInformation",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3457,7 +3463,8 @@
       "response": "GetPositionInformationResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (read pan 675/tilt 279 live)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformationNormalized",
@@ -3488,7 +3495,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.SetPreset2",
       "http_annotation": "POST /v1/telemetry/presets:set2",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SetPreset2",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3496,7 +3503,8 @@
       "response": "SetPresetResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.ConfigurePreset",
@@ -3514,7 +3522,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GoPreset",
       "http_annotation": "POST /v1/telemetry/presets:go",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "GoPreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3522,12 +3530,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.RemovePreset",
       "http_annotation": "POST /v1/telemetry/presets:remove",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "RemovePreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3535,7 +3544,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PointMove",
@@ -4164,7 +4174,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.GenGoogleAuthSecret",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "GenGoogleAuthSecret",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4172,12 +4182,13 @@
       "response": "GenGoogleAuthSecretResponse",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md (security_tfa_temp_user_lifecycle PASS)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.EnableGoogleAuth",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "EnableGoogleAuth",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4185,12 +4196,13 @@
       "response": "EnableGoogleAuthResponse",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md (security_tfa_temp_user_lifecycle PASS)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.DisableGoogleAuth",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DisableGoogleAuth",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4198,7 +4210,8 @@
       "response": "DisableGoogleAuthResponse",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md (security_tfa_temp_user_lifecycle PASS)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.CheckLogin",
@@ -4671,7 +4684,7 @@
     {
       "fqmn": "axxonsoft.bl.vmda.VMDAService.ExecuteQuery",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ExecuteQuery",
       "package": "axxonsoft.bl.vmda",
       "proto": "axxonsoft/bl/vmda/VMDA.proto",
@@ -4679,7 +4692,8 @@
       "response": "ExecuteQueryResponse",
       "safety_class": "review",
       "service": "VMDAService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-5h-vmda-fix/evidence.md (live MomentQuest, real archived objects)"
     },
     {
       "fqmn": "axxonsoft.bl.vmda.VMDAService.ExecuteQueryTyped",
