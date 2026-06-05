@@ -48,9 +48,29 @@ class PtzPreflight:
 
     def setup(self) -> None:
         self.client.authenticate_grpc()
-        inventory = self.client.load_inventory()
-        self.fixtures["telemetry_items"] = self.telemetry_like_components(inventory.get("components", []), inventory.get("cameras", []))
-        self.fixtures["telemetry_ap"] = self.fixtures["telemetry_items"][0].get("access_point", "") if self.fixtures["telemetry_items"] else ""
+        items = self.telemetry_components_from_config()
+        if not items:
+            inventory = self.client.load_inventory()
+            items = self.telemetry_like_components(inventory.get("components", []), inventory.get("cameras", []))
+        self.fixtures["telemetry_items"] = items
+        self.fixtures["telemetry_ap"] = items[0].get("access_point", "") if items else ""
+
+    def telemetry_components_from_config(self) -> list[dict[str, Any]]:
+        """Discover TelemetryControl endpoints from the full config graph via DomainService.ListComponents.
+
+        TelemetryControl endpoints do not appear in the filtered inventory; this matches the
+        discovery the shipped PTZ tool (axxon_mcp_ptz.list_telemetry_sources) uses.
+        """
+        domain_pb2 = self.client.import_module("axxonsoft.bl.domain.Domain_pb2")
+        domain = self.client.common_stubs()["domain"]
+        found: dict[str, dict[str, Any]] = {}
+        request = domain_pb2.ListComponentsRequest(page_size=1000)
+        for page in domain.ListComponents(request, timeout=self.client.config.timeout):
+            for component in self.client.message_to_dict(page).get("items", []):
+                access_point = component.get("access_point", "")
+                if "/TelemetryControl." in access_point:
+                    found[access_point] = component
+        return list(found.values())
 
     def telemetry_like_components(self, components: list[dict[str, Any]], cameras: list[dict[str, Any]]) -> list[dict[str, Any]]:
         found = [
@@ -126,7 +146,6 @@ class PtzPreflight:
             presets = self.client.message_to_dict(stub.GetPresetsInfo(pb2.GetPresetsInfoRequest(access_point=access_point), timeout=self.args.timeout))
             operations = self.client.message_to_dict(stub.GetAuxiliaryOperations(pb2.GetAuxiliaryOperationsRequest(access_point=access_point), timeout=self.args.timeout))
             tours = self.client.message_to_dict(stub.GetTours(pb2.GetToursRequest(access_point=access_point), timeout=self.args.timeout))
-            trackers = self.client.message_to_dict(tag_stub.ListTrackers(tag_pb2.ListTnTTrackersRequest(access_point=access_point), timeout=self.args.timeout))
             details = {
                 "telemetry_ap_len": len(access_point),
                 "is_available": availability.get("is_available"),
@@ -134,9 +153,14 @@ class PtzPreflight:
                 "preset_count": len(presets.get("preset_info", [])),
                 "operation_count": len(operations.get("operations", [])),
                 "tour_count": len(tours.get("tours", [])),
-                "tag_track_mode": trackers.get("mode", ""),
-                "tag_track_tracker_count": len(trackers.get("trackers", [])),
             }
+            # Tag&Track is an optional add-on; a missing tracker is a fixture gap, not a telemetry failure.
+            try:
+                trackers = self.client.message_to_dict(tag_stub.ListTrackers(tag_pb2.ListTnTTrackersRequest(access_point=access_point), timeout=self.args.timeout))
+                details["tag_track_mode"] = trackers.get("mode", "")
+                details["tag_track_tracker_count"] = len(trackers.get("trackers", []))
+            except Exception as tag_exc:
+                details["tag_track_gap"] = str(tag_exc)[:120]
             return self.result("telemetry_read_preflight", "PASS", details, start)
         except Exception as exc:
             return self.exception_result("telemetry_read_preflight", exc, start)
