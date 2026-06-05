@@ -87,7 +87,9 @@ These have **zero** MCP surface — not stale evidence, actually absent:
 Re-run + re-stamp; the code already exists:
 
 - **TelemetryService / PTZ** — `axxon_mcp_ptz.py`, 16 tools, Phase 8 live run on `DeviceIpint.53`.
-- **DomainNotifier / NodeNotifier** — `domain_event_subscribe` / `node_event_subscribe` shipped.
+- ~~**DomainNotifier / NodeNotifier**~~ RECONCILED `bc27e3e` — `domain_event_subscribe` /
+  `node_event_subscribe` exercise PullEvents/PullDetailedEvents/DisconnectEventChannel
+  (Domain 3/5, Node 3/6). UpdateSubscription/PushDiagnosticEvents/Ping stay pending.
 - **MediaService** — exercised by `live_view` / metadata, raw RPCs unstamped.
 
 ---
@@ -165,4 +167,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **172 tested-pass / 154 pending / 35 fixture-warn** (361 total).
+Current honest coverage: **178 tested-pass / 148 pending / 35 fixture-warn** (361 total).
