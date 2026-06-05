@@ -17,6 +17,26 @@ class EventSearchRefactorTests(unittest.TestCase):
         self.assertNotIn("def ensure_stubs(self)", source)
         self.assertNotIn("def authenticate(self)", source)
 
+    def test_setup_registers_export_event_body_type(self) -> None:
+        module = importlib.import_module("axxon_event_search")
+
+        class RecordingClient:
+            def __init__(self):
+                self.imported: list[str] = []
+
+            def authenticate_grpc(self):
+                pass
+
+            def import_module(self, name):
+                self.imported.append(name)
+                return object()
+
+        search = module.AxxonEventSearch.__new__(module.AxxonEventSearch)
+        search.client = RecordingClient()
+        search.pb = {}
+        search.setup()
+        self.assertTrue(any("ExportEvent" in name for name in search.client.imported))
+
     def test_examples_are_importable_and_expose_main(self) -> None:
         modules = [
             "examples.inventory_sync",

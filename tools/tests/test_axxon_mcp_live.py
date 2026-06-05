@@ -166,6 +166,58 @@ class AxxonMcpLiveTests(unittest.TestCase):
         self.assertEqual(result["status"], "gap")
         self.assertIn("camera", result["message"].lower())
 
+    def test_search_events_registers_export_event_body_type(self) -> None:
+        """search_events imports the ExportEvent body module so Any decode never crashes."""
+        module = importlib.import_module("axxon_mcp_live")
+
+        class FakeStub:
+            def ReadEvents(self, request, timeout):
+                self.last_request = request
+                yield object()
+
+        import types
+
+        class RecordingClient(FakeClient):
+            def __init__(self):
+                super().__init__()
+                self.imported: list[str] = []
+
+            def ensure_client(self):
+                return self
+
+            def authenticate_grpc(self):
+                pass
+
+            def import_module(self, name):
+                self.imported.append(name)
+                stub_mod = types.SimpleNamespace()
+                stub_mod.EEventType = types.SimpleNamespace(DESCRIPTOR=types.SimpleNamespace(values_by_name={}))
+                stub_mod.SearchFilter = lambda **kw: types.SimpleNamespace(subjects=[], **kw)
+                stub_mod.SearchFilterArray = lambda **kw: types.SimpleNamespace(**kw)
+                stub_mod.TimeRange = lambda **kw: types.SimpleNamespace(**kw)
+                stub_mod.ReadEventsRequest = lambda **kw: types.SimpleNamespace(**kw)
+                return stub_mod
+
+            def stub_from_proto(self, proto, service):
+                self.last_stub = FakeStub()
+                return self.last_stub
+
+            def message_to_dict(self, message):
+                return {"items": [{"event_name": "axxonsoft.bl.mmexport.ExportEvent", "subjects": ["x"]}]}
+
+        fake = RecordingClient()
+        live = module.AxxonMcpLive(client_factory=lambda _config: fake, config_factory=lambda: FakeConfig())
+        live.connect_axxon_profile("env")
+
+        result = live.search_events(hours=24.0, limit=5)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["count"], 1)
+        self.assertTrue(any("ExportEvent" in name for name in fake.imported))
+        # AC5: TimeRange must use the millisecond string format YYYYMMDDThhmmss.mmm, not numeric epoch-1900 ms.
+        rng = fake.last_stub.last_request.range
+        self.assertRegex(rng.begin_time, r"^\d{8}T\d{6}\.\d{3}$")
+        self.assertRegex(rng.end_time, r"^\d{8}T\d{6}\.\d{3}$")
+
     def test_subscribe_events_bounded_respects_caps(self) -> None:
         module = importlib.import_module("axxon_mcp_live")
         fake = FakeClient()

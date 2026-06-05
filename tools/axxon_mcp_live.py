@@ -372,14 +372,19 @@ class AxxonMcpLive:
         events_pb2 = client.import_module("axxonsoft.bl.events.Events_pb2")
         history_pb2 = client.import_module("axxonsoft.bl.events.EventHistory_pb2")
         primitive_pb2 = client.import_module("axxonsoft.bl.primitive.Primitives_pb2")
+        # Register event body types carried in the Any "body" field so message_to_dict can decode
+        # them. Most live in Events_pb2; ExportEvent ships in its own module and is otherwise missing
+        # from the descriptor pool, which makes MessageToDict raise on export-bearing pages.
+        client.import_module("axxonsoft.bl.mmexport.ExportEvent_pb2")
         stub = client.stub_from_proto("axxonsoft/bl/events/EventHistory.proto", "EventHistoryService")
         client.authenticate_grpc()
 
         import datetime as _dt
-        epoch_1900_ms = 2208988800000
+        # EventHistoryService expects the millisecond string format YYYYMMDDThhmmss.mmm. The numeric
+        # epoch-1900-millisecond form silently returns 0 events on the stand.
         now = _dt.datetime.now(_dt.UTC)
-        begin_ms = int((now - _dt.timedelta(hours=hours)).timestamp() * 1000) + epoch_1900_ms
-        end_ms = int(now.timestamp() * 1000) + epoch_1900_ms
+        begin_time = (now - _dt.timedelta(hours=hours)).strftime("%Y%m%dT%H%M%S.%f")[:-3]
+        end_time = now.strftime("%Y%m%dT%H%M%S.%f")[:-3]
 
         type_enum = events_pb2.EEventType
         resolved_types: list[int] = []
@@ -399,7 +404,7 @@ class AxxonMcpLive:
                     f.subjects.extend(subjects)
                 filters.append(f)
         request = history_pb2.ReadEventsRequest(
-            range=primitive_pb2.TimeRange(begin_time=str(begin_ms), end_time=str(end_ms)),
+            range=primitive_pb2.TimeRange(begin_time=begin_time, end_time=end_time),
             filters=history_pb2.SearchFilterArray(filters=filters) if filters else history_pb2.SearchFilterArray(),
             descending=descending,
         )

@@ -110,6 +110,9 @@ class AxxonEventSearch:
             "event_history_pb2": "axxonsoft.bl.events.EventHistory_pb2",
             "events_pb2": "axxonsoft.bl.events.Events_pb2",
             "primitive_pb2": "axxonsoft.bl.primitive.Primitives_pb2",
+            # ExportEvent bodies arrive as Any "body" values; register the type so message_to_dict
+            # can decode export-bearing pages instead of raising on the missing descriptor.
+            "export_event_pb2": "axxonsoft.bl.mmexport.ExportEvent_pb2",
         }
         for key, module in modules.items():
             self.pb[key] = self.client.import_module(module)
