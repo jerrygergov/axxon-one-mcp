@@ -331,6 +331,14 @@ class TestValidateRecipeHappyPath(unittest.TestCase):
         for key in ("valid", "steps", "risk_classes", "required_approvals", "gaps"):
             self.assertIn(key, result)
 
+    def test_accepts_assemble_recipe_output_dict(self) -> None:
+        """validate_recipe consumes assemble_recipe's dict output directly so the chain composes."""
+        assembled = self._translator.assemble_recipe("create a macro named codex-test")
+        self.assertIn("steps", assembled)
+        result = self._translator.validate_recipe(assembled)
+        self.assertEqual(len(result["steps"]), len(assembled["steps"]))
+        self.assertIn("valid", result)
+
     def test_does_not_call_apply_or_rollback(self) -> None:
         called = []
         mod = importlib.import_module("axxon_mcp_translator")

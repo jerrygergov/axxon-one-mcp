@@ -388,23 +388,25 @@ class AxxonMcpTranslator:
     # validate_recipe
     # ------------------------------------------------------------------
 
-    def validate_recipe(self, recipe: list[dict[str, Any]]) -> dict[str, Any]:
+    def validate_recipe(self, recipe: list[dict[str, Any]] | dict[str, Any]) -> dict[str, Any]:
         """Dry-run each step via operator.plan and aggregate the results.
 
         Args:
-            recipe: List of step dicts, each with ``workflow``, ``params``, and ``why`` keys.
+            recipe: Either the ``assemble_recipe`` output (dict with a ``steps`` key) or a
+                plain list of step dicts, each with ``workflow``, ``params``, and ``why`` keys.
 
         Returns:
             Aggregated validation result with ``valid``, ``steps``, ``risk_classes``,
             ``required_approvals``, and ``gaps`` keys.
         """
+        steps = recipe.get("steps", []) if isinstance(recipe, dict) else list(recipe)
         operator = self._ensure_operator()
         step_results: list[dict[str, Any]] = []
         risk_classes: list[str] = []
         required_approvals: list[str] = []
         gaps: list[str] = []
 
-        for step in recipe:
+        for step in steps:
             workflow = step.get("workflow", "")
             params = dict(step.get("params") or {})
             plan = operator.plan(workflow, params)
@@ -536,7 +538,7 @@ def register_translator_tools(server: Any, translator: AxxonMcpTranslator) -> No
         return translator.assemble_recipe(intent_text, context or {})
 
     @server.tool(name="validate_recipe")
-    def validate_recipe(recipe: list[dict[str, Any]]) -> dict[str, Any]:
+    def validate_recipe(recipe: list[dict[str, Any]] | dict[str, Any]) -> dict[str, Any]:
         """Dry-run each step in a recipe via operator.plan and return aggregated validation results."""
         return translator.validate_recipe(recipe)
 
