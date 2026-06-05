@@ -64,14 +64,15 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Phase 7 — NL -> plan translator (2026-06-04, `827e3b0`, `.agent/tasks/phase-7-nl-translator/`).** Added `tools/axxon_mcp_translator.py` (`--enable-translator`): `assemble_recipe` (English intent -> ordered steps over existing operator workflows, refuses to invent API shapes; PTZ/role/permission intents return a structured `unsupported_intent` gap), `validate_recipe` (dry-run each step via `OperatorRegistry.plan`, aggregate risk/approvals/gaps), and `explain_recipe` (offline risk + rollback + wall-clock preview). Live-verified: 3 ephemeral recipes (`create_camera`, `create_macro`, `external_event_inject`) round-trip assemble->validate->apply->verify->rollback->verify-absent on the stand. Test suite now 668/668.
 
-**Archived VMDA query fix (2026-06-04, `.agent/tasks/phase-5h-vmda-fix/`).** Corrected `vmda_query` to the documented MomentQuest binding (Integration APIs 3.0 pages 295/447): `VMDAService.ExecuteQuery` with `access_point` = the VMDA database (`*/VMDA_DB.N/Database`, auto-discovered), `camera_ID` = the host-relative detector source, `schema_ID="vmda_schema"`, a `figure ...; result = r.res;` MomentQuest `query`, and `language="EVENT_BASIC"`. Live-verified against real recorded objects on camera 1's tracker `AVDetector.1` (a 14-day sweep found 3931 intervals on day-5; the tool returns intervals with object bounding boxes). Test suite now 669/669.
+**Archived VMDA query fix (2026-06-04, `.agent/tasks/phase-5h-vmda-fix/`).** Corrected `vmda_query` to the documented MomentQuest binding (Integration APIs 3.0 pages 295/447): `VMDAService.ExecuteQuery` with `access_point` = the VMDA database (`*/VMDA_DB.N/Database`, auto-discovered), `camera_ID` = the host-relative detector source, `schema_ID="vmda_schema"`, a `figure ...; result = r.res;` MomentQuest `query`, and `language="EVENT_BASIC"`. Live-verified against real recorded objects on camera 1's tracker `AVDetector.1` (a 14-day sweep found 3931 intervals on day-5; the tool returns intervals with object bounding boxes). Test suite now 671/671.
 
 **Remaining gaps (cannot be closed from the API client):**
 - `ptz_controller` + Phase 5B — need a PTZ camera (deferred).
-- `recent_events` / EventHistory — the stand persists no events to its queryable EventHistory DB (ReadCount = 0 across all 20 event types over 30 days). Returns data on any stand with event archiving. (Archived `vmda_query` is no longer a gap: it is live-verified against real recorded objects on camera 1.)
 - `schedule_descriptor_get` — no schedule/calendar/weekly/daily descriptor field exists on any of the 38 devices; Axxon schedules are authored in the desktop client and not creatable via this API.
 
-**Next concrete step:** Every planned phase is now built. The only open items are stand-fixture-blocked (PTZ/Phase 5B, archived event + VMDA stores, schedule descriptor) and the high-risk 5F-B2 mutations held out of scope; all unblock with a differently-provisioned stand, not new code.
+(The earlier `recent_events` / EventHistory "no events" entry was a false gap: it came from `ReadCount`=0, the same wrong read as the VMDA gap. `search_events` returns thousands of archived events once `mmexport.ExportEvent_pb2` is registered for the Any-body decode and the `TimeRange` uses the millisecond string format; live-verified at 300 events including `ExportEvent` on 2026-06-05. See `.agent/tasks/phase-5i-archived-events/`.)
+
+**Next concrete step:** Every planned phase is now built. The only open items are stand-fixture-blocked (PTZ/Phase 5B, schedule descriptor) and the high-risk 5F-B2 mutations held out of scope; all unblock with a differently-provisioned stand, not new code.
 
 ---
 

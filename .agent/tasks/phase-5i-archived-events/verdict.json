@@ -1,0 +1,7 @@
+{
+  "task_id": "phase-5i-archived-events",
+  "verdict": "PASS",
+  "judged_against": "current code + current command results (671 tests, OK) + live stand verification",
+  "criteria": {"AC1": "PASS", "AC2": "PASS", "AC3": "PASS", "AC4": "PASS", "AC5": "PASS"},
+  "notes": "Archived-events 'gap' was a false conclusion from ReadCount=0. Two real bugs fixed in search_events: ExportEvent Any-body decode crash and numeric epoch-1900 timestamp returning 0. Live-verified 300 events including ExportEvent. Proto symlink removed before commit; no proto/CA/PDF staged."
+}
