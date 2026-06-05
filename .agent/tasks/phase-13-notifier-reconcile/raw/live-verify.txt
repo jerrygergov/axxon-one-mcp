@@ -1,0 +1,23 @@
+Phase 13 — DomainNotifier / NodeNotifier reconcile
+Live evidence against the demo stand (host/creds redacted; AXXON_TLS_CN=Server).
+
+Exercised via tools/axxon_mcp_admin.py domain_event_subscribe / node_event_subscribe,
+which call AxxonApiClient.pull_notifier_events_bounded. That path invokes, per notifier:
+  - PullEvents            (detailed=False) — server-streaming subscription
+  - PullDetailedEvents    (detailed=True)  — server-streaming subscription
+  - DisconnectEventChannel                 — clean teardown in finally
+
+Live results (4 subscribe calls, timeout_s=4, limit=10):
+  domain PullEvents (detailed=False)        -> status=idle count=0 stream_idle=true disconnect_clean=true
+  domain PullDetailedEvents (detailed=True) -> status=idle count=0 stream_idle=true disconnect_clean=true
+  node   PullEvents (detailed=False)        -> status=idle count=0 stream_idle=true disconnect_clean=true
+  node   PullDetailedEvents (detailed=True) -> status=idle count=0 stream_idle=true disconnect_clean=true
+
+Interpretation: each call established the subscription, the server held the bounded
+long-poll open, then closed with a clean DEADLINE_EXCEEDED (no events in-window =
+healthy idle, not a transport failure), and DisconnectEventChannel returned cleanly
+(disconnect_clean=true). This is gRPC-surface verification of PullEvents /
+PullDetailedEvents / DisconnectEventChannel on both DomainNotifier and NodeNotifier.
+
+NOT exercised (stay pending): UpdateSubscription, PushDiagnosticEvents (both notifiers),
+and NodeNotifier.Ping.

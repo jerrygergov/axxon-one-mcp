@@ -1770,7 +1770,7 @@
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.PullEvents",
       "http_annotation": "POST /v1/notifier/subscriptions",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PullEvents",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1778,12 +1778,13 @@
       "response": "Events",
       "safety_class": "mutating",
       "service": "DomainNotifier",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"
     },
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.PullDetailedEvents",
       "http_annotation": "POST /v1/notifier/subscriptions:pull",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PullDetailedEvents",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1791,7 +1792,8 @@
       "response": "Events",
       "safety_class": "mutating",
       "service": "DomainNotifier",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"
     },
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.UpdateSubscription",
@@ -1809,7 +1811,7 @@
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.DisconnectEventChannel",
       "http_annotation": "POST /v1/notifier/subscriptions:disconnect",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DisconnectEventChannel",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1817,7 +1819,8 @@
       "response": "DisconnectEventChannelResponse",
       "safety_class": "mutating",
       "service": "DomainNotifier",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (disconnect_clean=true)"
     },
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.PushDiagnosticEvents",
@@ -1835,7 +1838,7 @@
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.PullEvents",
       "http_annotation": "POST /v1/node-notifier/subscriptions",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PullEvents",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1843,12 +1846,13 @@
       "response": "Events",
       "safety_class": "mutating",
       "service": "NodeNotifier",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"
     },
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.PullDetailedEvents",
       "http_annotation": "POST /v1/node-notifier/subscriptions:pull",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PullDetailedEvents",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1856,7 +1860,8 @@
       "response": "Events",
       "safety_class": "mutating",
       "service": "NodeNotifier",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"
     },
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.UpdateSubscription",
@@ -1874,7 +1879,7 @@
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.DisconnectEventChannel",
       "http_annotation": "POST /v1/node-notifier/subscriptions:disconnect",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DisconnectEventChannel",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1882,7 +1887,8 @@
       "response": "DisconnectEventChannelResponse",
       "safety_class": "mutating",
       "service": "NodeNotifier",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (disconnect_clean=true)"
     },
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.PushDiagnosticEvents",

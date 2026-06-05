@@ -109,6 +109,23 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (scan started)"),
     ("DiscoveryService", "GetDiscoveryProgress"): (
         "tested-pass", ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (streamed 3 real network cameras)"),
+    # Phase 13: DomainNotifier/NodeNotifier reconcile (no new code). The shipped
+    # domain_event_subscribe/node_event_subscribe tools exercise PullEvents,
+    # PullDetailedEvents and DisconnectEventChannel on both notifiers; live runs
+    # return clean idle streams (stream_idle + disconnect_clean true). The other
+    # methods (UpdateSubscription/PushDiagnosticEvents/Ping) stay pending.
+    ("DomainNotifier", "PullEvents"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"),
+    ("DomainNotifier", "PullDetailedEvents"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"),
+    ("DomainNotifier", "DisconnectEventChannel"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (disconnect_clean=true)"),
+    ("NodeNotifier", "PullEvents"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"),
+    ("NodeNotifier", "PullDetailedEvents"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (idle stream, clean disconnect)"),
+    ("NodeNotifier", "DisconnectEventChannel"): (
+        "tested-pass", ".agent/tasks/phase-13-notifier-reconcile/raw/live-verify.txt (disconnect_clean=true)"),
 }
 
 
