@@ -58,8 +58,8 @@ These have **zero** MCP surface — not stale evidence, actually absent:
 1. **AuditEventInjector (0/7)** — programmatic audit-log writes; needed for compliance integrations.
 2. **EMailNotifier / GSMNotifier (0/5)** — configure email/SMS notification actions. A desktop
    operator can wire "on alarm → send email"; the MCP cannot.
-3. **TextEventSupportService / ExternalDetectorService first-class tools** — POS/ACS/text-event
-   ingestion is only reachable through generated code templates, not a direct `raise_text_event` tool.
+3. **TextEventSupportService** — POS/ACS/text-event ingestion has no direct
+   `raise_text_event` tool yet. (`ExternalDetectorService` is now CLOSED — see below.)
 4. **BackupSourceService (0/5)** — archive backup source config.
 5. **CloudService (0/4)** — cloud connection / Axxon Cloud pairing.
 6. **StateControlService (0/3)** — arm/disarm state control of objects.
@@ -82,14 +82,33 @@ Re-run + re-stamp; the code already exists:
 
 ---
 
+## C2. Build pass 1 — ExternalDetectorService closed (2026-06-05, `dbaebbc`)
+
+`raise_periodical_event` operator workflow added (`tools/axxon_mcp_operator.py`):
+pushes a `PeriodicalEventData.TargetList` of tracklets via
+`POST /v1/detectors/external:raisePeriodicalEvent`. ExternalDetectorService moved
+**0/2 → 2/2** (both `RaiseOccasionalEvent` and `RaisePeriodicalEvent` now tested-pass).
+
+Live verification surfaced a real latent bug: the external-detector endpoints return
+**HTTP 200 even on rejection**, with the real outcome in the body
+`{"error": "OK" | "BAD_EVENT_TYPE" | ...}`. The operator `http_post` apply handler
+only checked `status >= 400`, so it would have reported a rejected event as
+`applied`. Fixed: the handler now treats a non-`OK` body error as an apply failure,
+which also hardens the pre-existing `external_event_inject`. The accepted periodical
+event type on this stand is `TargetList` (vs `Event1` for occasional events).
+
+---
+
 ## D. Recommended next moves (priority order)
 
-1. **Reconcile the ledger.** Add an `axxon_corpus_restamp.py` pass that flips `live_status`
-   for every method already covered by a passing smoke/MCP tool, so the corpus matches STATUS.md.
-   This alone likely moves ~30-40 methods from `pending` → `tested-pass`.
+1. ~~**Reconcile the ledger.**~~ DONE (pass 1, `a61d363`): `tools/axxon_corpus_restamp.py`
+   flipped 14 evidence-cited methods and added the `evidence` field. Coverage 152 → 160 pass.
 2. **Close the true zero-coverage families** that have real operator value:
    notification actions (email/SMS), StateControl (arm/disarm), CloudService (pairing),
    RealtimeRecognizer (face/LPR), HeatMapService, AuditEventInjector.
-3. **Promote external-event ingestion** (Text/ExternalDetector) from template-only to a
-   first-class `raise_text_event` / `external_detector_push` tool pair.
+3. ~~**Promote external-event ingestion** (ExternalDetector)~~ DONE for periodical events
+   (`dbaebbc`, ExternalDetectorService 2/2). Still open: a first-class `raise_text_event`
+   for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
+
+Current honest coverage: **162 tested-pass / 162 pending / 37 fixture-warn** (361 total).
