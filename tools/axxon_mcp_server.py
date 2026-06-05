@@ -51,6 +51,7 @@ def create_server(
     translator: Any | None = None,
     ptz: Any | None = None,
     audit: Any | None = None,
+    recognizer: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -152,6 +153,9 @@ def create_server(
 
     if audit is not None:
         register_audit_tools(server, audit)
+
+    if recognizer is not None:
+        register_recognizer_tools(server, recognizer)
 
     return server
 
@@ -846,6 +850,28 @@ def register_audit_tools(server: Any, audit: Any) -> None:
         return audit.audit_inject(kind, params, confirmation)
 
 
+def register_recognizer_tools(server: Any, recognizer: Any) -> None:
+    @server.tool(name="recognizer_connect_axxon_profile")
+    def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the read-only face/LPR watchlist layer to the env profile."""
+        return recognizer.recognizer_connect_axxon_profile(profile)
+
+    @server.tool(name="list_recognizer_lists")
+    def list_recognizer_lists(list_type: str = "any") -> dict[str, Any]:
+        """List face/LPR recognition watchlists (id, name, type, item count). list_type: any/face/lpr/food."""
+        return recognizer.list_recognizer_lists(list_type)
+
+    @server.tool(name="get_recognizer_list")
+    def get_recognizer_list(list_id: str) -> dict[str, Any]:
+        """Get one watchlist descriptor via GetListStream."""
+        return recognizer.get_recognizer_list(list_id)
+
+    @server.tool(name="list_recognizer_items")
+    def list_recognizer_items(list_ids: list[str] | None = None, limit: int = 200) -> dict[str, Any]:
+        """List enrolled items (people/plates) as privacy-safe metadata: no images, no biometric vectors."""
+        return recognizer.list_recognizer_items(list_ids, limit)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1104,6 +1130,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 10 AuditEventInjector tools. Injection needs AXXON_AUDIT_INJECT_APPROVE=1.",
     )
+    parser.add_argument(
+        "--enable-recognizer",
+        action="store_true",
+        help="Enable Phase 11 read-only RealtimeRecognizerService watchlist tools (face/LPR lists).",
+    )
     return parser
 
 
@@ -1221,6 +1252,11 @@ def main() -> int:
         from axxon_mcp_audit import AxxonMcpAudit
 
         audit = AxxonMcpAudit()
+    recognizer = None
+    if args.enable_recognizer:
+        from axxon_mcp_recognizer import AxxonMcpRecognizer
+
+        recognizer = AxxonMcpRecognizer()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1240,6 +1276,7 @@ def main() -> int:
         translator=translator,
         ptz=ptz,
         audit=audit,
+        recognizer=recognizer,
     )
     server.run(transport=args.transport)
     return 0

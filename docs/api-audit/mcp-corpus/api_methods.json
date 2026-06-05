@@ -3767,7 +3767,7 @@
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.GetLists",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetLists",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3775,12 +3775,13 @@
       "response": "GetListsResponse",
       "safety_class": "read",
       "service": "RealtimeRecognizerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (returns real face list)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.GetListStream",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetListStream",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3788,12 +3789,13 @@
       "response": "GetListStreamResponse",
       "safety_class": "read",
       "service": "RealtimeRecognizerService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams list descriptor)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.GetItems",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetItems",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3801,7 +3803,8 @@
       "response": "GetItemsResponse",
       "safety_class": "read",
       "service": "RealtimeRecognizerService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams 6 enrolled items, metadata only)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.Clear",

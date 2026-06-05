@@ -1,0 +1,49 @@
+{
+  "task_id": "phase-11-recognizer-lists",
+  "overall": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "tools/axxon_mcp_recognizer.py exists; AxxonMcpRecognizer dataclass with recognizer_connect_axxon_profile, list_recognizer_lists, get_recognizer_list, list_recognizer_items; uses stub_from_proto(RECOGNIZER_PROTO, 'RealtimeRecognizerService') for direct gRPC."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "list_recognizer_lists builds GetListsRequest with type=getattr(pb2, LIST_TYPES[list_type]); returns id/name/type/score/item_count (len of item_ids). Confirmed by test_list_lists_returns_summary_with_item_count and test_list_type_maps_to_enum."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "get_recognizer_list iterates GetListStream, aggregates descriptor; returns {status, list}. Confirmed by test_get_list_streams_descriptor."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "list_recognizer_items calls GetItems with required_items=[], load_images=False, load_vectors=False; _summarize_item never emits images/vectors/data_images keys. Confirmed by test_list_items_metadata_only_no_biometrics and live run 'contains biometric payload: False'."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "note": "5 tests in test_axxon_mcp_recognizer.py all pass. Full suite: Ran 701 tests OK."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "note": "GetLists=tested-pass, GetListStream=tested-pass, GetItems=tested-pass; ChangeLists/ChangeListsStream/ChangeItems/Clear=pending. Restamp dry-run: 0 changes (no drift). live-verify.txt shows RESULT: PASS with all names redacted as <redacted-name>. Spec.md contains '<redacted-name>' under guidance notes (pre-build live probe description, not evidence); all actual evidence files are properly sanitized."
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "note": "register_recognizer_tools registers 4 tools (recognizer_connect_axxon_profile, list_recognizer_lists, get_recognizer_list, list_recognizer_items); create_server has recognizer param; --enable-recognizer arg defined; recognizer=recognizer passed in create_server call."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -m unittest tools.tests.test_axxon_mcp_recognizer  -> Ran 5 tests OK",
+    "python3.12 -m unittest discover -s tools/tests 2>&1 | grep -E '^(Ran|OK|FAILED|ERROR)' -> Ran 701 tests OK",
+    "python3.12 -c \"import json;[print(x['method'],x['live_status']) for x in json.load(open('docs/api-audit/mcp-corpus/api_methods.json'))['methods'] if x['service']=='RealtimeRecognizerService']\" -> GetLists tested-pass, GetListStream tested-pass, GetItems tested-pass, ChangeLists pending, ChangeListsStream pending, ChangeItems pending, Clear pending",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run, pass --write to apply)",
+    "grep -n 'register_recognizer_tools|--enable-recognizer|recognizer' tools/axxon_mcp_server.py",
+    "grep -rn '<redacted-name>|<redacted-name>' .agent/tasks/phase-11-recognizer-lists/ -> spec.md:12 only (guidance notes, not evidence)"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "task_id": "phase-11-recognizer-lists",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id":"AC1","text":"axxon_mcp_recognizer.py module + AxxonMcpRecognizer dataclass + direct gRPC","status":"PASS","proof":["tools/axxon_mcp_recognizer.py"]},
+    {"id":"AC2","text":"list_recognizer_lists returns summary + EListType enum mapping","status":"PASS","proof":["test_list_lists_returns_summary_with_item_count","test_list_type_maps_to_enum"]},
+    {"id":"AC3","text":"get_recognizer_list aggregates GetListStream","status":"PASS","proof":["test_get_list_streams_descriptor","live get_recognizer_list"]},
+    {"id":"AC4","text":"list_recognizer_items metadata only, no images/vectors","status":"PASS","proof":["test_list_items_metadata_only_no_biometrics","live contains biometric payload: False"]},
+    {"id":"AC5","text":"unit tests + full suite green","status":"PASS","proof":["raw/test-unit.txt: Ran 701 tests OK"]},
+    {"id":"AC6","text":"GetLists/GetListStream/GetItems restamped tested-pass; mutations pending","status":"PASS","proof":["raw/live-verify.txt","tools/axxon_corpus_restamp.py","docs/api-audit/mcp-corpus/api_methods.json"]},
+    {"id":"AC7","text":"server registration behind --enable-recognizer","status":"PASS","proof":["register_recognizer_tools 4 tools","create_server recognizer param"]}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_recognizer.py",
+    "tools/tests/test_axxon_mcp_recognizer.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -m unittest discover -s tools/tests 2>&1 | grep -E '^(Ran|OK|FAILED)'",
+    "cd /Users/jerrygergov/Documents/GitHub/axxon-one-mcp && python3.12 -m unittest tools.tests.test_axxon_mcp_recognizer",
+    "python3.12 -c \"import json;[print(x['method'],x['live_status']) for x in json.load(open('docs/api-audit/mcp-corpus/api_methods.json'))['methods'] if x['service']=='RealtimeRecognizerService']\"",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": ["ChangeLists/ChangeListsStream/ChangeItems/Clear (watchlist mutation) out of scope, stay pending"]
+}

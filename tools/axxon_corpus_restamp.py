@@ -94,6 +94,15 @@ RESTAMP = {
     ("AuditEventInjector", "InjectMMExportEvent"): (
         "tested-warn-fixture-needed",
         ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (errors on stand: needs a live MM export job)"),
+    # Phase 11: read-only RealtimeRecognizerService watchlist tools live-verified
+    # against the stand's "Intersec Face List" (ELT_Face, 6 enrolled faces). The
+    # fixture now exists, so these flip from fixture-warn to tested-pass.
+    ("RealtimeRecognizerService", "GetLists"): (
+        "tested-pass", ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (returns real face list)"),
+    ("RealtimeRecognizerService", "GetListStream"): (
+        "tested-pass", ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams list descriptor)"),
+    ("RealtimeRecognizerService", "GetItems"): (
+        "tested-pass", ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams 6 enrolled items, metadata only)"),
 }
 
 
