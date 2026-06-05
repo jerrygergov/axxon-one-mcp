@@ -256,7 +256,82 @@ class StubAdminMutator:
         return [{"action": name, "args": args} for name, args in self.calls]
 
 
+class StubPtz:
+    def ptz_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "ptz-control"}
+
+    def list_telemetry_sources(self, limit: int = 64):
+        return {"status": "ok", "count": 1, "sources": ["hosts/Server/DeviceIpint.53/TelemetryControl.0"]}
+
+    def session_available(self, access_point: str):
+        return {"status": "ok", "access_point": access_point, "is_available": True}
+
+    def acquire_session(self, access_point: str, host_name: str = "axxon-mcp"):
+        return {"status": "ok", "access_point": access_point, "session_id": 1}
+
+    def keepalive_session(self, access_point: str, session_id: int):
+        return {"status": "ok", "result": True}
+
+    def release_session(self, access_point: str, session_id: int):
+        return {"status": "ok", "session_id": session_id}
+
+    def get_position(self, access_point: str):
+        return {"status": "ok", "absolute_position": {"pan": 675, "tilt": 279, "zoom": 10}}
+
+    def move(self, access_point: str, session_id: int, pan: float, tilt: float, mode: str = "continuous"):
+        return {"status": "ok", "pan": pan, "tilt": tilt, "mode": mode}
+
+    def zoom(self, access_point: str, session_id: int, value: float, mode: str = "continuous"):
+        return {"status": "ok", "value": value, "mode": mode}
+
+    def focus(self, access_point: str, session_id: int, value: float, mode: str = "continuous"):
+        return {"status": "ok", "value": value}
+
+    def iris(self, access_point: str, session_id: int, value: float, mode: str = "continuous"):
+        return {"status": "ok", "value": value}
+
+    def absolute_move(self, access_point: str, session_id: int, pan: int, tilt: int, zoom: int, mask: int = 7):
+        return {"status": "ok", "absolute_position": {"pan": pan, "tilt": tilt, "zoom": zoom, "mask": mask}}
+
+    def list_presets(self, access_point: str):
+        return {"status": "ok", "presets": []}
+
+    def set_preset(self, access_point: str, session_id: int, position: int, label: str = ""):
+        return {"status": "ok", "position": position, "label": label}
+
+    def go_preset(self, access_point: str, session_id: int, position: int, speed: float = 1.0):
+        return {"status": "ok", "position": position}
+
+    def remove_preset(self, access_point: str, session_id: int, position: int):
+        return {"status": "ok", "position": position}
+
+    def auxiliary_operations(self, access_point: str):
+        return {"status": "ok", "operations": ["wiper"]}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
+    def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        ptz_tools = {
+            "ptz_connect_axxon_profile", "list_telemetry_sources", "ptz_session_available",
+            "ptz_acquire_session", "ptz_keepalive_session", "ptz_release_session",
+            "ptz_get_position", "ptz_move", "ptz_zoom", "ptz_focus", "ptz_iris",
+            "ptz_absolute_move", "ptz_list_presets", "ptz_set_preset", "ptz_go_preset",
+            "ptz_remove_preset", "ptz_auxiliary_operations",
+        }
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in ptz_tools:
+            self.assertNotIn(name, docs_only.tools)
+        self.assertIn("ptz", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-ptz"])
+        self.assertTrue(args.enable_ptz)
+        server = module.create_server(docs=StubDocs(), ptz=StubPtz(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(ptz_tools, set(server.tools))
+        ap = "hosts/Server/DeviceIpint.53/TelemetryControl.0"
+        self.assertEqual(server.tools["list_telemetry_sources"](64)["count"], 1)
+        self.assertEqual(server.tools["ptz_acquire_session"](ap)["session_id"], 1)
+        self.assertEqual(server.tools["ptz_absolute_move"](ap, 1, 100, 50, 5)["absolute_position"]["pan"], 100)
+        self.assertEqual(server.tools["ptz_move"](ap, 1, 0.5, 0.5, "continuous")["mode"], "continuous")
     def test_create_server_registers_phase_one_tools_and_resources(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
         server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)

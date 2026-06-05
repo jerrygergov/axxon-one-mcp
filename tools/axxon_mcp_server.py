@@ -49,6 +49,7 @@ def create_server(
     bookmarks: Any | None = None,
     bookmark_mutator: Any | None = None,
     translator: Any | None = None,
+    ptz: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -145,7 +146,97 @@ def create_server(
     if translator is not None:
         register_translator_tools(server, translator)
 
+    if ptz is not None:
+        register_ptz_tools(server, ptz)
+
     return server
+
+
+def register_ptz_tools(server: Any, ptz: Any) -> None:
+    @server.tool(name="ptz_connect_axxon_profile")
+    def ptz_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the PTZ/telemetry control layer to the env profile."""
+        return ptz.ptz_connect_axxon_profile(profile)
+
+    @server.tool(name="list_telemetry_sources")
+    def list_telemetry_sources(limit: int = 64) -> dict[str, Any]:
+        """List PTZ telemetry endpoints (*/TelemetryControl.M) from the full config graph."""
+        return ptz.list_telemetry_sources(limit)
+
+    @server.tool(name="ptz_session_available")
+    def ptz_session_available(access_point: str) -> dict[str, Any]:
+        """Report whether a PTZ source has a free control session."""
+        return ptz.session_available(access_point)
+
+    @server.tool(name="ptz_acquire_session")
+    def ptz_acquire_session(access_point: str, host_name: str = "axxon-mcp") -> dict[str, Any]:
+        """Acquire a telemetry control session for a PTZ source."""
+        return ptz.acquire_session(access_point, host_name)
+
+    @server.tool(name="ptz_keepalive_session")
+    def ptz_keepalive_session(access_point: str, session_id: int) -> dict[str, Any]:
+        """Extend a telemetry control session."""
+        return ptz.keepalive_session(access_point, session_id)
+
+    @server.tool(name="ptz_release_session")
+    def ptz_release_session(access_point: str, session_id: int) -> dict[str, Any]:
+        """Release a telemetry control session."""
+        return ptz.release_session(access_point, session_id)
+
+    @server.tool(name="ptz_get_position")
+    def ptz_get_position(access_point: str) -> dict[str, Any]:
+        """Read the absolute pan/tilt/zoom position of a PTZ source."""
+        return ptz.get_position(access_point)
+
+    @server.tool(name="ptz_move")
+    def ptz_move(access_point: str, session_id: int, pan: float, tilt: float, mode: str = "continuous") -> dict[str, Any]:
+        """Pan/tilt the camera (mode: continuous, relative, or absolute)."""
+        return ptz.move(access_point, session_id, pan, tilt, mode)
+
+    @server.tool(name="ptz_zoom")
+    def ptz_zoom(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
+        """Zoom the camera (mode: continuous, relative, or absolute)."""
+        return ptz.zoom(access_point, session_id, value, mode)
+
+    @server.tool(name="ptz_focus")
+    def ptz_focus(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
+        """Adjust focus (mode: continuous, relative, or absolute)."""
+        return ptz.focus(access_point, session_id, value, mode)
+
+    @server.tool(name="ptz_iris")
+    def ptz_iris(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
+        """Adjust iris (mode: continuous, relative, or absolute)."""
+        return ptz.iris(access_point, session_id, value, mode)
+
+    @server.tool(name="ptz_absolute_move")
+    def ptz_absolute_move(access_point: str, session_id: int, pan: int, tilt: int, zoom: int, mask: int = 7) -> dict[str, Any]:
+        """Move to an absolute pan/tilt/zoom position (mask selects axes; 7 = all)."""
+        return ptz.absolute_move(access_point, session_id, pan, tilt, zoom, mask)
+
+    @server.tool(name="ptz_list_presets")
+    def ptz_list_presets(access_point: str) -> dict[str, Any]:
+        """List telemetry presets for a PTZ source."""
+        return ptz.list_presets(access_point)
+
+    @server.tool(name="ptz_set_preset")
+    def ptz_set_preset(access_point: str, session_id: int, position: int, label: str = "") -> dict[str, Any]:
+        """Save the current position as a preset at the given slot."""
+        return ptz.set_preset(access_point, session_id, position, label)
+
+    @server.tool(name="ptz_go_preset")
+    def ptz_go_preset(access_point: str, session_id: int, position: int, speed: float = 1.0) -> dict[str, Any]:
+        """Move the camera to a saved preset."""
+        return ptz.go_preset(access_point, session_id, position, speed)
+
+    @server.tool(name="ptz_remove_preset")
+    def ptz_remove_preset(access_point: str, session_id: int, position: int) -> dict[str, Any]:
+        """Delete a saved preset."""
+        return ptz.remove_preset(access_point, session_id, position)
+
+    @server.tool(name="ptz_auxiliary_operations")
+    def ptz_auxiliary_operations(access_point: str) -> dict[str, Any]:
+        """List auxiliary operations (wiper, light, etc.) a PTZ source supports."""
+        return ptz.auxiliary_operations(access_point)
 
 
 def register_bookmark_tools(server: Any, bookmarks: Any) -> None:
@@ -978,6 +1069,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 7 NL-to-plan translator tools (assemble_recipe/validate_recipe/explain_recipe).",
     )
+    parser.add_argument(
+        "--enable-ptz",
+        action="store_true",
+        help="Enable PTZ/telemetry control tools (TelemetryService: sessions, move/zoom/focus/iris, presets).",
+    )
     return parser
 
 
@@ -1085,6 +1181,11 @@ def main() -> int:
             )
 
         translator = AxxonMcpTranslator(operator_factory=_make_operator)
+    ptz = None
+    if args.enable_ptz:
+        from axxon_mcp_ptz import AxxonMcpPtz
+
+        ptz = AxxonMcpPtz()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1102,6 +1203,7 @@ def main() -> int:
         bookmarks=bookmarks,
         bookmark_mutator=bookmark_mutator,
         translator=translator,
+        ptz=ptz,
     )
     server.run(transport=args.transport)
     return 0

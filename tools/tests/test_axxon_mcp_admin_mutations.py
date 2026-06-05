@@ -56,6 +56,10 @@ class FakeAdminMutationClient:
             self.ldap_servers[server["index"]] = dict(server)
         for role in payload.get("modified_roles", []):
             self.roles[role["index"]] = dict(role)
+        for user in payload.get("modified_users", []):
+            existing = self.users.get(user["index"], {})
+            existing.update(user)
+            self.users[user["index"]] = existing
         removed_assignments = {
             (item.get("user_id"), item.get("role_id"))
             for item in payload.get("removed_users_assignments", [])
@@ -168,6 +172,7 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
                 "security_ldap_temp_lifecycle",
                 "security_tfa_temp_user_lifecycle",
                 "security_production_role_edit_lifecycle",
+                "security_user_credential_lifecycle",
             },
         )
 
@@ -283,6 +288,34 @@ class AxxonMcpAdminMutationRegistryTests(unittest.TestCase):
         self.assertNotIn("password", str(applied).lower())
         self.assertNotIn("password", str(verified).lower())
         self.assertNotIn("password", str(rolled_back).lower())
+
+    def test_user_credential_lifecycle_changes_login_and_password_then_removes(self) -> None:
+        registry = self.registry()
+        plan = registry.plan("security_user_credential_lifecycle", {"display_name_hint": "cred"})
+
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        verified = registry.verify(plan["plan_id"])
+        rolled_back = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(verified["status"], "verified")
+        self.assertEqual(rolled_back["status"], "rolled-back")
+        self.assertTrue(applied["new_login"].endswith("_renamed"))
+        self.assertTrue(verified["login_changed"])
+        self.assertTrue(rolled_back["user_removed"])
+        self.assertTrue(rolled_back["role_removed"])
+        self.assertEqual(self.fake.users, {})
+        self.assertEqual(self.fake.roles, {})
+        # never leaks a password value
+        self.assertNotIn("password", str(applied).lower())
+        self.assertNotIn("password", str(verified).lower())
+
+    def test_user_credential_lifecycle_rejects_when_disabled(self) -> None:
+        registry = self.registry(enabled=False)
+        plan = registry.plan("security_user_credential_lifecycle", {})
+        result = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(result["status"], "rejected")
+        self.assertEqual(self.fake.users, {})
 
     def test_user_role_lifecycle_rollback_rejects_wrong_confirmation(self) -> None:
         registry = self.registry()

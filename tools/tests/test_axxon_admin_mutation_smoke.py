@@ -174,8 +174,8 @@ class AxxonAdminMutationSmokeTests(unittest.TestCase):
             payload = json.loads(json_path.read_text(encoding="utf-8"))
             md_text = md_path.read_text(encoding="utf-8")
 
-        self.assertEqual(report["summary"], {"PASS": 6, "WARN": 0, "FAIL": 0})
-        self.assertEqual(payload["summary"], {"PASS": 6, "WARN": 0, "FAIL": 0})
+        self.assertEqual(report["summary"], {"PASS": 7, "WARN": 0, "FAIL": 0})
+        self.assertEqual(payload["summary"], {"PASS": 7, "WARN": 0, "FAIL": 0})
         self.assertIn("| PASS | `security_tfa_temp_user_lifecycle` |", md_text)
         self.assertNotIn("demo.internal", json.dumps(payload, sort_keys=True))
         self.assertIn(("list_workflows", ()), registry.calls)

@@ -34,6 +34,7 @@ WORKFLOWS = [
     "security_ldap_temp_lifecycle",
     "security_tfa_temp_user_lifecycle",
     "security_production_role_edit_lifecycle",
+    "security_user_credential_lifecycle",
 ]
 CLI_CONNECTION_FLAGS = {
     "--host",

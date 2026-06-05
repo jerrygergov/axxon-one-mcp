@@ -48,6 +48,10 @@ ADMIN_MUTATION_WORKFLOWS: dict[str, dict[str, str]] = {
         "risk": "security-mutation",
         "summary": "Edit a production role's comment and restore the original record (5F-B2).",
     },
+    "security_user_credential_lifecycle": {
+        "risk": "security-mutation",
+        "summary": "Create an ephemeral codex user, change its login + password, verify, then remove it (5F-B2).",
+    },
 }
 
 
@@ -310,6 +314,19 @@ class AxxonAdminMutationRegistry:
                 "new_comment": new_comment,
                 "original_comment": original.get("comment", ""),
             }
+        elif workflow == "security_user_credential_lifecycle":
+            state = _temp_security_ids(clean_params)
+            state["password"] = _generated_password()
+            state["new_login"] = f"{state['login']}_renamed"
+            state["new_password"] = _generated_password()
+            plan["_state"] = state
+            plan["expected"] = {
+                "role_id": state["role_id"],
+                "user_id": state["user_id"],
+                "role_name": state["role_name"],
+                "login": state["login"],
+                "new_login": state["new_login"],
+            }
         self.plans[plan_id] = plan
         self._audit("plan", _public_plan(plan))
         return _public_plan(plan)
@@ -361,6 +378,10 @@ class AxxonAdminMutationRegistry:
             result = self._apply_security_production_role_edit_lifecycle(plan)
             self._audit("apply", result)
             return result
+        if plan["workflow"] == "security_user_credential_lifecycle":
+            result = self._apply_security_user_credential_lifecycle(plan)
+            self._audit("apply", result)
+            return result
         result = {
             "status": "fixture-needed",
             "plan_id": plan_id,
@@ -398,6 +419,10 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_production_role_edit_lifecycle":
             result = self._verify_security_production_role_edit_lifecycle(plan)
+            self._audit("verify", result)
+            return result
+        if plan["workflow"] == "security_user_credential_lifecycle":
+            result = self._verify_security_user_credential_lifecycle(plan)
             self._audit("verify", result)
             return result
         result = {
@@ -448,6 +473,10 @@ class AxxonAdminMutationRegistry:
             return result
         if plan["workflow"] == "security_production_role_edit_lifecycle":
             result = self._rollback_security_production_role_edit_lifecycle(plan)
+            self._audit("rollback", result)
+            return result
+        if plan["workflow"] == "security_user_credential_lifecycle":
+            result = self._rollback_security_user_credential_lifecycle(plan)
             self._audit("rollback", result)
             return result
         result = {
@@ -623,6 +652,72 @@ class AxxonAdminMutationRegistry:
             "workflow": plan["workflow"],
             "role_removed": not role_present,
             "user_removed": not user_present,
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _apply_security_user_credential_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        # Create the ephemeral user (with a temp role to satisfy assignment), then change its login + password.
+        client.security_change_config(self._add_user_role_payload(state))
+        response = _body(
+            client.security_change_config(
+                {
+                    "modified_users": [
+                        {
+                            "index": state["user_id"],
+                            "login": state["new_login"],
+                            "name": "codex temporary user",
+                            "comment": "codex credential lifecycle, remove after smoke",
+                            "enabled": True,
+                        }
+                    ],
+                    "modified_user_passwords": [
+                        {"user_index": state["user_id"], "password": state["new_password"], "must_change_password": False}
+                    ],
+                }
+            )
+        )
+        plan["applied"] = True
+        return {
+            "status": "applied",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "user_id": state["user_id"],
+            "original_login": state["login"],
+            "new_login": state["new_login"],
+            "response_keys": sorted(str(key) for key in response.keys()),
+        }
+
+    def _verify_security_user_credential_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        users = _body(client.security_list_users()).get("users", [])
+        current = next((u for u in users if isinstance(u, dict) and u.get("index") == state["user_id"]), None)
+        login_changed = bool(current) and current.get("login") == state["new_login"]
+        return {
+            "status": "verified" if login_changed else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "user_id": state["user_id"],
+            "login_changed": login_changed,
+        }
+
+    def _rollback_security_user_credential_lifecycle(self, plan: dict[str, Any]) -> dict[str, Any]:
+        state = dict(plan.get("_state") or {})
+        client = self.ensure_client()
+        response = _body(client.security_change_config(self._remove_user_role_payload(state)))
+        users = _body(client.security_list_users()).get("users", [])
+        roles = _body(client.security_list_roles()).get("roles", [])
+        user_present = any(u.get("index") == state["user_id"] for u in users if isinstance(u, dict))
+        role_present = any(r.get("index") == state["role_id"] for r in roles if isinstance(r, dict))
+        plan["rolled_back"] = True
+        return {
+            "status": "rolled-back" if not user_present and not role_present else "warn",
+            "plan_id": plan["plan_id"],
+            "workflow": plan["workflow"],
+            "user_removed": not user_present,
+            "role_removed": not role_present,
             "response_keys": sorted(str(key) for key in response.keys()),
         }
 
