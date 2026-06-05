@@ -88,6 +88,11 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     `--enable-logic-control` (approval-gated). LaunchMacro ran a manual macro; ChangeArmState
     arms/disarms a camera for a bounded auto-reverting window (timeout required, capped 300s, so
     no permanent state change). Both live-verified -> tested-pass. LogicService now 15/29.
+10d. **DomainSettings data-storage (phase-17)** — `get_data_storage_settings` +
+    `update_data_storage_settings` shipped behind `--enable-settings` (update approval-gated).
+    Update is field-masked and etag-managed (never a blind overwrite); live-verified by changing
+    system-logs cleanup_period and restoring it (reversible). UpdateDataStorageSettings flipped
+    pending -> tested-pass; DomainSettingsService now 6/8 (Export/GDPR/Bookmark still pending).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -178,4 +183,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **188 tested-pass / 136 pending / 37 fixture-warn** (361 total).
+Current honest coverage: **189 tested-pass / 135 pending / 37 fixture-warn** (361 total).

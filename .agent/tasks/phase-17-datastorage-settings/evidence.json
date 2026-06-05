@@ -1,0 +1,36 @@
+{
+  "task_id": "phase-17-datastorage-settings",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "module + dataclass + gating", "status": "PASS",
+     "proof": ["tools/axxon_mcp_settings.py", "tools/tests/test_axxon_mcp_settings.py UpdateGatingTests"], "gaps": []},
+    {"id": "AC2", "text": "get_data_storage_settings flat shape + seconds", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_settings.py GetTests", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC3", "text": "update field-masked + etag-managed; empty errors", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_settings.py UpdateTests", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (43200->43320->restore)"], "gaps": []},
+    {"id": "AC4", "text": "server registration behind --enable-settings", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py register_settings_tools + 6-edit wiring", ".agent/tasks/phase-17-datastorage-settings/raw/test-unit.txt (import OK)"], "gaps": []},
+    {"id": "AC5", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-17-datastorage-settings/raw/test-unit.txt (Ran 737 ... OK)"], "gaps": []},
+    {"id": "AC6", "text": "corpus restamp UpdateDataStorageSettings", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py DomainSettingsService entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (189/135/37, DomainSettings 6/8)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_settings.py",
+    "tools/tests/test_axxon_mcp_settings.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_settings.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "Export/GDPR/Bookmark get+update on DomainSettingsService stay pending (separate follow-up).",
+    "VMDA network_location credential changes out of scope (need real storage creds)."
+  ]
+}

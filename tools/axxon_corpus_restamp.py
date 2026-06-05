@@ -165,6 +165,14 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (launched manual macro Fire)"),
     ("LogicService", "ChangeArmState"): (
         "tested-pass", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (arm/disarm cam1, bounded auto-revert)"),
+    # Phase 17: DomainSettingsService data-storage get+update live-verified through
+    # the MCP tools. Get returned real retention/cleanup + etag; update changed
+    # cleanup_period field-masked with the etag, confirmed by readback, then
+    # restored (reversible). Export/GDPR/Bookmark RPCs stay pending.
+    ("DomainSettingsService", "GetDataStorageSettings"): (
+        "tested-pass", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (read real retention/cleanup + etag)"),
+    ("DomainSettingsService", "UpdateDataStorageSettings"): (
+        "tested-pass", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (field-masked etag update, readback + restore)"),
 }
 
 

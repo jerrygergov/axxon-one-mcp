@@ -54,6 +54,7 @@ def create_server(
     recognizer: Any | None = None,
     recognizer_write: Any | None = None,
     logic_control: Any | None = None,
+    settings: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -165,6 +166,9 @@ def create_server(
 
     if logic_control is not None:
         register_logic_control_tools(server, logic_control)
+
+    if settings is not None:
+        register_settings_tools(server, settings)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -950,6 +954,28 @@ def register_logic_control_tools(server: Any, logic_control: Any) -> None:
         return logic_control.change_arm_state(camera_ap, state, timeout_s, confirmation)
 
 
+def register_settings_tools(server: Any, settings: Any) -> None:
+    @server.tool(name="settings_connect_axxon_profile")
+    def settings_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the data-storage settings layer to the env profile."""
+        return settings.settings_connect_axxon_profile(profile)
+
+    @server.tool(name="get_data_storage_settings")
+    def get_data_storage_settings() -> dict[str, Any]:
+        """Read data-storage settings (system-logs + VMDA retention/cleanup, seconds) and etag."""
+        return settings.get_data_storage_settings()
+
+    @server.tool(name="update_data_storage_settings")
+    def update_data_storage_settings(
+        system_logs_retention_s: int | None = None,
+        system_logs_cleanup_s: int | None = None,
+        vmda_retention_s: int | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Update only the provided data-storage durations (field-masked, etag-managed). Gated."""
+        return settings.update_data_storage_settings(system_logs_retention_s, system_logs_cleanup_s, vmda_retention_s, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1224,6 +1250,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 16 LogicService control tools (launch_macro, change_arm_state). Mutations need AXXON_LOGIC_CONTROL_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-settings",
+        action="store_true",
+        help="Enable Phase 17 DomainSettings data-storage tools. Updates need AXXON_SETTINGS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1360,6 +1391,11 @@ def main() -> int:
         from axxon_mcp_logic_control import AxxonMcpLogicControl
 
         logic_control = AxxonMcpLogicControl()
+    settings = None
+    if args.enable_settings:
+        from axxon_mcp_settings import AxxonMcpSettings
+
+        settings = AxxonMcpSettings()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1387,6 +1423,7 @@ def main() -> int:
         recognizer=recognizer,
         recognizer_write=recognizer_write,
         logic_control=logic_control,
+        settings=settings,
         discovery=discovery,
     )
     server.run(transport=args.transport)

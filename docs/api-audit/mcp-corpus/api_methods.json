@@ -4321,12 +4321,13 @@
       "response": "DataStorageSettings",
       "safety_class": "read",
       "service": "DomainSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (read real retention/cleanup + etag)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.UpdateDataStorageSettings",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UpdateDataStorageSettings",
       "package": "axxonsoft.bl.settings",
       "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
@@ -4334,7 +4335,8 @@
       "response": "DataStorageSettings",
       "safety_class": "mutating",
       "service": "DomainSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (field-masked etag update, readback + restore)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetExportSettings",
