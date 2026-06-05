@@ -76,6 +76,24 @@ RESTAMP = {
     ("ExternalDetectorService", "RaiseOccasionalEvent"): (
         "tested-pass",
         ".agent/tasks/phase-9-periodical-event/raw/live-verify.txt (Event1 accepted via external_event_inject path)"),
+    # Phase 10: AuditEventInjector live-verified via tools/axxon_mcp_audit.py.
+    # Six Inject* methods accept on the stand; InjectMMExportEvent errors (needs a
+    # live export job) and stays pending.
+    ("AuditEventInjector", "InjectCameraViewingEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectPtzControlEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectArchiveViewingEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectNgpJournalExportEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectClientAppOptionEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectLdapSetupEvent"): (
+        "tested-pass", ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"),
+    ("AuditEventInjector", "InjectMMExportEvent"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (errors on stand: needs a live MM export job)"),
 }
 
 

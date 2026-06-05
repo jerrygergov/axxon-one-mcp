@@ -1,0 +1,10 @@
+connected: True enabled: True timeout: 30.0
+camera_viewing       -> injected (InjectCameraViewingEvent)
+ptz_control          -> injected (InjectPtzControlEvent)
+archive_viewing      -> injected (InjectArchiveViewingEvent)
+journal_export       -> injected (InjectNgpJournalExportEvent)
+client_app_option    -> injected (InjectClientAppOptionEvent)
+ldap_setup           -> injected (InjectLdapSetupEvent)
+
+ALL injected: True
+RESULT: PASS

@@ -50,6 +50,7 @@ def create_server(
     bookmark_mutator: Any | None = None,
     translator: Any | None = None,
     ptz: Any | None = None,
+    audit: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -148,6 +149,9 @@ def create_server(
 
     if ptz is not None:
         register_ptz_tools(server, ptz)
+
+    if audit is not None:
+        register_audit_tools(server, audit)
 
     return server
 
@@ -821,6 +825,27 @@ def register_metadata_tools(server: Any, metadata: Any) -> None:
         return metadata.vmda_query(camera_id, query_type=query_type, database=database, hours=hours, max_intervals=max_intervals, timeout=timeout)
 
 
+def register_audit_tools(server: Any, audit: Any) -> None:
+    @server.tool(name="audit_connect_axxon_profile")
+    def audit_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the write-only AuditEventInjector layer to the env profile."""
+        return audit.audit_connect_axxon_profile(profile)
+
+    @server.tool(name="list_audit_event_kinds")
+    def list_audit_event_kinds() -> dict[str, Any]:
+        """List supported audit-event kinds and their required params."""
+        return audit.list_audit_event_kinds()
+
+    @server.tool(name="audit_inject")
+    def audit_inject(kind: str, params: dict[str, Any] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Inject an audit-trail event (compliance). Approval-gated, irreversible.
+
+        Requires AXXON_AUDIT_INJECT_APPROVE=1 and confirmation=CONFIRM-audit-inject.
+        kind is one of list_audit_event_kinds(); params supplies that kind's fields.
+        """
+        return audit.audit_inject(kind, params, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1074,6 +1099,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable PTZ/telemetry control tools (TelemetryService: sessions, move/zoom/focus/iris, presets).",
     )
+    parser.add_argument(
+        "--enable-audit",
+        action="store_true",
+        help="Enable Phase 10 AuditEventInjector tools. Injection needs AXXON_AUDIT_INJECT_APPROVE=1.",
+    )
     return parser
 
 
@@ -1186,6 +1216,11 @@ def main() -> int:
         from axxon_mcp_ptz import AxxonMcpPtz
 
         ptz = AxxonMcpPtz()
+    audit = None
+    if args.enable_audit:
+        from axxon_mcp_audit import AxxonMcpAudit
+
+        audit = AxxonMcpAudit()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1204,6 +1239,7 @@ def main() -> int:
         bookmark_mutator=bookmark_mutator,
         translator=translator,
         ptz=ptz,
+        audit=audit,
     )
     server.run(transport=args.transport)
     return 0

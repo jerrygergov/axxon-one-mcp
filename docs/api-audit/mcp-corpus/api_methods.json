@@ -394,7 +394,7 @@
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectClientAppOptionEvent",
       "http_annotation": "POST /v1/audit/injectClientAppOptionEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectClientAppOptionEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -402,12 +402,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectArchiveViewingEvent",
       "http_annotation": "POST /v1/audit/injectArchiveViewingEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectArchiveViewingEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -415,12 +416,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectCameraViewingEvent",
       "http_annotation": "POST /v1/audit/injectCameraViewingEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectCameraViewingEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -428,12 +430,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectNgpJournalExportEvent",
       "http_annotation": "POST /v1/audit/injectNgpJournalExportEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectNgpJournalExportEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -441,12 +444,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectPtzControlEvent",
       "http_annotation": "POST /v1/audit/injectPtzControlEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectPtzControlEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -454,12 +458,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectMMExportEvent",
       "http_annotation": "POST /v1/audit/injectMMExportEvent",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "InjectMMExportEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -467,12 +472,13 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (errors on stand: needs a live MM export job)"
     },
     {
       "fqmn": "axxonsoft.bl.audit.AuditEventInjector.InjectLdapSetupEvent",
       "http_annotation": "POST /v1/audit/injectLdapSetupEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "InjectLdapSetupEvent",
       "package": "axxonsoft.bl.audit",
       "proto": "axxonsoft/bl/audit/Audit.proto",
@@ -480,7 +486,8 @@
       "response": "AuditClientResponse",
       "safety_class": "mutating",
       "service": "AuditEventInjector",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-10-audit-injector/raw/live-verify.txt (injected)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.Authenticate",
