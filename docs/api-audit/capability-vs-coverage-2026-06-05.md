@@ -93,6 +93,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     Update is field-masked and etag-managed (never a blind overwrite); live-verified by changing
     system-logs cleanup_period and restoring it (reversible). UpdateDataStorageSettings flipped
     pending -> tested-pass; DomainSettingsService now 6/8 (Export/GDPR/Bookmark still pending).
+10e. **DomainSettings bookmark + GDPR (phase-18)** — `update_bookmark_settings` (live-verified by
+    toggling mandatory_protection and restoring, reversible) -> tested-pass. `update_gdpr_settings`
+    built + gated + reachable but a NO-OP on this stand (GDPR privacy-masking module not
+    provisioned), so fixture-warn. DomainSettingsService now 7/8.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -183,4 +187,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **189 tested-pass / 135 pending / 37 fixture-warn** (361 total).
+Current honest coverage: **190 tested-pass / 133 pending / 38 fixture-warn** (361 total).

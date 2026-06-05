@@ -173,6 +173,14 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (read real retention/cleanup + etag)"),
     ("DomainSettingsService", "UpdateDataStorageSettings"): (
         "tested-pass", ".agent/tasks/phase-17-datastorage-settings/raw/live-verify.txt (field-masked etag update, readback + restore)"),
+    # Phase 18: bookmark + GDPR settings updates. UpdateBookmarkSettings round-trips
+    # (mandatory_protection toggle + restore). UpdateGDPRSettings is reachable but a
+    # no-op on this stand (privacy masking needs a module/license), so fixture-warn.
+    ("DomainSettingsService", "UpdateBookmarkSettings"): (
+        "tested-pass", ".agent/tasks/phase-18-gdpr-bookmark-settings/raw/live-verify.txt (mandatory_protection toggle + restore)"),
+    ("DomainSettingsService", "UpdateGDPRSettings"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-18-gdpr-bookmark-settings/raw/live-verify.txt (accepted but no-op: GDPR masking module not provisioned)"),
 }
 
 

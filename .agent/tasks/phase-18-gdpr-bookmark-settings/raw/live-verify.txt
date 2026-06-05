@@ -1,0 +1,28 @@
+Phase 18 — DomainSettings bookmark + GDPR settings updates
+Live evidence against the demo stand (host/creds redacted; etags redacted).
+Exercised through the MCP tools with AXXON_SETTINGS_APPROVE=1.
+
+[update_bookmark_settings] UpdateBookmarkSettings (field-masked, request-level etag)
+  GET     mandatory_protection=False max_duration_s=0 retention_s=0 etag=<redacted>
+  GATE    bad confirmation token        -> status=gap (no wire call)
+  GATE    empty payload                 -> status=error (no wire call)
+  UPDATE  mandatory_protection False->True (field-masked, etag carried)
+                                        -> status=applied new_etag=<redacted>
+  READBACK                              -> mandatory_protection=True (changed=True)
+  RESTORE mandatory_protection True->False (rollback)
+                                        -> restored=True
+
+[update_gdpr_settings] UpdateGDPRSettings (reachable, NO-OP on this stand)
+  GET     privacy_mask_type=unspecified etag=<redacted>
+  GATE    unknown mask name "rainbow"   -> status=error (no wire call)
+  UPDATE  privacy_mask_type=black       -> status=applied (server accepts, returns etag)
+  READBACK                              -> privacy_mask_type=unspecified (value did NOT change)
+  Interpretation: the update is accepted but inert. GDPR privacy masking needs a
+  module/license not provisioned on this stand (dead-fixture class like HeatMap).
+  UpdateGDPRSettings is built + unit-tested + reachable but stays fixture-warn.
+
+[hygiene]
+  The bookmark mutation was restored to its original value (read-then-restore).
+  The GDPR update was a no-op so nothing changed. Stand ends unchanged. Updates
+  are always field-masked (never a blind overwrite) and carry the read etag. No
+  biometric data.

@@ -975,6 +975,31 @@ def register_settings_tools(server: Any, settings: Any) -> None:
         """Update only the provided data-storage durations (field-masked, etag-managed). Gated."""
         return settings.update_data_storage_settings(system_logs_retention_s, system_logs_cleanup_s, vmda_retention_s, confirmation)
 
+    @server.tool(name="get_bookmark_settings")
+    def get_bookmark_settings() -> dict[str, Any]:
+        """Read bookmark settings (mandatory_protection, max duration, retention period) + etag."""
+        return settings.get_bookmark_settings()
+
+    @server.tool(name="update_bookmark_settings")
+    def update_bookmark_settings(
+        mandatory_protection: bool | None = None,
+        bookmark_max_duration_s: int | None = None,
+        retention_period_s: int | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Update only the provided bookmark settings (field-masked, etag-managed). Gated."""
+        return settings.update_bookmark_settings(mandatory_protection, bookmark_max_duration_s, retention_period_s, confirmation)
+
+    @server.tool(name="get_gdpr_settings")
+    def get_gdpr_settings() -> dict[str, Any]:
+        """Read GDPR privacy-mask setting (unspecified/mosaic/black) + etag."""
+        return settings.get_gdpr_settings()
+
+    @server.tool(name="update_gdpr_settings")
+    def update_gdpr_settings(privacy_mask_type: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Set the GDPR privacy-mask type (unspecified/mosaic/black), field-masked + etag-managed. Gated."""
+        return settings.update_gdpr_settings(privacy_mask_type, confirmation)
+
 
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os

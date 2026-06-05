@@ -45,6 +45,32 @@ class _Settings:
         self.etag = etag
 
 
+class _BookmarkSettings:
+    def __init__(self, mandatory_protection=False, max_duration=0, retention=0):
+        self.mandatory_protection = mandatory_protection
+        self.bookmark_max_duration = _Dur(max_duration)
+        self.retention_period = _Dur(retention)
+
+
+class _BookmarkResp:
+    def __init__(self, settings=None, etag="BM-A"):
+        self.settings = settings or _BookmarkSettings()
+        self.etag = etag
+
+
+class _GDPRSettings:
+    PRIVACY_MASK_TYPE_UNSPECIFIED, MOSAIC, BLACK = 0, 1, 2
+
+    def __init__(self, privacy_mask_type=0):
+        self.privacy_mask_type = privacy_mask_type
+
+
+class _GDPRResp:
+    def __init__(self, settings=None, etag="GD-A"):
+        self.settings = settings or _GDPRSettings()
+        self.etag = etag
+
+
 class _GetReq:
     def __init__(self, **kw):
         pass
@@ -56,9 +82,33 @@ class _UpdReq:
         self.update_mask = update_mask
 
 
+class _ReqEtag:
+    def __init__(self, settings=None, mask=None, etag=""):
+        self.settings = settings
+        self.mask = mask
+        self.etag = etag
+
+
+class _UpdRespEtag:
+    def __init__(self, etag="X"):
+        self.etag = etag
+
+
 class _DSPb2:
     GetDataStorageSettingsRequest = _GetReq
     UpdateDataStorageSettingsRequest = _UpdReq
+    GetBookmarkSettingsRequest = _GetReq
+    UpdateBookmarkSettingsRequest = _ReqEtag
+    GetGDPRSettingsRequest = _GetReq
+    UpdateGDPRSettingsRequest = _ReqEtag
+
+
+class _BookmarkPb2:
+    BookmarkSettings = _BookmarkSettings
+
+
+class _GDPRPb2:
+    GDPRSettings = _GDPRSettings
 
 
 class _DataPb2:
@@ -70,9 +120,11 @@ class _DataPb2:
 
 
 class _FakeStub:
-    def __init__(self, recorder, current):
+    def __init__(self, recorder, current, bookmark=None, gdpr=None):
         self._rec = recorder
         self._current = current
+        self._bookmark = bookmark or _BookmarkResp()
+        self._gdpr = gdpr or _GDPRResp()
 
     def GetDataStorageSettings(self, request, timeout=None):
         self._rec.append(("Get", request, timeout))
@@ -90,6 +142,22 @@ class _FakeStub:
             etag="ETAG-B",
         )
 
+    def GetBookmarkSettings(self, request, timeout=None):
+        self._rec.append(("GetBookmark", request, timeout))
+        return self._bookmark
+
+    def UpdateBookmarkSettings(self, request, timeout=None):
+        self._rec.append(("UpdateBookmark", request, timeout))
+        return _UpdRespEtag(etag="BM-B")
+
+    def GetGDPRSettings(self, request, timeout=None):
+        self._rec.append(("GetGDPR", request, timeout))
+        return self._gdpr
+
+    def UpdateGDPRSettings(self, request, timeout=None):
+        self._rec.append(("UpdateGDPR", request, timeout))
+        return _UpdRespEtag(etag="GD-B")
+
 
 class FakeSettingsClient:
     def __init__(self, config, current=None):
@@ -105,7 +173,13 @@ class FakeSettingsClient:
         return _FakeStub(self.calls, self._current)
 
     def import_module(self, name):
-        return _DataPb2() if name.endswith("DataStorageSettings_pb2") else _DSPb2()
+        if name.endswith("DataStorageSettings_pb2"):
+            return _DataPb2()
+        if name.endswith("BookmarkSettings_pb2"):
+            return _BookmarkPb2()
+        if name.endswith("GDPRSettings_pb2"):
+            return _GDPRPb2()
+        return _DSPb2()
 
 
 def _settings(current=None, **overrides):
@@ -174,6 +248,82 @@ class UpdateTests(unittest.TestCase):
         inst.update_data_storage_settings(system_logs_retention_s=500, confirmation=module.SETTINGS_CONFIRMATION)
         upd = inst.client.calls[1][1]
         self.assertEqual(list(upd.update_mask.paths), ["system_logs_settings.retention_period"])
+
+
+class BookmarkTests(unittest.TestCase):
+    def test_get_shape(self) -> None:
+        inst = _settings()
+        out = inst.get_bookmark_settings()
+        self.assertEqual(out["status"], "ok")
+        self.assertIn("mandatory_protection", out)
+        self.assertIn("bookmark_max_duration_s", out)
+        self.assertIn("retention_period_s", out)
+        self.assertEqual(out["etag"], "BM-A")
+
+    def test_update_disabled_without_approval(self) -> None:
+        inst = _settings(enabled=False)
+        out = inst.update_bookmark_settings(mandatory_protection=True, confirmation=module.SETTINGS_CONFIRMATION)
+        self.assertEqual(out["status"], "disabled")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_update_bad_token(self) -> None:
+        inst = _settings(enabled=True)
+        out = inst.update_bookmark_settings(mandatory_protection=True, confirmation="WRONG")
+        self.assertEqual(out["status"], "gap")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_update_empty_errors(self) -> None:
+        inst = _settings(enabled=True)
+        out = inst.update_bookmark_settings(confirmation=module.SETTINGS_CONFIRMATION)
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_update_masks_and_request_etag(self) -> None:
+        inst = _settings(enabled=True)
+        out = inst.update_bookmark_settings(
+            mandatory_protection=True, bookmark_max_duration_s=120, confirmation=module.SETTINGS_CONFIRMATION
+        )
+        self.assertEqual(out["status"], "applied")
+        kinds = [c[0] for c in inst.client.calls]
+        self.assertEqual(kinds, ["GetBookmark", "UpdateBookmark"])
+        upd = inst.client.calls[1][1]
+        self.assertEqual(set(upd.mask.paths), {"mandatory_protection", "bookmark_max_duration"})
+        self.assertEqual(upd.etag, "BM-A")  # request-level etag carried from get
+        self.assertTrue(upd.settings.mandatory_protection)
+        self.assertEqual(upd.settings.bookmark_max_duration.seconds, 120)
+        self.assertEqual(out["etag"], "BM-B")
+
+
+class GDPRTests(unittest.TestCase):
+    def test_get_shape(self) -> None:
+        inst = _settings()
+        out = inst.get_gdpr_settings()
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["privacy_mask_type"], "unspecified")
+        self.assertEqual(out["etag"], "GD-A")
+
+    def test_update_mask_name_mapping(self) -> None:
+        inst = _settings(enabled=True)
+        out = inst.update_gdpr_settings("black", confirmation=module.SETTINGS_CONFIRMATION)
+        self.assertEqual(out["status"], "applied")
+        kinds = [c[0] for c in inst.client.calls]
+        self.assertEqual(kinds, ["GetGDPR", "UpdateGDPR"])
+        upd = inst.client.calls[1][1]
+        self.assertEqual(list(upd.mask.paths), ["privacy_mask_type"])
+        self.assertEqual(upd.settings.privacy_mask_type, _GDPRSettings.BLACK)
+        self.assertEqual(upd.etag, "GD-A")
+
+    def test_update_unknown_mask_errors(self) -> None:
+        inst = _settings(enabled=True)
+        out = inst.update_gdpr_settings("rainbow", confirmation=module.SETTINGS_CONFIRMATION)
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_update_disabled_without_approval(self) -> None:
+        inst = _settings(enabled=False)
+        out = inst.update_gdpr_settings("mosaic", confirmation=module.SETTINGS_CONFIRMATION)
+        self.assertEqual(out["status"], "disabled")
+        self.assertEqual(inst.client.calls, [])
 
 
 if __name__ == "__main__":

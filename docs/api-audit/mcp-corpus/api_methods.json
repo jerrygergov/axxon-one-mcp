@@ -4380,7 +4380,7 @@
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.UpdateGDPRSettings",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "UpdateGDPRSettings",
       "package": "axxonsoft.bl.settings",
       "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
@@ -4388,7 +4388,8 @@
       "response": "UpdateGDPRSettingsResponse",
       "safety_class": "mutating",
       "service": "DomainSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-18-gdpr-bookmark-settings/raw/live-verify.txt (accepted but no-op: GDPR masking module not provisioned)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetBookmarkSettings",
@@ -4406,7 +4407,7 @@
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.UpdateBookmarkSettings",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UpdateBookmarkSettings",
       "package": "axxonsoft.bl.settings",
       "proto": "axxonsoft/bl/settings/DomainSettingsService.proto",
@@ -4414,7 +4415,8 @@
       "response": "UpdateBookmarkSettingsResponse",
       "safety_class": "mutating",
       "service": "DomainSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-18-gdpr-bookmark-settings/raw/live-verify.txt (mandatory_protection toggle + restore)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.generic.GenericSettingsService.GetSettings",
