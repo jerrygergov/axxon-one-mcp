@@ -1,0 +1,37 @@
+Phase 15 — LogicService alert lifecycle probe + severity-enum bug fix
+Live evidence against the demo stand (host/creds redacted; AXXON_TLS_CN=Server).
+
+Transport note: the alarm tools use the HTTP /grpc bridge. On this stand that
+bridge is on host port 80 (AXXON_HTTP_URL=http://<demo-host>:80), not the default
+8000. Direct gRPC TLS (port 20109) was used to confirm enum errors verbatim.
+
+[severity-enum bug — root cause and fix proof]
+  AlertState.ESeverity proto enum = SV_UNCLASSIFIED/SV_FALSE/SV_NOTICE/SV_WARNING/SV_ALARM.
+  Shipped tool SEVERITY_CHOICES was ("confirmed_alarm","suspicious_situation","false_alarm")
+  -> none are valid enum names.
+  Direct gRPC CompleteAlertReview with severity SV_FALSE_ALARM ->
+    StatusCode.INTERNAL "Unknown bl::events::AlertState::ESeverity."
+  Bridge CompleteAlertReview on a fresh raised alert:
+    severity "false_alarm" -> HTTP 500   (the bug)
+    severity "SV_FALSE"    -> HTTP 200   (request now accepted)
+  Fix: SEVERITY_CHOICES -> valid SV_* enum names; tool passes the value through.
+
+[reachable lifecycle RPCs — live-exercised]
+  RaiseAlert(camera_ap)            -> status ok, returned alert_id (real alerts raised)
+  GetActiveAlerts(camera_ap)       -> read the raised alerts back (state ST_WANT_REACTION)
+  BeginAlertReview                 -> returned over bridge (result field present)
+  ContinueAlertReview              -> result=True
+  CancelAlertReview                -> returned over bridge (result field present)
+
+[stand limitation — documented, not a code defect]
+  RaiseAlert creates AIT_USER alerts. On this stand user-raised alerts only clear
+  via a 300s TTL (GetConfig user_alert_ttl=300); Begin/Continue/Complete/Cancel
+  return result:False for them. Full CompleteAlertReview/EscalateAlert success
+  needs a rule-generated alert, which cannot be triggered here. Those two RPCs are
+  marked tested-warn-fixture-needed (request shape now correct; success blocked by
+  fixture, same class as HeatMap/Cloud).
+
+[cleanup]
+  All alerts raised during this probe were left only to the bounded 300s TTL and
+  confirmed expired (0 active alerts on the affected cameras afterward). No
+  residue beyond TTL.

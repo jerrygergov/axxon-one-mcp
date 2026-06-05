@@ -1,0 +1,27 @@
+{
+  "task_id": "phase-15-alarm-severity-fix",
+  "overall": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "SEVERITY_CHOICES is exactly ('SV_UNCLASSIFIED','SV_FALSE','SV_NOTICE','SV_WARNING','SV_ALARM'). No friendly strings (confirmed_alarm/suspicious_situation/false_alarm) present in axxon_mcp_alarms.py. Proto confirms these match AlertState.ESeverity enum values."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "alarm_complete_review gates on AXXON_ALARMS_APPROVE env + CONFIRM-alarm-complete token. Severity outside SEVERITY_CHOICES returns gap (no wire call). Empty bookmark_message returns gap. All gating logic verified in source and confirmed by passing unit tests test_complete_review_rejects_unknown_severity and test_complete_review_rejects_empty_bookmark."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "test_severity_choices_are_valid_enum_names present and passing. All severity assertions use SV_ALARM not confirmed_alarm. Full suite: Ran 719 tests OK. Alarms module: Ran 35 tests OK."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "corpus api_methods.json live_status: RaiseAlert/GetActiveAlerts/BeginAlertReview/ContinueAlertReview/CancelAlertReview=tested-pass; CompleteAlertReview/EscalateAlert=tested-warn-fixture-needed; LaunchMacro/ChangeArmState/ChangeConfig/ChangeCounters/CounterAction=pending. Restamp dry-run: 0 methods restamped (corpus in sync)."
+    }
+  ],
+  "notes": "All 4 acceptance criteria PASS. Proto ESeverity enum confirmed: SV_UNCLASSIFIED/SV_FALSE/SV_NOTICE/SV_WARNING/SV_ALARM. live-verify.txt shows host as <demo-host> with no real IPs or credentials. Full 719-test suite green. Corpus in sync with 0 restamp delta."
+}

@@ -136,6 +136,28 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (LPR plate add confirmed by readback)"),
     ("RealtimeRecognizerService", "Clear"): (
         "tested-pass", ".agent/tasks/phase-14-recognizer-writes/raw/live-verify.txt (authorized node wipe, node empty after)"),
+    # Phase 15: LogicService alert lifecycle probed live. RaiseAlert/GetActiveAlerts/
+    # Begin/Continue/CancelAlertReview are reachable and exercised (raised real
+    # alerts, read them back, ran review transitions). CompleteAlertReview/
+    # EscalateAlert: the severity-enum bug is fixed (request now accepted, 200 vs
+    # the old 500), but full success needs a rule-raised alert (user-raised alerts
+    # only TTL-expire on this stand), so they stay fixture-needed.
+    ("LogicService", "RaiseAlert"): (
+        "tested-pass", ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (raised real alerts, returned alert_id)"),
+    ("LogicService", "GetActiveAlerts"): (
+        "tested-pass", ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (read back active alerts)"),
+    ("LogicService", "BeginAlertReview"): (
+        "tested-pass", ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition exercised)"),
+    ("LogicService", "ContinueAlertReview"): (
+        "tested-pass", ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition, result=True)"),
+    ("LogicService", "CancelAlertReview"): (
+        "tested-pass", ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition exercised)"),
+    ("LogicService", "CompleteAlertReview"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (severity bug fixed: SV_FALSE 200 vs false_alarm 500; full success needs a rule-raised alert)"),
+    ("LogicService", "EscalateAlert"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (reachable; full success needs a rule-raised alert)"),
 }
 
 

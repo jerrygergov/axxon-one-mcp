@@ -565,6 +565,14 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         self.assertEqual(fake.calls[-1][0], "cancel_alert_review")
         self.assertEqual(m.audit[-1]["action"], "alarm_cancel_review")
 
+    def test_severity_choices_are_valid_enum_names(self) -> None:
+        # AlertState.ESeverity proto enum; guards against re-introducing the
+        # friendly strings (confirmed_alarm/...) that the server 500s on.
+        valid = {"SV_UNCLASSIFIED", "SV_FALSE", "SV_NOTICE", "SV_WARNING", "SV_ALARM"}
+        module = importlib.import_module("axxon_mcp_alarms")
+        self.assertTrue(set(module.SEVERITY_CHOICES).issubset(valid))
+        self.assertNotIn("false_alarm", module.SEVERITY_CHOICES)
+
     def test_complete_review_rejects_unknown_severity(self) -> None:
         _, _, m = self._mutator()
         r = m.alarm_complete_review(
@@ -578,7 +586,7 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         _, _, m = self._mutator()
         r = m.alarm_complete_review(
             "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "a",
-            severity="confirmed_alarm", bookmark_message="", confirmation="CONFIRM-alarm-complete",
+            severity="SV_ALARM", bookmark_message="", confirmation="CONFIRM-alarm-complete",
         )
         self.assertEqual(r["status"], "gap")
         self.assertIn("bookmark", r["message"])
@@ -587,15 +595,15 @@ class AxxonMcpAlarmsTests(unittest.TestCase):
         _, fake, m = self._mutator()
         r = m.alarm_complete_review(
             "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", "alert-x",
-            severity="confirmed_alarm", bookmark_message="real incident",
+            severity="SV_ALARM", bookmark_message="real incident",
             confirmation="CONFIRM-alarm-complete",
         )
         self.assertEqual(r["status"], "ok")
         self.assertEqual(fake.calls[-1][0], "complete_alert_review")
-        self.assertEqual(fake.calls[-1][2]["severity"], "confirmed_alarm")
+        self.assertEqual(fake.calls[-1][2]["severity"], "SV_ALARM")
         self.assertEqual(fake.calls[-1][2]["bookmark_message"], "real incident")
         self.assertEqual(m.audit[-1]["action"], "alarm_complete_review")
-        self.assertEqual(m.audit[-1]["severity"], "confirmed_alarm")
+        self.assertEqual(m.audit[-1]["severity"], "SV_ALARM")
 
     def test_escalate_rejects_unknown_priority(self) -> None:
         _, _, m = self._mutator()

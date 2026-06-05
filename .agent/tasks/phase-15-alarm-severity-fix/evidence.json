@@ -1,0 +1,64 @@
+{
+  "task_id": "phase-15-alarm-severity-fix",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "text": "severity choices fixed to valid ESeverity enum names",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_alarms.py SEVERITY_CHOICES",
+        ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (false_alarm 500 vs SV_FALSE 200)"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC2",
+      "text": "gating + validation preserved",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_alarms.py test_complete_review_rejects_unknown_severity",
+        "tools/tests/test_axxon_mcp_alarms.py test_complete_review_rejects_empty_bookmark",
+        "tools/tests/test_axxon_mcp_alarms.py test_complete_review_ok_path"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC3",
+      "text": "unit tests updated + enum-validity regression; full suite green",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_alarms.py test_severity_choices_are_valid_enum_names",
+        ".agent/tasks/phase-15-alarm-severity-fix/raw/test-unit.txt (Ran 719 ... OK)"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC4",
+      "text": "corpus restamp of reachable lifecycle RPCs; Complete/Escalate fixture-warn",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_corpus_restamp.py LogicService entries",
+        "docs/api-audit/mcp-corpus/api_methods.json",
+        "docs/api-audit/capability-vs-coverage-2026-06-05.md (186/138/37, LogicService 13/29)"
+      ],
+      "gaps": []
+    }
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_alarms.py",
+    "tools/tests/test_axxon_mcp_alarms.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_alarms.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "CompleteAlertReview/EscalateAlert full success needs a rule-raised alert; user-raised alerts only TTL-expire on this stand. Marked tested-warn-fixture-needed.",
+    "LaunchMacro/ChangeArmState/ChangeConfig/ChangeCounters/CounterAction stay pending (not in this phase's scope)."
+  ]
+}

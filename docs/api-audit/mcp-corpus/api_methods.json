@@ -2491,7 +2491,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.GetActiveAlerts",
       "http_annotation": "POST /v1/logic_service/getactivealerts",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "GetActiveAlerts",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2499,7 +2499,8 @@
       "response": "GetActiveAlertsResponse",
       "safety_class": "review",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (read back active alerts)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchGetActiveAlerts",
@@ -2595,7 +2596,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.RaiseAlert",
       "http_annotation": "POST /v1/logic_service/raisealert",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RaiseAlert",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2603,12 +2604,13 @@
       "response": "RaiseAlertResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (raised real alerts, returned alert_id)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BeginAlertReview",
       "http_annotation": "POST /v1/logic_service/beginalert",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BeginAlertReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2616,12 +2618,13 @@
       "response": "BeginAlertReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition exercised)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.CancelAlertReview",
       "http_annotation": "POST /v1/logic_service/cancelalert",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "CancelAlertReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2629,12 +2632,13 @@
       "response": "CancelAlertReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition exercised)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.ContinueAlertReview",
       "http_annotation": "POST /v1/logic_service/continuealert",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ContinueAlertReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2642,12 +2646,13 @@
       "response": "ContinueAlertReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (review transition, result=True)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.CompleteAlertReview",
       "http_annotation": "POST /v1/logic_service/completealert",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "CompleteAlertReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2655,12 +2660,13 @@
       "response": "CompleteAlertReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (severity bug fixed: SV_FALSE 200 vs false_alarm 500; full success needs a rule-raised alert)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.EscalateAlert",
       "http_annotation": "POST /v1/logic_service/escalatealert",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "EscalateAlert",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2668,7 +2674,8 @@
       "response": "EscalateAlertResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (reachable; full success needs a rule-raised alert)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.ChangeConfig",

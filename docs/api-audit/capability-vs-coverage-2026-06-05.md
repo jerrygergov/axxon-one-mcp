@@ -34,7 +34,7 @@
 | **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs (6) unstamped. |
 | **Events / history** | EventHistoryService, EventDescription | ✅ strong | `search_events`, `subscribe_events_bounded`, `find_event_suppliers` — 13/13 stamped. |
 | **Live notifications** | DomainNotifier, NodeNotifier | ⚠️ thin | `domain_event_subscribe`/`node_event_subscribe` exist but all 11 RPCs unstamped. |
-| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 8/29, RealtimeRecognizer 6/7, HeatMap 0/6 stamped. |
+| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 13/29, RealtimeRecognizer 6/7, HeatMap 0/6 stamped. |
 | **PTZ / telemetry** | TelemetryService, TagAndTrackService | ⚠️ shipped, unstamped | 16 `ptz_*` tools shipped Phase 8; corpus still 0/32. TagAndTrack 0/4. |
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
 | **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 1/5 stamped. |
@@ -78,6 +78,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
 10. **RealtimeRecognizerService (6/7)** — reads CLOSED `496bd70` (GetLists/GetListStream/GetItems);
     writes CLOSED phase-14 (ChangeLists/ChangeItems/Clear, approval-gated, live-verified incl. an
     authorized node wipe). Only ChangeListsStream stays pending (ChangeLists covers the same intent).
+10b. **LogicService alerts (phase-15)** — alert lifecycle reconciled. Fixed a real shipped bug:
+    `alarm_complete_review` sent invalid severity strings (confirmed_alarm/...) that the server
+    500s on; now uses the valid `SV_*` ESeverity enum (proven SV_FALSE=200 vs false_alarm=500).
+    RaiseAlert/GetActiveAlerts/Begin/Continue/CancelAlertReview live-exercised -> tested-pass.
+    CompleteAlertReview/EscalateAlert stay fixture-warn: user-raised alerts only TTL-expire here,
+    so full review-completion needs a rule-raised alert this stand cannot trigger.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -168,4 +174,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **181 tested-pass / 145 pending / 35 fixture-warn** (361 total).
+Current honest coverage: **186 tested-pass / 138 pending / 37 fixture-warn** (361 total).
