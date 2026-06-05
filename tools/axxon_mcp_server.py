@@ -26,7 +26,7 @@ def default_fastmcp_factory(name: str, **kwargs: Any) -> Any:
     except ModuleNotFoundError as exc:
         raise SystemExit(
             "The MCP Python SDK is not installed. Install the docs-only MCP dependency with "
-            "`/tmp/axxon-grpc-venv/bin/python -m pip install -r arm64-docker/tools/requirements-mcp.txt`."
+            "`python3.12 -m pip install -r tools/requirements-mcp.txt`."
         ) from exc
     return FastMCP(name, **kwargs)
 

@@ -15,8 +15,8 @@ import re
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CORPUS_DIR = REPO_ROOT / "arm64-docker" / "docs" / "api-audit" / "mcp-corpus"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CORPUS_DIR = REPO_ROOT / "docs" / "api-audit" / "mcp-corpus"
 
 
 def load_json(path: Path, fallback: Any) -> Any:
