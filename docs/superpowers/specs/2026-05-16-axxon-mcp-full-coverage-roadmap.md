@@ -20,23 +20,27 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 ---
 
-## 1b. Current phase status (updated 2026-06-04)
+## 1b. Current phase status (updated 2026-06-05)
+
+**Every planned phase is shipped and merged to `main` (`319eb48`); test suite 682/682. All former gaps are
+closed with live evidence or proven a hard API limit (Phase 8). See the dated entries below for details.**
 
 | Phase | State | Merged to main? | Artifacts |
 | --- | --- | --- | --- |
 | **5A** Live + archive viewing | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_view.py`, `tools/axxon_view_smoke.py`, `docs/api-audit/phase-5a-view-smoke-latest.md` |
-| **5B** PTZ + Tag&Track + control panels | ⏸ deferred (no PTZ fixture) | n/a | none |
+| **5B** PTZ + telemetry control | ✅ shipped + live-verified (Phase 8) | yes (`15d90d8`) | `tools/axxon_mcp_ptz.py`, `tools/tests/test_axxon_mcp_ptz.py`, `.agent/tasks/phase-8-finish-all/` |
 | **5C** Alarms (lifecycle + subscription) | ✅ shipped | yes (`12c9283`) | `tools/axxon_mcp_alarms.py`, `tools/axxon_alarms_smoke.py`, `docs/api-audit/phase-5c-alarms-smoke-latest.md`, design + plan under `docs/superpowers/specs/` and `docs/superpowers/plans/` |
 | **5D** Videowall / layouts / maps | ✅ shipped | yes | `tools/axxon_mcp_view_objects.py`, `tools/axxon_view_objects_smoke.py`, `docs/api-audit/phase-5d-view-objects-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5E** Detector depth + archive policies | ✅ shipped (fixture caveats) | yes (`62a4b9b`) | `tools/axxon_mcp_detector_archive.py`, `tools/axxon_detector_archive_smoke.py`, `docs/api-audit/phase-5e-detector-archive-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-A** Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) | yes (`64d6477`) | `tools/axxon_mcp_admin.py`, `tools/axxon_admin_smoke.py`, `docs/api-audit/phase-5f-admin-smoke-latest.md`, design + plan under `docs/superpowers/` |
 | **5F-B1** Security/admin mutations | ✅ shipped | yes (`518a956`) | `tools/axxon_mcp_admin_mutations.py`, `tools/axxon_admin_mutation_smoke.py`, `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`, design + plan under `docs/superpowers/` |
-| **5F-B2** Reversible production role edit | ✅ partial (role-comment edit/restore) | yes | `security_production_role_edit_lifecycle` in `tools/axxon_mcp_admin_mutations.py`; rest of 5F-B2 deferred |
+| **5F-B2** Reversible production security mutations | ✅ complete (Phase 8) | yes (`15d90d8`) | `security_production_role_edit_lifecycle` + `security_user_credential_lifecycle` in `tools/axxon_mcp_admin_mutations.py`; license/timezone/NTP/LDAP-sync stay out of scope (not safely reversible) |
 | **5G** BookmarkService reads + lifecycle | ✅ shipped (fixture caveats) | yes | `tools/axxon_mcp_bookmark_mutations.py`, `tools/axxon_bookmarks_smoke.py`, `docs/api-audit/phase-5g-bookmarks-smoke-latest.md` |
 | **5H** Metadata / VMDA object-track search | ✅ shipped (live tracklets verified) | yes (`380c63f`) | `tools/axxon_mcp_metadata.py`, `tools/tests/test_axxon_mcp_metadata.py`, `.agent/tasks/phase-5h-metadata-search/` |
-| **6A** Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) | yes (`6ee1b8d`) | 13 template kinds × 2 langs (26 bundles): `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*`; 8 bundles live-verified (`.agent/tasks/phase-6a-live-verify/evidence.md`) |
+| **6A** Authoring kit expansion (Python + Node) | ✅ shipped | yes (`6ee1b8d`) | 13 template kinds × 2 langs (26 bundles): `tools/templates/*.tmpl`, `tools/tests/test_axxon_mcp_generator_6a*.py`, `.agent/tasks/phase-6a-*`; 8 bundles live-verified (`.agent/tasks/phase-6a-live-verify/evidence.md`) |
 | **6B** Partner SDK kit + distribution | ✅ shipped | yes (`da13181`) | `tools/axxon_mcp_partner.py`, `customer-templates/`, `tools/tests/test_axxon_mcp_partner.py`, `tools/tests/test_customer_templates.py`, `.agent/tasks/phase-6b-partner-sdk/evidence.md` |
-| **7** NL → plan translator | ❌ not started (next) | no | none |
+| **7** NL → plan translator | ✅ shipped + live-verified | yes (`827e3b0`) | `tools/axxon_mcp_translator.py`, `.agent/tasks/phase-7-nl-translator/` |
+| **8** Final gap closure (PTZ, 5F-B2, schedules) | ✅ shipped + live-verified | yes (`319eb48`) | `.agent/tasks/phase-8-finish-all/` (PTZ live motion, reversible user-credential lifecycle, schedule impossibility proof) |
 
 **Note on schedules:** During 5D brainstorming we decided to **move schedule authoring out of 5D into 5F** (security/system phase). The 5D scope is now Layouts + Maps + Videowalls only.
 
@@ -99,7 +103,7 @@ PTZ camera (the stand's emulator only supports absolute moves), but no code work
 | Axxon One product docs | https://docs.axxonsoft.com/confluence/spaces/ONE2025/pages/314535799/Documentation | Public product documentation — used for capability mapping, not embedded in repo. |
 | Integration APIs 3.0 PDF | `docs/integration-apis-3.0/` (local; gitignored) | AxxonSoft-copyrighted. Excluded from the public repo. Drives `api_methods.json` / `http_endpoints.json`. |
 | gRPC proto files | `docs/grpc-proto-files/` (local; gitignored) | AxxonSoft-copyrighted. Source for the 361-method catalog. |
-| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 39 rows, 32 verified, 2 partial, 5 fixture-blocked. |
+| PDF gap coverage matrix | `docs/api-audit/pdf-gap-coverage-matrix.md` | 39 rows, 33 verified, 3 partial, 4 fixture-needed (PTZ moved to verified in Phase 8). |
 | Structured MCP corpus | `docs/api-audit/mcp-corpus/` | 7 JSON files (api_methods, http_endpoints, task_recipes, fixtures, safety_policies, known_behaviors, README). |
 
 ### 2.2 Demo / testing stand
@@ -128,8 +132,8 @@ This is not a greenfield project. The roadmap builds on:
 | Phase 3 — Controlled operator (plan/apply/verify/rollback) | Shipped, 11 workflows (7 ephemeral, 4 persistent) | `axxon_mcp_operator.py` |
 | Phase 4 — Integration code generator | Shipped, 8 templates | `axxon_mcp_generator.py`, `tools/templates/` |
 | Verified API methods | 150 / 361 (127 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty) | `mcp-corpus/api_methods.json` |
-| PDF coverage matrix | 32 / 39 verified, 2 partial, 5 fixture-blocked | `pdf-gap-coverage-matrix.md` |
-| Unit tests | 500 / 500 passing on `main` | `tools/tests/` |
+| PDF coverage matrix | 33 / 39 verified, 3 partial, 4 fixture-needed | `pdf-gap-coverage-matrix.md` |
+| Unit tests | 682 / 682 passing on `main` (was 500 at roadmap authoring) | `tools/tests/` |
 
 ### 2.4 What is still missing (the work this roadmap exists for)
 
@@ -360,11 +364,16 @@ Workflows are limited to temporary `codex-*` security fixtures: user/role lifecy
 
 **5F-B2 partial — shipped 2026-05-29.** `security_production_role_edit_lifecycle` is the reversible slice of 5F-B2: it snapshots an existing production role, edits only the cosmetic `comment`, verifies, then restores the exact original record (`full_restore: true`), live-verified on the `operator` role. Same approval gates as 5F-B1.
 
-**5F-B2 still deferred** (not safely reversible on a shared stand, or out of approved scope):
-- Production `user_create`, `user_update`, `user_delete`, `change_password`, and `change_login` (live operator accounts).
+**5F-B2 completed — Phase 8 (2026-06-05).** `security_user_credential_lifecycle` adds reversible ephemeral
+user mutation: create a codex user, change its login + password via `SecurityService.ChangeConfig`, verify,
+then remove the user + temp role. Live-verified apply/verify/rollback on the stand with zero codex leftovers;
+no password value is ever returned. This covers the reversible form of `user_create`/`change_password`/
+`change_login` against ephemeral objects (it never touches `root` or a real operator account).
+
+**Still out of scope** (genuinely not safely reversible — can disable or brick the disposable stand):
 - LDAP synchronization against a real directory.
-- `license_apply(file)` / `license_drop(plan)` — license mutations are explicit maintenance-window work only; dropping the license can disable the running server and is not safely reversible.
-- `time_set_timezone(plan)` / `time_set_ntp(plan)` — stand-wide clock changes requiring a dedicated fixture/window.
+- `license_apply(file)` / `license_drop(plan)` — dropping the license can disable the running server.
+- `time_set_timezone(plan)` / `time_set_ntp(plan)` — stand-wide clock changes requiring a dedicated window.
 
 **Acceptance.**
 - Security and admin mutations match the existing `mutation-playbooks/users-roles-security.md` flow.
@@ -478,7 +487,7 @@ Phase 6A (templates × langs) ─────► Phase 6B (SDK) ────┘
 
 | Risk | Mitigation / what we still need to decide |
 | --- | --- |
-| PTZ / Tag&Track / control panels / TFA / WebSocket `/events` / client HTTP API for layouts are fixture-blocked on the demo stand. | Each phase ships with `status: fixture-needed` paths that are clean no-ops with clear evidence, and tools auto-detect via `axxon_fixture_discovery.py`. We decide per-phase whether to procure a fixture or ship fixture-gated. |
+| Tag&Track tracker / control panels / TFA / WebSocket `/events` / client HTTP API for layouts are fixture-blocked on the demo stand. (PTZ is NO LONGER blocked — Phase 8 found a real PTZ device and live-verified control.) | Each phase ships with `status: fixture-needed` paths that are clean no-ops with clear evidence, and tools auto-detect via `axxon_fixture_discovery.py`. We decide per-phase whether to procure a fixture or ship fixture-gated. |
 | Desktop client has interactive elements (joystick drag, mosaic drag-drop, hot zones) that have no obvious 1:1 API. | These are out of scope. The MCP exposes the underlying capability (PTZ move, layout cell content, map marker position) — building a graphical client on top is a different product. |
 | Multi-language template explosion (14 × 3 = 42 bundles to keep green). | Shared schema; CI matrix; language-specific renderers are thin. Static verifier is the single source of truth for safety. |
 | NL → plan translator could hallucinate API shapes. | Translator only composes registered workflows; `validate_recipe` rejects anything outside the registry; `explain_recipe` shows the exact RPC sequence before apply. |

@@ -42,8 +42,10 @@ coverage matrix for Axxon One VMS.
   LDAP add/edit/remove, and temporary-user TFA enable/disable. Live evidence
   PASS=5, WARN=0, FAIL=0 — see
   `docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md`.
-  License, timezone, NTP, production user/role edits, LDAP sync against a real
-  directory, and schedule authoring remain deferred.
+  Phase 8 added `security_user_credential_lifecycle` (reversible ephemeral-user
+  login + password change). License, timezone, NTP, and LDAP sync against a real
+  directory stay out of scope (not safely reversible on a shared stand). Schedule
+  authoring has no API representation at all (proven; desktop-client only).
 - **13** integration generator template kinds, each in **Python + Node/TypeScript**
   (26 bundles). The 8 base templates (grpc_consumer, http_grpc_consumer,
   legacy_http_consumer, event_consumer, external_event_producer, export_job,
@@ -72,18 +74,19 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | Phase | Status |
 | --- | --- |
 | 5A — Live + archive viewing | ✅ shipped |
-| 5B — PTZ + Tag&Track | ⏸ deferred (no PTZ fixture) |
+| 5B — PTZ / telemetry control | ✅ shipped + live-verified |
 | 5C — Alarms | ✅ shipped |
 | 5D — Videowall / layouts / maps | ✅ shipped |
 | 5E — Detector depth + archive policies | ✅ shipped (fixture caveats) |
 | 5F-A — Security / system-health reads + bounded notifiers | ✅ shipped (fixture caveats) |
 | 5F-B1 — Security/admin mutations | ✅ shipped |
-| 5F-B2 — Reversible production role edit | ✅ partial (rest deferred) |
+| 5F-B2 — Reversible production security mutations | ✅ complete |
 | 5G — BookmarkService reads + lifecycle | ✅ shipped |
 | 5H — Metadata / VMDA object-track search | ✅ shipped (live tracklets + archived objects verified) |
-| 6A — Authoring kit expansion (Python + Node) | ✅ shipped (only `ptz_controller` left, PTZ fixture gap) |
+| 6A — Authoring kit expansion (Python + Node) | ✅ shipped |
 | 6B — Partner SDK kit + distribution | ✅ shipped |
-| 7 — NL → plan translator | ✅ shipped |
+| 7 — NL → plan translator | ✅ shipped + live-verified |
+| 8 — Final gap closure (PTZ, 5F-B2, schedules) | ✅ shipped + live-verified |
 
 Full plan: [`docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md).
 
@@ -166,6 +169,9 @@ python tools/axxon_mcp_server.py --enable-metadata --transport stdio
 
 # + NL -> plan translator / recipe assembler (Phase 7)
 python tools/axxon_mcp_server.py --enable-translator --transport stdio
+
+# + PTZ / telemetry control tools (Phase 5B/8)
+python tools/axxon_mcp_server.py --enable-ptz --transport stdio
 
 # + live + archive viewing tools (Phase 5A)
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
@@ -252,8 +258,11 @@ then raises a bounded `RaiseOccasionalEvent` batch, mutation-gated),
 `plugin_scaffold` (a full runnable plugin repo: auth + `ListCameras` with retry,
 env loader, test, CI, README + Safety section, LICENSE).
 
-`ptz_controller` is the only planned 6A kind not yet shipped; it is blocked on a
-live PTZ-camera fixture on the demo stand. C# remains a future renderer layer.
+PTZ control itself ships as first-class MCP tools in Phase 8 (`tools/axxon_mcp_ptz.py`,
+`--enable-ptz`, live-verified against the stand's real PTZ device). A dedicated
+`ptz_controller` *generator template kind* (a scaffolded partner bundle) is the one
+optional 6A renderer not generated; the underlying capability is fully covered by the
+PTZ tools. C# remains a future renderer layer.
 
 Generated bundles read credentials only from environment, apply
 duration/byte/count caps, and refuse `output_dir` paths inside this repo unless
