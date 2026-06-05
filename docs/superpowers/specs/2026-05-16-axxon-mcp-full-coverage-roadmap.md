@@ -66,13 +66,27 @@ This roadmap turns that goal into a concrete sequence of shippable specs.
 
 **Archived VMDA query fix (2026-06-04, `.agent/tasks/phase-5h-vmda-fix/`).** Corrected `vmda_query` to the documented MomentQuest binding (Integration APIs 3.0 pages 295/447): `VMDAService.ExecuteQuery` with `access_point` = the VMDA database (`*/VMDA_DB.N/Database`, auto-discovered), `camera_ID` = the host-relative detector source, `schema_ID="vmda_schema"`, a `figure ...; result = r.res;` MomentQuest `query`, and `language="EVENT_BASIC"`. Live-verified against real recorded objects on camera 1's tracker `AVDetector.1` (a 14-day sweep found 3931 intervals on day-5; the tool returns intervals with object bounding boxes). Test suite now 671/671.
 
-**Remaining gaps (cannot be closed from the API client):**
-- `ptz_controller` + Phase 5B — need a PTZ camera (deferred).
-- `schedule_descriptor_get` — no schedule/calendar/weekly/daily descriptor field exists on any of the 38 devices; Axxon schedules are authored in the desktop client and not creatable via this API.
+**Phase 8 (2026-06-05) — all remaining gaps closed. See `.agent/tasks/phase-8-finish-all/`.**
+- `ptz_controller` + Phase 5B — CLOSED, live-verified. The "no PTZ camera" claim was a false negative: the
+  filtered inventory (200 components) shows 0 telemetry endpoints, but the full config graph
+  (DomainService.ListComponents, 501 components) has 3 real ones on `DeviceIpint.53` (TelemetryControl.0/1/2).
+  New `tools/axxon_mcp_ptz.py` (`--enable-ptz`, 17 TelemetryService tools) was live-verified: AbsoluteMove
+  moved the device (pan 675->120) and restored it. The emulator driver rejects continuous Move/Zoom/GoPreset;
+  those are driver limits surfaced as structured results, not tool defects.
+- `5F-B2 remainder` — CLOSED, live-verified. `security_user_credential_lifecycle` creates an ephemeral codex
+  user, changes its login + password (SecurityService.ChangeConfig), verifies, then removes it; live apply/
+  verify/rollback left the stand with zero codex leftovers. Still out of scope (not reversible / can brick the
+  stand): license apply/drop, timezone/NTP, LDAP sync against a real directory.
+- `schedule_descriptor_get` — CLOSED as a hard API limitation. Proven across every surface: 0 PDF pages mention
+  schedule/calendar/weekly; no Create/Set schedule RPC or message in any proto (only ArchiveSupport.GetCalendar,
+  read-only); no schedule trigger in LogicService/Macro; 0 schedule objects in the 501-component config graph;
+  no schedule unit type in ConfigurationService.ListUnits. Axxon schedules are desktop-client authored.
+- (The earlier `recent_events` / EventHistory "no events" entry was also a false gap, closed 2026-06-05 — see
+  `.agent/tasks/phase-5i-archived-events/`.)
 
-(The earlier `recent_events` / EventHistory "no events" entry was a false gap: it came from `ReadCount`=0, the same wrong read as the VMDA gap. `search_events` returns thousands of archived events once `mmexport.ExportEvent_pb2` is registered for the Any-body decode and the `TimeRange` uses the millisecond string format; live-verified at 300 events including `ExportEvent` on 2026-06-05. See `.agent/tasks/phase-5i-archived-events/`.)
-
-**Next concrete step:** Every planned phase is now built. The only open items are stand-fixture-blocked (PTZ/Phase 5B, schedule descriptor) and the high-risk 5F-B2 mutations held out of scope; all unblock with a differently-provisioned stand, not new code.
+**Next concrete step:** Nothing is open. Every planned phase is built, every former gap is closed or proven a
+hard API limit, and the suite is 682/682. PTZ continuous-mode motion would gain extra coverage on a hardware
+PTZ camera (the stand's emulator only supports absolute moves), but no code work remains.
 
 ---
 

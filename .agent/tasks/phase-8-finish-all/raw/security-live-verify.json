@@ -1,0 +1,13 @@
+{
+  "note": "Live 5F-B2 security_user_credential_lifecycle verification on the demo stand. Logins/passwords are ephemeral codex-* values and never written here; no secret values recorded.",
+  "workflow": "security_user_credential_lifecycle",
+  "approval_gate": "AXXON_ADMIN_MUTATION_APPROVE=1",
+  "applied": {"status": "applied", "changed": ["login -> codex_user_*_renamed", "password (value redacted)"]},
+  "verified": {"status": "verified", "login_changed": true},
+  "rolled_back": {"status": "rolled-back", "user_removed": true, "role_removed": true},
+  "post_state_check": {"total_users": 35, "total_roles": 4, "leftover_codex_users": "NONE", "leftover_codex_roles": "NONE"},
+  "out_of_scope_documented": {
+    "reason": "not reversible / can brick the disposable stand",
+    "items": ["license_apply / license_drop", "time_set_timezone / time_set_ntp", "LDAP sync against a real directory"]
+  }
+}
