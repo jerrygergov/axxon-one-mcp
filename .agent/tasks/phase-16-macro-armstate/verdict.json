@@ -1,0 +1,42 @@
+{
+  "task_id": "phase-16-macro-armstate",
+  "overall": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "AxxonMcpLogicControl dataclass mirrors AxxonMcpAudit pattern. _gate returns {status:disabled} when enabled=False (no wire call) and {status:gap} on wrong token (no wire call). Confirmed by GatingTests (3 tests all ok) and live-verify.txt [gate] line."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "list_launchable_macros calls ListMacros, classifies launchable as mode.common present. test_classifies_launchable passes: m-manual launchable=True, m-auto launchable=False."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "launch_macro gates, rejects empty macro_id (no wire call), on success returns {status:launched, macro_id}. LaunchMacroTests pass. Live: Fire macro launched."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "change_arm_state: zero/negative timeout_s returns error with empty calls list (verified live in Python). Large timeout capped to ARM_TIMEOUT_CAP_S=300. Unknown state returns error, no wire call. Friendly states map disarm->CS_Disarm(0), arm->CS_Arm(1), arm_private->CS_ArmPrivate(2). Response includes auto_reverts:True. No code path can call ChangeArmState without a bounded, positive timeout."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "note": "register_logic_control_tools registers 4 tools (logic_control_connect_axxon_profile, list_launchable_macros, launch_macro, change_arm_state). Wired via --enable-logic-control CLI flag and logic_control param in create_server. Server import ok."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "note": "12 tests in test_axxon_mcp_logic_control.py all ok. Full suite: Ran 731 tests in 0.630s OK."
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "note": "LaunchMacro and ChangeArmState both show live_status=tested-pass in api_methods.json with evidence citations. Corpus restamp dry-run reports 0 methods restamped (corpus already in sync)."
+    }
+  ],
+  "notes": "Sanitization check: rg for IPs/passwords/secrets in raw/live-verify.txt returned empty. All host/creds redacted; only object guids present. No biometric data. Full suite 731/731 green."
+}

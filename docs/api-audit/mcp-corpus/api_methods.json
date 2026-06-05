@@ -2465,7 +2465,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.LaunchMacro",
       "http_annotation": "POST /v1/logic_service/macros:launch",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "LaunchMacro",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2473,12 +2473,13 @@
       "response": "LaunchMacroResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (launched manual macro Fire)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.ChangeArmState",
       "http_annotation": "POST /v1/logic_service/armstate",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeArmState",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2486,7 +2487,8 @@
       "response": "ChangeArmStateResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (arm/disarm cam1, bounded auto-revert)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.GetActiveAlerts",

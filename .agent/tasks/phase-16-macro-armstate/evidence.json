@@ -1,0 +1,37 @@
+{
+  "task_id": "phase-16-macro-armstate",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "module + dataclass + gating", "status": "PASS",
+     "proof": ["tools/axxon_mcp_logic_control.py _gate", "tools/tests/test_axxon_mcp_logic_control.py GatingTests"], "gaps": []},
+    {"id": "AC2", "text": "list_launchable_macros classification", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_logic_control.py ListMacrosTests", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (total=24 launchable=9)"], "gaps": []},
+    {"id": "AC3", "text": "launch_macro by id", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_logic_control.py LaunchMacroTests", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (launched Fire)"], "gaps": []},
+    {"id": "AC4", "text": "change_arm_state bounded auto-reverting", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_logic_control.py ChangeArmStateTests", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (arm/disarm 5s auto_reverts, missing-timeout error)"], "gaps": []},
+    {"id": "AC5", "text": "server registration behind --enable-logic-control", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py register_logic_control_tools + 6-edit wiring", ".agent/tasks/phase-16-macro-armstate/raw/test-unit.txt (server import OK)"], "gaps": []},
+    {"id": "AC6", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-16-macro-armstate/raw/test-unit.txt (Ran 731 ... OK)"], "gaps": []},
+    {"id": "AC7", "text": "corpus restamp LaunchMacro/ChangeArmState", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py LogicService entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (188/136/37, LogicService 15/29)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_logic_control.py",
+    "tools/tests/test_axxon_mcp_logic_control.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_logic_control.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "ChangeMacros/ChangeConfig/ChangeCounters/CounterAction on LogicService stay pending (out of scope; macro CRUD lives in the operator module)."
+  ]
+}

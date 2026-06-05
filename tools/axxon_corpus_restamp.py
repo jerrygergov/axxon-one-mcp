@@ -158,6 +158,13 @@ RESTAMP = {
     ("LogicService", "EscalateAlert"): (
         "tested-warn-fixture-needed",
         ".agent/tasks/phase-15-alarm-severity-fix/raw/live-verify.txt (reachable; full success needs a rule-raised alert)"),
+    # Phase 16: LogicService control tools live-verified through the MCP tools
+    # (launch_macro/change_arm_state). LaunchMacro ran the manual "Fire" macro;
+    # ChangeArmState armed/disarmed cam1 for a bounded auto-reverting window.
+    ("LogicService", "LaunchMacro"): (
+        "tested-pass", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (launched manual macro Fire)"),
+    ("LogicService", "ChangeArmState"): (
+        "tested-pass", ".agent/tasks/phase-16-macro-armstate/raw/live-verify.txt (arm/disarm cam1, bounded auto-revert)"),
 }
 
 

@@ -53,6 +53,7 @@ def create_server(
     audit: Any | None = None,
     recognizer: Any | None = None,
     recognizer_write: Any | None = None,
+    logic_control: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -161,6 +162,9 @@ def create_server(
 
     if recognizer_write is not None:
         register_recognizer_write_tools(server, recognizer_write)
+
+    if logic_control is not None:
+        register_logic_control_tools(server, logic_control)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -924,6 +928,28 @@ def register_recognizer_write_tools(server: Any, recognizer_write: Any) -> None:
         return recognizer_write.recognizer_clear(node_name, confirmation, clear_ack)
 
 
+def register_logic_control_tools(server: Any, logic_control: Any) -> None:
+    @server.tool(name="logic_control_connect_axxon_profile")
+    def logic_control_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the approval-gated LogicService control layer to the env profile."""
+        return logic_control.logic_control_connect_axxon_profile(profile)
+
+    @server.tool(name="list_launchable_macros")
+    def list_launchable_macros() -> dict[str, Any]:
+        """List macros via ListMacros, flagging which are manually launchable (vs detector autorules)."""
+        return logic_control.list_launchable_macros()
+
+    @server.tool(name="launch_macro")
+    def launch_macro(macro_id: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Run a configured macro by id via LaunchMacro. Gated by approval env + confirmation token."""
+        return logic_control.launch_macro(macro_id, confirmation)
+
+    @server.tool(name="change_arm_state")
+    def change_arm_state(camera_ap: str = "", state: str = "", timeout_s: int = 0, confirmation: str = "") -> dict[str, Any]:
+        """Arm/disarm a camera (disarm/arm/arm_private) for a bounded, auto-reverting window via ChangeArmState."""
+        return logic_control.change_arm_state(camera_ap, state, timeout_s, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1193,6 +1219,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 14 RealtimeRecognizer watchlist write tools. Writes need AXXON_RECOGNIZER_WRITE_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-logic-control",
+        action="store_true",
+        help="Enable Phase 16 LogicService control tools (launch_macro, change_arm_state). Mutations need AXXON_LOGIC_CONTROL_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1324,6 +1355,11 @@ def main() -> int:
         from axxon_mcp_recognizer_write import AxxonMcpRecognizerWrite
 
         recognizer_write = AxxonMcpRecognizerWrite()
+    logic_control = None
+    if args.enable_logic_control:
+        from axxon_mcp_logic_control import AxxonMcpLogicControl
+
+        logic_control = AxxonMcpLogicControl()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1350,6 +1386,7 @@ def main() -> int:
         audit=audit,
         recognizer=recognizer,
         recognizer_write=recognizer_write,
+        logic_control=logic_control,
         discovery=discovery,
     )
     server.run(transport=args.transport)
