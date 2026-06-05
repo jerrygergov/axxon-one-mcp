@@ -814,6 +814,58 @@ def _build_external_event_inject_plan(host_uid: str, params: dict[str, Any]) -> 
     }
 
 
+def _build_raise_periodical_event_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
+    """Periodical external event injection via /v1/detectors/external:raisePeriodicalEvent.
+
+    Pushes a PeriodicalEventData.TargetList of tracklets (object id, type, bounding
+    box) from an external ML detector. One-shot on the wire, so rollback is a no-op.
+
+    Args:
+        host_uid (str): Host component prefix (e.g. hosts/Server).
+        params (dict): Must carry access_point; optional event_type and tracklets.
+
+    Returns:
+        (dict): Operator plan, or a gap result when access_point is missing.
+    """
+    access_point = str(params.get("access_point") or "").strip()
+    if not access_point:
+        return {
+            "status": "gap",
+            "workflow": "raise_periodical_event",
+            "message": "raise_periodical_event requires params.access_point (e.g. hosts/Server/DetectorEx.1/EventSupplier)",
+        }
+    event_type = str(params.get("event_type") or "TargetList").strip() or "TargetList"
+    tracklets = params.get("tracklets") or [
+        {"objectId": 1, "objectType": 0, "rectangle": {"x": 0.4, "y": 0.4, "w": 0.2, "h": 0.2}}
+    ]
+    timestamp = dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z")
+    body = {
+        "accessPoint": access_point,
+        "eventType": event_type,
+        "timestamp": timestamp,
+        "data": {"targetList": {"tracklets": tracklets}},
+    }
+    return {
+        "workflow": "raise_periodical_event",
+        "risk": "mutation",
+        "intent": f"inject a periodical external event of type {event_type} at {access_point} with {len(tracklets)} tracklet(s)",
+        "steps": [
+            {
+                "operation": "http_post",
+                "path": "/v1/detectors/external:raisePeriodicalEvent",
+                "body": body,
+            }
+        ],
+        "rollback": {
+            "strategy": "noop",
+            "description": "Periodical event injection is one-shot on the wire; no server-side state to undo.",
+        },
+        "expected": {"access_point": access_point, "event_type": event_type, "tracklet_count": len(tracklets)},
+        "confirmation_token": "CONFIRM-raise_periodical_event",
+        "rollback_confirmation_token": "CONFIRM-raise_periodical_event-rollback",
+    }
+
+
 def _build_temp_macro_plan(host_uid: str, params: dict[str, Any]) -> dict[str, Any]:
     """Disabled, empty, temporary LogicService macro. Self-contained: no fixture needed."""
     hint = str(params.get("display_name_hint") or "smoke").strip() or "smoke"
@@ -1586,6 +1638,7 @@ WORKFLOWS: dict[str, Callable[[str, dict[str, Any]], dict[str, Any]]] = {
     "create_appdata_detector_full": _build_create_appdata_detector_full_plan,
     "temp_device_template": _build_temp_device_template_plan,
     "external_event_inject": _build_external_event_inject_plan,
+    "raise_periodical_event": _build_raise_periodical_event_plan,
     "temp_macro": _build_temp_macro_plan,
     "create_camera": _build_create_camera_plan,
     "create_macro": _build_create_macro_plan,
@@ -2044,6 +2097,17 @@ class OperatorRegistry:
                     return {
                         "status": "error",
                         "message": f"http_post returned status {response['status']}",
+                        "plan_id": plan_id,
+                    }
+                # Axxon's external-detector endpoints answer 200 even on rejection,
+                # reporting the real outcome in the body as {"error": "OK"|"BAD_EVENT_TYPE"|...}.
+                body_error = (response.get("body") or {}).get("error") if isinstance(response.get("body"), dict) else None
+                if body_error is not None and str(body_error) != "OK":
+                    store_apply_state("error")
+                    self._record("apply", plan_id=plan_id, status="error", reason="http_post_body_error")
+                    return {
+                        "status": "error",
+                        "message": f"http_post rejected by server: {body_error}",
                         "plan_id": plan_id,
                     }
                 step_results.append([])

@@ -65,6 +65,17 @@ RESTAMP = {
         "tested-pass", "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md (security_tfa_temp_user_lifecycle PASS)"),
     ("SecurityService", "DisableGoogleAuth"): (
         "tested-pass", "docs/api-audit/phase-5f-b-admin-mutation-smoke-latest.md (security_tfa_temp_user_lifecycle PASS)"),
+    # Phase 9: raise_periodical_event operator workflow live-verified. The stand
+    # accepts eventType=TargetList at DetectorEx.1/EventSupplier ({"error":"OK"});
+    # a wrong type is now correctly rejected (BAD_EVENT_TYPE surfaced as apply error).
+    ("ExternalDetectorService", "RaisePeriodicalEvent"): (
+        "tested-pass",
+        ".agent/tasks/phase-9-periodical-event/raw/live-verify.txt (TargetList accepted, OK; Event1 rejected)"),
+    # The occasional path was HTTP-verified via external_event_inject before this
+    # phase, but only now is its body-error contract proven; cite it for parity.
+    ("ExternalDetectorService", "RaiseOccasionalEvent"): (
+        "tested-pass",
+        ".agent/tasks/phase-9-periodical-event/raw/live-verify.txt (Event1 accepted via external_event_inject path)"),
 }
 
 

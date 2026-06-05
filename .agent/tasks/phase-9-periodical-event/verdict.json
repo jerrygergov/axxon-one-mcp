@@ -1,0 +1,50 @@
+{
+  "task_id": "phase-9-periodical-event",
+  "overall": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "_build_raise_periodical_event_plan defined at line 817; 'raise_periodical_event' registered in WORKFLOWS at line 1641. rg confirms both."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "test_raise_periodical_event_plan_shape_and_default_tracklet and test_raise_periodical_event_passes_through_custom_tracklets both PASS. Plan targets /v1/detectors/external:raisePeriodicalEvent with required body keys and default tracklet."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "test_raise_periodical_event_requires_access_point PASS. Missing access_point returns {status: gap} not an exception."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "Covered by plan-shape and custom-tracklets tests. confirmation_token=CONFIRM-raise_periodical_event, rollback token present, noop rollback, risk=mutation confirmed in source (lines 864-865)."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "note": "Full suite: Ran 689 tests in 0.632s OK. 4 new raise_periodical_event tests + 2 body-error tests included."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "note": "Both ExternalDetectorService methods show live_status=tested-pass in api_methods.json. Corpus restamp dry-run reports 0 method(s) restamped — no drift."
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "note": "test_http_post_body_error_is_apply_failure and test_http_post_body_error_ok_is_applied both PASS. Source at lines 2103-2110 checks body['error'] != 'OK' and returns status=error. Implementation confirmed."
+    }
+  ],
+  "commands_run": [
+    "rg -n 'raise_periodical_event' tools/axxon_mcp_operator.py",
+    "python3.12 -m unittest tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_raise_periodical_event_plan_shape_and_default_tracklet tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_raise_periodical_event_requires_access_point tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_raise_periodical_event_passes_through_custom_tracklets tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_raise_periodical_event_default_event_type_is_target_list",
+    "python3.12 -m unittest discover -s tools/tests 2>&1 | grep -E '^(Ran|OK|FAILED|ERROR)'",
+    "python3.12 -c \"import json;[print(x['method'],x['live_status']) for x in json.load(open('docs/api-audit/mcp-corpus/api_methods.json'))['methods'] if x['service']=='ExternalDetectorService']\"",
+    "python3.12 tools/axxon_corpus_restamp.py",
+    "python3.12 -m unittest tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_http_post_body_error_is_apply_failure tools.tests.test_axxon_mcp_operator.OperatorPlanTests.test_http_post_body_error_ok_is_applied",
+    "rg -n 'body.*error|error.*OK|BAD_EVENT_TYPE|body_error' tools/axxon_mcp_operator.py"
+  ]
+}

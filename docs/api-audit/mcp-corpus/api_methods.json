@@ -1161,7 +1161,7 @@
     {
       "fqmn": "axxonsoft.bl.detectors.ExternalDetectorService.RaiseOccasionalEvent",
       "http_annotation": "POST /v1/detectors/external:raiseOccasionalEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RaiseOccasionalEvent",
       "package": "axxonsoft.bl.detectors",
       "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
@@ -1169,12 +1169,13 @@
       "response": "RaiseOccasionalEventResponse",
       "safety_class": "mutating",
       "service": "ExternalDetectorService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-9-periodical-event/raw/live-verify.txt (Event1 accepted via external_event_inject path)"
     },
     {
       "fqmn": "axxonsoft.bl.detectors.ExternalDetectorService.RaisePeriodicalEvent",
       "http_annotation": "POST /v1/detectors/external:raisePeriodicalEvent",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RaisePeriodicalEvent",
       "package": "axxonsoft.bl.detectors",
       "proto": "axxonsoft/bl/detectors/ExternalDetectorService.proto",
@@ -1182,7 +1183,8 @@
       "response": "RaisePeriodicalEventResponse",
       "safety_class": "mutating",
       "service": "ExternalDetectorService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-9-periodical-event/raw/live-verify.txt (TargetList accepted, OK; Event1 rejected)"
     },
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.Discover",

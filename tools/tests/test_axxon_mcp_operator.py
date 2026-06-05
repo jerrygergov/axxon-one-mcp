@@ -184,13 +184,14 @@ class FakeTemplateClient(FakeMutationClient):
 class FakeEventClient(FakeMutationClient):
     """Adds http_post_bearer for external-event injection."""
 
-    def __init__(self) -> None:
+    def __init__(self, post_response: dict | None = None) -> None:
         super().__init__()
         self.posts: list[dict] = []
+        self._post_response = post_response or {"status": 200, "body": {"accepted": True}}
 
     def http_post_bearer(self, path: str, body: dict) -> dict:
         self.posts.append({"path": path, "body": body})
-        return {"status": 200, "body": {"accepted": True}}
+        return self._post_response
 
 
 class FakeMacroClient(FakeMutationClient):
@@ -804,6 +805,95 @@ class OperatorPlanTests(unittest.TestCase):
         rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
         self.assertEqual(rolled["status"], "rolled_back")
         self.assertEqual(rolled["removed_uids"], [])
+
+    def test_raise_periodical_event_requires_access_point(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeEventClient(), host="hosts/Server")
+        gap = registry.plan("raise_periodical_event", {})
+        self.assertEqual(gap["status"], "gap")
+        self.assertIn("access_point", gap["message"])
+
+    def test_raise_periodical_event_plan_shape_and_default_tracklet(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeEventClient(), host="hosts/Server")
+        plan = registry.plan(
+            "raise_periodical_event",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier", "event_type": "Event1"},
+        )
+        self.assertEqual(plan["workflow"], "raise_periodical_event")
+        self.assertEqual(plan["risk"], "mutation")
+        self.assertEqual(plan["confirmation_token"], "CONFIRM-raise_periodical_event")
+        self.assertEqual(plan["rollback"]["strategy"], "noop")
+        step = plan["steps"][0]
+        self.assertEqual(step["operation"], "http_post")
+        self.assertEqual(step["path"], "/v1/detectors/external:raisePeriodicalEvent")
+        body = step["body"]
+        self.assertEqual(body["accessPoint"], "hosts/Server/DetectorEx.1/EventSupplier")
+        self.assertEqual(body["eventType"], "Event1")
+        self.assertIn("timestamp", body)
+        tracklets = body["data"]["targetList"]["tracklets"]
+        self.assertEqual(len(tracklets), 1)
+        self.assertIn("objectId", tracklets[0])
+        self.assertIn("objectType", tracklets[0])
+        self.assertIn("rectangle", tracklets[0])
+        for key in ("x", "y", "w", "h"):
+            self.assertIn(key, tracklets[0]["rectangle"])
+
+    def test_raise_periodical_event_passes_through_custom_tracklets(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeEventClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        custom = [
+            {"objectId": 7, "objectType": 1, "rectangle": {"x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4}},
+            {"objectId": 8, "objectType": 2, "rectangle": {"x": 0.5, "y": 0.5, "w": 0.1, "h": 0.1}},
+        ]
+        plan = registry.plan(
+            "raise_periodical_event",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier", "tracklets": custom},
+        )
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
+        self.assertEqual(len(client.posts), 1)
+        self.assertEqual(client.posts[0]["path"], "/v1/detectors/external:raisePeriodicalEvent")
+        sent = client.posts[0]["body"]["data"]["targetList"]["tracklets"]
+        self.assertEqual(sent, custom)
+        rolled = registry.rollback(plan["plan_id"], plan["rollback_confirmation_token"])
+        self.assertEqual(rolled["status"], "rolled_back")
+        self.assertEqual(rolled["removed_uids"], [])
+
+    def test_raise_periodical_event_default_event_type_is_target_list(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        registry = module.OperatorRegistry(client_factory=lambda: FakeEventClient(), host="hosts/Server")
+        plan = registry.plan(
+            "raise_periodical_event",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier"},
+        )
+        self.assertEqual(plan["steps"][0]["body"]["eventType"], "TargetList")
+
+    def test_http_post_body_error_is_apply_failure(self) -> None:
+        # Axxon's external-detector endpoints answer 200 with {"error": "BAD_EVENT_TYPE"}
+        # on rejection; the apply handler must surface that as an error, not "applied".
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeEventClient(post_response={"status": 200, "body": {"error": "BAD_EVENT_TYPE"}})
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan(
+            "raise_periodical_event",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier", "event_type": "Event1"},
+        )
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "error")
+        self.assertIn("BAD_EVENT_TYPE", applied["message"])
+
+    def test_http_post_body_error_ok_is_applied(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeEventClient(post_response={"status": 200, "body": {"error": "OK"}})
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+        plan = registry.plan(
+            "raise_periodical_event",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier"},
+        )
+        applied = registry.apply(plan["plan_id"], plan["confirmation_token"])
+        self.assertEqual(applied["status"], "applied")
 
     def test_temp_macro_plan_apply_verify_rollback(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
