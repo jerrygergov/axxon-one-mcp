@@ -181,6 +181,15 @@ RESTAMP = {
     ("DomainSettingsService", "UpdateGDPRSettings"): (
         "tested-warn-fixture-needed",
         ".agent/tasks/phase-18-gdpr-bookmark-settings/raw/live-verify.txt (accepted but no-op: GDPR masking module not provisioned)"),
+    # Phase 19: TimeZoneManager writes, all live round-tripped reversibly through the
+    # MCP tools. SetTimeZone -> UTC then restored; SetNTP empty -> set -> cleared;
+    # ChangeTimeZones add throwaway zone -> remove. Brings TimeZoneManager to 7/7.
+    ("TimeZoneManager", "SetTimeZone"): (
+        "tested-pass", ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (set UTC + restore)"),
+    ("TimeZoneManager", "SetNTP"): (
+        "tested-pass", ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (set pool.ntp.org + clear)"),
+    ("TimeZoneManager", "ChangeTimeZones"): (
+        "tested-pass", ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (add throwaway zone + remove)"),
 }
 
 

@@ -4538,7 +4538,7 @@
     {
       "fqmn": "axxonsoft.bl.tz.TimeZoneManager.ChangeTimeZones",
       "http_annotation": "POST /v1/time_zones:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeTimeZones",
       "package": "axxonsoft.bl.tz",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
@@ -4546,7 +4546,8 @@
       "response": "ChangeTimeZonesResponse",
       "safety_class": "mutating",
       "service": "TimeZoneManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (add throwaway zone + remove)"
     },
     {
       "fqmn": "axxonsoft.bl.tz.TimeZoneManager.GetNTP",
@@ -4564,7 +4565,7 @@
     {
       "fqmn": "axxonsoft.bl.tz.TimeZoneManager.SetNTP",
       "http_annotation": "POST /v1/time_sync/ntp_server:update",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetNTP",
       "package": "axxonsoft.bl.tz",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
@@ -4572,12 +4573,13 @@
       "response": "SetNTPResponse",
       "safety_class": "mutating",
       "service": "TimeZoneManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (set pool.ntp.org + clear)"
     },
     {
       "fqmn": "axxonsoft.bl.tz.TimeZoneManager.SetTimeZone",
       "http_annotation": "POST /v1/time_zone:set",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetTimeZone",
       "package": "axxonsoft.bl.tz",
       "proto": "axxonsoft/bl/tz/TimeZonesManager.proto",
@@ -4585,7 +4587,8 @@
       "response": "SetTimeZoneResponse",
       "safety_class": "mutating",
       "service": "TimeZoneManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (set UTC + restore)"
     },
     {
       "fqmn": "axxonsoft.bl.tz.TimeZoneManager.GetTimeZone",

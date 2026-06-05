@@ -55,6 +55,7 @@ def create_server(
     recognizer_write: Any | None = None,
     logic_control: Any | None = None,
     settings: Any | None = None,
+    timezone: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -169,6 +170,9 @@ def create_server(
 
     if settings is not None:
         register_settings_tools(server, settings)
+
+    if timezone is not None:
+        register_timezone_tools(server, timezone)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -1001,6 +1005,47 @@ def register_settings_tools(server: Any, settings: Any) -> None:
         return settings.update_gdpr_settings(privacy_mask_type, confirmation)
 
 
+def register_timezone_tools(server: Any, timezone: Any) -> None:
+    @server.tool(name="timezone_connect_axxon_profile")
+    def timezone_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the timezone/NTP layer to the env profile."""
+        return timezone.timezone_connect_axxon_profile(profile)
+
+    @server.tool(name="list_timezones")
+    def list_timezones(full: bool = False) -> dict[str, Any]:
+        """List the timezone database entries (full=True includes intervals)."""
+        return timezone.list_timezones(full)
+
+    @server.tool(name="get_timezone")
+    def get_timezone() -> dict[str, Any]:
+        """Read the current OS timezone, DST mode, and available timezones."""
+        return timezone.get_timezone()
+
+    @server.tool(name="get_ntp")
+    def get_ntp() -> dict[str, Any]:
+        """Read the NTP sync settings (url, sync_ip_devices, refresh rate seconds)."""
+        return timezone.get_ntp()
+
+    @server.tool(name="set_timezone")
+    def set_timezone(timezone_id: str = "", daylight_saving_mode_off: bool | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Set the OS timezone (and optional DST-off), then read it back. Gated."""
+        return timezone.set_timezone(timezone_id, daylight_saving_mode_off, confirmation)
+
+    @server.tool(name="set_ntp")
+    def set_ntp(ntp_url: str = "", sync_ip_devices: bool = False, refresh_rate_s: int | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Set the NTP server (url, device sync, optional refresh seconds). Gated."""
+        return timezone.set_ntp(ntp_url, sync_ip_devices, refresh_rate_s, confirmation)
+
+    @server.tool(name="change_timezones")
+    def change_timezones(
+        removed_zones: list[str] | None = None,
+        added_zones: list[dict[str, str]] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Edit the timezone database: remove zone ids and/or add {id,name} zones. Gated."""
+        return timezone.change_timezones(removed_zones, added_zones, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1280,6 +1325,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 17 DomainSettings data-storage tools. Updates need AXXON_SETTINGS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-timezone",
+        action="store_true",
+        help="Enable Phase 19 TimeZoneManager tools (set_timezone, set_ntp, change_timezones). Writes need AXXON_TIMEZONE_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1421,6 +1471,11 @@ def main() -> int:
         from axxon_mcp_settings import AxxonMcpSettings
 
         settings = AxxonMcpSettings()
+    timezone = None
+    if args.enable_timezone:
+        from axxon_mcp_timezone import AxxonMcpTimezone
+
+        timezone = AxxonMcpTimezone()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1449,6 +1504,7 @@ def main() -> int:
         recognizer_write=recognizer_write,
         logic_control=logic_control,
         settings=settings,
+        timezone=timezone,
         discovery=discovery,
     )
     server.run(transport=args.transport)

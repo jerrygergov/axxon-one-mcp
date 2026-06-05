@@ -1,0 +1,47 @@
+{
+  "task_id": "phase-19-timezone-ntp",
+  "overall_verdict": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "tools/axxon_mcp_timezone.py exists with AxxonMcpTimezone dataclass. Exposes reads list_timezones/get_timezone/get_ntp and gated writes set_timezone/set_ntp/change_timezones. _write_gate (lines 94-99) returns disabled (env unset) or gap (bad token) before any wire call. AXXON_TIMEZONE_APPROVE=1 + CONFIRM-timezone-set confirmed. GatingTests in test suite verify no calls before approval."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "set_timezone checks gate first, then requires non-empty timezone_id (returns error if empty, no wire call). BoolValue daylight_saving_mode_off set only when provided (CopyFrom, line 141). Sends SetTimeZone then reads back with GetTimeZone. EmptyInputTests.test_set_timezone_requires_id and SetTimeZoneTests confirmed."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "set_ntp builds Duration only when refresh_rate_s is provided (lines 156-157). change_timezones supports removed_zones and added_zones[{id,name}]; returns error when neither provided (lines 172-173), no wire call. SetNTPTests, ChangeTimeZonesTests, EmptyInputTests.test_change_timezones_no_edit_errors all pass."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "All 6 server registration edits present in tools/axxon_mcp_server.py: timezone param (line 58), register_timezone_tools call (line 175), function definition (line 1008), --enable-timezone flag (line 1328), args.enable_timezone gated instantiation (line 1475), timezone=timezone passed to create_server (line 1507). register_timezone_tools registers exactly 7 tools."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "note": "14 new tests in tools/tests/test_axxon_mcp_timezone.py covering GatingTests (disabled/gap), EmptyInputTests (set_timezone requires id, change_timezones no edit), ReadTests (read shapes), SetTimeZoneTests (dst bool conditional), SetNTPTests (duration conditional), ChangeTimeZonesTests (add/remove shape). Full suite: Ran 760 tests OK (independently verified)."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "note": "api_methods.json: SetTimeZone, SetNTP, ChangeTimeZones all marked tested-pass with evidence citing live-verify.txt. Pass-class total: 193 (170 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty), 130 pending, 38 fixture-warn. Coverage doc capability-vs-coverage-2026-06-05.md states 'Current honest coverage: 193 tested-pass / 130 pending / 38 fixture-warn' and TimeZoneManager 7/7 (item 10f). axxon_corpus_restamp.py reports 0 methods restamped confirming corpus already matches. raw/live-verify.txt shows reversible round-trips for all 3 writes."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_timezone\" -> import OK",
+    "python3.12 -m unittest discover -s tools/tests -> Ran 760 tests OK",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_timezone.py -v -> Ran 14 tests OK",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "Code inspection: axxon_mcp_timezone.py _write_gate, set_timezone, set_ntp, change_timezones logic verified",
+    "Code inspection: axxon_mcp_server.py 6-edit registration pattern all present, register_timezone_tools has 7 tools",
+    "api_methods.json: TimeZoneManager 7/7 tested-pass, pass-class total 193, pending 130, fixture-warn 38",
+    "capability-vs-coverage-2026-06-05.md: 193/130/38 summary present, TimeZoneManager 7/7 in item 10f"
+  ],
+  "notes": "All 6 acceptance criteria independently verified. No production code modified. Live tests not re-run (no creds); raw/live-verify.txt is sanitized and covers all 3 reversible round-trips. The 193 pass-class counts all pass-variant statuses (tested-pass + tested-pass-safe-record + tested-pass-empty), matching the corpus exactly."
+}

@@ -97,6 +97,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     toggling mandatory_protection and restoring, reversible) -> tested-pass. `update_gdpr_settings`
     built + gated + reachable but a NO-OP on this stand (GDPR privacy-masking module not
     provisioned), so fixture-warn. DomainSettingsService now 7/8.
+10f. **TimeZoneManager writes (phase-19)** — `set_timezone`, `set_ntp`, `change_timezones`
+    shipped behind `--enable-timezone` (`AXXON_TIMEZONE_APPROVE=1` + `CONFIRM-timezone-set`).
+    All three live round-tripped reversibly (TZ -> UTC then restored; NTP empty -> set ->
+    cleared; add throwaway zone -> remove). All -> tested-pass; TimeZoneManager now 7/7.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -187,4 +191,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **190 tested-pass / 133 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **193 tested-pass / 130 pending / 38 fixture-warn** (361 total).
