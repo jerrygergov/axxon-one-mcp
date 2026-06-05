@@ -1,0 +1,47 @@
+{
+  "task_id": "phase-12-device-discovery",
+  "overall": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "note": "tools/axxon_mcp_discovery.py exists; AxxonMcpDiscovery dataclass with discovery_connect_axxon_profile and discover_devices confirmed. Direct gRPC via stub_from_proto(DISCOVERY_PROTO, 'DiscoveryService')."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "note": "discover_devices calls Discover(Empty), then iterates GetDiscoveryProgress server-stream, dedupes by mac_address or ip_address, stops on FINISHED_STATES, max_devices, or deadline. Returns status/state/promille/count/devices."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "note": "_DEVICE_FIELDS tuple covers driver, driver_version, vendor, model, mac_address, ip_address, ip_port, firmware_version, categories, support_mode. Live evidence shows correct shape (Hikvision/Dahua)."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "note": "caps block returned in output with max_devices and max_seconds. Stream cancel() called in finally block unconditionally."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "note": "4 module tests ran OK. Full suite: Ran 705 tests in 0.581s OK."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "note": "DiscoveryService corpus: Discover=tested-pass, GetDiscoveryProgress=tested-pass, DiscoverNode=pending, GetNodeDiscoveryProgress=tested-pass, Probe=tested-warn-fixture-needed (out-of-scope methods unchanged). Restamp dry-run: 0 methods restamped (no drift). live-verify.txt: discover_started True, 3 real cameras (Hikvision/Dahua), RESULT: PASS, WAN addresses redacted."
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "note": "register_discovery_tools registers discovery_connect_axxon_profile and discover_devices. create_server has discovery param. --enable-discovery arg present in build_parser(). main() wires AxxonMcpDiscovery() behind that flag and passes discovery= to create_server."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -m unittest tools.tests.test_axxon_mcp_discovery",
+    "python3.12 -m unittest discover -s tools/tests 2>&1 | grep -E '^(Ran|OK|FAILED|ERROR)'",
+    "python3.12 -c \"import json;[print(x['method'],x['live_status']) for x in json.load(open('docs/api-audit/mcp-corpus/api_methods.json'))['methods'] if x['service']=='DiscoveryService']\"",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ]
+}

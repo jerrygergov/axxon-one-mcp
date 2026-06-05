@@ -103,6 +103,12 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams list descriptor)"),
     ("RealtimeRecognizerService", "GetItems"): (
         "tested-pass", ".agent/tasks/phase-11-recognizer-lists/raw/live-verify.txt (streams 6 enrolled items, metadata only)"),
+    # Phase 12: read-only DiscoveryService device discovery live-verified. Discover
+    # starts a scan; GetDiscoveryProgress streams real found cameras (Hikvision/Dahua).
+    ("DiscoveryService", "Discover"): (
+        "tested-pass", ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (scan started)"),
+    ("DiscoveryService", "GetDiscoveryProgress"): (
+        "tested-pass", ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (streamed 3 real network cameras)"),
 }
 
 

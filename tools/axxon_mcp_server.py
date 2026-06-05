@@ -52,6 +52,7 @@ def create_server(
     ptz: Any | None = None,
     audit: Any | None = None,
     recognizer: Any | None = None,
+    discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -156,6 +157,9 @@ def create_server(
 
     if recognizer is not None:
         register_recognizer_tools(server, recognizer)
+
+    if discovery is not None:
+        register_discovery_tools(server, discovery)
 
     return server
 
@@ -850,6 +854,18 @@ def register_audit_tools(server: Any, audit: Any) -> None:
         return audit.audit_inject(kind, params, confirmation)
 
 
+def register_discovery_tools(server: Any, discovery: Any) -> None:
+    @server.tool(name="discovery_connect_axxon_profile")
+    def discovery_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the read-only device-discovery layer to the env profile."""
+        return discovery.discovery_connect_axxon_profile(profile)
+
+    @server.tool(name="discover_devices")
+    def discover_devices(max_devices: int = 200, max_seconds: float = 20.0) -> dict[str, Any]:
+        """Scan the network for IP cameras to add (driver/vendor/model/mac/ip). Bounded by caps."""
+        return discovery.discover_devices(max_devices, max_seconds)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1135,6 +1151,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 11 read-only RealtimeRecognizerService watchlist tools (face/LPR lists).",
     )
+    parser.add_argument(
+        "--enable-discovery",
+        action="store_true",
+        help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
+    )
     return parser
 
 
@@ -1257,6 +1278,11 @@ def main() -> int:
         from axxon_mcp_recognizer import AxxonMcpRecognizer
 
         recognizer = AxxonMcpRecognizer()
+    discovery = None
+    if args.enable_discovery:
+        from axxon_mcp_discovery import AxxonMcpDiscovery
+
+        discovery = AxxonMcpDiscovery()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1277,6 +1303,7 @@ def main() -> int:
         ptz=ptz,
         audit=audit,
         recognizer=recognizer,
+        discovery=discovery,
     )
     server.run(transport=args.transport)
     return 0

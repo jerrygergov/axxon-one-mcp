@@ -1196,7 +1196,7 @@
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.Discover",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Discover",
       "package": "axxonsoft.bl.discovery",
       "proto": "axxonsoft/bl/discovery/Discovery.proto",
@@ -1204,7 +1204,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "review",
       "service": "DiscoveryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (scan started)"
     },
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.DiscoverNode",
@@ -1230,7 +1231,8 @@
       "response": "GetDiscoveryProgressResponse",
       "safety_class": "read",
       "service": "DiscoveryService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-12-device-discovery/raw/live-verify.txt (streamed 3 real network cameras)"
     },
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.GetNodeDiscoveryProgress",
