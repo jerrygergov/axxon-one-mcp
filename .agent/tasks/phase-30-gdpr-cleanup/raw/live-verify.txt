@@ -1,0 +1,36 @@
+Phase 30 - GDPR user-data cleanup (LayoutManager + MapService UserDataCleanup)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tools (axxon_mcp_gdpr_cleanup.
+layout_user_data_cleanup / map_user_data_cleanup). Both writes are approval-gated.
+
+Live verification uses a THROWAWAY, nonexistent user id, so the cleanup executes on
+the wire but matches no real user and deletes nothing real. Zero collateral on the
+shared stand.
+
+[gate matrix]
+  env unset                              -> status=disabled (no wire call)
+  enabled + bad token                    -> status=gap      (no wire call)
+  enabled + good token + empty user_ids  -> status=error    (no wire call)
+
+[applied] enabled (AXXON_GDPR_APPROVE=1) + confirmation=CONFIRM-gdpr-cleanup
+  throwaway user id: axxon-mcp-nonexistent-<rand>
+  layout_user_data_cleanup(user_ids=[throwaway]) ->
+    {status: applied, tool: layout_user_data_cleanup, user_ids: [throwaway]}
+  map_user_data_cleanup(user_ids=[throwaway]) ->
+    {status: applied, tool: map_user_data_cleanup, user_ids: [throwaway]}
+  Both RPCs returned an empty UserDataCleanupResponse (executed successfully).
+
+[wire shape] (probe before building)
+  LayoutManager.UserDataCleanup / MapService.UserDataCleanup both take
+  {repeated string user_ids} and return an empty response. A user id that owns nothing
+  is a successful no-op on the wire.
+
+[deferred, recorded honestly]
+  VMDAService.Cleanup: wipes a real camera's analytics DB on the shared stand
+  (collateral on data we did not create) -> deferred, NOT restamped.
+  EMailNotifier.SendEMail / GSMNotifier.SendSMS: no notifier/SMTP/GSM configured
+  ("Can't resolve reference to .../NotifyService") -> environment-walled, NOT restamped.
+
+[hygiene]
+  Only a throwaway/nonexistent user id was used; nothing real was deleted. Writes are
+  default-off (env + token). No proto/CA/PDF committed. Secrets env-only.

@@ -2255,7 +2255,7 @@
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.UserDataCleanup",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UserDataCleanup",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
@@ -2263,7 +2263,8 @@
       "response": "UserDataCleanupResponse",
       "safety_class": "review",
       "service": "LayoutManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"
     },
     {
       "fqmn": "axxonsoft.bl.license.LicenseService.LicenseKey",
@@ -2993,7 +2994,7 @@
     {
       "fqmn": "axxonsoft.bl.maps.MapService.UserDataCleanup",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UserDataCleanup",
       "package": "axxonsoft.bl.maps",
       "proto": "axxonsoft/bl/maps/MapService.proto",
@@ -3001,7 +3002,8 @@
       "response": "UserDataCleanupResponse",
       "safety_class": "review",
       "service": "MapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.Stream",

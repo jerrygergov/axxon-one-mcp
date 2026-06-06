@@ -59,6 +59,7 @@ def create_server(
     server_settings: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
+    gdpr_cleanup: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -184,6 +185,9 @@ def create_server(
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
+
+    if gdpr_cleanup is not None:
+        register_gdpr_cleanup_tools(server, gdpr_cleanup)
 
     return server
 
@@ -947,6 +951,23 @@ def register_discovery_tools(server: Any, discovery: Any) -> None:
         return discovery.discover_node_devices(node, max_devices, max_seconds)
 
 
+def register_gdpr_cleanup_tools(server: Any, gdpr_cleanup: Any) -> None:
+    @server.tool(name="gdpr_cleanup_connect_axxon_profile")
+    def gdpr_cleanup_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the GDPR cleanup layer to the env profile (writes need AXXON_GDPR_APPROVE=1)."""
+        return gdpr_cleanup.gdpr_cleanup_connect_axxon_profile(profile)
+
+    @server.tool(name="layout_user_data_cleanup")
+    def layout_user_data_cleanup(user_ids: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Remove a user's stored layouts via LayoutManager.UserDataCleanup (gated)."""
+        return gdpr_cleanup.layout_user_data_cleanup(user_ids=user_ids, confirmation=confirmation)
+
+    @server.tool(name="map_user_data_cleanup")
+    def map_user_data_cleanup(user_ids: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Remove a user's stored maps via MapService.UserDataCleanup (gated)."""
+        return gdpr_cleanup.map_user_data_cleanup(user_ids=user_ids, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1468,6 +1489,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-gdpr-cleanup",
+        action="store_true",
+        help="Enable Phase 30 GDPR cleanup tools (layout/map UserDataCleanup). Writes need AXXON_GDPR_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1629,6 +1655,11 @@ def main() -> int:
         from axxon_mcp_discovery import AxxonMcpDiscovery
 
         discovery = AxxonMcpDiscovery()
+    gdpr_cleanup = None
+    if args.enable_gdpr_cleanup:
+        from axxon_mcp_gdpr_cleanup import AxxonMcpGdprCleanup
+
+        gdpr_cleanup = AxxonMcpGdprCleanup()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1656,6 +1687,7 @@ def main() -> int:
         server_settings=server_settings,
         groups=groups,
         discovery=discovery,
+        gdpr_cleanup=gdpr_cleanup,
     )
     server.run(transport=args.transport)
     return 0

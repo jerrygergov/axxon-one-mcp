@@ -156,6 +156,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     restore to the captured pan/tilt/zoom -> exact match. continuous mode is rejected (error 2) by
     this simulated source; absolute is the supported mode. -> tested-pass (no new tool; restamp +
     focused regression test).
+10q. **GDPR user-data cleanup (phase-30)** — new gated module `axxon_mcp_gdpr_cleanup.py` with
+    `layout_user_data_cleanup` / `map_user_data_cleanup` (LayoutManager + MapService UserDataCleanup),
+    approval-gated (AXXON_GDPR_APPROVE=1 + CONFIRM-gdpr-cleanup). Live-verified with a throwaway,
+    nonexistent user id -> status applied, nothing real deleted; gate matrix (disabled/gap/error)
+    holds with no wire call. Both -> tested-pass. VMDAService.Cleanup (collateral on shared analytics)
+    and EMailNotifier/GSMNotifier sends (no SMTP/GSM infra) deferred honestly, not restamped.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -247,4 +253,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **208 tested-pass / 115 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **210 tested-pass / 113 pending / 38 fixture-warn** (361 total).

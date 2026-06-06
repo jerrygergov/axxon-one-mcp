@@ -251,6 +251,13 @@ RESTAMP = {
     # restore to captured -> exact match. continuous mode is rejected by this simulated source.
     ("TelemetryService", "Zoom"): (
         "tested-pass", ".agent/tasks/phase-29-ptz-zoom/raw/live-verify.txt (Zoom absolute=ok, position captured + restored exactly)"),
+    # Phase 30: GDPR user-data cleanup live-verified through the gated layout/map cleanup tools
+    # using a throwaway, nonexistent user id -> the RPC executes (applied) but matches no real
+    # user and deletes nothing real. Gate matrix (disabled/gap/error) holds with no wire call.
+    ("LayoutManager", "UserDataCleanup"): (
+        "tested-pass", ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"),
+    ("MapService", "UserDataCleanup"): (
+        "tested-pass", ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"),
 }
 
 

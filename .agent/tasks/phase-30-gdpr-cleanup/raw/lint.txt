@@ -1,0 +1,1 @@
+n/a (repo convention; no separate linter configured)
