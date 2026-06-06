@@ -3763,7 +3763,7 @@
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeListsStream",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeListsStream",
       "package": "axxonsoft.bl.realtimerecognizer",
       "proto": "axxonsoft/bl/realtimeRecognizer/RealtimeRecognizer.proto",
@@ -3771,7 +3771,8 @@
       "response": "ChangeListsStreamResponse",
       "safety_class": "mutating",
       "service": "RealtimeRecognizerService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-22-recognizer-stream/raw/live-verify.txt (stream add LPR list + remove)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeItems",

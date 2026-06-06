@@ -928,6 +928,16 @@ def register_recognizer_write_tools(server: Any, recognizer_write: Any) -> None:
         """Add/change/remove watchlists via ChangeLists. Gated by approval env + confirmation token."""
         return recognizer_write.recognizer_change_lists(added, changed, removed_ids, confirmation)
 
+    @server.tool(name="recognizer_change_lists_stream")
+    def recognizer_change_lists_stream(
+        added: list[dict[str, Any]] | None = None,
+        changed: list[dict[str, Any]] | None = None,
+        removed_ids: list[str] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Add/change/remove watchlists via the streaming ChangeListsStream (proto-preferred). Gated."""
+        return recognizer_write.recognizer_change_lists_stream(added, changed, removed_ids, confirmation)
+
     @server.tool(name="recognizer_change_items")
     def recognizer_change_items(
         list_id: str = "",

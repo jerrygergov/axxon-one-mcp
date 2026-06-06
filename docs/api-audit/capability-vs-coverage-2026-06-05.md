@@ -75,9 +75,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
    (BuildHeatmap/BuildEventsHeatmap, all camera/db/detector bindings) returns "Failed to
    execute command". The service needs a heat-map analytics module/license not provisioned
    on this stand (same dead-fixture class as PTZ hardware / Cloud pairing).
-10. **RealtimeRecognizerService (6/7)** — reads CLOSED `496bd70` (GetLists/GetListStream/GetItems);
-    writes CLOSED phase-14 (ChangeLists/ChangeItems/Clear, approval-gated, live-verified incl. an
-    authorized node wipe). Only ChangeListsStream stays pending (ChangeLists covers the same intent).
+10. **RealtimeRecognizerService (7/7 non-fixture)** — reads CLOSED `496bd70`
+    (GetLists/GetListStream/GetItems); writes CLOSED phase-14 (ChangeLists/ChangeItems/Clear,
+    approval-gated, live-verified incl. an authorized node wipe) and ChangeListsStream CLOSED
+    phase-22 (see 10i). Only GetData stays fixture-warn (biometric, out of scope).
 10b. **LogicService alerts (phase-15)** — alert lifecycle reconciled. Fixed a real shipped bug:
     `alarm_complete_review` sent invalid severity strings (confirmed_alarm/...) that the server
     500s on; now uses the valid `SV_*` ESeverity enum (proven SV_FALSE=200 vs false_alarm=500).
@@ -109,6 +110,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     shipped behind `--enable-groups` (`AXXON_GROUPS_APPROVE=1` + `CONFIRM-groups-set`).
     Both live round-tripped reversibly (add throwaway group -> remove; add object
     membership -> remove). Both -> tested-pass; GroupManager now 4/4.
+10i. **RealtimeRecognizer ChangeListsStream (phase-22)** — `recognizer_change_lists_stream`
+    added to the existing gated write module (`--enable-recognizer-write`). The
+    proto-preferred bidirectional streaming replacement for the deprecated unary
+    ChangeLists; live round-tripped reversibly (stream-add throwaway LPR list ->
+    stream-remove). -> tested-pass; all 7 non-fixture recognizer methods now pass
+    (only GetData stays fixture-warn, biometric, out of scope).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -199,4 +206,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **197 tested-pass / 126 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **198 tested-pass / 125 pending / 38 fixture-warn** (361 total).

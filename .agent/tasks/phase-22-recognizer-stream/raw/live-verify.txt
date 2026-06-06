@@ -1,0 +1,24 @@
+Phase 22 - RealtimeRecognizerService ChangeListsStream (streaming watchlist write)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tool (axxon_mcp_recognizer_write
+.recognizer_change_lists_stream) with AXXON_RECOGNIZER_WRITE_APPROVE=1.
+ChangeListsStream is the proto-preferred bidirectional streaming replacement for
+the deprecated unary ChangeLists.
+
+[gating] no wire call before approval + confirmation
+  change_lists_stream, approval unset           -> status=disabled
+  change_lists_stream, bad confirmation token   -> status=gap
+  change_lists_stream, no edit field            -> status=error
+
+[change_lists_stream] ChangeListsStream (bidirectional stream, EPS_LAST on last packet)
+  LIST    lists before = 0
+  ADD     stream packet {added_list: id=<uuid> name=axxon-mcp-probe type=ELT_LPR, status=EPS_LAST}
+          -> status=applied failed_lists=[] count 0->1
+  REMOVE  stream packet {removed_lists: ids=[<uuid>], status=EPS_LAST}
+          -> status=applied failed_lists=[] count 1->0 (restored)
+
+[hygiene]
+  The throwaway LPR list was added via the stream then removed via the stream.
+  LPR string lists only; no biometric image bytes or vectors are built or emitted.
+  Stand ends in its original state: 0 lists. No proto/CA/PDF committed. Secrets
+  env-only. No biometric data.

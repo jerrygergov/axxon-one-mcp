@@ -34,6 +34,7 @@ LIST_TYPES = {"any": "ELT_Any", "face": "ELT_Face", "lpr": "ELT_LPR", "food": "E
 RECOGNIZER_WRITE_TOOL_NAMES = (
     "recognizer_write_connect_axxon_profile",
     "recognizer_change_lists",
+    "recognizer_change_lists_stream",
     "recognizer_change_items",
     "recognizer_clear",
 )
@@ -138,6 +139,39 @@ class AxxonMcpRecognizerWrite:
         )
         response = stub.ChangeLists(request, timeout=self.ensure_client().config.timeout)
         return {"status": "applied", "failed_lists": list(response.failed_lists)}
+
+    def _list_packets(self, pb2: Any, added: list[dict[str, Any]], changed: list[dict[str, Any]], removed_ids: list[str]) -> Iterator[Any]:
+        """Yield ChangeListsStreamRequest packets; the last one carries EPS_LAST."""
+        packets: list[Any] = []
+        for spec in added:
+            packets.append(pb2.ChangeListsStreamRequest(added_list=_build_list(pb2, spec)))
+        for spec in changed:
+            packets.append(pb2.ChangeListsStreamRequest(changed_list=_build_list(pb2, spec)))
+        if removed_ids:
+            packets.append(pb2.ChangeListsStreamRequest(removed_lists=pb2.ChangeListsStreamRequest.ListIds(ids=[str(x) for x in removed_ids])))
+        for index, packet in enumerate(packets):
+            if index == len(packets) - 1:
+                packet.status = pb2.EPS_LAST
+            yield packet
+
+    def recognizer_change_lists_stream(
+        self,
+        added: list[dict[str, Any]] | None = None,
+        changed: list[dict[str, Any]] | None = None,
+        removed_ids: list[str] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        gated = self._gate(confirmation)
+        if gated is not None:
+            return gated
+        added, changed, removed_ids = added or [], changed or [], removed_ids or []
+        if not (added or changed or removed_ids):
+            return {"status": "error", "message": "provide at least one of added, changed, removed_ids"}
+        stub, pb2 = self._stub_and_pb2()
+        failed: list[str] = []
+        for response in stub.ChangeListsStream(self._list_packets(pb2, added, changed, removed_ids), timeout=self.ensure_client().config.timeout):
+            failed.extend(response.failed_lists)
+        return {"status": "applied", "failed_lists": failed}
 
     def _item_packets(self, pb2: Any, added: list[dict[str, Any]], removed_item_ids: list[str]) -> Iterator[Any]:
         """Yield ChangeItemsRequest packets; the last one carries EPS_LAST."""

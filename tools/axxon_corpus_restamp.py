@@ -204,6 +204,12 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add throwaway group + remove)"),
     ("GroupManager", "SetObjectsMembership"): (
         "tested-pass", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add object membership + remove)"),
+    # Phase 22: RealtimeRecognizerService streaming watchlist write live round-tripped
+    # reversibly through the MCP tool (add throwaway LPR list via stream -> remove via
+    # stream). Closes the last non-fixture pending method; ChangeLists (deprecated) and
+    # ChangeListsStream both now tested-pass.
+    ("RealtimeRecognizerService", "ChangeListsStream"): (
+        "tested-pass", ".agent/tasks/phase-22-recognizer-stream/raw/live-verify.txt (stream add LPR list + remove)"),
 }
 
 
