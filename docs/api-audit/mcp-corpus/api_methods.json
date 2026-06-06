@@ -3401,7 +3401,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Zoom",
       "http_annotation": "POST /v1/telemetry:zoom",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Zoom",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3409,7 +3409,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-29-ptz-zoom/raw/live-verify.txt (Zoom absolute=ok, position captured + restored exactly)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Focus",

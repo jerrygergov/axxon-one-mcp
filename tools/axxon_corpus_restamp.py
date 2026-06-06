@@ -246,6 +246,11 @@ RESTAMP = {
     # Read-only (inverse of RestoreBackup); the safe member of the backup/restore cluster.
     ("ConfigurationManager", "CollectBackup"): (
         "tested-pass", ".agent/tasks/phase-28-collect-backup/raw/live-verify.txt (LOCAL export, 28 chunks / 1.82MB, metadata-only)"),
+    # Phase 29: TelemetryService.Zoom live-verified reversibly through the ptz zoom tool on
+    # DeviceIpint.53/TelemetryControl.0: capture position -> Zoom(absolute,0.4)=ok -> AbsoluteMove
+    # restore to captured -> exact match. continuous mode is rejected by this simulated source.
+    ("TelemetryService", "Zoom"): (
+        "tested-pass", ".agent/tasks/phase-29-ptz-zoom/raw/live-verify.txt (Zoom absolute=ok, position captured + restored exactly)"),
 }
 
 

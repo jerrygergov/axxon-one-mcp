@@ -215,6 +215,34 @@ class AxxonMcpPtzTests(unittest.TestCase):
         result = _ptz([PTZ_AP]).auxiliary_operations(PTZ_AP)
         self.assertEqual(result["operations"], ["wiper", "light"])
 
+    def test_zoom_absolute_mode_emits_single_zoom_with_absolute_flag(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        result = ptz.zoom(PTZ_AP, 9, 0.4, mode="absolute")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["mode"], "absolute")
+        stub = ptz.client.telemetry_stub
+        zoom_calls = [req for name, req in stub.calls if name == "Zoom"]
+        self.assertEqual(len(zoom_calls), 1)
+        request = zoom_calls[0]
+        self.assertEqual(request.access_point, PTZ_AP)
+        self.assertEqual(request.session_id, 9)
+        self.assertEqual(request.value, 0.4)
+        self.assertTrue(request.mode.is_absolute)
+        self.assertFalse(request.mode.is_continuous)
+
+    def test_zoom_reversible_capture_restore_sequence(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        captured = ptz.get_position(PTZ_AP)["absolute_position"]
+        self.assertEqual(ptz.zoom(PTZ_AP, 9, 0.4, mode="absolute")["status"], "ok")
+        restore = ptz.absolute_move(
+            PTZ_AP, 9, captured["pan"], captured["tilt"], captured["zoom"], captured["mask"]
+        )
+        self.assertEqual(restore["status"], "ok")
+        self.assertEqual(restore["absolute_position"]["pan"], captured["pan"])
+        self.assertEqual(restore["absolute_position"]["zoom"], captured["zoom"])
+        names = [name for name, _ in ptz.client.telemetry_stub.calls]
+        self.assertLess(names.index("Zoom"), names.index("AbsoluteMove"))
+
 
 if __name__ == "__main__":
     unittest.main()

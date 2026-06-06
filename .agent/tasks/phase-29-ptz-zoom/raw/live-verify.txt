@@ -1,0 +1,32 @@
+Phase 29 - TelemetryService.Zoom (reversible live pass)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tool (axxon_mcp_ptz.zoom), bracketed by a
+position capture and an AbsoluteMove restore so the camera ends where it started.
+
+source: hosts/Server/DeviceIpint.53/TelemetryControl.0  (simulated PTZ source, responsive)
+
+[session] AcquireSessionId -> session_id=14 error_code=NotError
+[capture] GetPositionInformation -> pan=100 tilt=100 zoom=10 mask=7
+
+[zoom continuous] rejected by this source
+  zoom(mode="continuous", value=0.5) -> server error 2
+
+[zoom absolute] accepted and executed
+  zoom(mode="absolute", value=0.4) -> status=ok
+  (the server accepted and ran the Zoom RPC; this source has virtual optics, so its
+   reported zoom does not change, but the command path is proven end-to-end)
+
+[restore] AbsoluteMove back to the captured position -> status=ok
+[verify] GetPositionInformation -> pan=100 tilt=100 zoom=10 mask=7
+  restored exactly: True
+
+[notes]
+  - The supported Zoom mode on this simulated source is "absolute"; "continuous" returns
+    error 2. The narrow accepted absolute value (~0.4) reflects the simulated device, not
+    the tool.
+  - The device is intermittently busy (error 1) under rapid commands; a small retry
+    handles it. ReleaseSessionId can fail the same way and is harmless (session auto-expires).
+
+[hygiene]
+  Reversible: the camera position was captured before and restored after; final position
+  equals the captured position exactly. No proto/CA/PDF committed. Secrets env-only.

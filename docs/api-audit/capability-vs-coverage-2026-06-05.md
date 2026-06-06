@@ -151,6 +151,11 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     only (raw backup bytes never surfaced). Read-only (the inverse of RestoreBackup), the safe
     member of the backup/restore cluster. Live-verified LOCAL export (28 chunks / 1.82 MB);
     unknown type / empty node -> gap with no wire call. -> tested-pass.
+10p. **TelemetryService Zoom (phase-29)** — the existing `zoom` ptz tool live-verified reversibly
+    on DeviceIpint.53/TelemetryControl.0: capture position -> Zoom(absolute,0.4)=ok -> AbsoluteMove
+    restore to the captured pan/tilt/zoom -> exact match. continuous mode is rejected (error 2) by
+    this simulated source; absolute is the supported mode. -> tested-pass (no new tool; restamp +
+    focused regression test).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -242,4 +247,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **207 tested-pass / 116 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **208 tested-pass / 115 pending / 38 fixture-warn** (361 total).

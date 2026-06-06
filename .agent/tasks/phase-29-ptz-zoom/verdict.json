@@ -1,0 +1,48 @@
+{
+  "task_id": "phase-29-ptz-zoom",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-06",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "test_zoom_absolute_mode_emits_single_zoom_with_absolute_flag (test_axxon_mcp_ptz.py:218) asserts status ok, exactly one Zoom RPC (len==1), request.access_point/session_id/value, mode.is_absolute True and is_continuous False. Green."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "test_zoom_reversible_capture_restore_sequence (line 233) captures position, zooms absolute, restores via AbsoluteMove to captured pan/tilt/zoom, asserts names.index('Zoom') < names.index('AbsoluteMove'). test_move_bad_mode_refused (line 201) still present and green."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "git diff --stat HEAD -- tools/axxon_mcp_ptz.py is empty. Overall diff touches only tests, restamp script, corpus json, coverage doc."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "python3.12 -m unittest discover -s tools/tests => Ran 807 tests OK. ptz suite Ran 10 OK."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "corpus (TelemetryService,Zoom) live_status=tested-pass; restamp dry-run reports 0 method(s) restamped; coverage doc shows 208 tested-pass / 115 pending / 38 fixture-warn and item 10p; live-verify.txt recorded under raw/. Corpus tally 185+21+2=208 tested-pass-prefixed."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_ptz\" -> IMPORT_OK",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_ptz.py -v -> Ran 10 tests OK",
+    "python3.12 -m unittest discover -s tools/tests -> Ran 807 tests OK",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "git diff --stat HEAD -- tools/axxon_mcp_ptz.py -> empty"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-29-ptz-zoom/spec.md",
+    ".agent/tasks/phase-29-ptz-zoom/evidence.json",
+    ".agent/tasks/phase-29-ptz-zoom/raw/live-verify.txt",
+    "tools/tests/test_axxon_mcp_ptz.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ]
+}
