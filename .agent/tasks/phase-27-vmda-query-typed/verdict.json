@@ -1,0 +1,59 @@
+{
+  "task_id": "phase-27-vmda-query-typed",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "commands_run": [
+    {
+      "cmd": "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_metadata\"",
+      "result": "import OK"
+    },
+    {
+      "cmd": "python3.12 -m unittest discover -s tools/tests",
+      "result": "Ran 801 tests OK"
+    },
+    {
+      "cmd": "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_metadata.py -v",
+      "result": "Ran 9 tests OK"
+    },
+    {
+      "cmd": "python3.12 tools/axxon_corpus_restamp.py",
+      "result": "0 method(s) restamped (dry-run)"
+    }
+  ],
+  "artifacts_used": [
+    "tools/axxon_mcp_metadata.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_metadata.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_metadata.py:260-268 builds ExecuteQueryTypedRequest(access_point, camera_ID, schema_ID, dt_posix_start_time, dt_posix_end_time, query=_motion_in_area_query(...)) and iterates stub.ExecuteQueryTyped. No ExecuteQueryRequest / stub.ExecuteQuery in the module. _momentquest_motion_in_area, _MOMENTQUEST_TEMPLATE, VMDA_QUERY_LANGUAGE absent from production code (grep exit 1); no language= field. query= is a typed QueryDescription, not a string."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "_motion_in_area_query(query_pb2, primitive_pb2, polygon) at lines 70-74 builds QueryDescription(motion_in_area=MotionInArea(area=Polyline(points=[Point(x,y)...], closed=True))) with full-frame default box when polygon omitted. Behavior preserved: unsupported query_type returns gap before any wire call (235-236), missing database returns gap (251-252), time range derived (255-258), interval/object cap (237,273-276), result keys status/camera_id/database/query_type/time_range/interval_count/object_count/intervals (277). Polygon-passthrough test asserts custom points (0.1,0.2)... map to typed Polyline."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "Metadata vmda_query docstring (line 217) says 'via VMDAService.ExecuteQueryTyped (typed motion-in-area)'. Server tool docstring axxon_mcp_server.py:891 says 'Archived VMDA forensic search via ExecuteQueryTyped typed motion-in-area.' No other tool behavior changed; full suite green."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "Metadata suite 9/9 OK including test_vmda_query_binding_uses_typed_query (asserts ExecuteQueryTyped + QueryDescription/MotionInArea/Polyline >=3 points), test_vmda_query_polygon_points_passed_through (custom polygon -> typed Polyline points), and test_vmda_query_bad_type_refused (gap, no wire call). Full suite 801 OK."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "docs/api-audit/mcp-corpus/api_methods.json: VMDAService ExecuteQueryTyped live_status=tested-pass; VMDA EnumerateSchemes/ExecuteQuery/ExecuteQueryTyped pass, only Cleanup pending (3/4). Corpus counts: pass-class 206 (tested-pass 183 + tested-pass-empty 2 + tested-pass-safe-record 21) / pending 117 / fixture-warn 38 / total 361. Coverage doc capability-vs-coverage-2026-06-05.md line 240 states '206 tested-pass / 117 pending / 38 fixture-warn (361 total)' and item 10n (lines 144-145) notes the typed VMDA query. Restamp dry-run reports 0 method(s) restamped."
+    }
+  ]
+}

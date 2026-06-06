@@ -236,6 +236,11 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 archive by AP)"),
     ("DomainService", "SearchMaps"): (
         "tested-pass", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 map locator by AP)"),
+    # Phase 27: VMDAService ExecuteQueryTyped (non-deprecated typed forensic query) live-verified
+    # read-only via vmda_query, which now builds a typed QueryDescription(motion_in_area) instead of
+    # the deprecated ExecuteQuery MomentQuest string. Brings VMDAService to 3/4 (only Cleanup pending).
+    ("VMDAService", "ExecuteQueryTyped"): (
+        "tested-pass", ".agent/tasks/phase-27-vmda-query-typed/raw/live-verify.txt (typed motion-in-area query, real VMDA db + source)"),
 }
 
 

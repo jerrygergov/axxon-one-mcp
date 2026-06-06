@@ -888,7 +888,7 @@ def register_metadata_tools(server: Any, metadata: Any) -> None:
         max_intervals: int = 500,
         timeout: float = 60.0,
     ) -> dict[str, Any]:
-        """Archived VMDA forensic search via ExecuteQuery MomentQuest motion-in-area.
+        """Archived VMDA forensic search via ExecuteQueryTyped typed motion-in-area.
 
         camera_id is a detector VMDA source (e.g. hosts/Server/AVDetector.1/SourceEndpoint.vmda);
         database (*/VMDA_DB.N/Database) is discovered when omitted.

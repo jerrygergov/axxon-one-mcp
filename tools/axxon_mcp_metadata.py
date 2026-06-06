@@ -35,15 +35,7 @@ OBJECT_TYPE_NAMES = {"face": "FACE", "human": "HUMAN", "group": "GROUP", "vehicl
 BEHAVIOUR_NAMES = {"moving": "MOVING", "abandoned": "ABANDONED"}
 QUERY_TYPES = {"motion_in_area"}
 
-# MomentQuest "motion in area" smart-search program. The polygon is a full-frame box in
-# normalized [0,1] coordinates; objects whose foot point falls inside it match. This mirrors the
-# desktop client's VMDA search documented in the Integration APIs guide.
-_MOMENTQUEST_TEMPLATE = (
-    "figure fZone=polygon({points}); set r = group[obj=vmda_object] "
-    "{{ res = or(fZone((obj.left + obj.right) / 2, obj.bottom)) }}; result = r.res;"
-)
 VMDA_SCHEMA_ID = "vmda_schema"
-VMDA_QUERY_LANGUAGE = "EVENT_BASIC"
 
 
 def default_config_factory() -> AxxonClientConfig:
@@ -75,11 +67,11 @@ def _axxon_ts(value: dt.datetime) -> str:
     return value.strftime("%Y%m%dT%H%M%S.%f")[:-3]
 
 
-def _momentquest_motion_in_area(polygon: list[tuple[float, float]] | None) -> str:
-    """Return a MomentQuest program for a motion-in-area search over a normalized polygon."""
+def _motion_in_area_query(query_pb2: Any, primitive_pb2: Any, polygon: list[tuple[float, float]] | None) -> Any:
+    """Build a typed motion-in-area QueryDescription over a normalized [0,1] polygon (full frame by default)."""
     box = polygon or [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
-    points = ",".join(f"{x},{y}" for x, y in box)
-    return _MOMENTQUEST_TEMPLATE.format(points=points)
+    area = primitive_pb2.Polyline(points=[primitive_pb2.Point(x=float(x), y=float(y)) for x, y in box], closed=True)
+    return query_pb2.QueryDescription(motion_in_area=query_pb2.MotionInArea(area=area))
 
 
 def _vmda_database_ap(inventory: dict[str, Any]) -> str:
@@ -222,7 +214,7 @@ class AxxonMcpMetadata:
         max_intervals: int | None = None,
         timeout: float | None = None,
     ) -> dict[str, Any]:
-        """Archived VMDA forensic search via VMDAService.ExecuteQuery (MomentQuest motion-in-area).
+        """Archived VMDA forensic search via VMDAService.ExecuteQueryTyped (typed motion-in-area).
 
         Args:
             camera_id: Detector VMDA source, e.g. ``hosts/Server/AVDetector.1/SourceEndpoint.vmda``
@@ -251,6 +243,8 @@ class AxxonMcpMetadata:
             if hasattr(client, "authenticate_grpc"):
                 client.authenticate_grpc()
             vmda_pb2 = client.import_module("axxonsoft.bl.vmda.VMDA_pb2")
+            query_pb2 = client.import_module("axxonsoft.bl.vmda.Query_pb2")
+            primitive_pb2 = client.import_module("axxonsoft.bl.primitive.Primitives_pb2")
             stub = client.stub_from_proto("axxonsoft/bl/vmda/VMDA.proto", "VMDAService")
 
             db = database or _vmda_database_ap(client.load_inventory() if hasattr(client, "load_inventory") else {})
@@ -263,16 +257,15 @@ class AxxonMcpMetadata:
             begin_ts = begin or _axxon_ts(now - dt.timedelta(hours=window))
             end_ts = end or _axxon_ts(now + dt.timedelta(hours=1))
 
-            request = vmda_pb2.ExecuteQueryRequest(
+            request = vmda_pb2.ExecuteQueryTypedRequest(
                 access_point=db,
                 camera_ID=relative_camera,
                 schema_ID=VMDA_SCHEMA_ID,
                 dt_posix_start_time=begin_ts,
                 dt_posix_end_time=end_ts,
-                query=_momentquest_motion_in_area(polygon),
-                language=VMDA_QUERY_LANGUAGE,
+                query=_motion_in_area_query(query_pb2, primitive_pb2, polygon),
             )
-            for response in stub.ExecuteQuery(request, timeout=deadline):
+            for response in stub.ExecuteQueryTyped(request, timeout=deadline):
                 for interval in getattr(response, "intervals", []):
                     objects = list(getattr(interval, "objects", []))
                     object_total += len(objects)

@@ -1,0 +1,34 @@
+{
+  "task_id": "phase-27-vmda-query-typed",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "vmda_query builds typed QueryDescription and calls ExecuteQueryTyped (deprecated string path removed)", "status": "PASS",
+     "proof": ["tools/axxon_mcp_metadata.py vmda_query (ExecuteQueryTypedRequest + ExecuteQueryTyped)", "tools/tests/test_axxon_mcp_metadata.py test_vmda_query_binding_uses_typed_query", ".agent/tasks/phase-27-vmda-query-typed/raw/live-verify.txt (status ok)"], "gaps": []},
+    {"id": "AC2", "text": "_motion_in_area_query builds typed QueryDescription from polygon; behavior preserved", "status": "PASS",
+     "proof": ["tools/axxon_mcp_metadata.py _motion_in_area_query", "tools/tests/test_axxon_mcp_metadata.py test_vmda_query_polygon_points_passed_through/test_vmda_query_bad_type_refused/test_vmda_query_missing_database_is_gap/test_vmda_query_zero_results_ok"], "gaps": []},
+    {"id": "AC3", "text": "docstrings accurately reflect ExecuteQueryTyped; no other tool changed", "status": "PASS",
+     "proof": ["tools/axxon_mcp_metadata.py vmda_query docstring", "tools/axxon_mcp_server.py vmda_query tool docstring"], "gaps": []},
+    {"id": "AC4", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-27-vmda-query-typed/raw/test-unit.txt (Ran 801 ... OK; metadata suite 9 OK)"], "gaps": []},
+    {"id": "AC5", "text": "corpus restamp ExecuteQueryTyped tested-pass; coverage 206; VMDAService 3/4", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py VMDAService entry", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (206/117/38, item 10n)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_metadata.py",
+    "tools/tests/test_axxon_mcp_metadata.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_metadata\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_metadata.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "VMDAService.Cleanup stays pending (destructive VMDA database wipe; out of scope).",
+    "Only motion_in_area is supported (the sole entry in QUERY_TYPES); other typed query kinds are not wired."
+  ]
+}

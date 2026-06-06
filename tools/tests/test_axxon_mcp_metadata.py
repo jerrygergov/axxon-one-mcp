@@ -30,6 +30,25 @@ class FakeVmdaPb:
     class ExecuteQueryRequest(FakeMsg):
         pass
 
+    class ExecuteQueryTypedRequest(FakeMsg):
+        pass
+
+
+class FakeQueryPb:
+    class QueryDescription(FakeMsg):
+        pass
+
+    class MotionInArea(FakeMsg):
+        pass
+
+
+class FakePrimitivePb:
+    class Polyline(FakeMsg):
+        pass
+
+    class Point(FakeMsg):
+        pass
+
 
 class FakeMediaPb:
     class EndpointRef(FakeMsg):
@@ -46,7 +65,7 @@ class FakeVmdaStub:
         self.pages = intervals_pages
         self.last_request = None
 
-    def ExecuteQuery(self, request, timeout=None):
+    def ExecuteQueryTyped(self, request, timeout=None):
         self.last_request = request
         for p in self.pages:
             yield p
@@ -90,6 +109,8 @@ class FakeClient:
             "axxonsoft.bl.metadata.MetadataService_pb2": FakeMetadataPb,
             "axxonsoft.bl.media.Media_pb2": FakeMediaPb,
             "axxonsoft.bl.vmda.VMDA_pb2": FakeVmdaPb,
+            "axxonsoft.bl.vmda.Query_pb2": FakeQueryPb,
+            "axxonsoft.bl.primitive.Primitives_pb2": FakePrimitivePb,
         }[name]
 
     def stub_from_proto(self, proto_path, service):
@@ -196,8 +217,8 @@ class MetadataToolTests(unittest.TestCase):
         self.assertEqual(r["interval_count"], 0)
         self.assertEqual(r["object_count"], 0)
 
-    def test_vmda_query_binding_matches_pdf(self) -> None:
-        """AC4: ExecuteQuery binds access_point=VMDA_DB, camera_ID=relative source, schema/language."""
+    def test_vmda_query_binding_uses_typed_query(self) -> None:
+        """AC1/AC4: ExecuteQueryTyped binds access_point=VMDA_DB, relative camera, and a typed motion_in_area QueryDescription."""
         captured = {}
 
         module = importlib.import_module("axxon_mcp_metadata")
@@ -207,12 +228,12 @@ class MetadataToolTests(unittest.TestCase):
             def stub_from_proto(self, proto_path, service):
                 stub = super().stub_from_proto(proto_path, service)
                 if service == "VMDAService":
-                    orig = stub.ExecuteQuery
+                    orig = stub.ExecuteQueryTyped
                     def wrap(request, timeout=None):
-                        for f in ("access_point", "camera_ID", "schema_ID", "language", "query"):
+                        for f in ("access_point", "camera_ID", "schema_ID", "query"):
                             captured[f] = getattr(request, f, None)
                         return orig(request, timeout=timeout)
-                    stub.ExecuteQuery = wrap
+                    stub.ExecuteQueryTyped = wrap
                 return stub
 
         mcp = module.AxxonMcpMetadata(
@@ -224,8 +245,40 @@ class MetadataToolTests(unittest.TestCase):
         self.assertEqual(captured["access_point"], "hosts/Server/VMDA_DB.0/Database")
         self.assertEqual(captured["camera_ID"], "AVDetector.1/SourceEndpoint.vmda")
         self.assertEqual(captured["schema_ID"], "vmda_schema")
-        self.assertEqual(captured["language"], "EVENT_BASIC")
-        self.assertIn("vmda_object", captured["query"])
+        # query is a typed QueryDescription carrying a motion_in_area with a polygon
+        qd = captured["query"]
+        self.assertIsInstance(qd, FakeQueryPb.QueryDescription)
+        self.assertIsInstance(qd.motion_in_area, FakeQueryPb.MotionInArea)
+        self.assertGreaterEqual(len(qd.motion_in_area.area.points), 3)
+
+    def test_vmda_query_polygon_points_passed_through(self) -> None:
+        """AC2: a custom normalized polygon becomes the typed Polyline points."""
+        captured = {}
+        module = importlib.import_module("axxon_mcp_metadata")
+        importlib.reload(module)
+
+        class CaptureClient(FakeClient):
+            def stub_from_proto(self, proto_path, service):
+                stub = super().stub_from_proto(proto_path, service)
+                if service == "VMDAService":
+                    orig = stub.ExecuteQueryTyped
+                    def wrap(request, timeout=None):
+                        captured["query"] = getattr(request, "query", None)
+                        return orig(request, timeout=timeout)
+                    stub.ExecuteQueryTyped = wrap
+                return stub
+
+        mcp = module.AxxonMcpMetadata(
+            client_factory=lambda config: CaptureClient(config, vmda_pages=[]),
+            config_factory=lambda: FakeConfig(),
+        )
+        mcp.connect_axxon_profile("env")
+        mcp.vmda_query("hosts/Server/AVDetector.1/SourceEndpoint.vmda", query_type="motion_in_area",
+                       polygon=[(0.1, 0.2), (0.8, 0.2), (0.5, 0.9)])
+        pts = captured["query"].motion_in_area.area.points
+        self.assertEqual(len(pts), 3)
+        self.assertAlmostEqual(pts[0].x, 0.1)
+        self.assertAlmostEqual(pts[0].y, 0.2)
 
     def test_vmda_query_missing_database_is_gap(self) -> None:
         """AC4: no VMDA database in inventory and none passed returns a clean gap."""

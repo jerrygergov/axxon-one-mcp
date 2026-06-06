@@ -4749,7 +4749,7 @@
     {
       "fqmn": "axxonsoft.bl.vmda.VMDAService.ExecuteQueryTyped",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ExecuteQueryTyped",
       "package": "axxonsoft.bl.vmda",
       "proto": "axxonsoft/bl/vmda/VMDA.proto",
@@ -4757,7 +4757,8 @@
       "response": "ExecuteQueryResponse",
       "safety_class": "review",
       "service": "VMDAService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-27-vmda-query-typed/raw/live-verify.txt (typed motion-in-area query, real VMDA db + source)"
     }
   ],
   "source": "docs/api-audit/grpc-api-catalog.csv"
