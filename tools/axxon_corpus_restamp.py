@@ -197,6 +197,13 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (INFO -> DEBUG -> restore)"),
     ("ServerSettings", "DropLogs"): (
         "tested-pass", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (authorized drop, server healthy after)"),
+    # Phase 21: GroupManager writes live round-tripped reversibly through the MCP tools.
+    # ChangeGroups add throwaway group -> remove; SetObjectsMembership add object -> remove.
+    # Brings GroupManager to 4/4.
+    ("GroupManager", "ChangeGroups"): (
+        "tested-pass", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add throwaway group + remove)"),
+    ("GroupManager", "SetObjectsMembership"): (
+        "tested-pass", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add object membership + remove)"),
 }
 
 

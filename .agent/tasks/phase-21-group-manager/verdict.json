@@ -1,0 +1,44 @@
+{
+  "task_id": "phase-21-group-manager",
+  "overall_status": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "commands": {
+    "import": "import OK",
+    "full_suite": "Ran 781 tests OK",
+    "groups_suite": "Ran 10 tests OK",
+    "restamp_dry_run": "0 method(s) restamped (dry-run)"
+  },
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "tools/axxon_mcp_groups.py: _write_gate returns {status:disabled} when AXXON_GROUPS_APPROVE!=1, {status:gap} on wrong token (GROUPS_CONFIRMATION='CONFIRM-groups-set'), None to proceed. Gate called before _stub_and_pb2 in both writes; gating tests assert inst.client.calls == []."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "list_groups returns {group_id,name,parent,description} rows via ListGroups. change_groups is gated, returns status=error with no wire call when no edit field given (test asserts calls==[]), builds ChangeGroupsRequest(removed_groups) + added/changed Group specs."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": "set_objects_membership is gated, returns status=error with no wire call when neither added nor removed given, builds Membership{group_id,object} into added_objects/removed_objects, returns failed_added/failed_removed."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": "axxon_mcp_server.py: groups param on create_server (L60), if groups is not None: register_groups_tools(...) (L182-183), register_groups_tools registers 4 tools (L1079-1107), --enable-groups CLI flag (L1399), flag-gated AxxonMcpGroups instantiation in main (L1555-1559), groups=groups passed to create_server (L1590)."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": "10 groups tests pass (read shape, gating disabled/gap no-wire, no-edit error no-wire for both writes, change add/remove shape, changed_groups, membership add/remove shape). Full suite 781 tests OK."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "evidence": "api_methods.json GroupManager ListGroups/BatchGetGroups/ChangeGroups/SetObjectsMembership all live_status=tested-pass (4/4). Corpus counts: pass-class 197 (174 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty), pending 126, fixture-warn 38, total 361. coverage doc line 202 states '197 tested-pass / 126 pending / 38 fixture-warn (361 total)'; item 10h notes GroupManager now 4/4. Restamp dry-run reports 0."
+    }
+  ]
+}

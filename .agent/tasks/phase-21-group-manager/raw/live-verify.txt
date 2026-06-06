@@ -1,0 +1,26 @@
+Phase 21 - GroupManager writes (ChangeGroups, SetObjectsMembership)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tools (axxon_mcp_groups) with
+AXXON_GROUPS_APPROVE=1. GroupManager carries no etag; writes are plain.
+
+[gating] no wire call before approval + confirmation
+  change_groups, approval unset           -> status=disabled
+  change_groups, bad confirmation token   -> status=gap
+  change_groups, no edit field            -> status=error
+  set_objects_membership, no edit field   -> status=error
+
+[change_groups] ChangeGroups (group tree add/remove)
+  LIST    groups before = 5
+  ADD     throwaway group {id=<uuid>, name=axxon-mcp-probe, parent=<demo-root>} -> count 5->6
+  REMOVE  removed_groups=[<uuid>]                                                -> count 6->5 (restored)
+
+[set_objects_membership] SetObjectsMembership (object membership add/remove)
+  ADD     {group_id=<uuid>, object=hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0}
+          -> status=applied failed_added=0
+  REMOVE  same membership                                                        -> status=applied failed_removed=0
+
+[hygiene]
+  Every mutation was reversed (add group -> remove; add membership -> remove).
+  Object name must be lowercase hosts/... (uppercase HOSTS/ fails "Can not parse name").
+  Stand ends in its original state: 5 groups, no probe membership. No proto/CA/PDF
+  committed. Secrets env-only. No biometric data.

@@ -105,6 +105,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     `--enable-server` (`AXXON_SERVER_APPROVE=1` + `CONFIRM-server-set`). SetLogLevel live
     round-tripped reversibly (INFO -> DEBUG -> restored); DropLogs authorized irreversible
     (server healthy after). Both -> tested-pass; ServerSettings now 3/3.
+10h. **GroupManager writes (phase-21)** — `change_groups`, `set_objects_membership`
+    shipped behind `--enable-groups` (`AXXON_GROUPS_APPROVE=1` + `CONFIRM-groups-set`).
+    Both live round-tripped reversibly (add throwaway group -> remove; add object
+    membership -> remove). Both -> tested-pass; GroupManager now 4/4.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -195,4 +199,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **195 tested-pass / 128 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **197 tested-pass / 126 pending / 38 fixture-warn** (361 total).

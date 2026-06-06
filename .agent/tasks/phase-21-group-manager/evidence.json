@@ -1,0 +1,36 @@
+{
+  "task_id": "phase-21-group-manager",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "module + gating idiom (disabled/gap before wire)", "status": "PASS",
+     "proof": ["tools/axxon_mcp_groups.py _write_gate", "tools/tests/test_axxon_mcp_groups.py GatingTests", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt [gating]"], "gaps": []},
+    {"id": "AC2", "text": "list_groups read; change_groups gated, no-edit errors, add/remove shape", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_groups.py ReadTests, ChangeGroupsTests, EmptyInputTests.test_change_groups_no_edit_errors", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add group + remove)"], "gaps": []},
+    {"id": "AC3", "text": "set_objects_membership gated, no-edit errors, add/remove shape", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_groups.py MembershipTests, EmptyInputTests.test_membership_no_edit_errors", ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add membership + remove)"], "gaps": []},
+    {"id": "AC4", "text": "server registration of 4 tools behind --enable-groups", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py register_groups_tools", ".agent/tasks/phase-21-group-manager/raw/test-unit.txt (server import OK)"], "gaps": []},
+    {"id": "AC5", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-21-group-manager/raw/test-unit.txt (Ran 781 ... OK; groups suite 10 OK)"], "gaps": []},
+    {"id": "AC6", "text": "corpus restamp 2 writes tested-pass; coverage 197; GroupManager 4/4", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py GroupManager entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (197/126/38, GroupManager 4/4)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_groups.py",
+    "tools/tests/test_axxon_mcp_groups.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_groups\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_groups.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "Group permissions editing (Group.permissions subtree) is out of scope.",
+    "changed_groups_info is plumbed and unit-tested; live proof focuses on the reversible add/remove path."
+  ]
+}

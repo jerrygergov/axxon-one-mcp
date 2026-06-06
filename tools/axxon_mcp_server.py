@@ -57,6 +57,7 @@ def create_server(
     settings: Any | None = None,
     timezone: Any | None = None,
     server_settings: Any | None = None,
+    groups: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -177,6 +178,9 @@ def create_server(
 
     if server_settings is not None:
         register_server_settings_tools(server, server_settings)
+
+    if groups is not None:
+        register_groups_tools(server, groups)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -1072,6 +1076,37 @@ def register_server_settings_tools(server: Any, server_settings: Any) -> None:
         return server_settings.drop_logs(nodes, confirmation)
 
 
+def register_groups_tools(server: Any, groups: Any) -> None:
+    @server.tool(name="groups_connect_axxon_profile")
+    def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the GroupManager layer to the env profile."""
+        return groups.groups_connect_axxon_profile(profile)
+
+    @server.tool(name="list_groups")
+    def list_groups(tree: bool = False) -> dict[str, Any]:
+        """List object groups ({group_id,name,parent,description}); tree=True for tree view."""
+        return groups.list_groups(tree)
+
+    @server.tool(name="change_groups")
+    def change_groups(
+        removed_groups: list[str] | None = None,
+        added_groups: list[dict[str, str]] | None = None,
+        changed_groups: list[dict[str, str]] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Edit the group tree: remove ids and/or add/change {group_id,name,parent,description} groups. Gated."""
+        return groups.change_groups(removed_groups, added_groups, changed_groups, confirmation)
+
+    @server.tool(name="set_objects_membership")
+    def set_objects_membership(
+        added: list[dict[str, str]] | None = None,
+        removed: list[dict[str, str]] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Add/remove object membership in groups via {group_id,object} pairs. Gated."""
+        return groups.set_objects_membership(added, removed, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1361,6 +1396,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 20 ServerSettings tools (set_log_level, drop_logs). Writes need AXXON_SERVER_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-groups",
+        action="store_true",
+        help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1512,6 +1552,11 @@ def main() -> int:
         from axxon_mcp_server_settings import AxxonMcpServerSettings
 
         server_settings = AxxonMcpServerSettings()
+    groups = None
+    if args.enable_groups:
+        from axxon_mcp_groups import AxxonMcpGroups
+
+        groups = AxxonMcpGroups()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1542,6 +1587,7 @@ def main() -> int:
         settings=settings,
         timezone=timezone,
         server_settings=server_settings,
+        groups=groups,
         discovery=discovery,
     )
     server.run(transport=args.transport)

@@ -2038,7 +2038,7 @@
     {
       "fqmn": "axxonsoft.bl.groups.GroupManager.ChangeGroups",
       "http_annotation": "POST /v1/groups:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeGroups",
       "package": "axxonsoft.bl.groups",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
@@ -2046,12 +2046,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "GroupManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add throwaway group + remove)"
     },
     {
       "fqmn": "axxonsoft.bl.groups.GroupManager.SetObjectsMembership",
       "http_annotation": "POST /v1/groups/membership",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetObjectsMembership",
       "package": "axxonsoft.bl.groups",
       "proto": "axxonsoft/bl/groups/GroupManager.proto",
@@ -2059,7 +2060,8 @@
       "response": "SetObjectsMembershipResponse",
       "safety_class": "mutating",
       "service": "GroupManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-21-group-manager/raw/live-verify.txt (add object membership + remove)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.BuildHeatmap",
