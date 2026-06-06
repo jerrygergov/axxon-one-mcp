@@ -56,6 +56,7 @@ def create_server(
     logic_control: Any | None = None,
     settings: Any | None = None,
     timezone: Any | None = None,
+    server_settings: Any | None = None,
     discovery: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -173,6 +174,9 @@ def create_server(
 
     if timezone is not None:
         register_timezone_tools(server, timezone)
+
+    if server_settings is not None:
+        register_server_settings_tools(server, server_settings)
 
     if discovery is not None:
         register_discovery_tools(server, discovery)
@@ -1046,6 +1050,28 @@ def register_timezone_tools(server: Any, timezone: Any) -> None:
         return timezone.change_timezones(removed_zones, added_zones, confirmation)
 
 
+def register_server_settings_tools(server: Any, server_settings: Any) -> None:
+    @server.tool(name="server_connect_axxon_profile")
+    def server_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ServerSettings layer to the env profile."""
+        return server_settings.server_connect_axxon_profile(profile)
+
+    @server.tool(name="get_log_level")
+    def get_log_level(nodes: list[str] | None = None) -> dict[str, Any]:
+        """Read the per-node server log level (empty nodes = current node)."""
+        return server_settings.get_log_level(nodes)
+
+    @server.tool(name="set_log_level")
+    def set_log_level(level: str = "", nodes: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Set the server log level (e.g. LOG_LEVEL_INFO), then read it back. Gated."""
+        return server_settings.set_log_level(level, nodes, confirmation)
+
+    @server.tool(name="drop_logs")
+    def drop_logs(nodes: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Permanently delete server log history for the given nodes. Gated, irreversible."""
+        return server_settings.drop_logs(nodes, confirmation)
+
+
 def register_partner_tools(server: Any, kit: Any) -> None:
     import os
 
@@ -1330,6 +1356,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 19 TimeZoneManager tools (set_timezone, set_ntp, change_timezones). Writes need AXXON_TIMEZONE_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-server",
+        action="store_true",
+        help="Enable Phase 20 ServerSettings tools (set_log_level, drop_logs). Writes need AXXON_SERVER_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1476,6 +1507,11 @@ def main() -> int:
         from axxon_mcp_timezone import AxxonMcpTimezone
 
         timezone = AxxonMcpTimezone()
+    server_settings = None
+    if args.enable_server:
+        from axxon_mcp_server_settings import AxxonMcpServerSettings
+
+        server_settings = AxxonMcpServerSettings()
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -1505,6 +1541,7 @@ def main() -> int:
         logic_control=logic_control,
         settings=settings,
         timezone=timezone,
+        server_settings=server_settings,
         discovery=discovery,
     )
     server.run(transport=args.transport)

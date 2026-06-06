@@ -1,0 +1,36 @@
+{
+  "task_id": "phase-20-server-loglevel",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "module + gating idiom (disabled/gap before wire)", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server_settings.py _write_gate", "tools/tests/test_axxon_mcp_server_settings.py GatingTests", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt [gating]"], "gaps": []},
+    {"id": "AC2", "text": "get_log_level read; set_log_level gated, requires level, readback", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_server_settings.py ReadTests, SetLogLevelTests, InputTests.test_set_log_level_requires_level", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (INFO -> DEBUG -> restore)"], "gaps": []},
+    {"id": "AC3", "text": "drop_logs gated + invalid level errors with valid_levels, no wire", "status": "PASS",
+     "proof": ["tools/tests/test_axxon_mcp_server_settings.py DropLogsTests, InputTests.test_set_log_level_invalid_name", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (authorized drop, server healthy after)"], "gaps": []},
+    {"id": "AC4", "text": "server registration of 4 tools behind --enable-server", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py register_server_settings_tools", ".agent/tasks/phase-20-server-loglevel/raw/test-unit.txt (server import OK)"], "gaps": []},
+    {"id": "AC5", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-20-server-loglevel/raw/test-unit.txt (Ran 771 ... OK; server_settings 11 OK)"], "gaps": []},
+    {"id": "AC6", "text": "corpus restamp 2 writes tested-pass; coverage 195; ServerSettings 3/3", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py ServerSettings entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (195/128/38, ServerSettings 3/3)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_server_settings.py",
+    "tools/tests/test_axxon_mcp_server_settings.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_server_settings\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_server_settings.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "DropLogs is irreversible (log history deleted); user-authorized for this phase. No backup/recovery tool in scope.",
+    "Multi-node fan-out beyond the single-node 'Server' stand is not exercised live (nodes param is plumbed through and unit-tested)."
+  ]
+}

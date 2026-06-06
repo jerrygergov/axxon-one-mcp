@@ -1,0 +1,24 @@
+Phase 20 - ServerSettings writes (SetLogLevel, DropLogs)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tools (axxon_mcp_server_settings)
+with AXXON_SERVER_APPROVE=1. ServerSettings carries no etag; writes are plain.
+
+[gating] no wire call before approval + confirmation
+  set_log_level, approval unset           -> status=disabled
+  set_log_level, bad confirmation token   -> status=gap
+  set_log_level, unknown level name       -> status=error (valid_levels returned)
+
+[set_log_level] SetLogLevel (per-node level, readback)
+  GET     node_log_level={'Server': 'LOG_LEVEL_INFO'}
+  SET     -> LOG_LEVEL_DEBUG  -> status=applied node_log_level={'Server': 'LOG_LEVEL_DEBUG'} failed=[]
+  RESTORE -> LOG_LEVEL_INFO   -> readback={'Server': 'LOG_LEVEL_INFO'} (matches original)
+
+[drop_logs] DropLogs (authorized irreversible delete of server log history)
+  DROP    nodes=[] (current node) -> status=applied failed_nodes=[]
+  POST    GetLogLevel={'Server': 'LOG_LEVEL_INFO'} (server healthy after drop)
+
+[hygiene]
+  SetLogLevel reversed back to its original level (INFO). DropLogs was explicitly
+  user-authorized as an irreversible operation for this phase (log history gone by
+  design, same class as the previously-authorized Clear). Stand ends at its original
+  log level. No proto/CA/PDF committed. Secrets env-only. No biometric data.

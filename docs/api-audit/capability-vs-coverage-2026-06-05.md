@@ -101,6 +101,10 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     shipped behind `--enable-timezone` (`AXXON_TIMEZONE_APPROVE=1` + `CONFIRM-timezone-set`).
     All three live round-tripped reversibly (TZ -> UTC then restored; NTP empty -> set ->
     cleared; add throwaway zone -> remove). All -> tested-pass; TimeZoneManager now 7/7.
+10g. **ServerSettings writes (phase-20)** — `set_log_level`, `drop_logs` shipped behind
+    `--enable-server` (`AXXON_SERVER_APPROVE=1` + `CONFIRM-server-set`). SetLogLevel live
+    round-tripped reversibly (INFO -> DEBUG -> restored); DropLogs authorized irreversible
+    (server healthy after). Both -> tested-pass; ServerSettings now 3/3.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -191,4 +195,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **193 tested-pass / 130 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **195 tested-pass / 128 pending / 38 fixture-warn** (361 total).

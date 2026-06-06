@@ -1090,7 +1090,7 @@
     {
       "fqmn": "axxonsoft.bl.config.ServerSettings.SetLogLevel",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetLogLevel",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ServerSettings.proto",
@@ -1098,12 +1098,13 @@
       "response": "SetLogLevelResponse",
       "safety_class": "mutating",
       "service": "ServerSettings",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (INFO -> DEBUG -> restore)"
     },
     {
       "fqmn": "axxonsoft.bl.config.ServerSettings.DropLogs",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DropLogs",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ServerSettings.proto",
@@ -1111,7 +1112,8 @@
       "response": "DropLogsResponse",
       "safety_class": "mutating",
       "service": "ServerSettings",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (authorized drop, server healthy after)"
     },
     {
       "fqmn": "axxonsoft.bl.config.SharedKVStorageService.ListRecords",

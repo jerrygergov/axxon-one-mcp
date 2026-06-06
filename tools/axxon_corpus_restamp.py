@@ -190,6 +190,13 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (set pool.ntp.org + clear)"),
     ("TimeZoneManager", "ChangeTimeZones"): (
         "tested-pass", ".agent/tasks/phase-19-timezone-ntp/raw/live-verify.txt (add throwaway zone + remove)"),
+    # Phase 20: ServerSettings writes live-verified through the MCP tools. SetLogLevel
+    # INFO -> DEBUG -> restored to INFO; DropLogs authorized irreversible (server healthy
+    # after). Brings ServerSettings to 3/3.
+    ("ServerSettings", "SetLogLevel"): (
+        "tested-pass", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (INFO -> DEBUG -> restore)"),
+    ("ServerSettings", "DropLogs"): (
+        "tested-pass", ".agent/tasks/phase-20-server-loglevel/raw/live-verify.txt (authorized drop, server healthy after)"),
 }
 
 
