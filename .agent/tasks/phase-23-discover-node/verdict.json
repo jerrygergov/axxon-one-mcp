@@ -1,0 +1,46 @@
+{
+  "task_id": "phase-23-discover-node",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "commands_run": [
+    "python3.12 -c import axxon_mcp_server + axxon_mcp_discovery -> import OK",
+    "python3.12 -m unittest discover -s tools/tests -> Ran 790 tests, OK",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_discovery.py -v -> Ran 8 tests, OK (4 DiscoverNodeTests)",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)"
+  ],
+  "artifacts_used": [
+    "tools/axxon_mcp_discovery.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_discovery.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "discover_node_devices(node='', max_devices=200, max_seconds=20.0) clamps caps via min/max with DEVICE_CAP/SECONDS_CAP, calls DiscoverNode(DiscoveryRequest(node=node)), drains GetNodeDiscoveryProgress(DiscoveryRequest(node=node)), returns dict with node/progress_timed_out/state/promille/count/devices/caps plus status/discover_started."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "_drain_progress helper shared by both discover_devices and discover_node_devices; no duplicated loop body. Catches grpc.RpcError, re-raises unless code()==DEADLINE_EXCEEDED, then sets timed_out=True keeping partial devices. test_node_deadline_is_graceful proves progress_timed_out=True with count=1 partial device and no exception. discover_devices retains status/discover_started/state/promille/count/devices/caps shape."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "discover_node_devices registered via @server.tool inside register_discovery_tools (axxon_mcp_server.py:892-895); wiring conditional on existing discovery param, no new flag or create_server param. DISCOVERY_TOOL_NAMES includes 'discover_node_devices' (confirmed at runtime)."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "4 new DiscoverNodeTests (aggregate+echo node, cap clamp, deadline graceful, empty defaults current) plus full suite of 790 tests green on rerun."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "api_methods.json: DiscoveryService Discover/DiscoverNode/GetDiscoveryProgress/GetNodeDiscoveryProgress all tested-pass, Probe tested-warn-fixture-needed. Pass-class count 199 (176 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty), 124 pending, 38 fixture-warn, 361 total. Coverage doc states '199 tested-pass / 124 pending / 38 fixture-warn' and item 10j notes DiscoverNode. Restamp dry-run reports 0."
+    }
+  ]
+}

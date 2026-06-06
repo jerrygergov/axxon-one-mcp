@@ -210,6 +210,11 @@ RESTAMP = {
     # ChangeListsStream both now tested-pass.
     ("RealtimeRecognizerService", "ChangeListsStream"): (
         "tested-pass", ".agent/tasks/phase-22-recognizer-stream/raw/live-verify.txt (stream add LPR list + remove)"),
+    # Phase 23: DiscoveryService node-scoped scan live-verified read-only through the MCP
+    # tool (DiscoverNode + GetNodeDiscoveryProgress, found devices on node "Server").
+    # Read-only network scan, no mutation. Node-scan reads now complete (Probe stays fixture-warn).
+    ("DiscoveryService", "DiscoverNode"): (
+        "tested-pass", ".agent/tasks/phase-23-discover-node/raw/live-verify.txt (node-scoped scan, devices found)"),
 }
 
 

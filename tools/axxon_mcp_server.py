@@ -889,6 +889,11 @@ def register_discovery_tools(server: Any, discovery: Any) -> None:
         """Scan the network for IP cameras to add (driver/vendor/model/mac/ip). Bounded by caps."""
         return discovery.discover_devices(max_devices, max_seconds)
 
+    @server.tool(name="discover_node_devices")
+    def discover_node_devices(node: str = "", max_devices: int = 200, max_seconds: float = 20.0) -> dict[str, Any]:
+        """Scan one node for IP cameras via DiscoverNode (empty node = current). Bounded by caps."""
+        return discovery.discover_node_devices(node, max_devices, max_seconds)
+
 
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")

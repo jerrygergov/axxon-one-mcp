@@ -1212,7 +1212,7 @@
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.DiscoverNode",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DiscoverNode",
       "package": "axxonsoft.bl.discovery",
       "proto": "axxonsoft/bl/discovery/Discovery.proto",
@@ -1220,7 +1220,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "review",
       "service": "DiscoveryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-23-discover-node/raw/live-verify.txt (node-scoped scan, devices found)"
     },
     {
       "fqmn": "axxonsoft.bl.discovery.DiscoveryService.GetDiscoveryProgress",

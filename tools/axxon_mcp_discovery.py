@@ -15,10 +15,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+import grpc
+
 from axxon_api_client import AxxonApiClient, AxxonClientConfig
 from axxon_mcp_admin import public_config_summary
 
 DISCOVERY_PROTO = "axxonsoft/bl/discovery/Discovery.proto"
+DISCOVERY_PB2 = "axxonsoft.bl.discovery.Discovery_pb2"
 EMPTY_PB2 = "google.protobuf.empty_pb2"
 DEVICE_CAP = 1000
 SECONDS_CAP = 120
@@ -29,6 +32,7 @@ _DEVICE_FIELDS = ("driver", "driver_version", "vendor", "model", "mac_address", 
 DISCOVERY_TOOL_NAMES = (
     "discovery_connect_axxon_profile",
     "discover_devices",
+    "discover_node_devices",
 )
 
 
@@ -69,20 +73,18 @@ class AxxonMcpDiscovery:
             self.discovery_connect_axxon_profile("env")
         return self.client
 
-    def discover_devices(self, max_devices: int = 200, max_seconds: float = 20.0) -> dict[str, Any]:
-        max_devices = min(max(int(max_devices), 1), DEVICE_CAP)
-        max_seconds = min(max(float(max_seconds), 1.0), SECONDS_CAP)
-        client = self.ensure_client()
-        client.authenticate_grpc()
-        stub = client.stub_from_proto(DISCOVERY_PROTO, "DiscoveryService")
-        empty = client.import_module(EMPTY_PB2)
+    def _drain_progress(self, client: Any, stream: Any, max_devices: int, max_seconds: float) -> tuple[list[dict[str, Any]], str, int, bool]:
+        """Aggregate devices from a progress stream until a cap or finished state.
 
-        stub.Discover(empty.Empty(), timeout=client.config.timeout)
+        A progress-stream DEADLINE_EXCEEDED (the scan has not produced results yet)
+        is tolerated: draining stops and `timed_out` is True, keeping whatever
+        devices were gathered. Other RpcErrors propagate.
+        """
         devices: dict[str, dict[str, Any]] = {}
         state = "PROGRESS_STATE_RUNNING"
         promille = 0
+        timed_out = False
         deadline = time.monotonic() + max_seconds
-        stream = stub.GetDiscoveryProgress(empty.Empty(), timeout=client.config.timeout)
         try:
             for page in stream:
                 data = client.message_to_dict(page)
@@ -94,12 +96,27 @@ class AxxonMcpDiscovery:
                         devices[key] = _summarize_device(device)
                 if len(devices) >= max_devices or state in FINISHED_STATES or time.monotonic() >= deadline:
                     break
+        except grpc.RpcError as error:
+            if error.code() != grpc.StatusCode.DEADLINE_EXCEEDED:
+                raise
+            timed_out = True
         finally:
             cancel = getattr(stream, "cancel", None)
             if callable(cancel):
                 cancel()
+        return list(devices.values())[:max_devices], state, promille, timed_out
 
-        device_list = list(devices.values())[:max_devices]
+    def discover_devices(self, max_devices: int = 200, max_seconds: float = 20.0) -> dict[str, Any]:
+        max_devices = min(max(int(max_devices), 1), DEVICE_CAP)
+        max_seconds = min(max(float(max_seconds), 1.0), SECONDS_CAP)
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        stub = client.stub_from_proto(DISCOVERY_PROTO, "DiscoveryService")
+        empty = client.import_module(EMPTY_PB2)
+
+        stub.Discover(empty.Empty(), timeout=client.config.timeout)
+        stream = stub.GetDiscoveryProgress(empty.Empty(), timeout=client.config.timeout)
+        device_list, state, promille, _ = self._drain_progress(client, stream, max_devices, max_seconds)
         return {
             "status": "ok",
             "discover_started": True,
@@ -107,5 +124,28 @@ class AxxonMcpDiscovery:
             "promille": promille,
             "count": len(device_list),
             "devices": device_list,
+            "caps": {"max_devices": max_devices, "max_seconds": max_seconds},
+        }
+
+    def discover_node_devices(self, node: str = "", max_devices: int = 200, max_seconds: float = 20.0) -> dict[str, Any]:
+        max_devices = min(max(int(max_devices), 1), DEVICE_CAP)
+        max_seconds = min(max(float(max_seconds), 1.0), SECONDS_CAP)
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        stub = client.stub_from_proto(DISCOVERY_PROTO, "DiscoveryService")
+        pb2 = client.import_module(DISCOVERY_PB2)
+
+        stub.DiscoverNode(pb2.DiscoveryRequest(node=node), timeout=client.config.timeout)
+        stream = stub.GetNodeDiscoveryProgress(pb2.DiscoveryRequest(node=node), timeout=client.config.timeout)
+        device_list, state, promille, timed_out = self._drain_progress(client, stream, max_devices, max_seconds)
+        return {
+            "status": "ok",
+            "discover_started": True,
+            "node": node,
+            "state": state,
+            "promille": promille,
+            "count": len(device_list),
+            "devices": device_list,
+            "progress_timed_out": timed_out,
             "caps": {"max_devices": max_devices, "max_seconds": max_seconds},
         }

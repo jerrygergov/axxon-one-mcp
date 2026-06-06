@@ -116,6 +116,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     ChangeLists; live round-tripped reversibly (stream-add throwaway LPR list ->
     stream-remove). -> tested-pass; all 7 non-fixture recognizer methods now pass
     (only GetData stays fixture-warn, biometric, out of scope).
+10j. **DiscoveryService DiscoverNode (phase-23)** — `discover_node_devices` added to the
+    existing read-only discovery module (`--enable-discovery`). Node-scoped twin of
+    Discover; live-verified read-only (started a scan on node "Server", found devices via
+    GetNodeDiscoveryProgress). Shares the progress-drain helper with discover_devices and
+    tolerates a slow-stream DEADLINE_EXCEEDED (`progress_timed_out`). -> tested-pass; all 4
+    non-fixture DiscoveryService methods now pass (only Probe stays fixture-warn).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -206,4 +212,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **198 tested-pass / 125 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **199 tested-pass / 124 pending / 38 fixture-warn** (361 total).
