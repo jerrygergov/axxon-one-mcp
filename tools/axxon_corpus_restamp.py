@@ -215,6 +215,11 @@ RESTAMP = {
     # Read-only network scan, no mutation. Node-scan reads now complete (Probe stays fixture-warn).
     ("DiscoveryService", "DiscoverNode"): (
         "tested-pass", ".agent/tasks/phase-23-discover-node/raw/live-verify.txt (node-scoped scan, devices found)"),
+    # Phase 24: LayoutImagesManager streaming image download live round-tripped through the
+    # MCP tool (uploaded a throwaway 1x1 PNG fixture, downloaded it via DownloadLayoutImage,
+    # bytes matched, then removed). Read-only download; metadata-only response. LayoutImagesManager 4/4.
+    ("LayoutImagesManager", "DownloadLayoutImage"): (
+        "tested-pass", ".agent/tasks/phase-24-download-layout-image/raw/live-verify.txt (download streamed image, metadata-only)"),
 }
 
 

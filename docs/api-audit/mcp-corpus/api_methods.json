@@ -2184,7 +2184,7 @@
     {
       "fqmn": "axxonsoft.bl.layout.LayoutImagesManager.DownloadLayoutImage",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DownloadLayoutImage",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutImagesManager.proto",
@@ -2192,7 +2192,8 @@
       "response": "DownloadLayoutImageResponse",
       "safety_class": "read",
       "service": "LayoutImagesManager",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-24-download-layout-image/raw/live-verify.txt (download streamed image, metadata-only)"
     },
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.ListLayouts",

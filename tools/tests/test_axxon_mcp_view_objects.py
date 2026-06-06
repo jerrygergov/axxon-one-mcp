@@ -54,6 +54,7 @@ class FakeClient:
             },
         ]
         self.map_image_bytes: dict[str, bytes] = {"m-1": b"X" * 10, "m-big": b"Y" * 5_000_000}
+        self.layout_image_bytes: dict[str, bytes] = {"img-1": b"P" * 70, "img-big": b"Q" * 5_000_000}
         self.map_markers: dict[str, list[dict[str, Any]]] = {
             "m-1": [
                 {
@@ -162,6 +163,13 @@ class FakeClient:
         if layout_id in ("lid-grpc-down", "lid-unknown"):
             raise RuntimeError("grpc transport unavailable")
         return {"images": [{"id": "img-1", "etag": "ie-1"}]}
+
+    def download_layout_image_grpc(self, layout_id: str, image_id: str, chunk_size_kb: int = 32) -> dict[str, Any]:
+        self.calls.append(("download_layout_image_grpc", (layout_id, image_id, chunk_size_kb), {}))
+        if image_id == "img-missing":
+            raise RuntimeError("image not found")
+        raw = self.layout_image_bytes.get(image_id, b"")
+        return {"etag": f"li-etag-{image_id}", "total_size_bytes": len(raw), "chunk_count": 2, "data": raw}
 
     def list_maps(self) -> dict[str, Any]:
         self.calls.append(("list_maps", (), {}))
@@ -492,6 +500,38 @@ class AxxonMcpViewObjectsTests(unittest.TestCase):
         module = importlib.import_module("axxon_mcp_view_objects")
         vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
         r = vo.get_map_image("m-missing")
+        self.assertEqual(r["status"], "gap")
+
+    def test_download_layout_image_returns_metadata_no_raw_bytes(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.download_layout_image("lid-1", "img-1")
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["layout_id"], "lid-1")
+        self.assertEqual(r["image_id"], "img-1")
+        self.assertEqual(r["total_size_bytes"], 70)
+        self.assertEqual(r["bytes_returned"], 70)
+        self.assertFalse(r["truncated"])
+        self.assertEqual(r["chunk_count"], 2)
+        self.assertEqual(r["etag"], "li-etag-img-1")
+        self.assertNotIn("data", r)
+        self.assertIn(("download_layout_image_grpc", ("lid-1", "img-1", 32), {}), fake.calls)
+
+    def test_download_layout_image_truncates_at_cap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        fake = FakeClient()
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: fake, config_factory=lambda: FakeConfig())
+        r = vo.download_layout_image("lid-1", "img-big", max_bytes=1000)
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["bytes_returned"], 1000)
+        self.assertTrue(r["truncated"])
+        self.assertNotIn("data", r)
+
+    def test_download_layout_image_missing_returns_gap(self) -> None:
+        module = importlib.import_module("axxon_mcp_view_objects")
+        vo = module.AxxonMcpViewObjects(client_factory=lambda _cfg: FakeClient(), config_factory=lambda: FakeConfig())
+        r = vo.download_layout_image("lid-1", "img-missing")
         self.assertEqual(r["status"], "gap")
 
     def test_get_markers_returns_normalized_list(self) -> None:

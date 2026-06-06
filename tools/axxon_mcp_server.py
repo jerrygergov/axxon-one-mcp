@@ -713,6 +713,11 @@ def register_view_objects_tools(server: Any, view_objects: Any) -> None:
         """List image metadata for one layout."""
         return view_objects.list_layout_images(layout_id)
 
+    @server.tool(name="download_layout_image")
+    def download_layout_image(layout_id: str, image_id: str, max_bytes: int = 4_194_304) -> dict[str, Any]:
+        """Return layout image metadata only (etag/size/chunks), capped by byte budget."""
+        return view_objects.download_layout_image(layout_id, image_id, max_bytes=max_bytes)
+
     @server.tool(name="list_maps")
     def list_maps(limit: int = 50) -> dict[str, Any]:
         """List maps with normalized metadata."""

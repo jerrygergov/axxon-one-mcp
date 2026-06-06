@@ -122,6 +122,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     GetNodeDiscoveryProgress). Shares the progress-drain helper with discover_devices and
     tolerates a slow-stream DEADLINE_EXCEEDED (`progress_timed_out`). -> tested-pass; all 4
     non-fixture DiscoveryService methods now pass (only Probe stays fixture-warn).
+10k. **LayoutImagesManager DownloadLayoutImage (phase-24)** — `download_layout_image`
+    added to the view-objects module (read), with a `download_layout_image_grpc` client
+    helper for the server-streaming chunk download (the HTTP /grpc bridge 500s here).
+    Live round-tripped (uploaded a 1x1 PNG fixture, downloaded it via the streaming RPC,
+    bytes matched, removed). Returns metadata only (etag/size/chunks, no raw bytes), like
+    get_map_image. -> tested-pass; LayoutImagesManager now 4/4.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -212,4 +218,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **199 tested-pass / 124 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **200 tested-pass / 123 pending / 38 fixture-warn** (361 total).

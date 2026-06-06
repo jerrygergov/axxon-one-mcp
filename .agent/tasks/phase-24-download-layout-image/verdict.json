@@ -1,0 +1,48 @@
+{
+  "task_id": "phase-24-download-layout-image",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_api_client.py:983 download_layout_image_grpc(layout_id, image_id, chunk_size_kb=32) builds DownloadLayoutImageRequest{layout_id,image_id,chunk_size_kb}, iterates stub.DownloadLayoutImage server stream, takes etag+total_size_bytes from first response (chunk_count==0), accumulates chunk_data, returns dict with etag/total_size_bytes/chunk_count/data. Mirrors existing direct-gRPC helper idiom."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_view_objects.py:212 download_layout_image(layout_id, image_id, max_bytes=MAP_IMAGE_BYTES_CAP) calls helper and returns metadata only (status, tool, layout_id, image_id, etag, total_size_bytes, bytes_returned=min(total,cap), truncated, chunk_count, applied_cap). Response has no 'data' key. Helper exception returns status=gap. Confirmed no raw image bytes in response."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_server.py:716 @server.tool(name=\"download_layout_image\") registered immediately after list_layout_images (line 711) in the existing view-objects registration; no new flag, no new create_server param."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "3 new tests in tools/tests/test_axxon_mcp_view_objects.py: test_download_layout_image_returns_metadata_no_raw_bytes (line 505; asserts metadata fields and assertNotIn('data', r) at line 518), test_download_layout_image_truncates_at_cap (bytes_returned=1000, truncated, assertNotIn 'data'), test_download_layout_image_missing_returns_gap. Full suite 793 OK; view-objects 28 OK on rerun."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "docs/api-audit/mcp-corpus/api_methods.json: all 4 LayoutImagesManager methods live_status=tested-pass (DownloadLayoutImage included). Corpus counts computed from methods list: pass-class=200 (tested-pass 177 + tested-pass-empty 2 + tested-pass-safe-record 21), pending=123, fixture-warn=38, total=361. Coverage doc docs/api-audit/capability-vs-coverage-2026-06-05.md line 221 reads '200 tested-pass / 123 pending / 38 fixture-warn (361 total)'; item 10k (lines 125-130) notes the layout-image download and LayoutImagesManager 4/4. Restamp dry-run reports 0 restamped."
+    }
+  ],
+  "commands_run": [
+    {"cmd": "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_view_objects; import axxon_api_client\"", "result": "import OK"},
+    {"cmd": "python3.12 -m unittest discover -s tools/tests", "result": "Ran 793 tests ... OK"},
+    {"cmd": "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_view_objects.py -v", "result": "Ran 28 tests ... OK"},
+    {"cmd": "python3.12 tools/axxon_corpus_restamp.py", "result": "0 method(s) restamped (dry-run)"}
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-24-download-layout-image/spec.md",
+    "tools/axxon_api_client.py",
+    "tools/axxon_mcp_view_objects.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_view_objects.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ]
+}

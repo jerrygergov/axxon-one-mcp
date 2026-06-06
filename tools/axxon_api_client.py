@@ -980,6 +980,38 @@ class AxxonApiClient:
         )
         return self.message_to_dict(response)
 
+    def download_layout_image_grpc(self, layout_id: str, image_id: str, chunk_size_kb: int = 32) -> dict[str, Any]:
+        """Download a layout image over the direct-gRPC server stream.
+
+        The HTTP /grpc bridge 500s for LayoutImagesManager, so this assembles the
+        DownloadLayoutImage chunk stream. etag and total_size_bytes are only
+        guaranteed on the first response.
+
+        Args:
+            layout_id (str): Target layout UID.
+            image_id (str): Image UID to download.
+            chunk_size_kb (int, optional): Requested chunk size in KiB.
+
+        Returns:
+            (dict): etag, total_size_bytes, chunk_count, and the assembled data bytes.
+        """
+        stub = self.stub_from_proto(
+            "axxonsoft/bl/layout/LayoutImagesManager.proto", "LayoutImagesManager"
+        )
+        pb2 = self.import_module("axxonsoft.bl.layout.LayoutImagesManager_pb2")
+        request = pb2.DownloadLayoutImageRequest(layout_id=layout_id, image_id=image_id, chunk_size_kb=chunk_size_kb)
+        data = bytearray()
+        etag = ""
+        total_size_bytes = 0
+        chunk_count = 0
+        for response in stub.DownloadLayoutImage(request, timeout=self.config.timeout):
+            if chunk_count == 0:
+                etag = response.etag
+                total_size_bytes = response.total_size_bytes
+            data += response.chunk_data
+            chunk_count += 1
+        return {"etag": etag, "total_size_bytes": total_size_bytes, "chunk_count": chunk_count, "data": bytes(data)}
+
     def list_maps(self) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.maps.MapService.ListMaps",

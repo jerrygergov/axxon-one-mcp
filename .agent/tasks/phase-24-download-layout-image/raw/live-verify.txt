@@ -1,0 +1,34 @@
+Phase 24 - LayoutImagesManager DownloadLayoutImage (server-streaming image download)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+The download was exercised end-to-end THROUGH the shipped MCP tool
+(axxon_mcp_view_objects.download_layout_image). The HTTP /grpc bridge 500s for
+LayoutImagesManager, so the read goes over the direct-gRPC chunk stream via the
+new download_layout_image_grpc client helper.
+
+[fixture setup] (reversible; upload/remove are not part of the shipped tool)
+  list images before          -> 0
+  upload throwaway 1x1 PNG     -> status=OK (image_id=<uuid>, 70 bytes), count 0->1
+
+[download_layout_image] (the shipped read tool; metadata-only, no raw bytes)
+  status=ok
+  layout_id=<uuid> image_id=<uuid>
+  total_size_bytes=70  bytes_returned=70  truncated=False
+  chunk_count=1  applied_cap=4194304
+  etag_present=True
+  raw_bytes_in_response=False   (the response carries metadata only, never image bytes)
+
+[gap path]
+  download_layout_image(unknown image_id) -> status=gap
+
+[fixture teardown]
+  remove throwaway image       -> count 1->0 (restored)
+
+[probe note] (direct-gRPC round-trip before building)
+  Downloaded the uploaded image via DownloadLayoutImage: 1 chunk, total_size_bytes=70,
+  assembled bytes matched the uploaded PNG exactly, etag present on the first response.
+
+[hygiene]
+  The download itself is read-only. The upload/remove were fixture setup only and were
+  fully reversed; the stand ends with 0 images on the layout. No raw image bytes are
+  emitted by the tool or committed here. No proto/CA/PDF committed. Secrets env-only.
+  No biometric data.

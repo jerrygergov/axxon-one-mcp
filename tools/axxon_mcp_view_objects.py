@@ -209,6 +209,35 @@ class AxxonMcpViewObjects:
             "items": items,
         }
 
+    def download_layout_image(self, layout_id: str, image_id: str, max_bytes: int = MAP_IMAGE_BYTES_CAP) -> dict[str, Any]:
+        # Streams the image over direct gRPC (the HTTP /grpc bridge 500s here) and
+        # returns metadata only, mirroring get_map_image: no raw bytes in the response.
+        applied_cap = min(max(int(max_bytes), 1), MAP_IMAGE_BYTES_CAP)
+        client = self._ensure_client()
+        try:
+            body = client.download_layout_image_grpc(layout_id, image_id)
+        except Exception:
+            return {
+                "status": "gap",
+                "tool": "download_layout_image",
+                "message": f"Layout image not available: {layout_id}/{image_id}",
+            }
+        data = body.get("data") or b""
+        total = int(body.get("total_size_bytes") or len(data))
+        truncated = total > applied_cap or len(data) > applied_cap
+        return {
+            "status": "ok",
+            "tool": "download_layout_image",
+            "layout_id": layout_id,
+            "image_id": image_id,
+            "etag": body.get("etag", ""),
+            "total_size_bytes": total,
+            "bytes_returned": min(total, applied_cap),
+            "truncated": truncated,
+            "chunk_count": int(body.get("chunk_count", 0)),
+            "applied_cap": applied_cap,
+        }
+
     def list_maps(self, limit: int = 50) -> dict[str, Any]:
         applied_limit = min(max(int(limit), 1), LIST_LIMIT_CAP)
         client = self._ensure_client()
