@@ -27,6 +27,7 @@ class FakeClient:
     config = FakeConfig()
 
     def __init__(self) -> None:
+        self.calls: list = []
         self.inventory = {
             "cameras": [
                 {
@@ -48,6 +49,30 @@ class FakeClient:
 
     def load_inventory(self):
         return self.inventory
+
+    def get_cameras_by_components(self, access_points):
+        self.calls.append(("get_cameras_by_components", list(access_points)))
+        return {
+            "items": [{"access_point": ap, "display_name": "Cam", "serial_number": "SHOULD_NOT_LEAK"} for ap in access_points],
+            "not_found_objects": ["missing-cam"],
+            "unreachable_objects": [],
+        }
+
+    def batch_get_archives_domain(self, access_points):
+        self.calls.append(("batch_get_archives_domain", list(access_points)))
+        return {
+            "items": [{"access_point": ap, "enabled": True} for ap in access_points],
+            "not_found_objects": [],
+            "unreachable_objects": ["unreachable-arc"],
+        }
+
+    def search_maps(self, access_points):
+        self.calls.append(("search_maps", list(access_points)))
+        return {
+            "maps": [{"access_point": ap, "map_ids": ["m-1", "m-2"]} for ap in access_points],
+            "not_found_objects": [],
+            "unreachable_objects": [],
+        }
 
     def sanitize(self, value):
         if isinstance(value, dict):
@@ -289,6 +314,55 @@ class AxxonMcpViewTests(unittest.TestCase):
         self.assertEqual(result["statistics"]["bitrate"], 1234)
         self.assertEqual(result["rtsp"]["sessions"], [])
         self.assertNotIn("password", str(result))
+
+
+class DomainBatchReadTests(unittest.TestCase):
+    def _view(self):
+        module = importlib.import_module("axxon_mcp_view")
+        fake = FakeClient()
+        view = module.AxxonMcpView(client_factory=lambda _config: fake, config_factory=lambda: FakeConfig())
+        view.connect_axxon_profile("env")
+        return view, fake
+
+    def test_get_cameras_by_components_summarizes(self) -> None:
+        view, fake = self._view()
+        ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+        r = view.get_cameras_by_components([ap])
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["tool"], "get_cameras_by_components")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["not_found"], ["missing-cam"])
+        self.assertEqual(r["unreachable"], [])
+        self.assertEqual(r["items"][0]["access_point"], ap)
+        self.assertIn(("get_cameras_by_components", [ap]), fake.calls)
+        self.assertNotIn("SHOULD_NOT_LEAK", str(r))
+
+    def test_batch_get_archives_summarizes(self) -> None:
+        view, fake = self._view()
+        ap = "hosts/Server/MultimediaStorage.Main/MultimediaStorage"
+        r = view.batch_get_archives([ap])
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["tool"], "batch_get_archives")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["unreachable"], ["unreachable-arc"])
+        self.assertIn(("batch_get_archives_domain", [ap]), fake.calls)
+
+    def test_search_maps_summarizes(self) -> None:
+        view, fake = self._view()
+        ap = "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0"
+        r = view.search_maps([ap])
+        self.assertEqual(r["status"], "ok")
+        self.assertEqual(r["tool"], "search_maps")
+        self.assertEqual(r["count"], 1)
+        self.assertEqual(r["items"][0]["map_ids"], ["m-1", "m-2"])
+        self.assertIn(("search_maps", [ap]), fake.calls)
+
+    def test_empty_input_is_gap_without_wire_call(self) -> None:
+        for method in ("get_cameras_by_components", "batch_get_archives", "search_maps"):
+            view, fake = self._view()
+            r = getattr(view, method)([])
+            self.assertEqual(r["status"], "gap", method)
+            self.assertEqual(fake.calls, [], method)
 
 
 if __name__ == "__main__":

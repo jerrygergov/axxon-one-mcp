@@ -134,6 +134,13 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     background thread, applies UpdateSubscription with new filters (Bookmark -> Alert), then
     disconnects. Live-verified for BOTH DomainNotifier and NodeNotifier (same helper via the
     notifier param). Both -> tested-pass (only PushDiagnosticEvents / NodeNotifier.Ping remain).
+10m. **DomainService batch reads (phase-26)** — `get_cameras_by_components`,
+    `batch_get_archives`, `search_maps` added to the view module (read-only batch lookups by
+    ResourceLocator access point), backed by a shared `_domain_batch_read` client helper.
+    Live-verified with real camera/archive access points (each returned its entity). All three
+    -> tested-pass; DomainService now 21/21 (complete). AcfaService PerformAction/DownloadData
+    were probed and rejected first (no configured ACFA units on the stand; PerformAction is a
+    non-reversible physical action).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -225,4 +232,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **202 tested-pass / 121 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **205 tested-pass / 118 pending / 38 fixture-warn** (361 total).

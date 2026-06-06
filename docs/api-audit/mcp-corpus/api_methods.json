@@ -1331,7 +1331,7 @@
     {
       "fqmn": "axxonsoft.bl.domain.DomainService.GetCamerasByComponents",
       "http_annotation": "POST /v1/domain/cameras:getByComponents",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "GetCamerasByComponents",
       "package": "axxonsoft.bl.domain",
       "proto": "axxonsoft/bl/domain/Domain.proto",
@@ -1339,7 +1339,8 @@
       "response": "GetCamerasByComponentsResponse",
       "safety_class": "review",
       "service": "DomainService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 camera by component AP)"
     },
     {
       "fqmn": "axxonsoft.bl.domain.DomainService.ListArchives",
@@ -1357,7 +1358,7 @@
     {
       "fqmn": "axxonsoft.bl.domain.DomainService.BatchGetArchives",
       "http_annotation": "POST /v1/domain/archives:batchGet",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchGetArchives",
       "package": "axxonsoft.bl.domain",
       "proto": "axxonsoft/bl/domain/Domain.proto",
@@ -1365,7 +1366,8 @@
       "response": "BatchGetArchivesResponse",
       "safety_class": "review",
       "service": "DomainService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 archive by AP)"
     },
     {
       "fqmn": "axxonsoft.bl.domain.DomainService.ListControlPanels",
@@ -1526,7 +1528,7 @@
     {
       "fqmn": "axxonsoft.bl.domain.DomainService.SearchMaps",
       "http_annotation": "POST /v1/domain/maps:search",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SearchMaps",
       "package": "axxonsoft.bl.domain",
       "proto": "axxonsoft/bl/domain/Domain.proto",
@@ -1534,7 +1536,8 @@
       "response": "SearchMapsResponse",
       "safety_class": "review",
       "service": "DomainService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 map locator by AP)"
     },
     {
       "fqmn": "axxonsoft.bl.domain.DomainManager.EnumerateNodes",

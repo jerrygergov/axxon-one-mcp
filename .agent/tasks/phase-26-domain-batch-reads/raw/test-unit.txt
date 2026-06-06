@@ -1,0 +1,8 @@
+=== full suite ===
+Ran 800 tests in 0.690s
+OK
+=== view suite ===
+Ran 17 tests in 0.029s
+OK
+=== import ===
+server import OK

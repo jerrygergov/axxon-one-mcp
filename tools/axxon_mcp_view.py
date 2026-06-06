@@ -319,3 +319,53 @@ class AxxonMcpView:
             "statistics": statistics,
             "rtsp": rtsp,
         }
+
+    def _ensure_client(self) -> Any:
+        if self.client is None:
+            self.connect_axxon_profile("env")
+        return self.client
+
+    def get_cameras_by_components(self, access_points: list[str]) -> dict[str, Any]:
+        access_points = [ap for ap in (access_points or []) if ap]
+        if not access_points:
+            return {"status": "gap", "tool": "get_cameras_by_components", "message": "provide at least one access_point"}
+        result = self._ensure_client().get_cameras_by_components(access_points)
+        items = result.get("items", [])
+        return {
+            "status": "ok",
+            "tool": "get_cameras_by_components",
+            "count": len(items),
+            "items": [{"access_point": it.get("access_point", ""), "display_name": it.get("display_name", "")} for it in items],
+            "not_found": list(result.get("not_found_objects", [])),
+            "unreachable": list(result.get("unreachable_objects", [])),
+        }
+
+    def batch_get_archives(self, access_points: list[str]) -> dict[str, Any]:
+        access_points = [ap for ap in (access_points or []) if ap]
+        if not access_points:
+            return {"status": "gap", "tool": "batch_get_archives", "message": "provide at least one access_point"}
+        result = self._ensure_client().batch_get_archives_domain(access_points)
+        items = result.get("items", [])
+        return {
+            "status": "ok",
+            "tool": "batch_get_archives",
+            "count": len(items),
+            "items": [{"access_point": it.get("access_point", ""), "enabled": it.get("enabled")} for it in items],
+            "not_found": list(result.get("not_found_objects", [])),
+            "unreachable": list(result.get("unreachable_objects", [])),
+        }
+
+    def search_maps(self, access_points: list[str]) -> dict[str, Any]:
+        access_points = [ap for ap in (access_points or []) if ap]
+        if not access_points:
+            return {"status": "gap", "tool": "search_maps", "message": "provide at least one access_point"}
+        result = self._ensure_client().search_maps(access_points)
+        maps = result.get("maps", [])
+        return {
+            "status": "ok",
+            "tool": "search_maps",
+            "count": len(maps),
+            "items": [{"access_point": m.get("access_point", ""), "map_ids": list(m.get("map_ids", []))} for m in maps],
+            "not_found": list(result.get("not_found_objects", [])),
+            "unreachable": list(result.get("unreachable_objects", [])),
+        }

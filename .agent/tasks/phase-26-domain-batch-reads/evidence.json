@@ -1,0 +1,35 @@
+{
+  "task_id": "phase-26-domain-batch-reads",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "three DomainService batch-read client helpers sharing a drain", "status": "PASS",
+     "proof": ["tools/axxon_api_client.py _domain_batch_read + get_cameras_by_components/batch_get_archives_domain/search_maps", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 camera/archive/map each)"], "gaps": []},
+    {"id": "AC2", "text": "three read-only view tools, summarized result, empty-input gap (no wire)", "status": "PASS",
+     "proof": ["tools/axxon_mcp_view.py get_cameras_by_components/batch_get_archives/search_maps", "tools/tests/test_axxon_mcp_view.py DomainBatchReadTests", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt ([gap] all three)"], "gaps": []},
+    {"id": "AC3", "text": "tools registered in existing register_view_tools", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py get_cameras_by_components/batch_get_archives/search_maps tools", ".agent/tasks/phase-26-domain-batch-reads/raw/test-unit.txt (server import OK)"], "gaps": []},
+    {"id": "AC4", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-26-domain-batch-reads/raw/test-unit.txt (Ran 800 ... OK; view suite 17 OK incl 4 new)"], "gaps": []},
+    {"id": "AC5", "text": "corpus restamp 3 reads tested-pass; coverage 205; DomainService 21/21", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py DomainService entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (205/118/38, DomainService 21/21, item 10m)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_api_client.py",
+    "tools/axxon_mcp_view.py",
+    "tools/tests/test_axxon_mcp_view.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_view; import axxon_api_client\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_view.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "AcfaService PerformAction/DownloadData stay pending: no configured ACFA units on the stand and PerformAction is a non-reversible physical action.",
+    "Tools return access points / ids and counts only (no media bytes), consistent with the view module contract."
+  ]
+}

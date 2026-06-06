@@ -596,6 +596,21 @@ def register_view_tools(server: Any, view: Any) -> None:
         """Return /statistics and /rtsp/stat summary for a camera access point."""
         return view.stream_health(camera_access_point)
 
+    @server.tool(name="get_cameras_by_components")
+    def get_cameras_by_components(access_points: list[str] | None = None) -> dict[str, Any]:
+        """Batch-lookup cameras by component access points (read-only)."""
+        return view.get_cameras_by_components(access_points or [])
+
+    @server.tool(name="batch_get_archives")
+    def batch_get_archives(access_points: list[str] | None = None) -> dict[str, Any]:
+        """Batch-lookup archives by access points (read-only)."""
+        return view.batch_get_archives(access_points or [])
+
+    @server.tool(name="search_maps")
+    def search_maps(access_points: list[str] | None = None) -> dict[str, Any]:
+        """Search maps associated with object access points (read-only)."""
+        return view.search_maps(access_points or [])
+
 
 def register_alarm_read_tools(server: Any, alarms: Any) -> None:
     @server.tool(name="alarms_connect_axxon_profile")

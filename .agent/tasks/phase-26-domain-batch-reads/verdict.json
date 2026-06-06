@@ -1,0 +1,48 @@
+{
+  "task_id": "phase-26-domain-batch-reads",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "commands_run": [
+    "python3.12 -c import axxon_mcp_server/axxon_mcp_view/axxon_api_client -> import OK",
+    "python3.12 -m unittest discover -s tools/tests -> Ran 800 tests, OK",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_view.py -v -> Ran 17 tests, OK (4 DomainBatchReadTests)",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)"
+  ],
+  "artifacts_used": [
+    "spec.md",
+    "tools/axxon_api_client.py",
+    "tools/axxon_mcp_view.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_view.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_api_client.py:1367 _domain_batch_read builds ResourceLocator(access_point=...), drains the DomainService server stream, returns items/maps + not_found_objects + unreachable_objects. get_cameras_by_components(1395), batch_get_archives_domain(1398), search_maps(1402) delegate to _domain_batch_read with no duplicated drain loop."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_view.py:328-371 three read-only tools return {status, tool, count, items, not_found, unreachable}. Empty access-points returns status=gap before _ensure_client() so no wire call. Summarized items expose only access_point / display_name / enabled / map_ids (no serial_number)."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_server.py:599-612 registers get_cameras_by_components, batch_get_archives, search_maps as @server.tool inside register_view_tools (def line 538). No new flag or create_server param."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "tools/tests/test_axxon_mcp_view.py:319 DomainBatchReadTests: 4 tests covering summarization, no-leak (SHOULD_NOT_LEAK absent), request shape via fake.calls, and empty-input gap with fake.calls == []. Full suite 800 tests OK on rerun."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "api_methods.json: DomainService GetCamerasByComponents/BatchGetArchives/SearchMaps all live_status=tested-pass; DomainService 21/21, no pending. Corpus counts: pass-class 205 (tested-pass 182 + tested-pass-empty 2 + tested-pass-safe-record 21), pending 118, fixture-warn 38, total 361. Coverage doc line 235 states '205 tested-pass / 118 pending / 38 fixture-warn (361 total)'; item 10m (line 137) documents the DomainService batch reads. Restamp dry-run = 0."
+    }
+  ]
+}

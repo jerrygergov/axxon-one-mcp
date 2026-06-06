@@ -1364,6 +1364,43 @@ class AxxonApiClient:
         }
         return self.inventory
 
+    def _domain_batch_read(self, request_name: str, method_name: str, access_points: list[str], items_key: str) -> dict[str, Any]:
+        """Run a DomainService batch-read RPC over a list of ResourceLocator access points.
+
+        Drains the server stream into items/maps plus not_found/unreachable lists.
+
+        Args:
+            request_name (str): Domain_pb2 request message name.
+            method_name (str): DomainService stub method name.
+            access_points (list): Resource access points to look up.
+            items_key (str): Response field holding the entities ("items" or "maps").
+
+        Returns:
+            (dict): items_key list plus not_found_objects and unreachable_objects.
+        """
+        domain = self.common_stubs()["domain"]
+        domain_pb2 = self.pb["domain_pb2"]
+        locators = [domain_pb2.ResourceLocator(access_point=ap) for ap in access_points]
+        request = getattr(domain_pb2, request_name)(items=locators)
+        entities: list[dict[str, Any]] = []
+        not_found: list[str] = []
+        unreachable: list[str] = []
+        for page in getattr(domain, method_name)(request, timeout=self.config.timeout):
+            data = self.message_to_dict(page)
+            entities.extend(data.get(items_key, []))
+            not_found.extend(data.get("not_found_objects", []))
+            unreachable.extend(data.get("unreachable_objects", []))
+        return {items_key: entities, "not_found_objects": not_found, "unreachable_objects": unreachable}
+
+    def get_cameras_by_components(self, access_points: list[str]) -> dict[str, Any]:
+        return self._domain_batch_read("GetCamerasByComponentsRequest", "GetCamerasByComponents", list(access_points), "items")
+
+    def batch_get_archives_domain(self, access_points: list[str]) -> dict[str, Any]:
+        return self._domain_batch_read("BatchGetArchivesRequest", "BatchGetArchives", list(access_points), "items")
+
+    def search_maps(self, access_points: list[str]) -> dict[str, Any]:
+        return self._domain_batch_read("SearchMapsRequest", "SearchMaps", list(access_points), "maps")
+
     def _http_grpc_body(self, fqmn: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
         response = self.http_grpc(fqmn, data or {})
         body = response.get("body") if isinstance(response, dict) else None

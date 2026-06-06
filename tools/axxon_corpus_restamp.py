@@ -227,6 +227,15 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (domain: Bookmark -> Alert filters, disconnect clean)"),
     ("NodeNotifier", "UpdateSubscription"): (
         "tested-pass", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (node: Bookmark -> Alert filters, disconnect clean)"),
+    # Phase 26: DomainService batch read lookups live-verified read-only through the MCP view
+    # tools using real camera/archive access points (each returned its entity, no fixture needed).
+    # Brings DomainService to 21/21.
+    ("DomainService", "GetCamerasByComponents"): (
+        "tested-pass", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 camera by component AP)"),
+    ("DomainService", "BatchGetArchives"): (
+        "tested-pass", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 archive by AP)"),
+    ("DomainService", "SearchMaps"): (
+        "tested-pass", ".agent/tasks/phase-26-domain-batch-reads/raw/live-verify.txt (1 map locator by AP)"),
 }
 
 
