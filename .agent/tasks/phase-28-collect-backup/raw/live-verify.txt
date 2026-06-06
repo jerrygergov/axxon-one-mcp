@@ -1,0 +1,29 @@
+Phase 28 - ConfigurationManager.CollectBackup (read-only config export)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>, node "Server").
+Exercised end-to-end THROUGH the shipped MCP tool (axxon_mcp_admin.collect_config_backup),
+which drains the CollectBackup server stream and returns size/chunk metadata only.
+Read-only configuration export (the inverse of RestoreBackup); no mutation.
+
+[gap] unknown backup type -> no wire call
+  collect_config_backup(node="Server", backup_types=["NOPE"]) -> status=gap
+  message: node required and backup_types must be in LOCAL, SHARED, LICENSE, TICKETS
+
+[gap] empty node -> no wire call
+  collect_config_backup(node="") -> status=gap
+
+[collect_config_backup] live LOCAL export via CollectBackup
+  status=ok node=Server backup_types=['LOCAL']
+  total_size_bytes=1822820 chunk_count=28 byte_count=1822820
+  caps={'chunk_size_kb': 64}
+  data key present in response: False  (metadata-only; raw backup bytes never returned)
+
+[wire shape] (probe before building)
+  CollectBackupRequest{repeated EBackupType type, string node, uint64 chunk_size_kb}
+  -> stream CollectBackupResponse{total_size_bytes, chunk_index, chunk_data}.
+  EBackupType: LOCAL=0, SHARED=1, LICENSE=2, TICKETS=3. total_size_bytes carried on
+  the first response. Drain mirrors download_layout_image_grpc.
+
+[hygiene]
+  Read-only: nothing on the stand was created, changed, or deleted (config export only,
+  not a SetRevision/RestoreBackup). No proto/CA/PDF committed. Secrets env-only. The MCP
+  tool returns metadata only; the raw backup bytes are dropped, not surfaced.

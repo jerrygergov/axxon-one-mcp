@@ -823,5 +823,63 @@ class AxxonMcpAdminNotifierScheduleTests(unittest.TestCase):
         self.assertIn("schedule", result["message"])
 
 
+class FakeBackupClient(FakeClient):
+    def __init__(self, config: FakeConfig) -> None:
+        super().__init__(config)
+        self.calls: list[tuple[str, dict]] = []
+
+    def collect_backup_grpc(self, *, node: str, backup_types: list, chunk_size_kb: int) -> dict:
+        self.calls.append(("collect_backup_grpc", {"node": node, "backup_types": list(backup_types), "chunk_size_kb": chunk_size_kb}))
+        return {
+            "node": node,
+            "backup_types": list(backup_types),
+            "total_size_bytes": 1822820,
+            "chunk_count": 28,
+            "byte_count": 1822820,
+            "data": b"x" * 1822820,
+        }
+
+
+class CollectConfigBackupTests(unittest.TestCase):
+    def _admin(self) -> tuple:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeBackupClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+        return admin, fake
+
+    def test_collect_config_backup_metadata_only(self) -> None:
+        admin, fake = self._admin()
+        result = admin.collect_config_backup(node="Server")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "collect_config_backup")
+        self.assertEqual(result["node"], "Server")
+        self.assertEqual(result["backup_types"], ["LOCAL"])
+        self.assertEqual(result["chunk_count"], 28)
+        self.assertEqual(result["total_size_bytes"], 1822820)
+        self.assertEqual(result["byte_count"], 1822820)
+        self.assertNotIn("data", result)
+        self.assertEqual(fake.calls[0][0], "collect_backup_grpc")
+
+    def test_collect_config_backup_no_node_is_gap_no_wire(self) -> None:
+        admin, fake = self._admin()
+        result = admin.collect_config_backup(node="")
+        self.assertEqual(result["status"], "gap")
+        self.assertEqual(fake.calls, [])
+
+    def test_collect_config_backup_unknown_type_is_gap_no_wire(self) -> None:
+        admin, fake = self._admin()
+        result = admin.collect_config_backup(node="Server", backup_types=["NOPE"])
+        self.assertEqual(result["status"], "gap")
+        self.assertEqual(fake.calls, [])
+
+    def test_collect_config_backup_no_secret_leak(self) -> None:
+        admin, _ = self._admin()
+        result = admin.collect_config_backup(node="Server")
+        self.assertNotIn(marker("CONFIG_PASSWORD"), str(result))
+
+
 if __name__ == "__main__":
     unittest.main()

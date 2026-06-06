@@ -1108,6 +1108,46 @@ class AxxonApiClient:
             chunk_count += 1
         return {"etag": etag, "total_size_bytes": total_size_bytes, "chunk_count": chunk_count, "data": bytes(data)}
 
+    def collect_backup_grpc(self, node: str, backup_types: list[str] | None = None, chunk_size_kb: int = 64) -> dict[str, Any]:
+        """Drain the ConfigurationManager.CollectBackup config-export stream.
+
+        Read-only export: this assembles the backup chunk stream that the server
+        produces from the current configuration. It is the inverse of RestoreBackup
+        and changes nothing on the node. total_size_bytes is taken from the first
+        response.
+
+        Args:
+            node (str): Target node name, for instance "Server".
+            backup_types (list, optional): Human backup-type names to collect
+                (LOCAL, SHARED, LICENSE, TICKETS). Defaults to ["LOCAL"].
+            chunk_size_kb (int, optional): Requested chunk size in KiB.
+
+        Returns:
+            (dict): node, backup_types, total_size_bytes, chunk_count, byte_count,
+                and the assembled data bytes.
+        """
+        stub = self.stub_from_proto("axxonsoft/bl/maintenance/ConfigurationManager.proto", "ConfigurationManager")
+        pb2 = self.import_module("axxonsoft.bl.maintenance.ConfigurationManager_pb2")
+        names = list(backup_types or ["LOCAL"])
+        enum_values = [pb2.CollectBackupRequest.EBackupType.Value(name) for name in names]
+        request = pb2.CollectBackupRequest(type=enum_values, node=node, chunk_size_kb=chunk_size_kb)
+        data = bytearray()
+        total_size_bytes = 0
+        chunk_count = 0
+        for response in stub.CollectBackup(request, timeout=self.config.timeout):
+            if chunk_count == 0:
+                total_size_bytes = response.total_size_bytes
+            data += response.chunk_data
+            chunk_count += 1
+        return {
+            "node": node,
+            "backup_types": names,
+            "total_size_bytes": total_size_bytes,
+            "chunk_count": chunk_count,
+            "byte_count": len(data),
+            "data": bytes(data),
+        }
+
     def list_maps(self) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.maps.MapService.ListMaps",

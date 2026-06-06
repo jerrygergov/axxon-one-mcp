@@ -2836,7 +2836,7 @@
     {
       "fqmn": "axxonsoft.bl.maintenance.ConfigurationManager.CollectBackup",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "CollectBackup",
       "package": "axxonsoft.bl.maintenance",
       "proto": "axxonsoft/bl/maintenance/ConfigurationManager.proto",
@@ -2844,7 +2844,8 @@
       "response": "CollectBackupResponse",
       "safety_class": "read",
       "service": "ConfigurationManager",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-28-collect-backup/raw/live-verify.txt (LOCAL export, 28 chunks / 1.82MB, metadata-only)"
     },
     {
       "fqmn": "axxonsoft.bl.maintenance.ConfigurationManager.RestoreBackup",

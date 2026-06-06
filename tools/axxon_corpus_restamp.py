@@ -241,6 +241,11 @@ RESTAMP = {
     # the deprecated ExecuteQuery MomentQuest string. Brings VMDAService to 3/4 (only Cleanup pending).
     ("VMDAService", "ExecuteQueryTyped"): (
         "tested-pass", ".agent/tasks/phase-27-vmda-query-typed/raw/live-verify.txt (typed motion-in-area query, real VMDA db + source)"),
+    # Phase 28: ConfigurationManager.CollectBackup (read-only config export) live-verified through
+    # collect_config_backup, which drains the backup stream and returns size/chunk metadata only.
+    # Read-only (inverse of RestoreBackup); the safe member of the backup/restore cluster.
+    ("ConfigurationManager", "CollectBackup"): (
+        "tested-pass", ".agent/tasks/phase-28-collect-backup/raw/live-verify.txt (LOCAL export, 28 chunks / 1.82MB, metadata-only)"),
 }
 
 

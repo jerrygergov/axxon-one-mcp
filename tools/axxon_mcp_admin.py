@@ -25,9 +25,12 @@ ADMIN_TOOL_NAMES = (
     "domain_event_subscribe",
     "node_event_subscribe",
     "update_event_subscription",
+    "collect_config_backup",
     "schedule_descriptor_get",
 )
 
+BACKUP_TYPES = ("LOCAL", "SHARED", "LICENSE", "TICKETS")
+BACKUP_CHUNK_KB_CAP = 1024
 NOTIFIER_TIMEOUT_CAP_S = 30.0
 NOTIFIER_LIMIT_CAP = 100
 SCHEDULE_UNIT_TYPE_CANDIDATES = ("DeviceIpint", "MultimediaStorage", "AVDetector", "AppDataDetector")
@@ -729,6 +732,34 @@ class AxxonMcpAdmin:
         out = {"tool": "update_event_subscription", **redact_admin_secrets(result)}
         out["caps"] = {"timeout_s": timeout}
         return out
+
+    def collect_config_backup(
+        self,
+        node: str = "",
+        backup_types: list[str] | None = None,
+        chunk_size_kb: int = 64,
+    ) -> dict[str, Any]:
+        names = list(backup_types or ["LOCAL"])
+        unknown = [name for name in names if name not in BACKUP_TYPES]
+        if not node or unknown:
+            return {
+                "status": "gap",
+                "tool": "collect_config_backup",
+                "message": "node required and backup_types must be in " + ", ".join(BACKUP_TYPES),
+            }
+        chunk = max(1, min(int(chunk_size_kb), BACKUP_CHUNK_KB_CAP))
+        client = self.ensure_client()
+        result = client.collect_backup_grpc(node=node, backup_types=names, chunk_size_kb=chunk)
+        return {
+            "status": "ok",
+            "tool": "collect_config_backup",
+            "node": result["node"],
+            "backup_types": result["backup_types"],
+            "total_size_bytes": result["total_size_bytes"],
+            "chunk_count": result["chunk_count"],
+            "byte_count": result["byte_count"],
+            "caps": {"chunk_size_kb": chunk},
+        }
 
     def _schedule_descriptor(self, uid: str) -> tuple[dict[str, Any] | None, str]:
         client = self.ensure_client()

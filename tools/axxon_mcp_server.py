@@ -468,6 +468,19 @@ def register_admin_tools(server: Any, admin: Any) -> None:
             timeout_s=timeout_s,
         )
 
+    @server.tool(name="collect_config_backup")
+    def collect_config_backup(
+        node: str = "",
+        backup_types: list[str] | None = None,
+        chunk_size_kb: int = 64,
+    ) -> dict[str, Any]:
+        """Stream a read-only configuration backup export and return size/chunk metadata only."""
+        return admin.collect_config_backup(
+            node=node,
+            backup_types=backup_types,
+            chunk_size_kb=chunk_size_kb,
+        )
+
     @server.tool(name="schedule_descriptor_get")
     def schedule_descriptor_get(uid: str) -> dict[str, Any]:
         """Discover schedule-like descriptor fields for a unit without mutation."""

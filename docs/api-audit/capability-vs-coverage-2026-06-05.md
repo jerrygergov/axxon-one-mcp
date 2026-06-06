@@ -146,6 +146,11 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     `QueryDescription(motion_in_area=MotionInArea(area=Polyline))`, fixing a real code/docstring
     mismatch. Live-verified read-only against a real VMDA database + source. -> tested-pass;
     VMDAService now 3/4 (only the destructive Cleanup stays pending).
+10o. **ConfigurationManager CollectBackup (phase-28)** — `collect_config_backup` added to the
+    admin layer; drains the CollectBackup config-export stream and returns size/chunk metadata
+    only (raw backup bytes never surfaced). Read-only (the inverse of RestoreBackup), the safe
+    member of the backup/restore cluster. Live-verified LOCAL export (28 chunks / 1.82 MB);
+    unknown type / empty node -> gap with no wire call. -> tested-pass.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -237,4 +242,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **206 tested-pass / 117 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **207 tested-pass / 116 pending / 38 fixture-warn** (361 total).
