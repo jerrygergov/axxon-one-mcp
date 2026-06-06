@@ -270,6 +270,38 @@ class FakeNotifierScheduleClient(FakeHealthClient):
             "caps": {"timeout_s": timeout_s, "limit": limit},
         }
 
+    def update_subscription_bounded(
+        self,
+        *,
+        notifier: str,
+        event_types: list[str] | None = None,
+        new_event_types: list[str] | None = None,
+        subjects: list[str] | None = None,
+        new_subjects: list[str] | None = None,
+        timeout_s: float = 5.0,
+    ) -> dict:
+        self.calls.append(
+            (
+                "update_subscription",
+                {
+                    "notifier": notifier,
+                    "event_types": list(event_types or []),
+                    "new_event_types": list(new_event_types or []),
+                    "timeout_s": timeout_s,
+                },
+            )
+        )
+        return {
+            "status": "ok",
+            "notifier": notifier,
+            "service": "DomainNotifier" if notifier == "domain" else "NodeNotifier",
+            "subscription_applied": True,
+            "before_event_types": list(event_types or []),
+            "after_event_types": list(new_event_types or []),
+            "disconnect_clean": True,
+            "license_key": marker("LICENSE"),
+        }
+
     def list_units(self, unit_type: str) -> list[dict]:
         self.calls.append(("list_units", {"unit_type": unit_type}))
         return [
@@ -319,6 +351,7 @@ class AxxonMcpAdminScaffoldTests(unittest.TestCase):
             "system_health",
             "domain_event_subscribe",
             "node_event_subscribe",
+            "update_event_subscription",
             "schedule_descriptor_get",
         }
         self.assertTrue(expected.issubset(set(module.ADMIN_TOOL_NAMES)))
@@ -674,6 +707,69 @@ class AxxonMcpAdminNotifierScheduleTests(unittest.TestCase):
             fake.calls,
         )
         self.assertNotIn(marker("LICENSE"), str(result))
+
+    def test_update_event_subscription_applies_new_filters_and_clamps_and_redacts(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.update_event_subscription(
+            notifier="domain",
+            event_types=["ET_Bookmark"],
+            new_event_types=["ET_Alert"],
+            timeout_s=99,
+        )
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["tool"], "update_event_subscription")
+        self.assertEqual(result["notifier"], "domain")
+        self.assertTrue(result["subscription_applied"])
+        self.assertEqual(result["before_event_types"], ["ET_Bookmark"])
+        self.assertEqual(result["after_event_types"], ["ET_Alert"])
+        self.assertEqual(result["caps"]["timeout_s"], module.NOTIFIER_TIMEOUT_CAP_S)
+        self.assertIn(
+            (
+                "update_subscription",
+                {
+                    "notifier": "domain",
+                    "event_types": ["ET_Bookmark"],
+                    "new_event_types": ["ET_Alert"],
+                    "timeout_s": module.NOTIFIER_TIMEOUT_CAP_S,
+                },
+            ),
+            fake.calls,
+        )
+        self.assertNotIn(marker("LICENSE"), str(result))
+
+    def test_update_event_subscription_node_notifier(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.update_event_subscription(notifier="node", event_types=["ET_Bookmark"], new_event_types=["ET_Alert"])
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["notifier"], "node")
+        self.assertIn("NodeNotifier", result["service"])
+
+    def test_update_event_subscription_bad_notifier_is_gap_without_wire_call(self) -> None:
+        module = importlib.import_module("axxon_mcp_admin")
+        fake = FakeNotifierScheduleClient(FakeConfig())
+        admin = module.AxxonMcpAdmin(
+            client_factory=lambda config: fake,
+            config_factory=lambda: FakeConfig(),
+        )
+
+        result = admin.update_event_subscription(notifier="bogus", event_types=["ET_Bookmark"], new_event_types=["ET_Alert"])
+
+        self.assertEqual(result["status"], "gap")
+        self.assertFalse(any(call[0] == "update_subscription" for call in fake.calls))
 
     def test_node_event_subscribe_selects_node_notifier(self) -> None:
         module = importlib.import_module("axxon_mcp_admin")

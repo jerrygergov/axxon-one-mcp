@@ -1801,7 +1801,7 @@
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.UpdateSubscription",
       "http_annotation": "POST /v1/notifier/subscriptions:update",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UpdateSubscription",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1809,7 +1809,8 @@
       "response": "UpdateSubscriptionResponse",
       "safety_class": "mutating",
       "service": "DomainNotifier",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (domain: Bookmark -> Alert filters, disconnect clean)"
     },
     {
       "fqmn": "axxonsoft.bl.events.DomainNotifier.DisconnectEventChannel",
@@ -1869,7 +1870,7 @@
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.UpdateSubscription",
       "http_annotation": "POST /v1/node-notifier/subscriptions:update",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UpdateSubscription",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1877,7 +1878,8 @@
       "response": "UpdateSubscriptionResponse",
       "safety_class": "mutating",
       "service": "NodeNotifier",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (node: Bookmark -> Alert filters, disconnect clean)"
     },
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.DisconnectEventChannel",

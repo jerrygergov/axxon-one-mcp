@@ -1,0 +1,49 @@
+{
+  "task_id": "phase-25-update-subscription",
+  "overall_status": "PASS",
+  "verified_at": "2026-06-06",
+  "verifier": "task-verifier",
+  "summary": "All six acceptance criteria proven against current code and fresh rerun. Imports clean, 796 tests OK, 24 admin tests OK (3 new update_event_subscription tests), restamp dry-run 0. Corpus shows both DomainNotifier and NodeNotifier UpdateSubscription = tested-pass; counts 202/121/38/361 match coverage doc.",
+  "commands": {
+    "import_check": "PASS - import OK",
+    "full_suite": "PASS - Ran 796 tests OK",
+    "admin_module_verbose": "PASS - Ran 24 tests OK (3 new update_event_subscription)",
+    "corpus_restamp_dryrun": "PASS - 0 method(s) restamped (dry-run)"
+  },
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": "axxon_api_client.py:809 update_subscription_bounded with keyword-only signature; builds before/after EventFilters via build_pull_event_filters (lines 856-857), opens PullEvents on threading.Thread daemon (868-869), calls UpdateSubscription(UpdateSubscriptionRequest{subscription_id, filters_after}) (875-878), then DisconnectEventChannel (884-887). Maps domain->DomainNotifier, node->NodeNotifier (843). Returns status, notifier, service, subscription_applied, before_event_types, after_event_types, disconnect_clean (892-900)."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": "UpdateSubscription wrapped in try/except -> applied=False + update_error, no raise (874-881). DisconnectEventChannel in its own try/except, always executes since the preceding update block swallows all exceptions (882-889). Background _hold thread swallows errors (861-866). Helper imports time as _time locally (839) and uses _time.sleep (870); no bare time.sleep NameError risk."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": "axxon_mcp_admin.py:708 update_event_subscription(notifier=domain,...,timeout_s=5.0); bad notifier returns gap dict with no wire call (717-718), clamps timeout with NOTIFIER_TIMEOUT_CAP_S=30.0 (719,31), calls update_subscription_bounded (721-728), returns redact_admin_secrets(result) + tool name (729). Listed in __all__ at line 27."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": "axxon_mcp_server.py:452 @server.tool(name=update_event_subscription) registered immediately after node_event_subscribe (435); delegates to admin.update_event_subscription; no new flag or create_server param."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": "3 new tests in test_axxon_mcp_admin.py:711,747,761. bad-notifier test asserts no update_subscription entry in fake.calls (772). applies-filters test asserts LICENSE marker absent (745) and timeout 99 clamped to NOTIFIER_TIMEOUT_CAP_S (732,740). Full suite 796 OK on rerun."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "evidence": "api_methods.json: DomainNotifier and NodeNotifier UpdateSubscription both live_status=tested-pass. Computed corpus counts: 179+21+2=202 pass-class / 121 pending / 38 fixture-warn / 361 total. capability-vs-coverage-2026-06-05.md line 227 states 202 tested-pass / 121 pending / 38 fixture-warn (361 total); item 10l (131-136) notes both notifiers tested-pass. Restamp dry-run reports 0."
+    }
+  ],
+  "notes": [
+    "AC2: disconnect runs unconditionally after the update try/except rather than literally inside a finally clause; functionally equivalent because the update block cannot raise.",
+    "Coverage doc line 149 (Shipped-but-unstamped section) is historical narrative for commit bc27e3e and is superseded by item 10l; not a count contradiction."
+  ]
+}

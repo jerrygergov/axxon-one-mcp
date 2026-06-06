@@ -806,6 +806,102 @@ class AxxonApiClient:
             result["stream_error"] = stream_error
         return result
 
+    def update_subscription_bounded(
+        self,
+        *,
+        notifier: str,
+        event_types: list[str] | None = None,
+        new_event_types: list[str] | None = None,
+        subjects: list[str] | None = None,
+        new_subjects: list[str] | None = None,
+        timeout_s: float = 5.0,
+    ) -> dict[str, Any]:
+        """Update a live event subscription's filters, self-contained.
+
+        UpdateSubscription only targets a subscription that has an open PullEvents
+        stream, so this opens a short-lived subscription on a background daemon
+        thread, applies UpdateSubscription with the new filters on the main thread,
+        then disconnects. The subscription is fully torn down; nothing persists.
+
+        Args:
+            notifier (str): "domain" (DomainNotifier) or "node" (NodeNotifier).
+            event_types (list, optional): Initial subscription event types.
+            new_event_types (list, optional): Updated event types to apply.
+            subjects (list, optional): Initial subjects.
+            new_subjects (list, optional): Updated subjects.
+            timeout_s (float, optional): Per-call timeout bound.
+
+        Returns:
+            (dict): status, notifier, service, subscription_applied, before/after
+            event types, disconnect_clean, and update_error when the update failed.
+        """
+        import threading
+        import time as _time
+        import uuid as _uuid
+        from axxon_subscription_smoke import build_pull_event_filters
+
+        service_by_notifier = {"domain": "DomainNotifier", "node": "NodeNotifier"}
+        if notifier not in service_by_notifier:
+            raise ValueError("notifier must be 'domain' or 'node'")
+        timeout = max(0.1, min(float(timeout_s), 30.0))
+        if self.grpc_channel is None:
+            self.authenticate_grpc()
+        notify_pb2 = self.import_module("axxonsoft.bl.events.Notification_pb2")
+        events_pb2 = self.import_module("axxonsoft.bl.events.Events_pb2")
+        service_name = service_by_notifier[notifier]
+        notify = self.stub_from_proto("axxonsoft/bl/events/Notification.proto", service_name)
+
+        before = list(event_types or [])
+        after = list(new_event_types or [])
+        filters_before = build_pull_event_filters(notify_pb2, events_pb2, subjects=list(subjects or []), event_types=before)
+        filters_after = build_pull_event_filters(notify_pb2, events_pb2, subjects=list(new_subjects or subjects or []), event_types=after)
+        subscription_id = f"codex-{_uuid.uuid4()}"
+
+        def _hold() -> None:
+            try:
+                request = notify_pb2.PullEventsRequest(subscription_id=subscription_id, filters=filters_before)
+                for _ in notify.PullEvents(request, timeout=timeout):
+                    break
+            except Exception:
+                pass
+
+        holder = threading.Thread(target=_hold, daemon=True)
+        holder.start()
+        _time.sleep(min(timeout / 2.0, 2.0))
+
+        applied = True
+        update_error = ""
+        try:
+            notify.UpdateSubscription(
+                notify_pb2.UpdateSubscriptionRequest(subscription_id=subscription_id, filters=filters_after),
+                timeout=timeout,
+            )
+        except Exception as exc:
+            applied = False
+            update_error = str(exc)[:300]
+        disconnect_clean = True
+        try:
+            notify.DisconnectEventChannel(
+                notify_pb2.DisconnectEventChannelRequest(subscription_id=subscription_id),
+                timeout=min(timeout, 2.0),
+            )
+        except Exception:
+            disconnect_clean = False
+        holder.join(timeout=2.0)
+
+        result: dict[str, Any] = {
+            "status": "ok" if applied else "warn",
+            "notifier": notifier,
+            "service": service_name,
+            "subscription_applied": applied,
+            "before_event_types": before,
+            "after_event_types": after,
+            "disconnect_clean": disconnect_clean,
+        }
+        if update_error:
+            result["update_error"] = update_error
+        return result
+
     def get_active_alerts(self, camera_ap: str) -> dict[str, Any]:
         return self.http_grpc(
             "axxonsoft.bl.logic.LogicService.GetActiveAlerts",

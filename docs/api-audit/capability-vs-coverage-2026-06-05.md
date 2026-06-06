@@ -128,6 +128,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     Live round-tripped (uploaded a 1x1 PNG fixture, downloaded it via the streaming RPC,
     bytes matched, removed). Returns metadata only (etag/size/chunks, no raw bytes), like
     get_map_image. -> tested-pass; LayoutImagesManager now 4/4.
+10l. **UpdateSubscription (phase-25)** — `update_event_subscription` added to the admin
+    notifier layer, backed by `update_subscription_bounded`. UpdateSubscription only targets
+    a live PullEvents stream, so the self-contained tool opens a short-lived subscription on a
+    background thread, applies UpdateSubscription with new filters (Bookmark -> Alert), then
+    disconnects. Live-verified for BOTH DomainNotifier and NodeNotifier (same helper via the
+    notifier param). Both -> tested-pass (only PushDiagnosticEvents / NodeNotifier.Ping remain).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -139,8 +145,9 @@ Re-run + re-stamp; the code already exists:
 
 - **TelemetryService / PTZ** — `axxon_mcp_ptz.py`, 16 tools, Phase 8 live run on `DeviceIpint.53`.
 - ~~**DomainNotifier / NodeNotifier**~~ RECONCILED `bc27e3e` — `domain_event_subscribe` /
-  `node_event_subscribe` exercise PullEvents/PullDetailedEvents/DisconnectEventChannel
-  (Domain 3/5, Node 3/6). UpdateSubscription/PushDiagnosticEvents/Ping stay pending.
+  `node_event_subscribe` exercise PullEvents/PullDetailedEvents/DisconnectEventChannel.
+  UpdateSubscription CLOSED phase-25 (both notifiers, see 10l). Only
+  PushDiagnosticEvents (both) and NodeNotifier.Ping stay pending.
 - **MediaService** — exercised by `live_view` / metadata, raw RPCs unstamped.
 
 ---
@@ -218,4 +225,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **200 tested-pass / 123 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **202 tested-pass / 121 pending / 38 fixture-warn** (361 total).

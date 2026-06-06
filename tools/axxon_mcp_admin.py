@@ -24,6 +24,7 @@ ADMIN_TOOL_NAMES = (
     "system_health",
     "domain_event_subscribe",
     "node_event_subscribe",
+    "update_event_subscription",
     "schedule_descriptor_get",
 )
 
@@ -703,6 +704,31 @@ class AxxonMcpAdmin:
             limit=limit,
             detailed=detailed,
         )
+
+    def update_event_subscription(
+        self,
+        notifier: str = "domain",
+        event_types: list[str] | None = None,
+        new_event_types: list[str] | None = None,
+        subjects: list[str] | None = None,
+        new_subjects: list[str] | None = None,
+        timeout_s: float = 5.0,
+    ) -> dict[str, Any]:
+        if notifier not in ("domain", "node"):
+            return {"status": "gap", "tool": "update_event_subscription", "message": "notifier must be 'domain' or 'node'"}
+        timeout = max(1.0, min(float(timeout_s), NOTIFIER_TIMEOUT_CAP_S))
+        client = self.ensure_client()
+        result = client.update_subscription_bounded(
+            notifier=notifier,
+            event_types=list(event_types or []),
+            new_event_types=list(new_event_types or []),
+            subjects=list(subjects or []),
+            new_subjects=list(new_subjects or []),
+            timeout_s=timeout,
+        )
+        out = {"tool": "update_event_subscription", **redact_admin_secrets(result)}
+        out["caps"] = {"timeout_s": timeout}
+        return out
 
     def _schedule_descriptor(self, uid: str) -> tuple[dict[str, Any] | None, str]:
         client = self.ensure_client()

@@ -449,6 +449,25 @@ def register_admin_tools(server: Any, admin: Any) -> None:
             detailed=detailed,
         )
 
+    @server.tool(name="update_event_subscription")
+    def update_event_subscription(
+        notifier: str = "domain",
+        event_types: list[str] | None = None,
+        new_event_types: list[str] | None = None,
+        subjects: list[str] | None = None,
+        new_subjects: list[str] | None = None,
+        timeout_s: float = 5.0,
+    ) -> dict[str, Any]:
+        """Open a short-lived event subscription, apply UpdateSubscription with new filters, then disconnect."""
+        return admin.update_event_subscription(
+            notifier=notifier,
+            event_types=event_types,
+            new_event_types=new_event_types,
+            subjects=subjects,
+            new_subjects=new_subjects,
+            timeout_s=timeout_s,
+        )
+
     @server.tool(name="schedule_descriptor_get")
     def schedule_descriptor_get(uid: str) -> dict[str, Any]:
         """Discover schedule-like descriptor fields for a unit without mutation."""

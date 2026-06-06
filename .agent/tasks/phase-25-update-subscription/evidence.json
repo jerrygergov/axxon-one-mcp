@@ -1,0 +1,37 @@
+{
+  "task_id": "phase-25-update-subscription",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "update_subscription_bounded client helper: open sub on thread, UpdateSubscription, disconnect; domain+node", "status": "PASS",
+     "proof": ["tools/axxon_api_client.py update_subscription_bounded", "tools/tests/test_axxon_mcp_admin.py FakeNotifierScheduleClient.update_subscription_bounded + update tests", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (domain+node applied)"], "gaps": []},
+    {"id": "AC2", "text": "helper never raises on idle/slow stream; failed update -> subscription_applied=False + update_error; disconnect in finally", "status": "PASS",
+     "proof": ["tools/axxon_api_client.py update_subscription_bounded (try/except around UpdateSubscription, finally disconnect)", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (disconnect_clean=True both)"], "gaps": []},
+    {"id": "AC3", "text": "update_event_subscription admin tool: clamps timeout, bad-notifier gap, redacted result", "status": "PASS",
+     "proof": ["tools/axxon_mcp_admin.py update_event_subscription", "tools/tests/test_axxon_mcp_admin.py test_update_event_subscription_applies_new_filters_and_clamps_and_redacts/test_update_event_subscription_bad_notifier_is_gap_without_wire_call/test_update_event_subscription_node_notifier", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt ([gap] bad notifier)"], "gaps": []},
+    {"id": "AC4", "text": "tool registered next to node_event_subscribe", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py update_event_subscription tool", ".agent/tasks/phase-25-update-subscription/raw/test-unit.txt (server import OK)"], "gaps": []},
+    {"id": "AC5", "text": "unit tests + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-25-update-subscription/raw/test-unit.txt (Ran 796 ... OK; admin suite 24 OK incl 3 new)"], "gaps": []},
+    {"id": "AC6", "text": "corpus restamp both notifiers tested-pass; coverage 202", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py DomainNotifier+NodeNotifier UpdateSubscription entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (202/121/38, item 10l)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_api_client.py",
+    "tools/axxon_mcp_admin.py",
+    "tools/tests/test_axxon_mcp_admin.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_admin; import axxon_api_client\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_admin.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "PushDiagnosticEvents (both notifiers) and NodeNotifier.Ping stay pending; separate methods, not part of this phase.",
+    "The tool owns the full subscribe -> update -> disconnect lifecycle; there is no caller-managed persistent subscription handle by design."
+  ]
+}

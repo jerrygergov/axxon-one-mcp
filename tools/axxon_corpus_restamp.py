@@ -220,6 +220,13 @@ RESTAMP = {
     # bytes matched, then removed). Read-only download; metadata-only response. LayoutImagesManager 4/4.
     ("LayoutImagesManager", "DownloadLayoutImage"): (
         "tested-pass", ".agent/tasks/phase-24-download-layout-image/raw/live-verify.txt (download streamed image, metadata-only)"),
+    # Phase 25: UpdateSubscription live-verified through the self-contained MCP tool for both
+    # notifiers (open short-lived subscription -> UpdateSubscription new filters -> disconnect).
+    # Same helper covers both via the notifier param. Subscription torn down; nothing persists.
+    ("DomainNotifier", "UpdateSubscription"): (
+        "tested-pass", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (domain: Bookmark -> Alert filters, disconnect clean)"),
+    ("NodeNotifier", "UpdateSubscription"): (
+        "tested-pass", ".agent/tasks/phase-25-update-subscription/raw/live-verify.txt (node: Bookmark -> Alert filters, disconnect clean)"),
 }
 
 
