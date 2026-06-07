@@ -3349,7 +3349,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.KeepAlive",
       "http_annotation": "POST /v1/telemetry/sessions:keepAlive",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "KeepAlive",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3358,12 +3358,12 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; not exercised on emulator, needs hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (KeepAlive ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.ReleaseSessionId",
       "http_annotation": "POST /v1/telemetry/sessions:release",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "ReleaseSessionId",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3372,7 +3372,7 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (ReleaseSessionId ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.IsSessionAvailable",
@@ -3391,7 +3391,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Move",
       "http_annotation": "POST /v1/telemetry:move",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "Move",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3400,7 +3400,7 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects continuous mode, needs hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (Move absolute ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Zoom",
@@ -3485,7 +3485,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMoveNormalized",
       "http_annotation": "POST /v1/telemetry:absoluteMoveN",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AbsoluteMoveNormalized",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3493,7 +3493,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (normalized absolute move ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformation",
@@ -3512,7 +3513,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPositionInformationNormalized",
       "http_annotation": "GET /v1/telemetry/position_n",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetPositionInformationNormalized",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3520,12 +3521,13 @@
       "response": "GetPositionInformationNormalizedResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (normalized position read)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.SetPreset",
       "http_annotation": "POST /v1/telemetry/presets:set",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetPreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3533,12 +3535,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (save_preset bare SetPreset, fresh-session ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.SetPreset2",
       "http_annotation": "POST /v1/telemetry/presets:set2",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "SetPreset2",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3547,12 +3550,12 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (set_preset SetPreset2 ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.ConfigurePreset",
       "http_annotation": "POST /v1/telemetry:configure",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ConfigurePreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3560,12 +3563,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (configure_preset ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GoPreset",
       "http_annotation": "POST /v1/telemetry/presets:go",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GoPreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3574,12 +3578,12 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (go_preset fresh-session ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.RemovePreset",
       "http_annotation": "POST /v1/telemetry/presets:remove",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "RemovePreset",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3588,7 +3592,7 @@
       "safety_class": "mutating",
       "service": "TelemetryService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (remove_preset fresh-session ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PointMove",
@@ -3619,7 +3623,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPresetsInfo",
       "http_annotation": "GET /v1/telemetry/presets",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetPresetsInfo",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3627,12 +3631,13 @@
       "response": "PresetCollectionResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (list_presets ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetAuxiliaryOperations",
       "http_annotation": "GET /v1/telemetry/operations",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetAuxiliaryOperations",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3640,7 +3645,8 @@
       "response": "GetAuxiliaryOperationsResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_auxiliary_operations ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PerformAuxiliaryOperation",
@@ -3658,7 +3664,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetTours",
       "http_annotation": "GET /v1/telemetry/tours",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetTours",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3666,12 +3672,13 @@
       "response": "GetToursResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_tours ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetTourPoints",
       "http_annotation": "GET /v1/telemetry/tours/points",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetTourPoints",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3679,7 +3686,8 @@
       "response": "GetTourPointsResponse",
       "safety_class": "read",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_tour_points ok)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PlayTour",

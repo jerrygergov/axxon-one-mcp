@@ -173,6 +173,16 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     AcfaService.DownloadData, returns size metadata only, never the raw blob). Live-verified on the
     emulator lock: 2 icon images, 344 bytes each; error matrix (empty uid/ids) holds with no wire
     call. -> tested-pass; AcfaService now 7/7 COMPLETE.
+10t. **TelemetryService device-supported full (phase-33)** — added ptz tools
+    `get_position_normalized`, `absolute_move_normalized`, `save_preset` (bare SetPreset),
+    `configure_preset`, `get_tours`, `get_tour_points`; live-verified reversibly on
+    DeviceIpint.53/TelemetryControl.0 (presets created+removed, position restored, session released).
+    14 methods -> tested-pass (KeepAlive, ReleaseSessionId, Move, GetPositionInformationNormalized,
+    AbsoluteMoveNormalized, GetPresetsInfo, SetPreset, SetPreset2, GoPreset, RemovePreset,
+    ConfigurePreset, GetTours, GetTourPoints, GetAuxiliaryOperations); TelemetryService now 19/32.
+    The 13 unsupported by the simulated source (Focus/FocusAuto/Iris/IrisAuto/PointMove/AreaZoom/
+    PerformAuxiliaryOperation + tour writes) stay pending: rejected with error 2 / GeneralError,
+    closeable only on real PTZ hardware.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -264,4 +274,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **213 tested-pass / 110 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **227 tested-pass / 107 pending / 27 fixture-warn** (361 total).

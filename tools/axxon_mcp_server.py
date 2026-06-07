@@ -257,6 +257,36 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
         """Move to an absolute pan/tilt/zoom position (mask selects axes; 7 = all)."""
         return ptz.absolute_move(access_point, session_id, pan, tilt, zoom, mask)
 
+    @server.tool(name="ptz_get_position_normalized")
+    def ptz_get_position_normalized(access_point: str) -> dict[str, Any]:
+        """Read the normalized [0..1] pan/tilt/zoom position of a PTZ source."""
+        return ptz.get_position_normalized(access_point)
+
+    @server.tool(name="ptz_absolute_move_normalized")
+    def ptz_absolute_move_normalized(access_point: str, session_id: int, pan: float, tilt: float, zoom: float, mask: int = 7) -> dict[str, Any]:
+        """Move to a normalized [0..1] absolute pan/tilt/zoom position (mask selects axes; 7 = all)."""
+        return ptz.absolute_move_normalized(access_point, session_id, pan, tilt, zoom, mask)
+
+    @server.tool(name="ptz_save_preset")
+    def ptz_save_preset(access_point: str, session_id: int, position: int, label: str = "") -> dict[str, Any]:
+        """Save the current position as a preset via the bare SetPreset RPC."""
+        return ptz.save_preset(access_point, session_id, position, label)
+
+    @server.tool(name="ptz_configure_preset")
+    def ptz_configure_preset(access_point: str, position: int, label: str = "", pan: int = 0, tilt: int = 0, zoom: int = 0) -> dict[str, Any]:
+        """Create/update a preset at a slot with an explicit absolute position (ConfigurePreset)."""
+        return ptz.configure_preset(access_point, position, label, pan, tilt, zoom)
+
+    @server.tool(name="ptz_get_tours")
+    def ptz_get_tours(access_point: str) -> dict[str, Any]:
+        """List the patrol tours configured on a PTZ source."""
+        return ptz.get_tours(access_point)
+
+    @server.tool(name="ptz_get_tour_points")
+    def ptz_get_tour_points(access_point: str, tour_name: str) -> dict[str, Any]:
+        """List the preset points that make up a named patrol tour."""
+        return ptz.get_tour_points(access_point, tour_name)
+
     @server.tool(name="ptz_list_presets")
     def ptz_list_presets(access_point: str) -> dict[str, Any]:
         """List telemetry presets for a PTZ source."""

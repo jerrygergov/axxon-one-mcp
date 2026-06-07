@@ -214,6 +214,66 @@ class AxxonMcpPtz:
         return {"status": "ok", "tool": "absolute_move", "access_point": access_point,
                 "absolute_position": {"pan": int(pan), "tilt": int(tilt), "zoom": int(zoom), "mask": int(mask)}}
 
+    def get_position_normalized(self, access_point: str) -> dict[str, Any]:
+        """Read the normalized [0..1] pan/tilt/zoom position of a PTZ source."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        body = client.message_to_dict(stub.GetPositionInformationNormalized(tel.GetPositionInformationRequest(access_point=access_point), timeout=client.config.timeout))
+        return {"status": "ok", "tool": "get_position_normalized", "access_point": access_point,
+                "absolute_position": body.get("absolute_position", {}), "error_code": body.get("error_code", "NotError")}
+
+    def absolute_move_normalized(self, access_point: str, session_id: int, pan: float, tilt: float, zoom: float, mask: int = 7) -> dict[str, Any]:
+        """Move to a normalized [0..1] absolute pan/tilt/zoom position. mask selects axes (7 = all)."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        position = tel.AbsolutePositionNormalized(pan=float(pan), tilt=float(tilt), zoom=float(zoom), mask=int(mask))
+        stub.AbsoluteMoveNormalized(tel.AbsoluteMoveNormalizedRequest(access_point=access_point, session_id=int(session_id), absolute_position=position), timeout=client.config.timeout)
+        return {"status": "ok", "tool": "absolute_move_normalized", "access_point": access_point,
+                "absolute_position": {"pan": float(pan), "tilt": float(tilt), "zoom": float(zoom), "mask": int(mask)}}
+
+    def save_preset(self, access_point: str, session_id: int, position: int, label: str = "") -> dict[str, Any]:
+        """Save the current position as a preset via the bare SetPreset RPC (no response body)."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        stub.SetPreset(tel.SetPresetRequest(access_point=access_point, session_id=int(session_id), position=int(position), label=label), timeout=client.config.timeout)
+        return {"status": "ok", "tool": "save_preset", "access_point": access_point, "position": int(position), "label": label}
+
+    def configure_preset(self, access_point: str, position: int, label: str = "", pan: int = 0, tilt: int = 0, zoom: int = 0) -> dict[str, Any]:
+        """Create or update a preset at a slot with an explicit absolute position (ConfigurePreset)."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        preset = tel.Preset(label=label, absolute_pan=int(pan), absolute_tilt=int(tilt), absolute_zoom=int(zoom))
+        stub.ConfigurePreset(tel.ConfigurePresetRequest(access_point=access_point, position=int(position), preset=preset), timeout=client.config.timeout)
+        return {"status": "ok", "tool": "configure_preset", "access_point": access_point, "position": int(position), "label": label}
+
+    def get_tours(self, access_point: str) -> dict[str, Any]:
+        """List the patrol tours configured on a PTZ source."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        body = client.message_to_dict(stub.GetTours(tel.GetToursRequest(access_point=access_point), timeout=client.config.timeout))
+        return {"status": "ok", "tool": "get_tours", "access_point": access_point,
+                "tours": body.get("tours", []), "error_code": body.get("error_code", "NotError")}
+
+    def get_tour_points(self, access_point: str, tour_name: str) -> dict[str, Any]:
+        """List the preset points that make up a named patrol tour."""
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        stub = self._telemetry_stub(client)
+        body = client.message_to_dict(stub.GetTourPoints(tel.GetTourPointsRequest(access_point=access_point, tour_name=tour_name), timeout=client.config.timeout))
+        return {"status": "ok", "tool": "get_tour_points", "access_point": access_point, "tour_name": tour_name,
+                "preset_collection": body.get("preset_collection", {}), "error_code": body.get("error_code", "NotError")}
+
     def list_presets(self, access_point: str) -> dict[str, Any]:
         """List telemetry presets for a PTZ source."""
         client = self.ensure_client()

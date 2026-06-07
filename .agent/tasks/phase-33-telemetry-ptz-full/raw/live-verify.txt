@@ -1,0 +1,48 @@
+Phase 33 - TelemetryService full (device-supported methods) reversible live pass
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tools (axxon_mcp_ptz.*) on the simulated
+PTZ source hosts/Server/DeviceIpint.53/TelemetryControl.0. All preset/position changes
+were reversed (presets removed, position restored, session released).
+
+== 14 device-supported methods (all PASS) ==
+
+[chained session, sid acquired]
+  acquire_session                 -> ok
+  keepalive (KeepAlive)           -> ok
+  get_position_normalized
+    (GetPositionInformationNormalized) -> ok  {pan,tilt,zoom normalized}
+  absolute_move_normalized
+    (AbsoluteMoveNormalized)      -> ok
+  move(absolute) (Move)           -> ok
+  list_presets (GetPresetsInfo)   -> ok
+  set_preset (SetPreset2)         -> ok  (created slot 98)
+  configure_preset (ConfigurePreset) -> ok  (created slot 97)
+  get_tours (GetTours)            -> ok
+  get_tour_points (GetTourPoints) -> ok
+  auxiliary_operations (GetAuxiliaryOperations) -> ok (empty op list)
+
+[isolated fresh-session verification of the contention-sensitive ops]
+  save_preset (SetPreset, slot 90)    -> PASS
+  go_preset   (GoPreset, slot 90)     -> PASS
+  remove_preset (RemovePreset, slot 90) -> PASS
+  release_session (ReleaseSessionId)  -> PASS
+
+  Note: this simulated device returns a transient "error: 1" (device busy) when many
+  commands are rapid-fired in one session; the preset write/go/remove ops were each
+  re-verified in a fresh session with a short pause and all returned ok. This is device
+  contention behavior, not a tool fault.
+
+[reversibility] every created preset (90/97/98/99) was removed; captured position was
+  restored via AbsoluteMove; the session was released. The source ends as it started.
+
+== 13 device-UNSUPPORTED methods (NOT restamped; honest non-goals) ==
+  Focus / FocusAuto / Iris / IrisAuto -> "Device does not support" / error 2
+  PointMove / AreaZoom                -> operation returned error 2
+  PerformAuxiliaryOperation           -> device exposes no auxiliary operations
+  PlayTour / StopTour / StartFillTour / SetTourPoint / StopFillTour / RemoveTour
+                                      -> RPC returns error_code=GeneralError (the
+                                         simulated device does not create/run tours)
+  These are closeable only on real PTZ hardware; left pending/fixture-warn with reason.
+
+[hygiene]
+  Reversible PTZ control only; no proto/CA/PDF committed; secrets env-only.

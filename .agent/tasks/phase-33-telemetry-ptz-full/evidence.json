@@ -1,0 +1,33 @@
+{
+  "task_id": "phase-33-telemetry-ptz-full",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "new read tools get_position_normalized/get_tours/get_tour_points", "status": "PASS",
+     "proof": ["tools/axxon_mcp_ptz.py", "tools/tests/test_axxon_mcp_ptz.py test_get_position_normalized/test_get_tours_shape/test_get_tour_points_shape", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC2", "text": "new write tools absolute_move_normalized/save_preset/configure_preset emit right RPC", "status": "PASS",
+     "proof": ["tools/axxon_mcp_ptz.py", "tools/tests/test_axxon_mcp_ptz.py test_absolute_move_normalized_emits_rpc/test_save_preset_uses_bare_setpreset/test_configure_preset_emits_rpc", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC3", "text": "existing tools unregressed; all 6 new tools registered", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py register_ptz_tools (ptz_get_position_normalized/ptz_absolute_move_normalized/ptz_save_preset/ptz_configure_preset/ptz_get_tours/ptz_get_tour_points)", ".agent/tasks/phase-33-telemetry-ptz-full/raw/test-unit.txt"], "gaps": []},
+    {"id": "AC4", "text": "unit + full suite green", "status": "PASS",
+     "proof": [".agent/tasks/phase-33-telemetry-ptz-full/raw/test-integration.txt (Ran 836 ... OK)", ".agent/tasks/phase-33-telemetry-ptz-full/raw/test-unit.txt (16 OK)"], "gaps": []},
+    {"id": "AC5", "text": "restamp 14 supported TelemetryService methods tested-pass; 12 unsupported documented; coverage 227; item 10t", "status": "PASS",
+     "proof": ["tools/axxon_corpus_restamp.py 14 TelemetryService entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (227/107/27, item 10t, TelemetryService 19/32)"], "gaps": ["13 device-unsupported methods left pending by design (real PTZ hardware needed)"]}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_ptz.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_ptz.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_ptz\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_ptz.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "13 TelemetryService methods (Focus/FocusAuto/Iris/IrisAuto/PointMove/AreaZoom/PerformAuxiliaryOperation + 6 tour writes) unsupported by the simulated PTZ source; closeable only on real hardware."
+  ]
+}

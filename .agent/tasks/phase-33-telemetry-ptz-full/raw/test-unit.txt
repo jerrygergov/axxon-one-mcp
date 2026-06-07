@@ -1,0 +1,21 @@
+test_acquire_refuses_non_telemetry_endpoint (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_acquire_refuses_non_telemetry_endpoint) ... ok
+test_auxiliary_operations (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_auxiliary_operations) ... ok
+test_list_telemetry_sources_found (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_list_telemetry_sources_found) ... ok
+test_list_telemetry_sources_gap_when_none (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_list_telemetry_sources_gap_when_none) ... ok
+test_move_bad_mode_refused (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_move_bad_mode_refused) ... ok
+test_move_zoom_focus_iris_and_absolute (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_move_zoom_focus_iris_and_absolute) ... ok
+test_preset_round_trip (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_preset_round_trip) ... ok
+test_session_lifecycle_and_position (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_session_lifecycle_and_position) ... ok
+test_zoom_absolute_mode_emits_single_zoom_with_absolute_flag (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_zoom_absolute_mode_emits_single_zoom_with_absolute_flag) ... ok
+test_zoom_reversible_capture_restore_sequence (test_axxon_mcp_ptz.AxxonMcpPtzTests.test_zoom_reversible_capture_restore_sequence) ... ok
+test_absolute_move_normalized_emits_rpc (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_absolute_move_normalized_emits_rpc) ... ok
+test_configure_preset_emits_rpc (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_configure_preset_emits_rpc) ... ok
+test_get_position_normalized (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_get_position_normalized) ... ok
+test_get_tour_points_shape (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_get_tour_points_shape) ... ok
+test_get_tours_shape (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_get_tours_shape) ... ok
+test_save_preset_uses_bare_setpreset (test_axxon_mcp_ptz.PtzNormalizedAndToursTests.test_save_preset_uses_bare_setpreset) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.026s
+
+OK

@@ -30,6 +30,8 @@ def _telemetry_pb():
         "AbsolutePosition", "AbsoluteMoveRequest", "GetPresetsInfoRequest",
         "SetPresetRequest", "GoPresetRequest", "RemovePresetRequest",
         "GetAuxiliaryOperationsRequest",
+        "AbsolutePositionNormalized", "AbsoluteMoveNormalizedRequest",
+        "ConfigurePresetRequest", "Preset", "GetToursRequest", "GetTourPointsRequest",
     ):
         setattr(mod, name, (lambda **kw: FakeMsg(**kw)))
     return mod
@@ -83,6 +85,27 @@ class FakeTelemetryStub:
     def AbsoluteMove(self, request, timeout=None):
         self.calls.append(("AbsoluteMove", request))
         return FakeMsg()
+
+    def GetPositionInformationNormalized(self, request, timeout=None):
+        return FakeMsg(absolute_position={"pan": 0.5, "tilt": 0.5, "zoom": 0.1, "mask": 7}, error_code="NotError")
+
+    def AbsoluteMoveNormalized(self, request, timeout=None):
+        self.calls.append(("AbsoluteMoveNormalized", request))
+        return FakeMsg()
+
+    def SetPreset(self, request, timeout=None):
+        self.calls.append(("SetPreset", request))
+        return FakeMsg()
+
+    def ConfigurePreset(self, request, timeout=None):
+        self.calls.append(("ConfigurePreset", request))
+        return FakeMsg()
+
+    def GetTours(self, request, timeout=None):
+        return FakeMsg(tours=[{"name": "Lobby", "state": "EIdle"}], error_code="NotError")
+
+    def GetTourPoints(self, request, timeout=None):
+        return FakeMsg(preset_collection={"presets": []}, error_code="NotError")
 
     def GetPresetsInfo(self, request, timeout=None):
         return FakeMsg(preset_info=[{"position": 0, "label": "Home"}], error_code="NotError")
@@ -242,6 +265,46 @@ class AxxonMcpPtzTests(unittest.TestCase):
         self.assertEqual(restore["absolute_position"]["zoom"], captured["zoom"])
         names = [name for name, _ in ptz.client.telemetry_stub.calls]
         self.assertLess(names.index("Zoom"), names.index("AbsoluteMove"))
+
+
+class PtzNormalizedAndToursTests(unittest.TestCase):
+    def test_get_position_normalized(self) -> None:
+        out = _ptz([PTZ_AP]).get_position_normalized(PTZ_AP)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["tool"], "get_position_normalized")
+        self.assertEqual(out["absolute_position"]["pan"], 0.5)
+
+    def test_absolute_move_normalized_emits_rpc(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        out = ptz.absolute_move_normalized(PTZ_AP, 9, 0.25, 0.5, 0.75, 7)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["absolute_position"]["zoom"], 0.75)
+        self.assertIn("AbsoluteMoveNormalized", [name for name, _ in ptz.client.telemetry_stub.calls])
+
+    def test_save_preset_uses_bare_setpreset(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        out = ptz.save_preset(PTZ_AP, 9, 5, "Door")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["tool"], "save_preset")
+        self.assertIn("SetPreset", [name for name, _ in ptz.client.telemetry_stub.calls])
+
+    def test_configure_preset_emits_rpc(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        out = ptz.configure_preset(PTZ_AP, 3, "Gate", 100, 50, 5)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["position"], 3)
+        self.assertIn("ConfigurePreset", [name for name, _ in ptz.client.telemetry_stub.calls])
+
+    def test_get_tours_shape(self) -> None:
+        out = _ptz([PTZ_AP]).get_tours(PTZ_AP)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["tours"][0]["name"], "Lobby")
+
+    def test_get_tour_points_shape(self) -> None:
+        out = _ptz([PTZ_AP]).get_tour_points(PTZ_AP, "Lobby")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["tour_name"], "Lobby")
+        self.assertIn("preset_collection", out)
 
 
 if __name__ == "__main__":

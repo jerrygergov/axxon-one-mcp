@@ -271,6 +271,39 @@ RESTAMP = {
     # returns size metadata only. Completes AcfaService (7/7).
     ("AcfaService", "DownloadData"): (
         "tested-pass", ".agent/tasks/phase-32-acfa-download/raw/live-verify.txt (2 lock icon images, 344 bytes each, metadata-only)"),
+    # Phase 33: TelemetryService - every method the live simulated PTZ device executes, verified
+    # reversibly through the ptz tools on DeviceIpint.53/TelemetryControl.0 (presets created+removed,
+    # position captured+restored, session released). The 12 device-unsupported methods (Focus/Iris/
+    # auto/PointMove/AreaZoom/PerformAuxiliaryOperation/tour-writes) stay pending: the simulated
+    # source rejects them (error 2 / GeneralError); closeable only on real PTZ hardware.
+    ("TelemetryService", "KeepAlive"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (KeepAlive ok)"),
+    ("TelemetryService", "ReleaseSessionId"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (ReleaseSessionId ok)"),
+    ("TelemetryService", "Move"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (Move absolute ok)"),
+    ("TelemetryService", "GetPositionInformationNormalized"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (normalized position read)"),
+    ("TelemetryService", "AbsoluteMoveNormalized"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (normalized absolute move ok)"),
+    ("TelemetryService", "GetPresetsInfo"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (list_presets ok)"),
+    ("TelemetryService", "SetPreset"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (save_preset bare SetPreset, fresh-session ok)"),
+    ("TelemetryService", "SetPreset2"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (set_preset SetPreset2 ok)"),
+    ("TelemetryService", "GoPreset"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (go_preset fresh-session ok)"),
+    ("TelemetryService", "RemovePreset"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (remove_preset fresh-session ok)"),
+    ("TelemetryService", "ConfigurePreset"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (configure_preset ok)"),
+    ("TelemetryService", "GetTours"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_tours ok)"),
+    ("TelemetryService", "GetTourPoints"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_tour_points ok)"),
+    ("TelemetryService", "GetAuxiliaryOperations"): (
+        "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_auxiliary_operations ok)"),
 }
 
 
