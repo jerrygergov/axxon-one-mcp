@@ -24,6 +24,20 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 36 ConfigurationService: reversible single-property unit change on
+    # hosts/Server/DeviceIpint.1 display_name (Tracker -> probe -> Tracker), failed=0
+    # both directions for both ChangeConfig and ChangeConfigStream. ListSimilarUnits
+    # returns a valid paginated response. BatchGetFactories is reachable but returns
+    # NOT_FOUND for every unit_type/parent on this build -> stays fixture-warn.
+    ("ConfigurationService", "ChangeConfig"): (
+        "tested-pass", ".agent/tasks/phase-36-config-change/evidence.md AC4 (reversible display_name round-trip)"),
+    ("ConfigurationService", "ChangeConfigStream"): (
+        "tested-pass", ".agent/tasks/phase-36-config-change/evidence.md AC4 (reversible streamed display_name round-trip)"),
+    ("ConfigurationService", "ListSimilarUnits"): (
+        "tested-pass", ".agent/tasks/phase-36-config-change/evidence.md AC4 (valid paginated similar-units response)"),
+    ("ConfigurationService", "BatchGetFactories"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-36-config-change/evidence.md AC5 (RPC reachable, NOT_FOUND on every factory type on this build)"),
     # Phase 8 PTZ live run on DeviceIpint.53: acquire -> read pos -> AbsoluteMove
     # -> restore. These four round-tripped against the stand.
     ("TelemetryService", "AcquireSessionId"): (

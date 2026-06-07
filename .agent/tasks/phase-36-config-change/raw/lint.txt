@@ -1,0 +1,13 @@
+=== ruff: production module + server (clean) ===
+All checks passed!
+
+=== ruff: test file E402 is the repo-wide baseline (sys.path.insert before import), same as test_axxon_mcp_logic_alerts.py ===
+tools/tests/test_axxon_mcp_config_change.py:10:1: E402 Module level import not at top of file
+   |
+ 8 | sys.path.insert(0, str(TOOLS_DIR))
+ 9 |
+10 | import axxon_mcp_config_change as module
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ E402
+   |
+
+Found 1 error.

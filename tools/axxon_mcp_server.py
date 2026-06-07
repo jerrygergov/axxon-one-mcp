@@ -63,6 +63,7 @@ def create_server(
     control: Any | None = None,
     map_providers: Any | None = None,
     logic_alerts: Any | None = None,
+    config_change: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -200,6 +201,9 @@ def create_server(
 
     if logic_alerts is not None:
         register_logic_alerts_tools(server, logic_alerts)
+
+    if config_change is not None:
+        register_config_change_tools(server, config_change)
 
     return server
 
@@ -1101,6 +1105,33 @@ def register_logic_alerts_tools(server: Any, logic_alerts: Any) -> None:
         return logic_alerts.batch_escalate_alerts(nodes=nodes, groups=groups, parents=parents, comment=comment, confirmation=confirmation)
 
 
+def register_config_change_tools(server: Any, config_change: Any) -> None:
+    @server.tool(name="config_change_connect_axxon_profile")
+    def config_change_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ConfigurationService change layer (writes need AXXON_CONFIG_CHANGE_APPROVE=1)."""
+        return config_change.config_change_connect_axxon_profile(profile)
+
+    @server.tool(name="list_similar_units")
+    def list_similar_units(uid: str = "", node_name: str = "Server", page_size: int = 50, page_token: str = "", by_unit_type: bool = False) -> dict[str, Any]:
+        """List units similar to a given unit via ConfigurationService.ListSimilarUnits."""
+        return config_change.list_similar_units(uid=uid, node_name=node_name, page_size=page_size, page_token=page_token, by_unit_type=by_unit_type)
+
+    @server.tool(name="batch_get_factories")
+    def batch_get_factories(unit_types: list[str] | None = None, parent_uid: str = "", ignore_possible_limits: bool = True) -> dict[str, Any]:
+        """Query creatable-unit factory descriptors via ConfigurationService.BatchGetFactories."""
+        return config_change.batch_get_factories(unit_types=unit_types, parent_uid=parent_uid, ignore_possible_limits=ignore_possible_limits)
+
+    @server.tool(name="change_unit_property")
+    def change_unit_property(uid: str = "", unit_type: str = "", property_id: str = "", value_string: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Change a single unit string property via ConfigurationService.ChangeConfig (gated)."""
+        return config_change.change_unit_property(uid=uid, unit_type=unit_type, property_id=property_id, value_string=value_string, confirmation=confirmation)
+
+    @server.tool(name="change_unit_property_stream")
+    def change_unit_property_stream(uid: str = "", unit_type: str = "", property_id: str = "", value_string: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Change a single unit string property via ConfigurationService.ChangeConfigStream (gated)."""
+        return config_change.change_unit_property_stream(uid=uid, unit_type=unit_type, property_id=property_id, value_string=value_string, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1642,6 +1673,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 35 LogicService batch alert tools (batch read + gated batch review). Reviews need AXXON_LOGIC_ALERTS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-config-change",
+        action="store_true",
+        help="Enable Phase 36 ConfigurationService tools (list_similar_units, batch_get_factories + gated unit property changes). Writes need AXXON_CONFIG_CHANGE_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1823,6 +1859,11 @@ def main() -> int:
         from axxon_mcp_logic_alerts import AxxonMcpLogicAlerts
 
         logic_alerts = AxxonMcpLogicAlerts()
+    config_change = None
+    if args.enable_config_change:
+        from axxon_mcp_config_change import AxxonMcpConfigChange
+
+        config_change = AxxonMcpConfigChange()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1854,6 +1895,7 @@ def main() -> int:
         control=control,
         map_providers=map_providers,
         logic_alerts=logic_alerts,
+        config_change=config_change,
     )
     server.run(transport=args.transport)
     return 0

@@ -1,0 +1,16 @@
+=== phase-36-config-change live verify (sanitized) ===
+date: 2026-06-07T07:50:18Z
+host: <demo-host>  grpc: 20109  user: <redacted>  tls_cn: Server
+
+list_similar_units -> ok count= 0 has_next_page= True
+batch_get_factories -> ok items= [{'unit_type': 'DeviceIpint', 'status': 1, 'factory_type': ''}, {'unit_type': 'GSMModule', 'status': 1, 'factory_type': ''}] (status 1 = NOT_FOUND; environment-walled -> fixture-warn)
+original display_name = Tracker
+change_unit_property -> applied name now = Tracker [probe]
+restore -> applied name now = Tracker
+ChangeConfig REVERSIBLE OK
+change_unit_property_stream -> applied name now = Tracker [stream]
+restore stream -> applied name now = Tracker
+ChangeConfigStream REVERSIBLE OK
+gate (env off) -> disabled
+gate (bad token) -> gap
+ALL LIVE CHECKS PASS

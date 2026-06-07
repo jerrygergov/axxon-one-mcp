@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-36-config-change",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T07:52:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_config_change.py: AxxonMcpConfigChange with list_similar_units, batch_get_factories, change_unit_property, change_unit_property_stream; approval env AXXON_CONFIG_CHANGE_APPROVE, token CONFIRM-config-change"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_config_change.py GateTests: disabled/gap/error with client.calls==[]; live gate disabled+gap in raw/live-verify.txt"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 5 config_change tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt reversible ChangeConfig + ChangeConfigStream round-trips on hosts/Server/DeviceIpint.1 display_name; ListSimilarUnits ok with next_page_token"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py restamps 3 pass + BatchGetFactories fixture-warn; dry-run after write = 0 restamped; coverage doc 238/96/27"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 863 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 238, "pending": 96, "fixture_warn": 27, "total": 361, "configuration_service": "11/12"}
+}

@@ -845,7 +845,7 @@
     {
       "fqmn": "axxonsoft.bl.config.ConfigurationService.ChangeConfig",
       "http_annotation": "POST /v1/configurator:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeConfig",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
@@ -853,12 +853,13 @@
       "response": "ChangeConfigResponse",
       "safety_class": "mutating",
       "service": "ConfigurationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-36-config-change/evidence.md AC4 (reversible display_name round-trip)"
     },
     {
       "fqmn": "axxonsoft.bl.config.ConfigurationService.ChangeConfigStream",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeConfigStream",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
@@ -866,7 +867,8 @@
       "response": "ChangeConfigResponse",
       "safety_class": "mutating",
       "service": "ConfigurationService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-36-config-change/evidence.md AC4 (reversible streamed display_name round-trip)"
     },
     {
       "fqmn": "axxonsoft.bl.config.ConfigurationService.ListTemplates",
@@ -923,7 +925,7 @@
     {
       "fqmn": "axxonsoft.bl.config.ConfigurationService.BatchGetFactories",
       "http_annotation": "POST /v1/configurator/factories:batchGet",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "BatchGetFactories",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
@@ -931,12 +933,13 @@
       "response": "BatchGetFactoriesResponse",
       "safety_class": "review",
       "service": "ConfigurationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-36-config-change/evidence.md AC5 (RPC reachable, NOT_FOUND on every factory type on this build)"
     },
     {
       "fqmn": "axxonsoft.bl.config.ConfigurationService.ListSimilarUnits",
       "http_annotation": "POST /v1/configurator/units:listSimilar",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ListSimilarUnits",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/ConfigurationService.proto",
@@ -944,7 +947,8 @@
       "response": "ListSimilarUnitsResponse",
       "safety_class": "review",
       "service": "ConfigurationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-36-config-change/evidence.md AC4 (valid paginated similar-units response)"
     },
     {
       "fqmn": "axxonsoft.bl.config.DevicesCatalog.ListVendors",

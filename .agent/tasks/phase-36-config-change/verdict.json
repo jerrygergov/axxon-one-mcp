@@ -1,0 +1,34 @@
+{
+  "task_id": "phase-36-config-change",
+  "overall_verdict": "PASS",
+  "verified": "2026-06-07T00:00:00Z",
+  "verifier_note": "Fresh verification against current codebase and command results. AC4 relies on the recorded sanitized transcript (live stand unreachable from this environment).",
+  "criteria": [
+    {"id": "AC1", "status": "PASS", "reason": "tools/axxon_mcp_config_change.py defines AxxonMcpConfigChange with list_similar_units, batch_get_factories, change_unit_property (ChangeConfig), change_unit_property_stream (ChangeConfigStream); connect helper config_change_connect_axxon_profile + connect_axxon_profile alias + ensure_client + _stub_and_pb2 + _write_gate. Approval env AXXON_CONFIG_CHANGE_APPROVE, token CONFIRM-config-change. Import OK."},
+    {"id": "AC2", "status": "PASS", "reason": "tools/tests/test_axxon_mcp_config_change.py asserts client.calls==[] for env-off (status disabled), bad token (status gap), and missing-fields (status error) on both writes; applied-path tests assert client.calls[0][0] is ChangeConfig/ChangeConfigStream. 11 passed."},
+    {"id": "AC3", "status": "PASS", "reason": "tools/axxon_mcp_server.py 6-edit wiring: create_server param config_change (L66), conditional register (L205-206), register_config_change_tools with 5 @server.tool entries (L1108-1132), --enable-config-change flag (L1676), flag-gated instantiation (L1862-1866), pass to create_server (L1898). Server imports OK."},
+    {"id": "AC4", "status": "PASS", "reason": "raw/live-verify.txt (sanitized) shows ChangeConfig reversible round-trip (Tracker -> Tracker [probe] -> Tracker, REVERSIBLE OK), ChangeConfigStream reversible round-trip (Tracker -> Tracker [stream] -> Tracker, REVERSIBLE OK), list_similar_units ok with has_next_page True, gate env-off=disabled / bad-token=gap. Internally consistent and reversible, no demo host and no plaintext creds; uses <demo-host>/<redacted>. Relies on recorded transcript; live stand not reachable from verifier."},
+    {"id": "AC5", "status": "PASS", "reason": "python3.12 tools/axxon_corpus_restamp.py dry-run reports '0 method(s) restamped'. api_methods.json: ConfigurationService ChangeConfig/ChangeConfigStream/ListSimilarUnits live_status tested-pass; BatchGetFactories tested-warn-fixture-needed. Coverage doc capability-vs-coverage-2026-06-05.md L294 '238 tested-pass / 96 pending / 27 fixture-warn'; L308 ConfigurationService 11/12."},
+    {"id": "AC6", "status": "PASS", "reason": "python3.12 -m pytest tools/tests/ -q -> 863 passed. New file tools/tests/test_axxon_mcp_config_change.py contributes 11. No regressions."}
+  ],
+  "commands_run": [
+    "python3.12 -c import axxon_mcp_config_change, axxon_mcp_server -> import OK",
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_config_change.py -q -> 11 passed",
+    "python3.12 -m pytest tools/tests/ -q -> 863 passed",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "rg secret scan -> clean (only spec.md sanitization-instruction text matches)"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-36-config-change/spec.md",
+    ".agent/tasks/phase-36-config-change/evidence.md",
+    ".agent/tasks/phase-36-config-change/evidence.json",
+    ".agent/tasks/phase-36-config-change/raw/live-verify.txt",
+    "tools/axxon_mcp_config_change.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_config_change.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "coverage": {"tested_pass": 238, "pending": 96, "fixture_warn": 27, "total": 361, "configuration_service": "11/12"}
+}

@@ -291,4 +291,18 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **235 tested-pass / 100 pending / 26 fixture-warn** (361 total).
+Current honest coverage: **238 tested-pass / 96 pending / 27 fixture-warn** (361 total).
+
+### Item 10w (Phase 36): ConfigurationService unit changes
+
+`tools/axxon_mcp_config_change.py` (gated, `AXXON_CONFIG_CHANGE_APPROVE=1`,
+`--enable-config-change`). Live-verified on the demo stand:
+- **ChangeConfig** and **ChangeConfigStream** — reversible single-property change on
+  `hosts/Server/DeviceIpint.1` `display_name` (Tracker -> probe -> Tracker), failed=0
+  both directions. tested-pass.
+- **ListSimilarUnits** — valid paginated response (next_page_token). tested-pass.
+- **BatchGetFactories** — RPC reachable but returns `NOT_FOUND` for every unit_type /
+  parent_uid on this build; factory metadata is instead exposed via ListUnits
+  `display_mode=VM_WITH_FACTORY` (already pass). Left tested-warn-fixture-needed, honest.
+
+ConfigurationService now 11/12 (only BatchGetFactories outstanding, environment-walled).
