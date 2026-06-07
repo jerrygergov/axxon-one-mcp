@@ -24,6 +24,36 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 39 SecurityService credentials. CheckPassword is a read-only uniqueness/policy
+    # pre-check (current pw -> NOT_UNIQUE, unused pw -> OK). ChangePassword and ChangeLogin
+    # act on the authenticated session's own user; verified -> OK each on a SEPARATE
+    # throwaway admin user (created via ChangeConfig with an admin role assignment, then
+    # removed; ListUsers confirms gone). The shared root account is never touched. The six
+    # LDAP methods stay fixture-warn: no LDAP server on this stand (GetLDAPSynchronizationState
+    # returns UNAVAILABLE).
+    ("SecurityService", "CheckPassword"): (
+        "tested-pass", ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (uniqueness pre-check: current pw NOT_UNIQUE, unused pw OK)"),
+    ("SecurityService", "ChangePassword"): (
+        "tested-pass", ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (OK on throwaway admin user, then user removed)"),
+    ("SecurityService", "ChangeLogin"): (
+        "tested-pass", ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (OK on throwaway admin user, then user removed)"),
+    # LDAP cluster: probed live, GetLDAPSynchronizationState returns UNAVAILABLE ("Can't get
+    # connection channel") -> no LDAP server on this stand. All seven stay fixture-warn.
+    ("SecurityService", "TestLDAPConnection"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand; GetLDAPSynchronizationState returns UNAVAILABLE)"),
+    ("SecurityService", "StartLDAPSynchronization"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"),
+    ("SecurityService", "StopLDAPSynchronization"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"),
+    ("SecurityService", "SearchLDAP2"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"),
+    ("SecurityService", "SearchLDAPGroups"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"),
     # Phase 38 BookmarkService: reversible Create -> Update -> SetExportedTime ->
     # RenderTrack -> Delete round-trip on camera DeviceIpint.1. The throwaway bookmark was
     # created, the three target methods exercised (message updated, exported_time set and

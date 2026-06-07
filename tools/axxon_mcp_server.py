@@ -66,6 +66,7 @@ def create_server(
     config_change: Any | None = None,
     archive_volume: Any | None = None,
     bookmark_extras: Any | None = None,
+    security_credentials: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -212,6 +213,9 @@ def create_server(
 
     if bookmark_extras is not None:
         register_bookmark_extras_tools(server, bookmark_extras)
+
+    if security_credentials is not None:
+        register_security_credentials_tools(server, security_credentials)
 
     return server
 
@@ -1179,6 +1183,28 @@ def register_bookmark_extras_tools(server: Any, bookmark_extras: Any) -> None:
         return bookmark_extras.render_bookmark_track(bookmark_id=bookmark_id)
 
 
+def register_security_credentials_tools(server: Any, security_credentials: Any) -> None:
+    @server.tool(name="security_credentials_connect_axxon_profile")
+    def security_credentials_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the SecurityService credential layer (changes need AXXON_SECURITY_CREDENTIALS_APPROVE=1)."""
+        return security_credentials.security_credentials_connect_axxon_profile(profile)
+
+    @server.tool(name="check_password")
+    def check_password(user_id: str = "", password: str = "") -> dict[str, Any]:
+        """Pre-check a password's uniqueness/policy for a user via SecurityService.CheckPassword."""
+        return security_credentials.check_password(user_id=user_id, password=password)
+
+    @server.tool(name="change_my_password")
+    def change_my_password(password: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Change the connected session user's own password via SecurityService.ChangePassword (gated)."""
+        return security_credentials.change_my_password(password=password, confirmation=confirmation)
+
+    @server.tool(name="change_my_login")
+    def change_my_login(login: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Change the connected session user's own login via SecurityService.ChangeLogin (gated)."""
+        return security_credentials.change_my_login(login=login, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1735,6 +1761,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 38 BookmarkService extras (render_bookmark_track + gated update_bookmark, set_bookmark_exported_time). Writes need AXXON_BOOKMARK_EXTRAS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-security-credentials",
+        action="store_true",
+        help="Enable Phase 39 SecurityService credential tools (check_password + gated change_my_password, change_my_login). Changes need AXXON_SECURITY_CREDENTIALS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1931,6 +1962,11 @@ def main() -> int:
         from axxon_mcp_bookmark_extras import AxxonMcpBookmarkExtras
 
         bookmark_extras = AxxonMcpBookmarkExtras()
+    security_credentials = None
+    if args.enable_security_credentials:
+        from axxon_mcp_security_credentials import AxxonMcpSecurityCredentials
+
+        security_credentials = AxxonMcpSecurityCredentials()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1965,6 +2001,7 @@ def main() -> int:
         config_change=config_change,
         archive_volume=archive_volume,
         bookmark_extras=bookmark_extras,
+        security_credentials=security_credentials,
     )
     server.run(transport=args.transport)
     return 0

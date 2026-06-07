@@ -39,7 +39,7 @@
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
 | **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 1/5 stamped. |
 | **Bookmarks** | BookmarkService | ✅ strong | reads + lifecycle; UpdateBookmark/SetExportedTime/RenderTrack open. |
-| **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 22/35 SecurityService; Authentication 2/12 (federated/TFA flows pending). |
+| **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 28/35 SecurityService (7 LDAP fixture-warn); Authentication 2/12 (federated/TFA flows pending). |
 | **System health / license / time** | LicenseService, TimeZoneManager, DomainSettingsService, ServerSettings, NgpNodeService | ✅ partial | `system_health`, `license_status`, `time_status`. License 6/11. |
 | **Config tree / devices** | ConfigurationService, DomainService, DevicesCatalog, DiscoveryService, ConfigurationManager, DynamicParametersService | ✅ strong-ish | Inventory + config units + camera CRUD. DynamicParameters 0/2, Discovery 2/5. |
 | **Archive storage / backup / cloud** | ArchiveVolumeService, BackupSourceService, CloudService, StateControlService | ❌ weak | `archive_policy_get` only; BackupSource 0/5, Cloud 0/4, StateControl 0/3, ArchiveVolume 0/1. |
@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **242 tested-pass / 90 pending / 29 fixture-warn** (361 total).
+Current honest coverage: **245 tested-pass / 82 pending / 34 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -340,3 +340,22 @@ The throwaway bookmark was deleted (GetBookmark afterward errors = gone), no res
 BookmarkService now **7/7 complete**.
 
 Coverage after Phase 38: **242 tested-pass / 90 pending / 29 fixture-warn** (361 total).
+
+### Item 10z (Phase 39): SecurityService credentials -> 28/35
+
+`tools/axxon_mcp_security_credentials.py` (gated, `AXXON_SECURITY_CREDENTIALS_APPROVE=1`,
+`--enable-security-credentials`). Live-verified on the demo stand:
+- **CheckPassword** — read-only uniqueness/policy pre-check (NOT an auth check): the current
+  password returns NOT_UNIQUE, an unused password returns OK. tested-pass.
+- **ChangePassword / ChangeLogin** — act on the connected session's own user. Verified -> OK
+  each on a SEPARATE throwaway admin user (created via ChangeConfig with an admin role
+  assignment, then removed; ListUsers confirms gone). The shared root account is never
+  touched. Separate users are used because the module re-authenticates per call.
+- **LDAP cluster** (TestLDAPConnection, Start/StopLDAPSynchronization, SearchLDAP,
+  SearchLDAP2, SearchLDAPGroups, GetLDAPSynchronizationState) — no LDAP server on this stand
+  (GetLDAPSynchronizationState returns UNAVAILABLE). All 7 restamped tested-warn-fixture-needed
+  (5 were previously still `pending`), honest.
+
+SecurityService now 28/35 (28 tested-pass + 7 LDAP fixture-warn, environment-walled).
+
+Coverage after Phase 39: **245 tested-pass / 82 pending / 34 fixture-warn** (361 total).

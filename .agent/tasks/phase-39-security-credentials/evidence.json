@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-39-security-credentials",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T15:28:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_security_credentials.py: AxxonMcpSecurityCredentials with check_password, change_my_password, change_my_login; approval env AXXON_SECURITY_CREDENTIALS_APPROVE, token CONFIRM-security-credentials; changes act on the session's own user"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_security_credentials.py GateTests: disabled/gap/error for both writes + check_password empty with client.calls==[]; live gate disabled+gap"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 4 security_credentials tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt check_password NOT_UNIQUE/OK/error; ChangePassword OK on throwaway user A; ChangeLogin OK on throwaway user B; both users removed (ListUsers confirms gone); root untouched"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py CheckPassword/ChangePassword/ChangeLogin tested-pass; all 7 LDAP methods fixture-warn (5 previously pending); dry-run after write = 0; coverage doc 245/82/34; SecurityService 28/35 no pending"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 892 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 245, "pending": 82, "fixture_warn": 34, "total": 361, "security_service": "28/35"}
+}

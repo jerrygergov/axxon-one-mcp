@@ -3953,7 +3953,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.TestLDAPConnection",
       "http_annotation": "POST /v1/security/ldap:testConnection",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "TestLDAPConnection",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -3961,7 +3961,8 @@
       "response": "TestLDAPConnectionResponse",
       "safety_class": "mutating",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand; GetLDAPSynchronizationState returns UNAVAILABLE)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.GetLDAPSynchronization",
@@ -3992,7 +3993,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.StartLDAPSynchronization",
       "http_annotation": "POST /v1/security/ldapsynchronization:start",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "StartLDAPSynchronization",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4000,12 +4001,13 @@
       "response": "StartLDAPSynchronizationResponse",
       "safety_class": "mutating",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.StopLDAPSynchronization",
       "http_annotation": "POST /v1/security/ldapsynchronization:stop",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "StopLDAPSynchronization",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4013,7 +4015,8 @@
       "response": "StopLDAPSynchronizationResponse",
       "safety_class": "mutating",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.GetPolicies",
@@ -4057,7 +4060,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.CheckPassword",
       "http_annotation": "POST /v1/security/checkpass",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "CheckPassword",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4065,7 +4068,8 @@
       "response": "CheckPasswordResponse",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (uniqueness pre-check: current pw NOT_UNIQUE, unused pw OK)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.ListGlobalPermissions",
@@ -4226,7 +4230,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.SearchLDAP2",
       "http_annotation": "POST /v1/security/ldap:search",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SearchLDAP2",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4234,12 +4238,13 @@
       "response": "SearchLDAPResponse2",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.SearchLDAPGroups",
       "http_annotation": "POST /v1/security/ldap/groups:search",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SearchLDAPGroups",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4247,7 +4252,8 @@
       "response": "SearchLDAPGroupsResponse",
       "safety_class": "review",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC5 (no LDAP server on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.GenGoogleAuthSecret",
@@ -4333,7 +4339,7 @@
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.ChangePassword",
       "http_annotation": "POST /v1/security/password:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangePassword",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4341,12 +4347,13 @@
       "response": "ChangePasswordResponse",
       "safety_class": "mutating",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (OK on throwaway admin user, then user removed)"
     },
     {
       "fqmn": "axxonsoft.bl.security.SecurityService.ChangeLogin",
       "http_annotation": "POST /v1/security/login:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeLogin",
       "package": "axxonsoft.bl.security",
       "proto": "axxonsoft/bl/security/SecurityService.proto",
@@ -4354,7 +4361,8 @@
       "response": "ChangeLoginResponse",
       "safety_class": "mutating",
       "service": "SecurityService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-39-security-credentials/evidence.md AC4 (OK on throwaway admin user, then user removed)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.DomainSettingsService.GetDataStorageSettings",
