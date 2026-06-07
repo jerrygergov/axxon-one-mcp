@@ -183,6 +183,12 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     The 13 unsupported by the simulated source (Focus/FocusAuto/Iris/IrisAuto/PointMove/AreaZoom/
     PerformAuxiliaryOperation + tour writes) stay pending: rejected with error 2 / GeneralError,
     closeable only on real PTZ hardware.
+10u. **MapService providers complete (phase-34)** - new gated module `axxon_mcp_map_providers.py`
+    (AXXON_MAP_APPROVE=1 + CONFIRM-map-providers) with gated `configure_map_providers`
+    (ConfigureMapProviders) and read `get_map_provider` (GetMapProvider). Live-verified reversibly:
+    create a throwaway provider -> get -> remove -> NOT_FOUND. The tool normalizes provider ids to
+    uppercase (the server stores them uppercase and Get/remove are case-sensitive). Both -> tested-pass;
+    MapService now 11/11 COMPLETE.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -274,4 +280,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **227 tested-pass / 107 pending / 27 fixture-warn** (361 total).
+Current honest coverage: **229 tested-pass / 106 pending / 26 fixture-warn** (361 total).

@@ -61,6 +61,7 @@ def create_server(
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
     control: Any | None = None,
+    map_providers: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -192,6 +193,9 @@ def create_server(
 
     if control is not None:
         register_control_tools(server, control)
+
+    if map_providers is not None:
+        register_map_providers_tools(server, map_providers)
 
     return server
 
@@ -1034,6 +1038,23 @@ def register_control_tools(server: Any, control: Any) -> None:
         return control.vmda_cleanup(camera_id=camera_id, schema_id=schema_id, database=database, confirmation=confirmation)
 
 
+def register_map_providers_tools(server: Any, map_providers: Any) -> None:
+    @server.tool(name="map_providers_connect_axxon_profile")
+    def map_providers_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the map-providers layer to the env profile (writes need AXXON_MAP_APPROVE=1)."""
+        return map_providers.map_providers_connect_axxon_profile(profile)
+
+    @server.tool(name="configure_map_providers")
+    def configure_map_providers(changed: list[dict[str, str]] | None = None, removed: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Create/update or remove map providers via MapService.ConfigureMapProviders (gated)."""
+        return map_providers.configure_map_providers(changed=changed, removed=removed, confirmation=confirmation)
+
+    @server.tool(name="get_map_provider")
+    def get_map_provider(provider_id: str = "") -> dict[str, Any]:
+        """Read a single map provider by id via MapService.GetMapProvider."""
+        return map_providers.get_map_provider(provider_id=provider_id)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1565,6 +1586,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 31 ACFA/VMDA control tools (perform_unit_action, vmda_cleanup). Writes need AXXON_CONTROL_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-map-providers",
+        action="store_true",
+        help="Enable Phase 34 MapService provider tools (configure_map_providers, get_map_provider). Writes need AXXON_MAP_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1736,6 +1762,11 @@ def main() -> int:
         from axxon_mcp_acfa_vmda_control import AxxonMcpAcfaVmdaControl
 
         control = AxxonMcpAcfaVmdaControl()
+    map_providers = None
+    if args.enable_map_providers:
+        from axxon_mcp_map_providers import AxxonMcpMapProviders
+
+        map_providers = AxxonMcpMapProviders()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1765,6 +1796,7 @@ def main() -> int:
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
         control=control,
+        map_providers=map_providers,
     )
     server.run(transport=args.transport)
     return 0

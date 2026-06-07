@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-34-map-providers",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "gated module: disabled/gap before wire", "status": "PASS", "proof": ["tools/axxon_mcp_map_providers.py _write_gate", "tools/tests/test_axxon_mcp_map_providers.py GateTests", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC2", "text": "configure_map_providers calls ConfigureMapProviders; empty -> error no wire; id uppercased", "status": "PASS", "proof": ["tools/axxon_mcp_map_providers.py configure_map_providers", "tools/tests/test_axxon_mcp_map_providers.py ConfigureTests", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC3", "text": "get_map_provider calls GetMapProvider; missing id -> error no wire", "status": "PASS", "proof": ["tools/axxon_mcp_map_providers.py get_map_provider", "tools/tests/test_axxon_mcp_map_providers.py GetTests", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC4", "text": "6-edit wiring + suite green", "status": "PASS", "proof": ["tools/axxon_mcp_server.py map_providers param + register_map_providers_tools + --enable-map-providers", ".agent/tasks/phase-34-map-providers/raw/test-integration.txt (Ran 844 ... OK)"], "gaps": []},
+    {"id": "AC5", "text": "restamp both MapService methods tested-pass; coverage 229; MapService 11/11; item 10u", "status": "PASS", "proof": ["tools/axxon_corpus_restamp.py MapService entries", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (229/106/26, item 10u)"], "gaps": []}
+  ],
+  "changed_files": ["tools/axxon_mcp_map_providers.py", "tools/axxon_mcp_server.py", "tools/tests/test_axxon_mcp_map_providers.py", "tools/axxon_corpus_restamp.py", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md"],
+  "commands_for_fresh_verifier": ["python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_map_providers\"", "python3.12 -m unittest discover -s tools/tests", "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_map_providers.py -v", "python3.12 tools/axxon_corpus_restamp.py"],
+  "known_gaps": ["None for MapService (11/11 complete)."]
+}

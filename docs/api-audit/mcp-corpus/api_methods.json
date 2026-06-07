@@ -2957,7 +2957,7 @@
     {
       "fqmn": "axxonsoft.bl.maps.MapService.ConfigureMapProviders",
       "http_annotation": "POST /v1/maps/providers",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ConfigureMapProviders",
       "package": "axxonsoft.bl.maps",
       "proto": "axxonsoft/bl/maps/MapService.proto",
@@ -2965,7 +2965,8 @@
       "response": "ConfigureMapProvidersResponse",
       "safety_class": "mutating",
       "service": "MapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (create+remove throwaway provider, reversible)"
     },
     {
       "fqmn": "axxonsoft.bl.maps.MapService.ListMapProviders",
@@ -2983,7 +2984,7 @@
     {
       "fqmn": "axxonsoft.bl.maps.MapService.GetMapProvider",
       "http_annotation": "GET /v1/maps/provider",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetMapProvider",
       "package": "axxonsoft.bl.maps",
       "proto": "axxonsoft/bl/maps/MapService.proto",
@@ -2991,7 +2992,8 @@
       "response": "GetMapProviderResponse",
       "safety_class": "read",
       "service": "MapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (read back the created provider, NOT_FOUND after remove)"
     },
     {
       "fqmn": "axxonsoft.bl.maps.MapService.UserDataCleanup",

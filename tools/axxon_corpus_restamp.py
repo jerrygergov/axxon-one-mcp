@@ -304,6 +304,13 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_tour_points ok)"),
     ("TelemetryService", "GetAuxiliaryOperations"): (
         "tested-pass", ".agent/tasks/phase-33-telemetry-ptz-full/raw/live-verify.txt (get_auxiliary_operations ok)"),
+    # Phase 34: MapService provider config completed via the gated map-providers module. Reversible
+    # create->get->remove of a throwaway provider (lowercase id normalized to the server's uppercase).
+    # Completes MapService (11/11).
+    ("MapService", "ConfigureMapProviders"): (
+        "tested-pass", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (create+remove throwaway provider, reversible)"),
+    ("MapService", "GetMapProvider"): (
+        "tested-pass", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (read back the created provider, NOT_FOUND after remove)"),
 }
 
 

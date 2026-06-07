@@ -1,0 +1,13 @@
+test_create_applied_records_provider (test_axxon_mcp_map_providers.ConfigureTests.test_create_applied_records_provider) ... ok
+test_no_config_secret_leak (test_axxon_mcp_map_providers.ConfigureTests.test_no_config_secret_leak) ... ok
+test_remove_applied (test_axxon_mcp_map_providers.ConfigureTests.test_remove_applied) ... ok
+test_disabled_when_env_off (test_axxon_mcp_map_providers.GateTests.test_disabled_when_env_off) ... ok
+test_error_on_empty_no_wire (test_axxon_mcp_map_providers.GateTests.test_error_on_empty_no_wire) ... ok
+test_gap_on_bad_token (test_axxon_mcp_map_providers.GateTests.test_gap_on_bad_token) ... ok
+test_get_map_provider_shape (test_axxon_mcp_map_providers.GetTests.test_get_map_provider_shape) ... ok
+test_get_missing_id_is_error_no_wire (test_axxon_mcp_map_providers.GetTests.test_get_missing_id_is_error_no_wire) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.009s
+
+OK
