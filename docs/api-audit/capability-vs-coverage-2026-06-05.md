@@ -71,10 +71,13 @@ These have **zero** MCP surface — not stale evidence, actually absent:
    Needs a stand with a real I/O device (relay/ray) or an action-capable ACFA controller.
 7. **GenericSettingsService (0/3)** — generic per-object settings get/set.
 8. **DynamicParametersService (0/2)** — dynamic device parameter discovery (drives detector schemas).
-9. **HeatMapService (0/6)** — heat-map analytics. FIXTURE-BLOCKED: every Build* RPC
-   (BuildHeatmap/BuildEventsHeatmap, all camera/db/detector bindings) returns "Failed to
-   execute command". The service needs a heat-map analytics module/license not provisioned
-   on this stand (same dead-fixture class as PTZ hardware / Cloud pairing).
+9. **HeatMapService (0/6)** — heat-map analytics. FIXTURE-BLOCKED (re-confirmed 2026-06-07):
+   BuildHeatmap / BuildEventsHeatmap return INTERNAL "Failed to execute command" across every
+   camera tried (DeviceIpint.1/2 "Tracker", DetectorEx.1/vmda) with both DATA and IMAGE result
+   types; BuildHeatmapTyped / ExecuteHeatmapQueryTyped hang to DEADLINE_EXCEEDED. The service
+   needs a heat-map analytics module/license + a camera with accumulated tracker data, not
+   provisioned on this stand (same dead-fixture class as PTZ hardware / Cloud pairing). Not
+   closeable by code or permission — only by provisioning the heatmap module on the stand.
 10. **RealtimeRecognizerService (7/7 non-fixture)** — reads CLOSED `496bd70`
     (GetLists/GetListStream/GetItems); writes CLOSED phase-14 (ChangeLists/ChangeItems/Clear,
     approval-gated, live-verified incl. an authorized node wipe) and ChangeListsStream CLOSED
