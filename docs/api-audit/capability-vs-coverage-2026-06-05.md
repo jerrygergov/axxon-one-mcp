@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **238 tested-pass / 96 pending / 27 fixture-warn** (361 total).
+Current honest coverage: **239 tested-pass / 91 pending / 31 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -306,3 +306,22 @@ Current honest coverage: **238 tested-pass / 96 pending / 27 fixture-warn** (361
   `display_mode=VM_WITH_FACTORY` (already pass). Left tested-warn-fixture-needed, honest.
 
 ConfigurationService now 11/12 (only BatchGetFactories outstanding, environment-walled).
+
+### Item 10x (Phase 37): ArchiveService volume resize
+
+`tools/axxon_mcp_archive_volume.py` (gated, `AXXON_ARCHIVE_VOLUME_APPROVE=1`,
+`--enable-archive-volume`). Live-verified on the demo stand:
+- **Resize** — `list_volume_states` on standalone storage
+  `hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage` returns one MOUNTED volume
+  (capacity 107374182400); resizing to that same capacity returns EStatusCode `DONE` and
+  leaves capacity unchanged (reversible no-op). tested-pass.
+- **ChangeBookmarks** — server returns UNIMPLEMENTED "ChangeBookmarks deprecated"; the
+  live replacement is BookmarkService.CreateBookmark (already pass). fixture-warn.
+- **CreateReaderEndpoint / Seek / ClearInterval** — CORBA INTERNAL on every source/storage
+  AP form; the reader and recorded-source subsystem is not serviceable for the virtual
+  sources on this stand. fixture-warn (honest, not faked).
+
+ArchiveService now 13/17 (Resize closed; the reader chain + ClearInterval are
+environment-walled, ChangeBookmarks is deprecated server-side).
+
+Coverage after Phase 37: **239 tested-pass / 91 pending / 31 fixture-warn** (361 total).

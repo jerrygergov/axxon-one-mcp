@@ -24,6 +24,27 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 37 ArchiveService: Resize live-verified on standalone storage
+    # hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage volume 4b025154-... by
+    # resizing to its current capacity (107374182400) -> EStatusCode DONE, capacity
+    # unchanged (reversible no-op). The other four pending methods are not serviceable
+    # on this stand: ChangeBookmarks returns UNIMPLEMENTED "deprecated";
+    # CreateReaderEndpoint/Seek/ClearInterval throw CORBA INTERNAL (reader + recorded-
+    # source subsystem unavailable) -> all stay fixture-warn with honest citations.
+    ("ArchiveService", "Resize"): (
+        "tested-pass", ".agent/tasks/phase-37-archive-volume/evidence.md AC4 (resize to current capacity -> DONE, reversible no-op)"),
+    ("ArchiveService", "ChangeBookmarks"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (server returns UNIMPLEMENTED 'ChangeBookmarks deprecated'; use BookmarkService.CreateBookmark)"),
+    ("ArchiveService", "CreateReaderEndpoint"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (CORBA INTERNAL on every source AP; reader subsystem unavailable on this stand)"),
+    ("ArchiveService", "Seek"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (needs a reader endpoint that cannot be created on this stand)"),
+    ("ArchiveService", "ClearInterval"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (CORBA INTERNAL on every resolvable source/storage AP form)"),
     # Phase 36 ConfigurationService: reversible single-property unit change on
     # hosts/Server/DeviceIpint.1 display_name (Tracker -> probe -> Tracker), failed=0
     # both directions for both ChangeConfig and ChangeConfigStream. ListSimilarUnits

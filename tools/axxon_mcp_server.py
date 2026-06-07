@@ -64,6 +64,7 @@ def create_server(
     map_providers: Any | None = None,
     logic_alerts: Any | None = None,
     config_change: Any | None = None,
+    archive_volume: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -204,6 +205,9 @@ def create_server(
 
     if config_change is not None:
         register_config_change_tools(server, config_change)
+
+    if archive_volume is not None:
+        register_archive_volume_tools(server, archive_volume)
 
     return server
 
@@ -1132,6 +1136,23 @@ def register_config_change_tools(server: Any, config_change: Any) -> None:
         return config_change.change_unit_property_stream(uid=uid, unit_type=unit_type, property_id=property_id, value_string=value_string, confirmation=confirmation)
 
 
+def register_archive_volume_tools(server: Any, archive_volume: Any) -> None:
+    @server.tool(name="archive_volume_connect_axxon_profile")
+    def archive_volume_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ArchiveService volume layer (resize needs AXXON_ARCHIVE_VOLUME_APPROVE=1)."""
+        return archive_volume.archive_volume_connect_axxon_profile(profile)
+
+    @server.tool(name="list_volume_states")
+    def list_volume_states(access_point: str = "") -> dict[str, Any]:
+        """List archive storage volume states via ArchiveService.GetVolumesState."""
+        return archive_volume.list_volume_states(access_point=access_point)
+
+    @server.tool(name="resize_volume")
+    def resize_volume(access_point: str = "", volume_id: str = "", new_size: int = 0, confirmation: str = "") -> dict[str, Any]:
+        """Resize a storage volume to new_size bytes via ArchiveService.Resize (gated)."""
+        return archive_volume.resize_volume(access_point=access_point, volume_id=volume_id, new_size=new_size, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1678,6 +1699,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 36 ConfigurationService tools (list_similar_units, batch_get_factories + gated unit property changes). Writes need AXXON_CONFIG_CHANGE_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-archive-volume",
+        action="store_true",
+        help="Enable Phase 37 ArchiveService volume tools (list_volume_states + gated resize_volume). Resize needs AXXON_ARCHIVE_VOLUME_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1864,6 +1890,11 @@ def main() -> int:
         from axxon_mcp_config_change import AxxonMcpConfigChange
 
         config_change = AxxonMcpConfigChange()
+    archive_volume = None
+    if args.enable_archive_volume:
+        from axxon_mcp_archive_volume import AxxonMcpArchiveVolume
+
+        archive_volume = AxxonMcpArchiveVolume()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1896,6 +1927,7 @@ def main() -> int:
         map_providers=map_providers,
         logic_alerts=logic_alerts,
         config_change=config_change,
+        archive_volume=archive_volume,
     )
     server.run(transport=args.transport)
     return 0

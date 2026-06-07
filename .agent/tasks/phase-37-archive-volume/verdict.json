@@ -1,0 +1,62 @@
+{
+  "task_id": "phase-37-archive-volume",
+  "overall_verdict": "PASS",
+  "verified": "2026-06-07T00:00:00+00:00",
+  "verifier": "task-verifier",
+  "method": "fresh inspection of current codebase + reran verification commands",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_archive_volume.py exposes list_volume_states (read), resize_volume (gated write), plus archive_volume_connect_axxon_profile/connect_axxon_profile/ensure_client/_stub_and_pb2/_write_gate. Approval env AXXON_ARCHIVE_VOLUME_APPROVE, token CONFIRM-archive-resize. Module imports OK."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "resize_volume runs _write_gate before any wire call: env-off->disabled, bad token->gap, missing access_point/volume_id/non-positive size->error. Module tests 8 passed; 5 gate cases assert inst.client.calls==[]."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_server.py has the full 6-edit wiring: param archive_volume (L67), conditional register (L209-210), register_archive_volume_tools with 3 @server.tool entries (L1139-1153), --enable-archive-volume flag (L1702), flag-gated instantiation (L1894-1897), pass to create_server (L1930). Server imports OK."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "Live stand not reachable from verifier; raw/live-verify.txt accepted as evidence. It shows list_volume_states returning 1 mounted volume (state 4, capacity 107374182400) and resize_volume to the same capacity returning status_code 0 DONE with post-resize capacity unchanged (reversible no-op). Host and creds sanitized; no demo host IP or plaintext creds present."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "axxon_corpus_restamp.py dry-run reports 0 method(s) restamped. api_methods.json: ArchiveService.Resize live_status tested-pass; ChangeBookmarks/CreateReaderEndpoint/Seek/ClearInterval tested-warn-fixture-needed with honest citations. Coverage doc capability-vs-coverage-2026-06-05.md headline reads 239 tested-pass / 91 pending / 31 fixture-warn; ArchiveService now 13/17."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "reason": "python3.12 -m pytest tools/tests/ -q -> 871 passed. New unit-test file tools/tests/test_axxon_mcp_archive_volume.py present (8 tests passing)."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -c import axxon_mcp_archive_volume, axxon_mcp_server -> import OK",
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_archive_volume.py -q -> 8 passed",
+    "python3.12 -m pytest tools/tests/ -q -> 871 passed",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "rg secret scan over task dir + production module -> clean"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-37-archive-volume/spec.md",
+    ".agent/tasks/phase-37-archive-volume/evidence.md",
+    ".agent/tasks/phase-37-archive-volume/evidence.json",
+    ".agent/tasks/phase-37-archive-volume/raw/live-verify.txt",
+    "tools/axxon_mcp_archive_volume.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_archive_volume.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "notes": {
+    "coverage_math": "239 tested-pass = 216 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty in api_methods.json, consistent with the coverage doc headline.",
+    "secret_scan": "rg for the demo host IP and plaintext cred patterns over task dir + production module returned no matches; broader scan of live-verify.txt for host/cred patterns also clean."
+  }
+}

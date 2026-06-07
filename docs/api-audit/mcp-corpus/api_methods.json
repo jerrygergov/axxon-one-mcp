@@ -110,7 +110,7 @@
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.ChangeBookmarks",
       "http_annotation": "POST /v1/archive/action:makeUserComment",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ChangeBookmarks",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
@@ -118,7 +118,8 @@
       "response": "ChangeBookmarksResponse",
       "safety_class": "mutating",
       "service": "ArchiveService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (server returns UNIMPLEMENTED 'ChangeBookmarks deprecated'; use BookmarkService.CreateBookmark)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.GetRecordingInfo",
@@ -136,7 +137,7 @@
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.CreateReaderEndpoint",
       "http_annotation": "POST /v1/archive/action:createEndpoint",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "CreateReaderEndpoint",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
@@ -144,7 +145,8 @@
       "response": "CreateReaderEndpointResponse",
       "safety_class": "mutating",
       "service": "ArchiveService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (CORBA INTERNAL on every source AP; reader subsystem unavailable on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.GetHistory",
@@ -214,7 +216,7 @@
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.Seek",
       "http_annotation": "POST /v1/archive/action:seek",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "Seek",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
@@ -222,12 +224,13 @@
       "response": "SeekResponse",
       "safety_class": "mutating",
       "service": "ArchiveService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (needs a reader endpoint that cannot be created on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.Resize",
       "http_annotation": "POST /v1/archive/action:resize",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Resize",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
@@ -235,12 +238,13 @@
       "response": "ResizeResponse",
       "safety_class": "mutating",
       "service": "ArchiveService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-37-archive-volume/evidence.md AC4 (resize to current capacity -> DONE, reversible no-op)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.ClearInterval",
       "http_annotation": "POST /v1/archive/action:clearInterval",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ClearInterval",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveSupport.proto",
@@ -248,7 +252,8 @@
       "response": "ClearIntervalResponse",
       "safety_class": "mutating",
       "service": "ArchiveService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-37-archive-volume/evidence.md AC5 (CORBA INTERNAL on every resolvable source/storage AP form)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.GetVolumesState",
