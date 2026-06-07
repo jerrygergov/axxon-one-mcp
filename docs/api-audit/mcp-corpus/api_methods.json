@@ -2521,7 +2521,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchGetActiveAlerts",
       "http_annotation": "POST /v1/logic_service/batchgetactivealerts",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchGetActiveAlerts",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2529,12 +2529,13 @@
       "response": "BatchGetActiveAlertsResponse",
       "safety_class": "review",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (node read, 0 active alerts)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchFilterActiveAlerts",
       "http_annotation": "POST /v1/logic_service/batchfilteractivealerts",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchFilterActiveAlerts",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2542,12 +2543,13 @@
       "response": "BatchFilterActiveAlertsResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (node+filter read)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchBeginAlertsReview",
       "http_annotation": "POST /v1/logic_service/batchbeginalertsreview",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchBeginAlertsReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2555,12 +2557,13 @@
       "response": "BatchBeginAlertsReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchContinueAlertsRewiew",
       "http_annotation": "POST /v1/logic_service/batchcontinuealertsreview",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchContinueAlertsRewiew",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2568,12 +2571,13 @@
       "response": "BatchContinueAlertsRewiewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchCancelAlertsReview",
       "http_annotation": "POST /v1/logic_service/batchcancelalertsreview",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchCancelAlertsReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2581,7 +2585,8 @@
       "response": "BatchCancelAlertsReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchCompleteAlertsReview",
@@ -2599,7 +2604,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchEscalateAlerts",
       "http_annotation": "POST /v1/logic_service/batchescalatealerts",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchEscalateAlerts",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2607,7 +2612,8 @@
       "response": "BatchEscalateAlertsResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.RaiseAlert",

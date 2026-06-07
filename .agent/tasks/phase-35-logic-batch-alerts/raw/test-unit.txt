@@ -1,0 +1,13 @@
+test_disabled_when_env_off (test_axxon_mcp_logic_alerts.GateTests.test_disabled_when_env_off) ... ok
+test_error_on_empty_nodes_no_wire (test_axxon_mcp_logic_alerts.GateTests.test_error_on_empty_nodes_no_wire) ... ok
+test_gap_on_bad_token (test_axxon_mcp_logic_alerts.GateTests.test_gap_on_bad_token) ... ok
+test_batch_filter_ok_empty_result (test_axxon_mcp_logic_alerts.ReadTests.test_batch_filter_ok_empty_result) ... ok
+test_batch_get_active_alerts_ok (test_axxon_mcp_logic_alerts.ReadTests.test_batch_get_active_alerts_ok) ... ok
+test_batch_get_empty_nodes_error_no_wire (test_axxon_mcp_logic_alerts.ReadTests.test_batch_get_empty_nodes_error_no_wire) ... ok
+test_all_five_reviews_applied (test_axxon_mcp_logic_alerts.ReviewTests.test_all_five_reviews_applied) ... ok
+test_no_config_secret_leak (test_axxon_mcp_logic_alerts.ReviewTests.test_no_config_secret_leak) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.000s
+
+OK

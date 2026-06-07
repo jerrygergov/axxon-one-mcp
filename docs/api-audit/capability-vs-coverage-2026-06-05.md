@@ -192,6 +192,14 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     create a throwaway provider -> get -> remove -> NOT_FOUND. The tool normalizes provider ids to
     uppercase (the server stores them uppercase and Get/remove are case-sensitive). Both -> tested-pass;
     MapService now 11/11 COMPLETE.
+10v. **LogicService batch alerts (phase-35)** - new module `axxon_mcp_logic_alerts.py` with read
+    `batch_get_active_alerts` / `batch_filter_active_alerts` and gated batch reviews
+    (AXXON_LOGIC_ALERTS_APPROVE=1 + CONFIRM-batch-alerts): begin/continue/cancel/escalate. These are
+    node+filter-scoped, so they run as a clean no-op against 0 active alerts. Live-verified on node
+    Server (unreachable_nodes empty). 6 -> tested-pass; LogicService now 21/29. BatchCompleteAlertsReview
+    is left fixture-warn (reports unreachable_nodes=['Server'] - cannot complete with no reviewable
+    alert, same wall as the single CompleteAlertReview); counter ops stay fixture-walled (no counter
+    configured on the stand).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -283,4 +291,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **229 tested-pass / 106 pending / 26 fixture-warn** (361 total).
+Current honest coverage: **235 tested-pass / 100 pending / 26 fixture-warn** (361 total).

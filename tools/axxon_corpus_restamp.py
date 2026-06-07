@@ -311,6 +311,23 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (create+remove throwaway provider, reversible)"),
     ("MapService", "GetMapProvider"): (
         "tested-pass", ".agent/tasks/phase-34-map-providers/raw/live-verify.txt (read back the created provider, NOT_FOUND after remove)"),
+    # Phase 35: LogicService node-scoped batch alert ops live-verified through the new logic-alerts
+    # module (node=Server, 0 active alerts -> clean no-op, unreachable_nodes empty). The 5 review
+    # writes are approval-gated. BatchCompleteAlertsReview is NOT restamped: it reports
+    # unreachable_nodes=['Server'] (cannot complete without a reviewable alert; same wall as the
+    # single CompleteAlertReview). Counter ops stay fixture-walled (no counter configured).
+    ("LogicService", "BatchGetActiveAlerts"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (node read, 0 active alerts)"),
+    ("LogicService", "BatchFilterActiveAlerts"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (node+filter read)"),
+    ("LogicService", "BatchBeginAlertsReview"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"),
+    ("LogicService", "BatchContinueAlertsRewiew"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"),
+    ("LogicService", "BatchCancelAlertsReview"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"),
+    ("LogicService", "BatchEscalateAlerts"): (
+        "tested-pass", ".agent/tasks/phase-35-logic-batch-alerts/raw/live-verify.txt (applied, clean no-op)"),
 }
 
 

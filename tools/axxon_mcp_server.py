@@ -62,6 +62,7 @@ def create_server(
     gdpr_cleanup: Any | None = None,
     control: Any | None = None,
     map_providers: Any | None = None,
+    logic_alerts: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -196,6 +197,9 @@ def create_server(
 
     if map_providers is not None:
         register_map_providers_tools(server, map_providers)
+
+    if logic_alerts is not None:
+        register_logic_alerts_tools(server, logic_alerts)
 
     return server
 
@@ -1055,6 +1059,48 @@ def register_map_providers_tools(server: Any, map_providers: Any) -> None:
         return map_providers.get_map_provider(provider_id=provider_id)
 
 
+def register_logic_alerts_tools(server: Any, logic_alerts: Any) -> None:
+    @server.tool(name="logic_alerts_connect_axxon_profile")
+    def logic_alerts_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the LogicService batch-alert layer (reviews need AXXON_LOGIC_ALERTS_APPROVE=1)."""
+        return logic_alerts.logic_alerts_connect_axxon_profile(profile)
+
+    @server.tool(name="batch_get_active_alerts")
+    def batch_get_active_alerts(nodes: list[str] | None = None) -> dict[str, Any]:
+        """Read active alerts across nodes via LogicService.BatchGetActiveAlerts."""
+        return logic_alerts.batch_get_active_alerts(nodes=nodes)
+
+    @server.tool(name="batch_filter_active_alerts")
+    def batch_filter_active_alerts(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None) -> dict[str, Any]:
+        """Read active alerts across nodes filtered by groups/parents via BatchFilterActiveAlerts."""
+        return logic_alerts.batch_filter_active_alerts(nodes=nodes, groups=groups, parents=parents)
+
+    @server.tool(name="batch_begin_alerts_review")
+    def batch_begin_alerts_review(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Begin review on node+filter-scoped active alerts via BatchBeginAlertsReview (gated)."""
+        return logic_alerts.batch_begin_alerts_review(nodes=nodes, groups=groups, parents=parents, confirmation=confirmation)
+
+    @server.tool(name="batch_continue_alerts_review")
+    def batch_continue_alerts_review(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Continue review on node+filter-scoped alerts via BatchContinueAlertsRewiew (gated)."""
+        return logic_alerts.batch_continue_alerts_review(nodes=nodes, groups=groups, parents=parents, confirmation=confirmation)
+
+    @server.tool(name="batch_cancel_alerts_review")
+    def batch_cancel_alerts_review(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Cancel review on node+filter-scoped alerts via BatchCancelAlertsReview (gated)."""
+        return logic_alerts.batch_cancel_alerts_review(nodes=nodes, groups=groups, parents=parents, confirmation=confirmation)
+
+    @server.tool(name="batch_complete_alerts_review")
+    def batch_complete_alerts_review(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None, severity: int = 0, confirmation: str = "") -> dict[str, Any]:
+        """Complete review on node+filter-scoped alerts via BatchCompleteAlertsReview (gated)."""
+        return logic_alerts.batch_complete_alerts_review(nodes=nodes, groups=groups, parents=parents, severity=severity, confirmation=confirmation)
+
+    @server.tool(name="batch_escalate_alerts")
+    def batch_escalate_alerts(nodes: list[str] | None = None, groups: list[str] | None = None, parents: list[str] | None = None, comment: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Escalate node+filter-scoped alerts via BatchEscalateAlerts (gated)."""
+        return logic_alerts.batch_escalate_alerts(nodes=nodes, groups=groups, parents=parents, comment=comment, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1591,6 +1637,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 34 MapService provider tools (configure_map_providers, get_map_provider). Writes need AXXON_MAP_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-logic-alerts",
+        action="store_true",
+        help="Enable Phase 35 LogicService batch alert tools (batch read + gated batch review). Reviews need AXXON_LOGIC_ALERTS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1767,6 +1818,11 @@ def main() -> int:
         from axxon_mcp_map_providers import AxxonMcpMapProviders
 
         map_providers = AxxonMcpMapProviders()
+    logic_alerts = None
+    if args.enable_logic_alerts:
+        from axxon_mcp_logic_alerts import AxxonMcpLogicAlerts
+
+        logic_alerts = AxxonMcpLogicAlerts()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1797,6 +1853,7 @@ def main() -> int:
         gdpr_cleanup=gdpr_cleanup,
         control=control,
         map_providers=map_providers,
+        logic_alerts=logic_alerts,
     )
     server.run(transport=args.transport)
     return 0

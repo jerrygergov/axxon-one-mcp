@@ -1,0 +1,40 @@
+Phase 35 - LogicService node-scoped batch alert tools
+Live evidence against the demo stand (host <demo-host>, creds <redacted>, node "Server",
+0 active alerts). Exercised end-to-end THROUGH the shipped MCP tools
+(axxon_mcp_logic_alerts.*). Batch reviews are approval-gated.
+
+The batch ops are node+filter-scoped: with 0 active alerts they execute as a clean
+no-op (empty success/failure), so nothing is actually reviewed or escalated.
+
+[reads - not gated]
+  batch_get_active_alerts(nodes=['Server'])    -> status=ok alert_count=0
+  batch_filter_active_alerts(nodes=['Server']) -> status=ok alert_count=0
+  batch_get_active_alerts(nodes=[])            -> status=error (no wire call)
+
+[gate matrix]
+  env unset            -> batch_begin_alerts_review status=disabled (no wire call)
+  enabled + bad token  -> status=gap   (no wire call)
+  enabled + empty nodes-> status=error (no wire call)
+
+[gated batch reviews - applied, clean no-op (unreachable_nodes empty)]
+  batch_begin_alerts_review    -> applied  success=[] unreachable=[]
+  batch_continue_alerts_review -> applied  success=[] unreachable=[]
+  batch_cancel_alerts_review   -> applied  success=[] unreachable=[]
+  batch_escalate_alerts        -> applied  success=[] unreachable=[]
+
+[NOT restamped - operational failure, honest]
+  batch_complete_alerts_review -> applied but unreachable_nodes=['Server'] on every
+    attempt (with and without severity). BatchCompleteAlertsReview cannot complete with
+    no reviewable alert present; same fixture wall as the single CompleteAlertReview.
+    Left fixture-warn, not claimed as a functional pass.
+
+[restamped 6 methods] BatchGetActiveAlerts, BatchFilterActiveAlerts,
+  BatchBeginAlertsReview, BatchContinueAlertsRewiew, BatchCancelAlertsReview,
+  BatchEscalateAlerts.
+
+[fixture-walled, out of scope] counter ops (ListCounters returns empty - no counter
+  configured; GetCounterState raises a CORBA exception).
+
+[hygiene]
+  Node-scoped no-op (0 active alerts); nothing reviewed/escalated. Reviews default-off
+  (env + token). No proto/CA/PDF committed; secrets env-only.
