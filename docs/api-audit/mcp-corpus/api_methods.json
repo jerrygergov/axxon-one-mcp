@@ -2296,7 +2296,7 @@
     {
       "fqmn": "axxonsoft.bl.license.LicenseService.LicenseKey",
       "http_annotation": "GET /v1/license",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "LicenseKey",
       "package": "axxonsoft.bl.license",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
@@ -2304,12 +2304,13 @@
       "response": "LicenseKeyResponse",
       "safety_class": "review",
       "service": "LicenseService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-42-license-reads/evidence.md AC4 (key_present True, key_length 50992, value never returned)"
     },
     {
       "fqmn": "axxonsoft.bl.license.LicenseService.Restrictions",
       "http_annotation": "GET /v1/license/restrictions",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Restrictions",
       "package": "axxonsoft.bl.license",
       "proto": "axxonsoft/bl/license/LicenseService.proto",
@@ -2317,7 +2318,8 @@
       "response": "RestrictionsResponse",
       "safety_class": "review",
       "service": "LicenseService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-42-license-reads/evidence.md AC4 (restrictions + available_restrictions present)"
     },
     {
       "fqmn": "axxonsoft.bl.license.LicenseService.GetGlobalRestrictions",

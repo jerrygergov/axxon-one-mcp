@@ -1,0 +1,9 @@
+=== phase-42-license-reads live verify (sanitized) ===
+date: 2026-06-07T16:10:29Z
+host: <demo-host>  grpc: 20109  user: <redacted>  tls_cn: Server
+note: the license key value is never returned (key_present + key_length only)
+
+connect: {'connected': True, 'mode': 'read'}
+get_license_key -> {'status': 'ok', 'tool': 'get_license_key', 'key_present': True, 'key_length': 50992}
+get_restrictions -> {'status': 'ok', 'tool': 'get_restrictions', 'restrictions_present': True, 'available_present': True}
+ALL LIVE CHECKS PASS

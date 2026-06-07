@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-42-license-reads",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T16:12:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_license_reads.py: AxxonMcpLicenseReads with get_license_key (metadata-only) + get_restrictions; read-only, no gate"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_license_reads.py: raw key absent from output, key_length matches source, restrictions flags present, no config-secret leak"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 3 license_reads tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt get_license_key key_present True key_length 50992 (no raw key); get_restrictions restrictions_present + available_present True"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py LicenseKey/Restrictions tested-pass; dry-run after write = 0; coverage doc 256/67/38; LicenseService 8/11"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 916 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 256, "pending": 67, "fixture_warn": 38, "total": 361, "license_service": "8/11"}
+}

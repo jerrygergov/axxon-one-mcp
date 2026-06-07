@@ -24,6 +24,15 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 42 LicenseService reads. LicenseKey returns the current key (verified metadata-only:
+    # key_present True, key_length 50992; the raw key is never returned). Restrictions
+    # (deprecated proto, still serviceable) returns restrictions + available_restrictions. The
+    # three license-mutation methods (DistributeLicenseKey, DropLicenseKey,
+    # CreateLicenseDocument) are out of scope on a shared stand and left pending.
+    ("LicenseService", "LicenseKey"): (
+        "tested-pass", ".agent/tasks/phase-42-license-reads/evidence.md AC4 (key_present True, key_length 50992, value never returned)"),
+    ("LicenseService", "Restrictions"): (
+        "tested-pass", ".agent/tasks/phase-42-license-reads/evidence.md AC4 (restrictions + available_restrictions present)"),
     # Phase 41 LayoutManager. BatchGetLayouts is an etag-conditional read (empty/stale etag
     # returns the body, matching etag returns nothing, bogus id returns not_found);
     # LayoutsOnView pushes a layout to the view (OK); Update renames a layout reversibly

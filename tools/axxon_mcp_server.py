@@ -69,6 +69,7 @@ def create_server(
     security_credentials: Any | None = None,
     auth_sessions: Any | None = None,
     layout_manager: Any | None = None,
+    license_reads: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -224,6 +225,9 @@ def create_server(
 
     if layout_manager is not None:
         register_layout_manager_tools(server, layout_manager)
+
+    if license_reads is not None:
+        register_license_reads_tools(server, license_reads)
 
     return server
 
@@ -1257,6 +1261,23 @@ def register_layout_manager_tools(server: Any, layout_manager: Any) -> None:
         return layout_manager.update_layout_name(layout_id=layout_id, display_name=display_name, confirmation=confirmation)
 
 
+def register_license_reads_tools(server: Any, license_reads: Any) -> None:
+    @server.tool(name="license_reads_connect_axxon_profile")
+    def license_reads_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the LicenseService read layer (read-only license key + restrictions)."""
+        return license_reads.license_reads_connect_axxon_profile(profile)
+
+    @server.tool(name="get_license_key")
+    def get_license_key() -> dict[str, Any]:
+        """Report license key presence/length via LicenseService.LicenseKey (never returns the key)."""
+        return license_reads.get_license_key()
+
+    @server.tool(name="get_restrictions")
+    def get_restrictions() -> dict[str, Any]:
+        """Read license restrictions via LicenseService.Restrictions."""
+        return license_reads.get_restrictions()
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1828,6 +1849,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 41 LayoutManager tools (batch_get_layouts, layouts_on_view + gated update_layout_name). Rename needs AXXON_LAYOUT_MANAGER_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-license-reads",
+        action="store_true",
+        help="Enable Phase 42 LicenseService read tools (get_license_key metadata-only, get_restrictions).",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2039,6 +2065,11 @@ def main() -> int:
         from axxon_mcp_layout_manager import AxxonMcpLayoutManager
 
         layout_manager = AxxonMcpLayoutManager()
+    license_reads = None
+    if args.enable_license_reads:
+        from axxon_mcp_license_reads import AxxonMcpLicenseReads
+
+        license_reads = AxxonMcpLicenseReads()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2076,6 +2107,7 @@ def main() -> int:
         security_credentials=security_credentials,
         auth_sessions=auth_sessions,
         layout_manager=layout_manager,
+        license_reads=license_reads,
     )
     server.run(transport=args.transport)
     return 0

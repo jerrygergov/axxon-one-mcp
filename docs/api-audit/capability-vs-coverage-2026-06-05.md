@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **254 tested-pass / 69 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **256 tested-pass / 67 pending / 38 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -393,3 +393,18 @@ Coverage after Phase 40: **251 tested-pass / 72 pending / 38 fixture-warn** (361
 LayoutManager now **5/5 complete**.
 
 Coverage after Phase 41: **254 tested-pass / 69 pending / 38 fixture-warn** (361 total).
+
+### Item 10ac (Phase 42): LicenseService reads -> 8/11
+
+`tools/axxon_mcp_license_reads.py` (read-only, `--enable-license-reads`, no gate).
+Live-verified on the demo stand:
+- **LicenseKey** — returns the current license key; the tool reports key_present True and
+  key_length 50992 only, never the raw key (metadata-only surface). tested-pass.
+- **Restrictions** — deprecated proto but still serviceable; returns restrictions +
+  available_restrictions. tested-pass.
+- **DistributeLicenseKey / DropLicenseKey / CreateLicenseDocument** — license mutations that
+  would change the stand's licensing state; out of scope on a shared stand, left pending.
+
+LicenseService now 8/11.
+
+Coverage after Phase 42: **256 tested-pass / 67 pending / 38 fixture-warn** (361 total).
