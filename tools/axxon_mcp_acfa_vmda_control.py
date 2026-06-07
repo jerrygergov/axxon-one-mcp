@@ -28,6 +28,8 @@ VMDA_PB2 = "axxonsoft.bl.vmda.VMDA_pb2"
 CONTROL_TOOL_NAMES = (
     "control_connect_axxon_profile",
     "list_unit_actions",
+    "list_unit_visualizations",
+    "download_unit_data",
     "perform_unit_action",
     "vmda_cleanup",
 )
@@ -124,6 +126,38 @@ class AxxonMcpAcfaVmdaControl:
             if not response.more_data:
                 break
         return {"status": "ok", "tool": "list_unit_actions", "count": len(units), "units": units}
+
+    def list_unit_visualizations(self, uids: list[str] | None = None) -> dict[str, Any]:
+        ids = [u for u in (uids or []) if u]
+        if not ids:
+            return {"status": "error", "tool": "list_unit_visualizations", "message": "provide at least one unit uid"}
+        stub, pb2 = self._stub_and_pb2(ACFA_PROTO, "AcfaService", ACFA_PB2)
+        request = pb2.ListUnitsVisualizationsRequest(items=[pb2.ListUnitsVisualizationsRequest.Unit(uid=u) for u in ids], portion_size=200)
+        units: list[dict[str, Any]] = []
+        for response in stub.ListUnitsVisualizations(request, timeout=self.ensure_client().config.timeout):
+            for uv in response.items:
+                vis: list[dict[str, Any]] = []
+                for v in uv.visualizations:
+                    kind = v.WhichOneof("value")
+                    image_data_ids = [icon.image for icon in v.icons.items if icon.image] if kind == "icons" else []
+                    vis.append({"id": v.id, "name": v.name, "kind": kind, "image_data_ids": image_data_ids})
+                units.append({"uid": uv.uid, "visualizations": vis})
+            if not response.more_data:
+                break
+        return {"status": "ok", "tool": "list_unit_visualizations", "count": len(units), "units": units}
+
+    def download_unit_data(self, uid: str = "", data_ids: list[str] | None = None) -> dict[str, Any]:
+        ids = [d for d in (data_ids or []) if d]
+        if not uid or not ids:
+            return {"status": "error", "tool": "download_unit_data", "message": "uid and at least one data_id are required"}
+        stub, pb2 = self._stub_and_pb2(ACFA_PROTO, "AcfaService", ACFA_PB2)
+        items: list[dict[str, Any]] = []
+        total = 0
+        for response in stub.DownloadData(pb2.DownloadDataRequest(uid=uid, data_id=ids), timeout=self.ensure_client().config.timeout):
+            size = len(response.data)
+            total += size
+            items.append({"data_id": response.data_id, "byte_count": size})
+        return {"status": "ok", "tool": "download_unit_data", "uid": uid, "count": len(items), "items": items, "total_bytes": total}
 
     def perform_unit_action(
         self,

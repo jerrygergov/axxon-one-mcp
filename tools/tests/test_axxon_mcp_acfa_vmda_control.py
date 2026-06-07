@@ -42,6 +42,59 @@ class _UnitAction:
         self.actions = actions or []
 
 
+class _Icon:
+    def __init__(self, id="", image=""):
+        self.id = id
+        self.image = image
+
+
+class _IconGroup:
+    def __init__(self, items=None):
+        self.items = items or []
+
+
+class _Visualization:
+    def __init__(self, id="", name="", icons=None):
+        self.id = id
+        self.name = name
+        self.icons = icons or _IconGroup()
+        self._kind = "icons" if icons is not None else None
+
+    def WhichOneof(self, field):
+        return self._kind
+
+
+class _UnitVis:
+    def __init__(self, uid="", visualizations=None):
+        self.uid = uid
+        self.visualizations = visualizations or []
+
+
+class _VisResp:
+    def __init__(self, items, more_data=False):
+        self.items = items
+        self.more_data = more_data
+
+
+class _DownloadResp:
+    def __init__(self, data=b"", data_id=""):
+        self.data = data
+        self.data_id = data_id
+
+
+class _VisReq:
+    def __init__(self, items=None, portion_size=0):
+        self.items = items or []
+        self.portion_size = portion_size
+    Unit = None
+
+
+class _DownloadReq:
+    def __init__(self, uid="", data_id=None):
+        self.uid = uid
+        self.data_id = list(data_id or [])
+
+
 class _ActionsResp:
     def __init__(self, items, more_data=False):
         self.items = items
@@ -96,6 +149,10 @@ class _AcfaPb2:
     class ListUnitsActionsRequest(_ListReq):
         Unit = _Unit
 
+    class ListUnitsVisualizationsRequest(_VisReq):
+        Unit = _Unit
+
+    DownloadDataRequest = _DownloadReq
     PerformActionRequest = _PerformReq
 
 
@@ -111,6 +168,15 @@ class _AcfaStub:
     def ListUnitsActions(self, request, timeout=None):
         self._rec.append(("ListUnitsActions", [u.uid for u in request.items]))
         return iter([_ActionsResp([_UnitAction("u-1", [_Action("ARM", "Arm"), _Action("DISARM", "Disarm")])])])
+
+    def ListUnitsVisualizations(self, request, timeout=None):
+        self._rec.append(("ListUnitsVisualizations", [u.uid for u in request.items]))
+        vis = _Visualization("v-1", "Lock state", icons=_IconGroup([_Icon("i-1", "lock.png"), _Icon("i-2", "unlock.png"), _Icon("i-3", "")]))
+        return iter([_VisResp([_UnitVis("u-1", [vis])])])
+
+    def DownloadData(self, request, timeout=None):
+        self._rec.append(("DownloadData", request.uid, list(request.data_id)))
+        return iter([_DownloadResp(data=b"iVBORw0K" * 43, data_id=d) for d in request.data_id])
 
     def PerformAction(self, request, timeout=None):
         self._rec.append(("PerformAction", request.uid, request.id, [(p.id, p.value_string) for p in request.properties]))
@@ -234,6 +300,50 @@ class VmdaCleanupTests(unittest.TestCase):
     def test_no_config_secret_leak(self) -> None:
         inst = _inst(enabled=True)
         out = inst.vmda_cleanup(camera_id="DeviceIpint.1", confirmation=module.CONTROL_CONFIRMATION)
+        self.assertNotIn("CONFIG_PASSWORD_SHOULD_NOT_LEAK", str(out))
+
+
+class VisualizationsTests(unittest.TestCase):
+    def test_list_unit_visualizations_surfaces_image_data_ids(self) -> None:
+        out = _inst().list_unit_visualizations(uids=["hosts/Server/ACFA.2/EMULATOR_LOCK.5"])
+        self.assertEqual(out["status"], "ok")
+        vis = out["units"][0]["visualizations"][0]
+        self.assertEqual(vis["kind"], "icons")
+        self.assertEqual(vis["image_data_ids"], ["lock.png", "unlock.png"])
+
+    def test_list_unit_visualizations_empty_is_error_no_wire(self) -> None:
+        inst = _inst()
+        out = inst.list_unit_visualizations(uids=[])
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+
+class DownloadDataTests(unittest.TestCase):
+    def test_download_unit_data_metadata_only(self) -> None:
+        inst = _inst()
+        out = inst.download_unit_data(uid="u-1", data_ids=["lock.png", "unlock.png"])
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["count"], 2)
+        self.assertEqual(out["items"][0]["data_id"], "lock.png")
+        self.assertEqual(out["items"][0]["byte_count"], len(b"iVBORw0K" * 43))
+        self.assertEqual(out["total_bytes"], 2 * len(b"iVBORw0K" * 43))
+        self.assertNotIn("data", out)
+        self.assertNotIn("data", out["items"][0])
+
+    def test_download_unit_data_missing_uid_is_error_no_wire(self) -> None:
+        inst = _inst()
+        out = inst.download_unit_data(uid="", data_ids=["lock.png"])
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_download_unit_data_empty_ids_is_error_no_wire(self) -> None:
+        inst = _inst()
+        out = inst.download_unit_data(uid="u-1", data_ids=[])
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_download_unit_data_no_config_secret_leak(self) -> None:
+        out = _inst().download_unit_data(uid="u-1", data_ids=["lock.png"])
         self.assertNotIn("CONFIG_PASSWORD_SHOULD_NOT_LEAK", str(out))
 
 

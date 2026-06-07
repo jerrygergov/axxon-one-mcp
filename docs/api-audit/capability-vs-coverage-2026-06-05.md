@@ -168,6 +168,11 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     restore -> original state. VMDAService.Cleanup live-verified on a camera with 0 analytics intervals
     (verified empty first) -> result=True, nothing real deleted. Both -> tested-pass; VMDAService now
     4/4 complete, AcfaService 6/7 (only DownloadData pending).
+10s. **ACFA DownloadData (phase-32)** — extended the control module with read tools
+    `list_unit_visualizations` (surfaces icon image data_ids) and `download_unit_data` (drains
+    AcfaService.DownloadData, returns size metadata only, never the raw blob). Live-verified on the
+    emulator lock: 2 icon images, 344 bytes each; error matrix (empty uid/ids) holds with no wire
+    call. -> tested-pass; AcfaService now 7/7 COMPLETE.
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -259,4 +264,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **212 tested-pass / 111 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **213 tested-pass / 110 pending / 38 fixture-warn** (361 total).

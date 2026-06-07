@@ -83,7 +83,7 @@
     {
       "fqmn": "axxonsoft.bl.acfa.AcfaService.DownloadData",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "DownloadData",
       "package": "axxonsoft.bl.acfa",
       "proto": "axxonsoft/bl/acfa/AcfaService.proto",
@@ -91,7 +91,8 @@
       "response": "DownloadDataResponse",
       "safety_class": "read",
       "service": "AcfaService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-32-acfa-download/raw/live-verify.txt (2 lock icon images, 344 bytes each, metadata-only)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveService.GetArchiveTraits",

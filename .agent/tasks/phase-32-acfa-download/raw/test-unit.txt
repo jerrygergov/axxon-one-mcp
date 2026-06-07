@@ -1,0 +1,22 @@
+test_download_unit_data_empty_ids_is_error_no_wire (test_axxon_mcp_acfa_vmda_control.DownloadDataTests.test_download_unit_data_empty_ids_is_error_no_wire) ... ok
+test_download_unit_data_metadata_only (test_axxon_mcp_acfa_vmda_control.DownloadDataTests.test_download_unit_data_metadata_only) ... ok
+test_download_unit_data_missing_uid_is_error_no_wire (test_axxon_mcp_acfa_vmda_control.DownloadDataTests.test_download_unit_data_missing_uid_is_error_no_wire) ... ok
+test_download_unit_data_no_config_secret_leak (test_axxon_mcp_acfa_vmda_control.DownloadDataTests.test_download_unit_data_no_config_secret_leak) ... ok
+test_list_unit_actions_empty_is_error_no_wire (test_axxon_mcp_acfa_vmda_control.ListActionsTests.test_list_unit_actions_empty_is_error_no_wire) ... ok
+test_list_unit_actions_shape (test_axxon_mcp_acfa_vmda_control.ListActionsTests.test_list_unit_actions_shape) ... ok
+test_action_error_when_device_refuses (test_axxon_mcp_acfa_vmda_control.PerformActionTests.test_action_error_when_device_refuses) ... ok
+test_applied_records_action_and_props (test_axxon_mcp_acfa_vmda_control.PerformActionTests.test_applied_records_action_and_props) ... ok
+test_disabled_when_env_off (test_axxon_mcp_acfa_vmda_control.PerformActionTests.test_disabled_when_env_off) ... ok
+test_error_on_missing_args_no_wire (test_axxon_mcp_acfa_vmda_control.PerformActionTests.test_error_on_missing_args_no_wire) ... ok
+test_gap_on_bad_token (test_axxon_mcp_acfa_vmda_control.PerformActionTests.test_gap_on_bad_token) ... ok
+test_list_unit_visualizations_empty_is_error_no_wire (test_axxon_mcp_acfa_vmda_control.VisualizationsTests.test_list_unit_visualizations_empty_is_error_no_wire) ... ok
+test_list_unit_visualizations_surfaces_image_data_ids (test_axxon_mcp_acfa_vmda_control.VisualizationsTests.test_list_unit_visualizations_surfaces_image_data_ids) ... ok
+test_applied_discovers_db_and_strips_prefix (test_axxon_mcp_acfa_vmda_control.VmdaCleanupTests.test_applied_discovers_db_and_strips_prefix) ... ok
+test_disabled_when_env_off (test_axxon_mcp_acfa_vmda_control.VmdaCleanupTests.test_disabled_when_env_off) ... ok
+test_error_on_missing_camera_no_wire (test_axxon_mcp_acfa_vmda_control.VmdaCleanupTests.test_error_on_missing_camera_no_wire) ... ok
+test_no_config_secret_leak (test_axxon_mcp_acfa_vmda_control.VmdaCleanupTests.test_no_config_secret_leak) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.001s
+
+OK

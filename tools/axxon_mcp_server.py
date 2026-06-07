@@ -983,6 +983,16 @@ def register_control_tools(server: Any, control: Any) -> None:
         """List the actions each ACFA unit accepts (read; uid = unit access_point)."""
         return control.list_unit_actions(uids=uids)
 
+    @server.tool(name="list_unit_visualizations")
+    def list_unit_visualizations(uids: list[str] | None = None) -> dict[str, Any]:
+        """List each ACFA unit's visualizations and their icon image data_ids (read)."""
+        return control.list_unit_visualizations(uids=uids)
+
+    @server.tool(name="download_unit_data")
+    def download_unit_data(uid: str = "", data_ids: list[str] | None = None) -> dict[str, Any]:
+        """Download referenced ACFA data files (icon images) and return size metadata only (read)."""
+        return control.download_unit_data(uid=uid, data_ids=data_ids)
+
     @server.tool(name="perform_unit_action")
     def perform_unit_action(uid: str = "", action_id: str = "", properties: list[dict[str, str]] | None = None, confirmation: str = "") -> dict[str, Any]:
         """Perform an action on an ACFA unit via AcfaService.PerformAction (gated)."""

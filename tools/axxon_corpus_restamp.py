@@ -266,6 +266,11 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (ARM->DISARM reversible round-trip on the ACFA emulator)"),
     ("VMDAService", "Cleanup"): (
         "tested-pass", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (Cleanup on an empty-analytics camera, result=True, nothing real deleted)"),
+    # Phase 32: AcfaService.DownloadData live-verified read-only through download_unit_data, which
+    # drains the DownloadData stream for icon images discovered via list_unit_visualizations and
+    # returns size metadata only. Completes AcfaService (7/7).
+    ("AcfaService", "DownloadData"): (
+        "tested-pass", ".agent/tasks/phase-32-acfa-download/raw/live-verify.txt (2 lock icon images, 344 bytes each, metadata-only)"),
 }
 
 
