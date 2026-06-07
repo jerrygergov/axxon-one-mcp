@@ -70,6 +70,7 @@ def create_server(
     auth_sessions: Any | None = None,
     layout_manager: Any | None = None,
     license_reads: Any | None = None,
+    misc_reads: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -228,6 +229,9 @@ def create_server(
 
     if license_reads is not None:
         register_license_reads_tools(server, license_reads)
+
+    if misc_reads is not None:
+        register_misc_reads_tools(server, misc_reads)
 
     return server
 
@@ -1278,6 +1282,48 @@ def register_license_reads_tools(server: Any, license_reads: Any) -> None:
         return license_reads.get_restrictions()
 
 
+def register_misc_reads_tools(server: Any, misc_reads: Any) -> None:
+    @server.tool(name="misc_reads_connect_axxon_profile")
+    def misc_reads_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the cross-service misc layer (settings writes need AXXON_MISC_WRITE_APPROVE=1)."""
+        return misc_reads.misc_reads_connect_axxon_profile(profile)
+
+    @server.tool(name="acquire_dynamic_parameters")
+    def acquire_dynamic_parameters(uid: str = "") -> dict[str, Any]:
+        """Acquire a unit's dynamic parameters via DynamicParametersService.AcquireDynamicParameters."""
+        return misc_reads.acquire_dynamic_parameters(uid=uid)
+
+    @server.tool(name="acquire_device_additional_data")
+    def acquire_device_additional_data(uid: str = "") -> dict[str, Any]:
+        """Acquire a device's additional data via DynamicParametersService.AcquireDeviceAdditionalData."""
+        return misc_reads.acquire_device_additional_data(uid=uid)
+
+    @server.tool(name="probe_volume")
+    def probe_volume(volume_type: str = "", node_name: str = "Server", connection_params: dict[str, str] | None = None) -> dict[str, Any]:
+        """Probe an archive volume via ArchiveVolumeService.ProbeVolume."""
+        return misc_reads.probe_volume(volume_type=volume_type, node_name=node_name, connection_params=connection_params)
+
+    @server.tool(name="ping_node")
+    def ping_node(timeout_ms: int = 1000) -> dict[str, Any]:
+        """Ping a node via NodeNotifier.Ping."""
+        return misc_reads.ping_node(timeout_ms=timeout_ms)
+
+    @server.tool(name="get_generic_settings")
+    def get_generic_settings(context: str = "") -> dict[str, Any]:
+        """Read a generic-settings context via GenericSettingsService.GetSettings."""
+        return misc_reads.get_generic_settings(context=context)
+
+    @server.tool(name="save_generic_settings")
+    def save_generic_settings(context: str = "", values: dict[str, str] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Save a generic-settings context via GenericSettingsService.SaveSettings (gated)."""
+        return misc_reads.save_generic_settings(context=context, values=values, confirmation=confirmation)
+
+    @server.tool(name="remove_generic_settings")
+    def remove_generic_settings(context: str = "", revision: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Remove a generic-settings context via GenericSettingsService.RemoveSettings (gated)."""
+        return misc_reads.remove_generic_settings(context=context, revision=revision, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1854,6 +1900,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 42 LicenseService read tools (get_license_key metadata-only, get_restrictions).",
     )
     parser.add_argument(
+        "--enable-misc-reads",
+        action="store_true",
+        help="Enable Phase 43 cross-service tools (acquire dynamic params, probe_volume, ping_node, generic settings get + gated save/remove). Settings writes need AXXON_MISC_WRITE_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2070,6 +2121,11 @@ def main() -> int:
         from axxon_mcp_license_reads import AxxonMcpLicenseReads
 
         license_reads = AxxonMcpLicenseReads()
+    misc_reads = None
+    if args.enable_misc_reads:
+        from axxon_mcp_misc_reads import AxxonMcpMiscReads
+
+        misc_reads = AxxonMcpMiscReads()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2108,6 +2164,7 @@ def main() -> int:
         auth_sessions=auth_sessions,
         layout_manager=layout_manager,
         license_reads=license_reads,
+        misc_reads=misc_reads,
     )
     server.run(transport=args.transport)
     return 0

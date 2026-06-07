@@ -24,6 +24,26 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 43 cross-service batch. DynamicParametersService AcquireDynamicParameters /
+    # AcquireDeviceAdditionalData return status DONE on DeviceIpint.1. ArchiveVolumeService
+    # ProbeVolume returns a structured NOT_A_VOLUME result. NodeNotifier Ping streams >=1
+    # response. GenericSettingsService GetSettings/SaveSettings/RemoveSettings verified via a
+    # reversible round-trip on a throwaway GUID context (saved -> read back -> removed ->
+    # NOT_FOUND).
+    ("DynamicParametersService", "AcquireDynamicParameters"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (status DONE on DeviceIpint.1)"),
+    ("DynamicParametersService", "AcquireDeviceAdditionalData"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (status DONE on DeviceIpint.1)"),
+    ("ArchiveVolumeService", "ProbeVolume"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (structured NOT_A_VOLUME result)"),
+    ("NodeNotifier", "Ping"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (stream returned >=1 response)"),
+    ("GenericSettingsService", "GetSettings"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (read back the saved throwaway context)"),
+    ("GenericSettingsService", "SaveSettings"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (MODIFICATION_RESULT_OK on throwaway GUID context)"),
+    ("GenericSettingsService", "RemoveSettings"): (
+        "tested-pass", ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (context removed, follow-up GetSettings NOT_FOUND)"),
     # Phase 42 LicenseService reads. LicenseKey returns the current key (verified metadata-only:
     # key_present True, key_length 50992; the raw key is never returned). Restrictions
     # (deprecated proto, still serviceable) returns restrictions + available_restrictions. The

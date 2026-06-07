@@ -1,0 +1,35 @@
+{
+  "task_id": "phase-43-misc-reads",
+  "overall_verdict": "PASS",
+  "verified": "2026-06-07T00:00:00+00:00",
+  "verifier": "task-verifier (fresh pass against current codebase)",
+  "criteria": [
+    {"id": "AC1", "status": "PASS", "reason": "tools/axxon_mcp_misc_reads.py imports OK; AxxonMcpMiscReads exposes 5 reads (acquire_dynamic_parameters, acquire_device_additional_data, probe_volume, ping_node, get_generic_settings) + 2 gated writes (save_generic_settings, remove_generic_settings) + connect helper (misc_reads_connect_axxon_profile/connect_axxon_profile/ensure_client) + _stub_and_pb2 + _write_gate. Approval env AXXON_MISC_WRITE_APPROVE, token CONFIRM-misc-write."},
+    {"id": "AC2", "status": "PASS", "reason": "test_axxon_mcp_misc_reads.py asserts client.calls==[] for save env-off->disabled, save bad-token->gap, save empty-context->error, remove missing-revision->error, and acquire/probe/get empty-key->error. _write_gate runs before any wire call in source. Write happy-paths assert calls[0][0] SaveSettings/RemoveSettings."},
+    {"id": "AC3", "status": "PASS", "reason": "6-edit wiring present in tools/axxon_mcp_server.py: param misc_reads (L73), conditional register (L233-234), register_misc_reads_tools with 8 @server.tool entries (L1285-1324), --enable-misc-reads flag (L1903), flag-gated instantiation (L2124-2128), pass to create_server (L2167). Both modules import OK."},
+    {"id": "AC4", "status": "PASS", "reason": "raw/live-verify.txt (sanitized; host=<demo-host>, user=<redacted>): both acquire reads return result 0 (DONE); probe_volume status_code 1 NOT_A_VOLUME with error_details; ping_node responses 1; save->MODIFICATION_RESULT_OK, get->value_count 1, remove->applied, post-remove get->NOT_FOUND (reversible). No secrets in transcript."},
+    {"id": "AC5", "status": "PASS", "reason": "tools/axxon_corpus_restamp.py dry-run reports 0 method(s) restamped. api_methods.json live_status=tested-pass for all 7 targets; service counts DynamicParametersService 2/2, ArchiveVolumeService 1/1, GenericSettingsService 3/3, NodeNotifier 5/6. Coverage doc headline (capability-vs-coverage-2026-06-05.md L294,L426) = 263 tested-pass / 61 pending / 37 fixture-warn (361 total); aggregate tested-pass family = 263, fixture-warn 37, pending 61. evidence.json coverage matches 263/61/37."},
+    {"id": "AC6", "status": "PASS", "reason": "pytest tools/tests/test_axxon_mcp_misc_reads.py -q => 14 passed; pytest tools/tests/ -q => 930 passed."}
+  ],
+  "commands_run": [
+    "python3.12 -c import axxon_mcp_misc_reads, axxon_mcp_server -> import OK",
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_misc_reads.py -q -> 14 passed",
+    "python3.12 -m pytest tools/tests/ -q -> 930 passed",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "rg secret scan over task dir + module -> no matches (clean)"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-43-misc-reads/spec.md",
+    ".agent/tasks/phase-43-misc-reads/evidence.md",
+    ".agent/tasks/phase-43-misc-reads/evidence.json",
+    ".agent/tasks/phase-43-misc-reads/raw/live-verify.txt",
+    "tools/axxon_mcp_misc_reads.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_misc_reads.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "coverage": {"tested_pass": 263, "pending": 61, "fixture_warn": 37, "total": 361, "dynamic_parameters_service": "2/2", "archive_volume_service": "1/1", "generic_settings_service": "3/3", "node_notifier": "5/6"},
+  "notes": "All checks rerun against current code; verifier modified no production code. Corpus live_status field stores tested-pass variants (tested-pass 240 + tested-pass-safe-record 21 + tested-pass-empty 2 = 263), aggregating to the documented 263 headline."
+}

@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **256 tested-pass / 67 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **263 tested-pass / 61 pending / 37 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -408,3 +408,19 @@ Live-verified on the demo stand:
 LicenseService now 8/11.
 
 Coverage after Phase 42: **256 tested-pass / 67 pending / 38 fixture-warn** (361 total).
+
+### Item 10ad (Phase 43): cross-service batch (4 services)
+
+`tools/axxon_mcp_misc_reads.py` (gated settings writes, `AXXON_MISC_WRITE_APPROVE=1`,
+`--enable-misc-reads`). Live-verified on the demo stand:
+- **DynamicParametersService** — AcquireDynamicParameters + AcquireDeviceAdditionalData
+  return status DONE on DeviceIpint.1. **2/2 complete.**
+- **ArchiveVolumeService** — ProbeVolume returns a structured NOT_A_VOLUME result.
+  **1/1 complete.**
+- **GenericSettingsService** — GetSettings/SaveSettings/RemoveSettings verified via a
+  reversible round-trip on a throwaway GUID context (saved -> read back -> removed ->
+  NOT_FOUND). **3/3 complete.**
+- **NodeNotifier.Ping** — stream returned >=1 response. NodeNotifier now 5/6
+  (PushDiagnosticEvents remains).
+
+Coverage after Phase 43: **263 tested-pass / 61 pending / 37 fixture-warn** (361 total).

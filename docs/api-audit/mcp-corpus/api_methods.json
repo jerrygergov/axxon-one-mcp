@@ -323,7 +323,7 @@
     {
       "fqmn": "axxonsoft.bl.archive.ArchiveVolumeService.ProbeVolume",
       "http_annotation": "POST /v1/archive/volumes:probe",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ProbeVolume",
       "package": "axxonsoft.bl.archive",
       "proto": "axxonsoft/bl/archive/ArchiveVolumeService.proto",
@@ -331,7 +331,8 @@
       "response": "ProbeVolumeResponse",
       "safety_class": "review",
       "service": "ArchiveVolumeService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (structured NOT_A_VOLUME result)"
     },
     {
       "fqmn": "axxonsoft.bl.archive.BackupSourceService.BundleBackup",
@@ -1036,7 +1037,7 @@
     {
       "fqmn": "axxonsoft.bl.config.DynamicParametersService.AcquireDynamicParameters",
       "http_annotation": "GET /v1/configurator/dynamic-parameters:acquire",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AcquireDynamicParameters",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
@@ -1044,12 +1045,13 @@
       "response": "AcquireDynamicParametersResponse",
       "safety_class": "read",
       "service": "DynamicParametersService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (status DONE on DeviceIpint.1)"
     },
     {
       "fqmn": "axxonsoft.bl.config.DynamicParametersService.AcquireDeviceAdditionalData",
       "http_annotation": "GET /v1/configurator/device-additional-data:acquire",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AcquireDeviceAdditionalData",
       "package": "axxonsoft.bl.config",
       "proto": "axxonsoft/bl/config/DynamicParametersService.proto",
@@ -1057,7 +1059,8 @@
       "response": "AcquireDeviceAdditionalDataResponse",
       "safety_class": "read",
       "service": "DynamicParametersService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (status DONE on DeviceIpint.1)"
     },
     {
       "fqmn": "axxonsoft.bl.config.FileSystemBrowser.ListDirectory",
@@ -1938,7 +1941,7 @@
     {
       "fqmn": "axxonsoft.bl.events.NodeNotifier.Ping",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Ping",
       "package": "axxonsoft.bl.events",
       "proto": "axxonsoft/bl/events/Notification.proto",
@@ -1946,7 +1949,8 @@
       "response": "PingResponse",
       "safety_class": "review",
       "service": "NodeNotifier",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (stream returned >=1 response)"
     },
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.ChangeGlobalTrackerProfiles",
@@ -4490,7 +4494,7 @@
     {
       "fqmn": "axxonsoft.bl.settings.generic.GenericSettingsService.GetSettings",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetSettings",
       "package": "axxonsoft.bl.settings.generic",
       "proto": "axxonsoft/bl/settings/generic/GenericSettings.proto",
@@ -4498,12 +4502,13 @@
       "response": "GetSettingsResponse",
       "safety_class": "read",
       "service": "GenericSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (read back the saved throwaway context)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.generic.GenericSettingsService.SaveSettings",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SaveSettings",
       "package": "axxonsoft.bl.settings.generic",
       "proto": "axxonsoft/bl/settings/generic/GenericSettings.proto",
@@ -4511,12 +4516,13 @@
       "response": "SaveSettingsResponse",
       "safety_class": "review",
       "service": "GenericSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (MODIFICATION_RESULT_OK on throwaway GUID context)"
     },
     {
       "fqmn": "axxonsoft.bl.settings.generic.GenericSettingsService.RemoveSettings",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RemoveSettings",
       "package": "axxonsoft.bl.settings.generic",
       "proto": "axxonsoft/bl/settings/generic/GenericSettings.proto",
@@ -4524,7 +4530,8 @@
       "response": "RemoveSettingsResponse",
       "safety_class": "mutating",
       "service": "GenericSettingsService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-43-misc-reads/evidence.md AC4 (context removed, follow-up GetSettings NOT_FOUND)"
     },
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.SetState",
