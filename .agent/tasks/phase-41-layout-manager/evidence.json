@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-41-layout-manager",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T16:03:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_layout_manager.py: AxxonMcpLayoutManager with batch_get_layouts, layouts_on_view, update_layout_name; approval env AXXON_LAYOUT_MANAGER_APPROVE, token CONFIRM-layout-update; update reads live etag"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_layout_manager.py GateTests + input validation: disabled/gap/error with client.calls==[]; live gate disabled+gap"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 4 layout_manager tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt batch_get_layouts body+not_found; layouts_on_view ok; update_layout_name Fire->probe->Fire restored (read back)"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py BatchGetLayouts/LayoutsOnView/Update tested-pass; dry-run after write = 0; coverage doc 254/69/38; LayoutManager 5/5"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 912 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 254, "pending": 69, "fixture_warn": 38, "total": 361, "layout_manager": "5/5"}
+}

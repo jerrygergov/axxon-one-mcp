@@ -68,6 +68,7 @@ def create_server(
     bookmark_extras: Any | None = None,
     security_credentials: Any | None = None,
     auth_sessions: Any | None = None,
+    layout_manager: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -220,6 +221,9 @@ def create_server(
 
     if auth_sessions is not None:
         register_auth_sessions_tools(server, auth_sessions)
+
+    if layout_manager is not None:
+        register_layout_manager_tools(server, layout_manager)
 
     return server
 
@@ -1231,6 +1235,28 @@ def register_auth_sessions_tools(server: Any, auth_sessions: Any) -> None:
         return auth_sessions.close_session(confirmation=confirmation)
 
 
+def register_layout_manager_tools(server: Any, layout_manager: Any) -> None:
+    @server.tool(name="layout_manager_connect_axxon_profile")
+    def layout_manager_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the LayoutManager layer (rename needs AXXON_LAYOUT_MANAGER_APPROVE=1)."""
+        return layout_manager.layout_manager_connect_axxon_profile(profile)
+
+    @server.tool(name="batch_get_layouts")
+    def batch_get_layouts(layout_id: str = "", etag: str = "") -> dict[str, Any]:
+        """Read a layout by id (etag-conditional) via LayoutManager.BatchGetLayouts."""
+        return layout_manager.batch_get_layouts(layout_id=layout_id, etag=etag)
+
+    @server.tool(name="layouts_on_view")
+    def layouts_on_view(layout_id: str = "", display_name: str = "") -> dict[str, Any]:
+        """Push a layout to the view via LayoutManager.LayoutsOnView."""
+        return layout_manager.layouts_on_view(layout_id=layout_id, display_name=display_name)
+
+    @server.tool(name="update_layout_name")
+    def update_layout_name(layout_id: str = "", display_name: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Rename a layout via LayoutManager.Update (gated)."""
+        return layout_manager.update_layout_name(layout_id=layout_id, display_name=display_name, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1797,6 +1823,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 40 AuthenticationService session tools (authenticate, renew_session + gated close_session). Close needs AXXON_AUTH_SESSIONS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-layout-manager",
+        action="store_true",
+        help="Enable Phase 41 LayoutManager tools (batch_get_layouts, layouts_on_view + gated update_layout_name). Rename needs AXXON_LAYOUT_MANAGER_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2003,6 +2034,11 @@ def main() -> int:
         from axxon_mcp_auth_sessions import AxxonMcpAuthSessions
 
         auth_sessions = AxxonMcpAuthSessions()
+    layout_manager = None
+    if args.enable_layout_manager:
+        from axxon_mcp_layout_manager import AxxonMcpLayoutManager
+
+        layout_manager = AxxonMcpLayoutManager()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2039,6 +2075,7 @@ def main() -> int:
         bookmark_extras=bookmark_extras,
         security_credentials=security_credentials,
         auth_sessions=auth_sessions,
+        layout_manager=layout_manager,
     )
     server.run(transport=args.transport)
     return 0

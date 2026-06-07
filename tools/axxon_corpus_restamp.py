@@ -24,6 +24,16 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 41 LayoutManager. BatchGetLayouts is an etag-conditional read (empty/stale etag
+    # returns the body, matching etag returns nothing, bogus id returns not_found);
+    # LayoutsOnView pushes a layout to the view (OK); Update renames a layout reversibly
+    # (display_name -> probe -> restored via the live etag). Closes LayoutManager 5/5.
+    ("LayoutManager", "BatchGetLayouts"): (
+        "tested-pass", ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (etag-conditional read; body + not_found verified)"),
+    ("LayoutManager", "LayoutsOnView"): (
+        "tested-pass", ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (pushed a layout to the view, OK)"),
+    ("LayoutManager", "Update"): (
+        "tested-pass", ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (reversible display_name rename)"),
     # Phase 40 AuthenticationService sessions. Authenticate/Authenticate2/AuthenticateEx each
     # mint a valid token (expires_in 300); RenewSession/RenewSession2 each return error_code 0
     # with a fresh token on the authenticated channel; CloseSession returns OK (0) on a

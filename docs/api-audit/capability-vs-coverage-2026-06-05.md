@@ -37,7 +37,7 @@
 | **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 15/29, RealtimeRecognizer 6/7, HeatMap 0/6 stamped. |
 | **PTZ / telemetry** | TelemetryService, TagAndTrackService | ⚠️ shipped, unstamped | 16 `ptz_*` tools shipped Phase 8; corpus still 0/32. TagAndTrack 0/4. |
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
-| **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 1/5 stamped. |
+| **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 5/5. |
 | **Bookmarks** | BookmarkService | ✅ strong | reads + lifecycle; UpdateBookmark/SetExportedTime/RenderTrack open. |
 | **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 28/35 SecurityService (7 LDAP fixture-warn); Authentication 8/12 (4 TFA/approval/public-key fixture-warn). |
 | **System health / license / time** | LicenseService, TimeZoneManager, DomainSettingsService, ServerSettings, NgpNodeService | ✅ partial | `system_health`, `license_status`, `time_status`. License 6/11. |
@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **251 tested-pass / 72 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **254 tested-pass / 69 pending / 38 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -379,3 +379,17 @@ AuthenticationService now 8/12 (4 remaining are TFA/approval/public-key, environ
 no pending rows left.
 
 Coverage after Phase 40: **251 tested-pass / 72 pending / 38 fixture-warn** (361 total).
+
+### Item 10ab (Phase 41): LayoutManager -> 5/5
+
+`tools/axxon_mcp_layout_manager.py` (gated rename, `AXXON_LAYOUT_MANAGER_APPROVE=1`,
+`--enable-layout-manager`). Live-verified on the demo stand:
+- **BatchGetLayouts** — etag-conditional read: empty/stale etag returns the layout body,
+  matching etag returns nothing, bogus id returns not_found. tested-pass.
+- **LayoutsOnView** — pushes a layout to the view, OK. tested-pass.
+- **Update** — reversible display_name rename on a writable layout (Fire -> probe -> Fire),
+  using the live etag. tested-pass.
+
+LayoutManager now **5/5 complete**.
+
+Coverage after Phase 41: **254 tested-pass / 69 pending / 38 fixture-warn** (361 total).

@@ -2240,7 +2240,7 @@
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.BatchGetLayouts",
       "http_annotation": "POST /v1/layouts:batchGet",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BatchGetLayouts",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
@@ -2248,12 +2248,13 @@
       "response": "BatchGetLayoutsResponse",
       "safety_class": "review",
       "service": "LayoutManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (etag-conditional read; body + not_found verified)"
     },
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.Update",
       "http_annotation": "POST /v1/layouts:update",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Update",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
@@ -2261,12 +2262,13 @@
       "response": "UpdateResponse",
       "safety_class": "mutating",
       "service": "LayoutManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (reversible display_name rename)"
     },
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.LayoutsOnView",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "LayoutsOnView",
       "package": "axxonsoft.bl.layout",
       "proto": "axxonsoft/bl/layout/LayoutManager.proto",
@@ -2274,7 +2276,8 @@
       "response": "LayoutsOnViewResponse",
       "safety_class": "review",
       "service": "LayoutManager",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-41-layout-manager/evidence.md AC4 (pushed a layout to the view, OK)"
     },
     {
       "fqmn": "axxonsoft.bl.layout.LayoutManager.UserDataCleanup",
