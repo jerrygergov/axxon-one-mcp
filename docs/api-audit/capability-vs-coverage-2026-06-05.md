@@ -39,7 +39,7 @@
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
 | **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 1/5 stamped. |
 | **Bookmarks** | BookmarkService | ✅ strong | reads + lifecycle; UpdateBookmark/SetExportedTime/RenderTrack open. |
-| **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 28/35 SecurityService (7 LDAP fixture-warn); Authentication 2/12 (federated/TFA flows pending). |
+| **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 28/35 SecurityService (7 LDAP fixture-warn); Authentication 8/12 (4 TFA/approval/public-key fixture-warn). |
 | **System health / license / time** | LicenseService, TimeZoneManager, DomainSettingsService, ServerSettings, NgpNodeService | ✅ partial | `system_health`, `license_status`, `time_status`. License 6/11. |
 | **Config tree / devices** | ConfigurationService, DomainService, DevicesCatalog, DiscoveryService, ConfigurationManager, DynamicParametersService | ✅ strong-ish | Inventory + config units + camera CRUD. DynamicParameters 0/2, Discovery 2/5. |
 | **Archive storage / backup / cloud** | ArchiveVolumeService, BackupSourceService, CloudService, StateControlService | ❌ weak | `archive_policy_get` only; BackupSource 0/5, Cloud 0/4, StateControl 0/3, ArchiveVolume 0/1. |
@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **245 tested-pass / 82 pending / 34 fixture-warn** (361 total).
+Current honest coverage: **251 tested-pass / 72 pending / 38 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -359,3 +359,23 @@ Coverage after Phase 38: **242 tested-pass / 90 pending / 29 fixture-warn** (361
 SecurityService now 28/35 (28 tested-pass + 7 LDAP fixture-warn, environment-walled).
 
 Coverage after Phase 39: **245 tested-pass / 82 pending / 34 fixture-warn** (361 total).
+
+### Item 10aa (Phase 40): AuthenticationService sessions -> 8/12
+
+`tools/axxon_mcp_auth_sessions.py` (gated close, `AXXON_AUTH_SESSIONS_APPROVE=1`,
+`--enable-auth-sessions`). Tools never return raw token values (token_present boolean only).
+Live-verified on the demo stand:
+- **Authenticate / Authenticate2 / AuthenticateEx** — each mints a valid token
+  (expires_in 300). tested-pass.
+- **RenewSession / RenewSession2** — error_code 0 with a fresh token on the authenticated
+  channel. tested-pass.
+- **CloseSession** — OK (0) on a SEPARATE throwaway session; the main session stays usable.
+  tested-pass.
+- **ApproveAuthentication / DeclineAuthentication / AuthenticateBySecondFactor /
+  AuthenticateWithPublicKey** — need supervisor-approval / TFA / public-key flows not
+  configured on this stand. fixture-warn, honest.
+
+AuthenticationService now 8/12 (4 remaining are TFA/approval/public-key, environment-walled);
+no pending rows left.
+
+Coverage after Phase 40: **251 tested-pass / 72 pending / 38 fixture-warn** (361 total).

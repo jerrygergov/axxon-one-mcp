@@ -1,0 +1,18 @@
+=== phase-40-auth-sessions live verify (sanitized) ===
+date: 2026-06-07T15:51:16Z
+host: <demo-host>  grpc: 20109  user: <redacted>  tls_cn: Server
+note: token values are never returned/logged (token_present boolean only)
+note: CloseSession is exercised on a SEPARATE throwaway session (own module instance)
+
+connect: {'connected': True, 'enabled': True, 'approval_env': 'AXXON_AUTH_SESSIONS_APPROVE'}
+authenticate[Authenticate] -> ok token_present= True expires_in= 300
+authenticate[Authenticate2] -> ok token_present= True expires_in= 300
+authenticate[AuthenticateEx] -> ok token_present= True expires_in= 300
+authenticate[empty creds] -> error
+renew_session[RenewSession] -> ok error_code= 0 token_present= True
+renew_session[RenewSession2] -> ok error_code= 0 token_present= True
+close_session (throwaway session) -> {'status': 'applied', 'tool': 'close_session', 'error_code': 0, 'error_name': 'OK'}
+main session still usable -> renew_session -> ok
+gate (env off) -> disabled
+gate (bad token) -> gap
+ALL LIVE CHECKS PASS

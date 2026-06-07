@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-40-auth-sessions",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T15:53:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_auth_sessions.py: AxxonMcpAuthSessions with authenticate, renew_session, close_session; approval env AXXON_AUTH_SESSIONS_APPROVE, token CONFIRM-auth-sessions; token_present boolean only, never raw token_value"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_auth_sessions.py GateTests + input validation: disabled/gap/error with client.calls==[]; live gate disabled+gap"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 4 auth_sessions tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt Authenticate/Authenticate2/AuthenticateEx mint tokens; RenewSession/RenewSession2 error_code 0; CloseSession OK on throwaway session, main session still usable; no token values"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py 6 session methods tested-pass; 4 TFA/approval/public-key methods fixture-warn; dry-run after write = 0; coverage doc 251/72/38; AuthenticationService 8/12 no pending"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 902 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 251, "pending": 72, "fixture_warn": 38, "total": 361, "authentication_service": "8/12"}
+}

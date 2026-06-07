@@ -24,6 +24,35 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 40 AuthenticationService sessions. Authenticate/Authenticate2/AuthenticateEx each
+    # mint a valid token (expires_in 300); RenewSession/RenewSession2 each return error_code 0
+    # with a fresh token on the authenticated channel; CloseSession returns OK (0) on a
+    # SEPARATE throwaway session (the main session stays usable). The four TFA/public-key
+    # methods need flows not configured on this stand -> stay fixture-warn.
+    ("AuthenticationService", "Authenticate"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"),
+    ("AuthenticationService", "Authenticate2"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"),
+    ("AuthenticationService", "AuthenticateEx"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"),
+    ("AuthenticationService", "RenewSession"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (error_code 0, fresh token)"),
+    ("AuthenticationService", "RenewSession2"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (error_code 0, fresh token)"),
+    ("AuthenticationService", "CloseSession"): (
+        "tested-pass", ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (OK on throwaway session, main session unaffected)"),
+    ("AuthenticationService", "ApproveAuthentication"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a supervisor-approval flow not configured on this stand)"),
+    ("AuthenticationService", "DeclineAuthentication"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a supervisor-approval flow not configured on this stand)"),
+    ("AuthenticationService", "AuthenticateBySecondFactor"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs TFA enabled on the account)"),
+    ("AuthenticationService", "AuthenticateWithPublicKey"): (
+        "tested-warn-fixture-needed",
+        ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a registered public-key credential)"),
     # Phase 39 SecurityService credentials. CheckPassword is a read-only uniqueness/policy
     # pre-check (current pw -> NOT_UNIQUE, unused pw -> OK). ChangePassword and ChangeLogin
     # act on the authenticated session's own user; verified -> OK each on a SEPARATE

@@ -67,6 +67,7 @@ def create_server(
     archive_volume: Any | None = None,
     bookmark_extras: Any | None = None,
     security_credentials: Any | None = None,
+    auth_sessions: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -216,6 +217,9 @@ def create_server(
 
     if security_credentials is not None:
         register_security_credentials_tools(server, security_credentials)
+
+    if auth_sessions is not None:
+        register_auth_sessions_tools(server, auth_sessions)
 
     return server
 
@@ -1205,6 +1209,28 @@ def register_security_credentials_tools(server: Any, security_credentials: Any) 
         return security_credentials.change_my_login(login=login, confirmation=confirmation)
 
 
+def register_auth_sessions_tools(server: Any, auth_sessions: Any) -> None:
+    @server.tool(name="auth_sessions_connect_axxon_profile")
+    def auth_sessions_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the AuthenticationService session layer (close needs AXXON_AUTH_SESSIONS_APPROVE=1)."""
+        return auth_sessions.auth_sessions_connect_axxon_profile(profile)
+
+    @server.tool(name="authenticate")
+    def authenticate(user_name: str = "", password: str = "", variant: str = "Authenticate") -> dict[str, Any]:
+        """Mint a session token via AuthenticationService.Authenticate/Authenticate2/AuthenticateEx (no token returned)."""
+        return auth_sessions.authenticate(user_name=user_name, password=password, variant=variant)
+
+    @server.tool(name="renew_session")
+    def renew_session(variant: str = "RenewSession") -> dict[str, Any]:
+        """Renew the connected session via AuthenticationService.RenewSession/RenewSession2 (no token returned)."""
+        return auth_sessions.renew_session(variant=variant)
+
+    @server.tool(name="close_session")
+    def close_session(confirmation: str = "") -> dict[str, Any]:
+        """Close the connected session via AuthenticationService.CloseSession (gated)."""
+        return auth_sessions.close_session(confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1766,6 +1792,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 39 SecurityService credential tools (check_password + gated change_my_password, change_my_login). Changes need AXXON_SECURITY_CREDENTIALS_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-auth-sessions",
+        action="store_true",
+        help="Enable Phase 40 AuthenticationService session tools (authenticate, renew_session + gated close_session). Close needs AXXON_AUTH_SESSIONS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1967,6 +1998,11 @@ def main() -> int:
         from axxon_mcp_security_credentials import AxxonMcpSecurityCredentials
 
         security_credentials = AxxonMcpSecurityCredentials()
+    auth_sessions = None
+    if args.enable_auth_sessions:
+        from axxon_mcp_auth_sessions import AxxonMcpAuthSessions
+
+        auth_sessions = AxxonMcpAuthSessions()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2002,6 +2038,7 @@ def main() -> int:
         archive_volume=archive_volume,
         bookmark_extras=bookmark_extras,
         security_credentials=security_credentials,
+        auth_sessions=auth_sessions,
     )
     server.run(transport=args.transport)
     return 0

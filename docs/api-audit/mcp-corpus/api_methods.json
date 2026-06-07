@@ -499,7 +499,7 @@
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.Authenticate",
       "http_annotation": "GET /v1/authentication/authenticate",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Authenticate",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -507,12 +507,13 @@
       "response": "AuthenticateResponse",
       "safety_class": "review",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.Authenticate2",
       "http_annotation": "POST /v1/authentication/authenticate2",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Authenticate2",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -520,12 +521,13 @@
       "response": "AuthenticateResponse",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx",
       "http_annotation": "GET /v1/authentication/authenticate_ex",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "AuthenticateEx",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -533,7 +535,8 @@
       "response": "AuthenticateResponseEx",
       "safety_class": "review",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (minted a valid token)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2",
@@ -551,7 +554,7 @@
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.ApproveAuthentication",
       "http_annotation": "POST /v1/authentication:approve",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ApproveAuthentication",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -559,12 +562,13 @@
       "response": "ApproveAuthenticationResponse",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a supervisor-approval flow not configured on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.DeclineAuthentication",
       "http_annotation": "POST /v1/authentication:decline",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "DeclineAuthentication",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -572,12 +576,13 @@
       "response": "DeclineAuthenticationResponse",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a supervisor-approval flow not configured on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.AuthenticateBySecondFactor",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "AuthenticateBySecondFactor",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -585,12 +590,13 @@
       "response": "AuthenticateResponseEx",
       "safety_class": "review",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs TFA enabled on the account)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.AuthenticateWithPublicKey",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "AuthenticateWithPublicKey",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -598,7 +604,8 @@
       "response": "AuthenticateResponseEx",
       "safety_class": "review",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC5 (needs a registered public-key credential)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.GetSessionInfo",
@@ -616,7 +623,7 @@
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.RenewSession",
       "http_annotation": "GET /v1/authentication/renew",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RenewSession",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -624,12 +631,13 @@
       "response": "AuthenticateResponseEx",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (error_code 0, fresh token)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.RenewSession2",
       "http_annotation": "GET /v1/authentication/renew2",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RenewSession2",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -637,12 +645,13 @@
       "response": "AuthenticateResponseEx",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (error_code 0, fresh token)"
     },
     {
       "fqmn": "axxonsoft.bl.auth.AuthenticationService.CloseSession",
       "http_annotation": "GET /v1/authentication/close",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "CloseSession",
       "package": "axxonsoft.bl.auth",
       "proto": "axxonsoft/bl/auth/Authentication.proto",
@@ -650,7 +659,8 @@
       "response": "CloseSessionResponse",
       "safety_class": "mutating",
       "service": "AuthenticationService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-40-auth-sessions/evidence.md AC4 (OK on throwaway session, main session unaffected)"
     },
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.ListBookmarks",
