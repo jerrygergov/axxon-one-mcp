@@ -160,8 +160,14 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     `layout_user_data_cleanup` / `map_user_data_cleanup` (LayoutManager + MapService UserDataCleanup),
     approval-gated (AXXON_GDPR_APPROVE=1 + CONFIRM-gdpr-cleanup). Live-verified with a throwaway,
     nonexistent user id -> status applied, nothing real deleted; gate matrix (disabled/gap/error)
-    holds with no wire call. Both -> tested-pass. VMDAService.Cleanup (collateral on shared analytics)
-    and EMailNotifier/GSMNotifier sends (no SMTP/GSM infra) deferred honestly, not restamped.
+    holds with no wire call. Both -> tested-pass.
+10r. **ACFA PerformAction + VMDA Cleanup (phase-31)** — new gated module
+    `axxon_mcp_acfa_vmda_control.py` (AXXON_CONTROL_APPROVE=1 + CONFIRM-control-action) with read
+    `list_unit_actions` plus gated `perform_unit_action` and `vmda_cleanup`. AcfaService.PerformAction
+    live-verified reversibly on the ACFA emulator loop: capture DISARM -> ARM (applied) -> DISARM
+    restore -> original state. VMDAService.Cleanup live-verified on a camera with 0 analytics intervals
+    (verified empty first) -> result=True, nothing real deleted. Both -> tested-pass; VMDAService now
+    4/4 complete, AcfaService 6/7 (only DownloadData pending).
 11. **GlobalTrackerService (1/7)** — cross-camera tracking / Tag&Track topology.
 12. **TagAndTrackService (0/4)** — PTZ auto-follow.
 
@@ -253,4 +259,4 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **210 tested-pass / 113 pending / 38 fixture-warn** (361 total).
+Current honest coverage: **212 tested-pass / 111 pending / 38 fixture-warn** (361 total).

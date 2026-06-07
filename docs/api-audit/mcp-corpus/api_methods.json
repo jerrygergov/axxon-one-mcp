@@ -69,7 +69,7 @@
     {
       "fqmn": "axxonsoft.bl.acfa.AcfaService.PerformAction",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PerformAction",
       "package": "axxonsoft.bl.acfa",
       "proto": "axxonsoft/bl/acfa/AcfaService.proto",
@@ -77,7 +77,8 @@
       "response": "PerformActionResponse",
       "safety_class": "mutating",
       "service": "AcfaService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (ARM->DISARM reversible round-trip on the ACFA emulator)"
     },
     {
       "fqmn": "axxonsoft.bl.acfa.AcfaService.DownloadData",
@@ -4726,7 +4727,7 @@
     {
       "fqmn": "axxonsoft.bl.vmda.VMDAService.Cleanup",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Cleanup",
       "package": "axxonsoft.bl.vmda",
       "proto": "axxonsoft/bl/vmda/VMDA.proto",
@@ -4734,7 +4735,8 @@
       "response": "CleanupResponse",
       "safety_class": "review",
       "service": "VMDAService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (Cleanup on an empty-analytics camera, result=True, nothing real deleted)"
     },
     {
       "fqmn": "axxonsoft.bl.vmda.VMDAService.ExecuteQuery",

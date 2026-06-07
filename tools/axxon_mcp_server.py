@@ -60,6 +60,7 @@ def create_server(
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
+    control: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -188,6 +189,9 @@ def create_server(
 
     if gdpr_cleanup is not None:
         register_gdpr_cleanup_tools(server, gdpr_cleanup)
+
+    if control is not None:
+        register_control_tools(server, control)
 
     return server
 
@@ -968,6 +972,28 @@ def register_gdpr_cleanup_tools(server: Any, gdpr_cleanup: Any) -> None:
         return gdpr_cleanup.map_user_data_cleanup(user_ids=user_ids, confirmation=confirmation)
 
 
+def register_control_tools(server: Any, control: Any) -> None:
+    @server.tool(name="control_connect_axxon_profile")
+    def control_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ACFA/VMDA control layer to the env profile (writes need AXXON_CONTROL_APPROVE=1)."""
+        return control.control_connect_axxon_profile(profile)
+
+    @server.tool(name="list_unit_actions")
+    def list_unit_actions(uids: list[str] | None = None) -> dict[str, Any]:
+        """List the actions each ACFA unit accepts (read; uid = unit access_point)."""
+        return control.list_unit_actions(uids=uids)
+
+    @server.tool(name="perform_unit_action")
+    def perform_unit_action(uid: str = "", action_id: str = "", properties: list[dict[str, str]] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Perform an action on an ACFA unit via AcfaService.PerformAction (gated)."""
+        return control.perform_unit_action(uid=uid, action_id=action_id, properties=properties, confirmation=confirmation)
+
+    @server.tool(name="vmda_cleanup")
+    def vmda_cleanup(camera_id: str = "", schema_id: str = "vmda_schema", database: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Wipe a camera's VMDA analytics for a schema via VMDAService.Cleanup (gated)."""
+        return control.vmda_cleanup(camera_id=camera_id, schema_id=schema_id, database=database, confirmation=confirmation)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1494,6 +1520,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 30 GDPR cleanup tools (layout/map UserDataCleanup). Writes need AXXON_GDPR_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-control",
+        action="store_true",
+        help="Enable Phase 31 ACFA/VMDA control tools (perform_unit_action, vmda_cleanup). Writes need AXXON_CONTROL_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1660,6 +1691,11 @@ def main() -> int:
         from axxon_mcp_gdpr_cleanup import AxxonMcpGdprCleanup
 
         gdpr_cleanup = AxxonMcpGdprCleanup()
+    control = None
+    if args.enable_control:
+        from axxon_mcp_acfa_vmda_control import AxxonMcpAcfaVmdaControl
+
+        control = AxxonMcpAcfaVmdaControl()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1688,6 +1724,7 @@ def main() -> int:
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
+        control=control,
     )
     server.run(transport=args.transport)
     return 0

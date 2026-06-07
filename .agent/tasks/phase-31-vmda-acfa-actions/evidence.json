@@ -1,0 +1,34 @@
+{
+  "task_id": "phase-31-vmda-acfa-actions",
+  "overall_status": "PASS",
+  "acceptance_criteria": [
+    {"id": "AC1", "text": "gated module: disabled(env off)/gap(bad token) before any wire call", "status": "PASS",
+     "proof": ["tools/axxon_mcp_acfa_vmda_control.py _write_gate", "tools/tests/test_axxon_mcp_acfa_vmda_control.py test_disabled_when_env_off/test_gap_on_bad_token", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (gate matrix)"], "gaps": []},
+    {"id": "AC2", "text": "list_unit_actions read tool returns per-unit actions; empty uids -> error no wire", "status": "PASS",
+     "proof": ["tools/axxon_mcp_acfa_vmda_control.py list_unit_actions", "tools/tests/test_axxon_mcp_acfa_vmda_control.py test_list_unit_actions_shape/test_list_unit_actions_empty_is_error_no_wire", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt"], "gaps": []},
+    {"id": "AC3", "text": "perform_unit_action calls PerformAction; applied/action-error; missing args -> error no wire", "status": "PASS",
+     "proof": ["tools/axxon_mcp_acfa_vmda_control.py perform_unit_action", "tools/tests/test_axxon_mcp_acfa_vmda_control.py test_applied_records_action_and_props/test_action_error_when_device_refuses/test_error_on_missing_args_no_wire", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (reversible ARM->DISARM)"], "gaps": []},
+    {"id": "AC4", "text": "vmda_cleanup calls Cleanup; db discovery + prefix strip; missing camera -> error no wire", "status": "PASS",
+     "proof": ["tools/axxon_mcp_acfa_vmda_control.py vmda_cleanup", "tools/tests/test_axxon_mcp_acfa_vmda_control.py test_applied_discovers_db_and_strips_prefix/test_error_on_missing_camera_no_wire", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (empty camera, result=True)"], "gaps": []},
+    {"id": "AC5", "text": "6-edit wiring + suite green + restamp both tested-pass; coverage 212; item 10r", "status": "PASS",
+     "proof": ["tools/axxon_mcp_server.py control param + register_control_tools + --enable-control + main instantiation", ".agent/tasks/phase-31-vmda-acfa-actions/raw/test-integration.txt (Ran 824 ... OK)", "tools/axxon_corpus_restamp.py AcfaService.PerformAction + VMDAService.Cleanup", "docs/api-audit/mcp-corpus/api_methods.json", "docs/api-audit/capability-vs-coverage-2026-06-05.md (212/111/38, item 10r)"], "gaps": []}
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_acfa_vmda_control.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_acfa_vmda_control.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_server; import axxon_mcp_acfa_vmda_control\"",
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest discover -s tools/tests -p test_axxon_mcp_acfa_vmda_control.py -v",
+    "python3.12 tools/axxon_corpus_restamp.py"
+  ],
+  "known_gaps": [
+    "AcfaService.DownloadData still pending (separate).",
+    "GSMNotifier.SendSMS / EMailNotifier.SendEMail still environment-walled (no SMTP/GSM infra)."
+  ]
+}

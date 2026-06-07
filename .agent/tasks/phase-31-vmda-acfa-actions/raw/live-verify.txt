@@ -1,0 +1,39 @@
+Phase 31 - AcfaService.PerformAction + VMDAService.Cleanup (gated control)
+Live evidence against the demo stand (host <demo-host>, creds <redacted>).
+Exercised end-to-end THROUGH the shipped MCP tools
+(axxon_mcp_acfa_vmda_control.list_unit_actions / perform_unit_action / vmda_cleanup).
+
+ACFA target: hosts/Server/ACFA.2/EMULATOR_LOOP.17 (virtual loop on the ACFA emulator).
+VMDA target: DeviceIpint.1/SourceEndpoint.video:0:0 (camera with 0 analytics intervals).
+
+[A] list_unit_actions (read, not gated)
+  status=ok actions=['ALARM','HANDLE_ALARM','ARM','DISARM','ON','OFF']
+
+[gate matrix]
+  env unset                 -> perform_unit_action status=disabled (no wire call)
+  enabled + bad token       -> perform_unit_action status=gap      (no wire call)
+
+[perform_unit_action] reversible ARM -> DISARM round-trip (AcfaService.PerformAction)
+  captured state:        ['DISARM']
+  ARM    -> status=applied error_message=''
+  state after ARM:       ['ARM']
+  DISARM -> status=applied   (restore to captured state)
+  final state:           ['DISARM']   (unit returned to its original state)
+
+[vmda_cleanup] VMDAService.Cleanup on an empty-analytics camera
+  vmda intervals before cleanup: 0  (verified empty via vmda_query, 24h window)
+  vmda_cleanup -> status=applied result=True database=hosts/Server/VMDA_DB.0/Database
+  (real RPC against the real VMDA db + a real, parseable camera id; the camera had no
+   analytics, so nothing real was deleted)
+
+[wire shapes] (probed before building)
+  AcfaService.PerformAction(uid, id, [PropertyDescriptor]) -> {error_message, properties}.
+    Empty error_message = success. uid = unit access_point.
+  VMDAService.Cleanup(access_point=VMDA db, cs_IDs={camera_ID, schema_ID="vmda_schema"})
+    -> {bool result}. camera_ID is the relative camera id (hosts/Server/ stripped).
+
+[hygiene]
+  ACFA: the loop was returned to its captured DISARM state; no unit left changed.
+  VMDA: cleanup ran only on a camera verified to have 0 analytics intervals; no real
+  data was deleted. Writes are default-off (env + token). No proto/CA/PDF committed;
+  secrets env-only.

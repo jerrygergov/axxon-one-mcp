@@ -258,6 +258,14 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"),
     ("MapService", "UserDataCleanup"): (
         "tested-pass", ".agent/tasks/phase-30-gdpr-cleanup/raw/live-verify.txt (applied with throwaway user id, nothing real deleted)"),
+    # Phase 31: AcfaService.PerformAction live-verified reversibly through perform_unit_action on the
+    # ACFA emulator (EMULATOR_LOOP.17): capture DISARM -> ARM=applied -> DISARM restore -> original
+    # state. VMDAService.Cleanup live-verified through vmda_cleanup on a camera with 0 analytics
+    # intervals (verified empty first) -> result=True, nothing real deleted.
+    ("AcfaService", "PerformAction"): (
+        "tested-pass", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (ARM->DISARM reversible round-trip on the ACFA emulator)"),
+    ("VMDAService", "Cleanup"): (
+        "tested-pass", ".agent/tasks/phase-31-vmda-acfa-actions/raw/live-verify.txt (Cleanup on an empty-analytics camera, result=True, nothing real deleted)"),
 }
 
 
