@@ -1,0 +1,60 @@
+{
+  "task_id": "phase-38-bookmark-extras",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-07T17:30:00+00:00",
+  "verifier": "task-verifier",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_bookmark_extras.py defines class AxxonMcpBookmarkExtras with update_bookmark (gated), set_bookmark_exported_time (gated), render_bookmark_track (read), plus bookmark_extras_connect_axxon_profile/connect_axxon_profile/ensure_client/_stub_and_pb2/_write_gate. Approval env AXXON_BOOKMARK_EXTRAS_APPROVE, token CONFIRM-bookmark-extras. Import smoke OK."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "tools/tests/test_axxon_mcp_bookmark_extras.py GateTests assert client.calls==[] for both writes: update env-off->disabled, bad-token->gap, empty-id->error; set-exported env-off->disabled, missing-time->error. 10 passed."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_server.py 6-edit wiring present: param bookmark_extras (line 68), conditional register_bookmark_extras_tools (213-214), register fn with 4 @server.tool entries (1161/1166/1171/1176), --enable-bookmark-extras flag (1733), flag-gated instantiation (1929-1933), pass to create_server (1967). Server imports OK."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "raw/live-verify.txt shows reversible round-trip: fixture CreateBookmark (id captured) -> update_bookmark applied -> set_bookmark_exported_time applied (exported_time_set True via GetBookmark) -> render_bookmark_track ok -> DeleteBookmark cleanup with GetBookmark afterward confirming gone. Host/user sanitized to placeholders; no secret present. Live stand unreachable from verifier; transcript accepted as the evidence per instructions."
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "reason": "tools/axxon_corpus_restamp.py dry-run reports 0 method(s) restamped (idempotent). docs/api-audit/mcp-corpus/api_methods.json: BookmarkService UpdateBookmark/SetExportedTime/RenderTrack all live_status tested-pass, BookmarkService 7/7. Coverage doc capability-vs-coverage-2026-06-05.md headline 242 tested-pass / 90 pending / 29 fixture-warn (361 total); 242 = 219 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty, internally consistent."
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "reason": "Full suite tools/tests/ = 881 passed. Production module + server lint clean (raw/lint.txt: All checks passed)."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -c \"import sys; sys.path.insert(0,'tools'); import axxon_mcp_bookmark_extras, axxon_mcp_server\" -> import OK",
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_bookmark_extras.py -q -> 10 passed",
+    "python3.12 -m pytest tools/tests/ -q -> 881 passed",
+    "python3.12 tools/axxon_corpus_restamp.py -> 0 method(s) restamped (dry-run)",
+    "corpus JSON read -> BookmarkService 7/7; 242 tested-pass* total",
+    "rg secret scan over task dir + module -> clean"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-38-bookmark-extras/spec.md",
+    ".agent/tasks/phase-38-bookmark-extras/evidence.md",
+    ".agent/tasks/phase-38-bookmark-extras/evidence.json",
+    ".agent/tasks/phase-38-bookmark-extras/raw/live-verify.txt",
+    ".agent/tasks/phase-38-bookmark-extras/raw/build.txt",
+    ".agent/tasks/phase-38-bookmark-extras/raw/lint.txt",
+    "tools/axxon_mcp_bookmark_extras.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_bookmark_extras.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ]
+}

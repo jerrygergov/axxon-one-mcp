@@ -694,7 +694,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.UpdateBookmark",
       "http_annotation": "POST /v1/bookmarks:update",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "UpdateBookmark",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -702,7 +702,8 @@
       "response": "UpdateBookmarkResponse",
       "safety_class": "mutating",
       "service": "BookmarkService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (message updated on throwaway bookmark, then deleted)"
     },
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.DeleteBookmark",
@@ -720,7 +721,7 @@
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.SetExportedTime",
       "http_annotation": "POST /v1/bookmarks:setExportedTime",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "SetExportedTime",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -728,12 +729,13 @@
       "response": "SetExportedTimeResponse",
       "safety_class": "mutating",
       "service": "BookmarkService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (exported_time set, confirmed via GetBookmark)"
     },
     {
       "fqmn": "axxonsoft.bl.bookmarks.BookmarkService.RenderTrack",
       "http_annotation": "POST /v1/bookmarks:renderTrack",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RenderTrack",
       "package": "axxonsoft.bl.bookmarks",
       "proto": "axxonsoft/bl/bookmarks/BookmarkService.proto",
@@ -741,7 +743,8 @@
       "response": "RenderTrackResponse",
       "safety_class": "mutating",
       "service": "BookmarkService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (RenderTrack returned a bookmark for the throwaway fixture)"
     },
     {
       "fqmn": "axxonsoft.bl.cloud.CloudService.GetBindingConfiguration",

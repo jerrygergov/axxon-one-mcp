@@ -65,6 +65,7 @@ def create_server(
     logic_alerts: Any | None = None,
     config_change: Any | None = None,
     archive_volume: Any | None = None,
+    bookmark_extras: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -208,6 +209,9 @@ def create_server(
 
     if archive_volume is not None:
         register_archive_volume_tools(server, archive_volume)
+
+    if bookmark_extras is not None:
+        register_bookmark_extras_tools(server, bookmark_extras)
 
     return server
 
@@ -1153,6 +1157,28 @@ def register_archive_volume_tools(server: Any, archive_volume: Any) -> None:
         return archive_volume.resize_volume(access_point=access_point, volume_id=volume_id, new_size=new_size, confirmation=confirmation)
 
 
+def register_bookmark_extras_tools(server: Any, bookmark_extras: Any) -> None:
+    @server.tool(name="bookmark_extras_connect_axxon_profile")
+    def bookmark_extras_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the BookmarkService extras layer (writes need AXXON_BOOKMARK_EXTRAS_APPROVE=1)."""
+        return bookmark_extras.bookmark_extras_connect_axxon_profile(profile)
+
+    @server.tool(name="update_bookmark")
+    def update_bookmark(bookmark_id: str = "", message: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Update an existing bookmark's message via BookmarkService.UpdateBookmark (gated)."""
+        return bookmark_extras.update_bookmark(bookmark_id=bookmark_id, message=message, confirmation=confirmation)
+
+    @server.tool(name="set_bookmark_exported_time")
+    def set_bookmark_exported_time(bookmark_id: str = "", exported_time: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Set a bookmark's exported time via BookmarkService.SetExportedTime (gated)."""
+        return bookmark_extras.set_bookmark_exported_time(bookmark_id=bookmark_id, exported_time=exported_time, confirmation=confirmation)
+
+    @server.tool(name="render_bookmark_track")
+    def render_bookmark_track(bookmark_id: str = "") -> dict[str, Any]:
+        """Render a bookmark's track via BookmarkService.RenderTrack."""
+        return bookmark_extras.render_bookmark_track(bookmark_id=bookmark_id)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1704,6 +1730,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 37 ArchiveService volume tools (list_volume_states + gated resize_volume). Resize needs AXXON_ARCHIVE_VOLUME_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-bookmark-extras",
+        action="store_true",
+        help="Enable Phase 38 BookmarkService extras (render_bookmark_track + gated update_bookmark, set_bookmark_exported_time). Writes need AXXON_BOOKMARK_EXTRAS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -1895,6 +1926,11 @@ def main() -> int:
         from axxon_mcp_archive_volume import AxxonMcpArchiveVolume
 
         archive_volume = AxxonMcpArchiveVolume()
+    bookmark_extras = None
+    if args.enable_bookmark_extras:
+        from axxon_mcp_bookmark_extras import AxxonMcpBookmarkExtras
+
+        bookmark_extras = AxxonMcpBookmarkExtras()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -1928,6 +1964,7 @@ def main() -> int:
         logic_alerts=logic_alerts,
         config_change=config_change,
         archive_volume=archive_volume,
+        bookmark_extras=bookmark_extras,
     )
     server.run(transport=args.transport)
     return 0

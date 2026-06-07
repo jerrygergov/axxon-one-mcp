@@ -24,6 +24,17 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 38 BookmarkService: reversible Create -> Update -> SetExportedTime ->
+    # RenderTrack -> Delete round-trip on camera DeviceIpint.1. The throwaway bookmark was
+    # created, the three target methods exercised (message updated, exported_time set and
+    # confirmed via GetBookmark, track rendered), then deleted (GetBookmark afterward
+    # errors = gone). Closes BookmarkService 7/7.
+    ("BookmarkService", "UpdateBookmark"): (
+        "tested-pass", ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (message updated on throwaway bookmark, then deleted)"),
+    ("BookmarkService", "SetExportedTime"): (
+        "tested-pass", ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (exported_time set, confirmed via GetBookmark)"),
+    ("BookmarkService", "RenderTrack"): (
+        "tested-pass", ".agent/tasks/phase-38-bookmark-extras/evidence.md AC4 (RenderTrack returned a bookmark for the throwaway fixture)"),
     # Phase 37 ArchiveService: Resize live-verified on standalone storage
     # hosts/Server/MultimediaStorage.AliceBlue/MultimediaStorage volume 4b025154-... by
     # resizing to its current capacity (107374182400) -> EStatusCode DONE, capacity

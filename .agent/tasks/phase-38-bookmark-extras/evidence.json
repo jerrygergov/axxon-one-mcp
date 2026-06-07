@@ -1,0 +1,14 @@
+{
+  "task_id": "phase-38-bookmark-extras",
+  "overall_status": "PASS",
+  "updated": "2026-06-07T14:21:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_bookmark_extras.py: AxxonMcpBookmarkExtras with update_bookmark, set_bookmark_exported_time, render_bookmark_track; approval env AXXON_BOOKMARK_EXTRAS_APPROVE, token CONFIRM-bookmark-extras"},
+    "AC2": {"status": "PASS", "proof": "tools/tests/test_axxon_mcp_bookmark_extras.py GateTests: disabled/gap/error for both writes with client.calls==[]; live gate disabled+gap"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_mcp_server.py 6-edit wiring; server smoke registered 4 bookmark_extras tools; imports OK (raw/build.txt)"},
+    "AC4": {"status": "PASS", "proof": "raw/live-verify.txt reversible Create->Update->SetExportedTime->RenderTrack->Delete round-trip on throwaway bookmark; GetBookmark afterward confirms gone"},
+    "AC5": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py UpdateBookmark/SetExportedTime/RenderTrack tested-pass; dry-run after write = 0; coverage doc 242/90/29; BookmarkService 7/7"},
+    "AC6": {"status": "PASS", "proof": "raw/test-integration.txt 881 passed; production lint clean (raw/lint.txt)"}
+  },
+  "coverage": {"tested_pass": 242, "pending": 90, "fixture_warn": 29, "total": 361, "bookmark_service": "7/7"}
+}

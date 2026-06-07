@@ -291,7 +291,7 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **239 tested-pass / 91 pending / 31 fixture-warn** (361 total).
+Current honest coverage: **242 tested-pass / 90 pending / 29 fixture-warn** (361 total).
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 
@@ -325,3 +325,18 @@ ArchiveService now 13/17 (Resize closed; the reader chain + ClearInterval are
 environment-walled, ChangeBookmarks is deprecated server-side).
 
 Coverage after Phase 37: **239 tested-pass / 91 pending / 31 fixture-warn** (361 total).
+
+### Item 10y (Phase 38): BookmarkService extras -> 7/7
+
+`tools/axxon_mcp_bookmark_extras.py` (gated, `AXXON_BOOKMARK_EXTRAS_APPROVE=1`,
+`--enable-bookmark-extras`). Live-verified on the demo stand via a reversible
+Create -> Update -> SetExportedTime -> RenderTrack -> Delete round-trip on a throwaway
+bookmark (DeviceIpint.1):
+- **UpdateBookmark** — message updated, confirmed via GetBookmark. tested-pass.
+- **SetExportedTime** — exported_time set, confirmed via GetBookmark HasField. tested-pass.
+- **RenderTrack** — returned a bookmark for the fixture. tested-pass.
+The throwaway bookmark was deleted (GetBookmark afterward errors = gone), no residual state.
+
+BookmarkService now **7/7 complete**.
+
+Coverage after Phase 38: **242 tested-pass / 90 pending / 29 fixture-warn** (361 total).
