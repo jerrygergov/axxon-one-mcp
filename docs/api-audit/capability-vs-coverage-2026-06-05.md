@@ -31,11 +31,11 @@
 
 | Capability family | Services | Have MCP tools? | Notes |
 | --- | --- | --- | --- |
-| **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs (6) unstamped. |
+| **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs 4/6 stamped (phase-44 transport probes). |
 | **Events / history** | EventHistoryService, EventDescription | ✅ strong | `search_events`, `subscribe_events_bounded`, `find_event_suppliers` — 13/13 stamped. |
 | **Live notifications** | DomainNotifier, NodeNotifier | ⚠️ thin | `domain_event_subscribe`/`node_event_subscribe` exist but all 11 RPCs unstamped. |
-| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 15/29, RealtimeRecognizer 6/7, HeatMap 0/6 stamped. |
-| **PTZ / telemetry** | TelemetryService, TagAndTrackService | ⚠️ shipped, unstamped | 16 `ptz_*` tools shipped Phase 8; corpus still 0/32. TagAndTrack 0/4. |
+| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 15/29, RealtimeRecognizer 6/7, HeatMap 5/6 stamped (phase-44). |
+| **PTZ / telemetry** | TelemetryService, TagAndTrackService | ✅ partial | `ptz_*` tools (incl. `ptz_point_move`); TelemetryService 22/32 stamped (10 device/firmware fixture-warn). TagAndTrack 0/4. |
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
 | **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 5/5. |
 | **Bookmarks** | BookmarkService | ✅ strong | reads + lifecycle; UpdateBookmark/SetExportedTime/RenderTrack open. |
@@ -71,13 +71,16 @@ These have **zero** MCP surface — not stale evidence, actually absent:
    Needs a stand with a real I/O device (relay/ray) or an action-capable ACFA controller.
 7. **GenericSettingsService (0/3)** — generic per-object settings get/set.
 8. **DynamicParametersService (0/2)** — dynamic device parameter discovery (drives detector schemas).
-9. **HeatMapService (0/6)** — heat-map analytics. FIXTURE-BLOCKED (re-confirmed 2026-06-07):
-   BuildHeatmap / BuildEventsHeatmap return INTERNAL "Failed to execute command" across every
-   camera tried (DeviceIpint.1/2 "Tracker", DetectorEx.1/vmda) with both DATA and IMAGE result
-   types; BuildHeatmapTyped / ExecuteHeatmapQueryTyped hang to DEADLINE_EXCEEDED. The service
-   needs a heat-map analytics module/license + a camera with accumulated tracker data, not
-   provisioned on this stand (same dead-fixture class as PTZ hardware / Cloud pairing). Not
-   closeable by code or permission — only by provisioning the heatmap module on the stand.
+9. **HeatMapService (5/6)** — heat-map analytics. CORRECTED 2026-06-08 (phase-44): the earlier
+   "0/6 dead fixture" finding was a wrong-argument artifact. The INTERNAL "Failed to execute
+   command" came from passing the detector access point as `camera_ID` and a bad builder AP. With
+   the correct `camera_ID = hosts/Server/AVDetector.N/SourceEndpoint.vmda` and
+   `access_point = hosts/Server/HeatMapBuilder.0/HeatMapBuilder`, BuildHeatmap / BuildEventsHeatmap
+   / BuildFloorHeatmap all return result=True with image bytes, and ExecuteHeatmapQuery /
+   ExecuteHeatmapQueryTyped stream responses with progress on AVDetector.1. Only BuildHeatmapTyped
+   stays fixture-warn (DEADLINE_EXCEEDED >120s even at a 30-min window / 8x8 mask / DATA result —
+   a server-side typed-query compile hang, distinct from the working string-query path). Shipped as
+   `tools/axxon_mcp_heatmap.py` (`--enable-heatmap`).
 10. **RealtimeRecognizerService (7/7 non-fixture)** — reads CLOSED `496bd70`
     (GetLists/GetListStream/GetItems); writes CLOSED phase-14 (ChangeLists/ChangeItems/Clear,
     approval-gated, live-verified incl. an authorized node wipe) and ChangeListsStream CLOSED
@@ -185,7 +188,9 @@ These have **zero** MCP surface — not stale evidence, actually absent:
     ConfigurePreset, GetTours, GetTourPoints, GetAuxiliaryOperations); TelemetryService now 19/32.
     The 13 unsupported by the simulated source (Focus/FocusAuto/Iris/IrisAuto/PointMove/AreaZoom/
     PerformAuxiliaryOperation + tour writes) stay pending: rejected with error 2 / GeneralError,
-    closeable only on real PTZ hardware.
+    closeable only on real PTZ hardware. [Superseded by phase-44 (item 10ae): Focus/Iris service
+    OK on TelemetryControl.0 and PointMove on TelemetryControl.2; only the other 10 are genuinely
+    device/firmware-walled. TelemetryService is now 22/32.]
 10u. **MapService providers complete (phase-34)** - new gated module `axxon_mcp_map_providers.py`
     (AXXON_MAP_APPROVE=1 + CONFIRM-map-providers) with gated `configure_map_providers`
     (ConfigureMapProviders) and read `get_map_provider` (GetMapProvider). Live-verified reversibly:
@@ -271,8 +276,9 @@ returning found IP cameras (driver/vendor/model/mac/ip), bounded by device/time 
 the stream cancelled on exit. Live-verified: found 3 real cameras (Hikvision/Dahua) on the
 stand's LAN. `Discover` flipped `pending → tested-pass`; DiscoveryService now 4/5.
 
-Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build* RPC returns
-"Failed to execute command" regardless of binding (needs a heat-map analytics module).
+Correction (phase-44, 2026-06-08): the earlier "HeatMapService is dead on this stand" finding was
+a wrong-argument artifact, not a fixture wall — with the correct VMDA `camera_ID` + HeatMapBuilder
+access point, 5/6 HeatMap RPCs return real results (see B.9).
 
 ---
 
@@ -283,7 +289,8 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
 2. **Close the true zero-coverage families** that have real operator value:
    ~~AuditEventInjector~~ DONE (`0c16bb2`). Still open and live-exercisable here:
    Done: RealtimeRecognizer reads (`496bd70`), DiscoveryService (`c240043`).
-   Fixture-blocked here: CloudService (not paired), HeatMapService (no analytics module).
+   Fixture-blocked here: CloudService (not paired). HeatMapService now 5/6 (phase-44, was
+   mis-flagged as a dead fixture).
    Fixture-blocked on this stand (defer until a richer stand): notification actions
    (email/SMS, need NotifyService), StateControl/ACFA arm-disarm (need real I/O device).
 3. ~~**Promote external-event ingestion** (ExternalDetector)~~ DONE for periodical events
@@ -291,7 +298,24 @@ Fixture finding: HeatMapService is dead on this stand (see B.9) — every Build*
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **263 tested-pass / 61 pending / 37 fixture-warn** (361 total).
+Current honest coverage: **275 tested-pass / 36 pending / 50 fixture-warn** (361 total).
+
+### Item 10ae (Phase 44): Telemetry + HeatMap + Media physical/hardware batch -> +12 tested-pass
+
+Closed the three "physical/hardware" clusters by live-probing what the demo stand actually
+services. TelemetryService Focus/Iris (Empty OK on TelemetryControl.0) and PointMove (OK on
+TelemetryControl.2) added to `tools/axxon_mcp_ptz.py` (`ptz_point_move`); TelemetryService is now
+22/32 with the remaining 10 honestly fixture-warn (FocusAuto/IrisAuto UNIMPLEMENTED, AreaZoom
+INTERNAL error 2, PerformAuxiliaryOperation has no aux ops, and 6 tour ops return GeneralError —
+firmware does not support on-device tours). New read-only `tools/axxon_mcp_heatmap.py`
+(`--enable-heatmap`) ships build_heatmap / build_events_heatmap / build_floor_heatmap (result=True
+with image bytes) and execute_heatmap_query / execute_heatmap_query_typed (streamed responses with
+progress); HeatMapService 5/6 (BuildHeatmapTyped fixture-warn, server-side compile hang). New
+read-only `tools/axxon_mcp_media.py` (`--enable-media`) ships request_connection / request_qos /
+request_tunnel / stream_probe (MediaService 4/6; AwaitConnection and ConnectEndpoint need a
+peer/speaker sink). All tools are metadata-only — never returning raw image bytes, media samples,
+cookies, or tokens. Also corrected the stale B.9 "HeatMapService is a dead fixture" claim, which
+was a wrong-argument artifact (detector AP passed as camera_ID), not a provisioning wall.
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
 

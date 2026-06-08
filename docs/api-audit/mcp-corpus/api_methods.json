@@ -2100,7 +2100,7 @@
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.BuildHeatmap",
       "http_annotation": "POST /v1/heatmap:build",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BuildHeatmap",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2108,12 +2108,13 @@
       "response": "BuildHeatmapResponse",
       "safety_class": "mutating",
       "service": "HeatMapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, image bytes returned)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.BuildHeatmapTyped",
       "http_annotation": "POST /v1/heatmap:buildTyped",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "BuildHeatmapTyped",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2121,12 +2122,13 @@
       "response": "BuildHeatmapResponse",
       "safety_class": "mutating",
       "service": "HeatMapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (DEADLINE_EXCEEDED >120s; server-side typed-query compile hang)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.BuildEventsHeatmap",
       "http_annotation": "POST /v1/events-heatmap:build",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BuildEventsHeatmap",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2134,12 +2136,13 @@
       "response": "BuildEventsHeatmapResponse",
       "safety_class": "mutating",
       "service": "HeatMapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, ~22KB image bytes)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.BuildFloorHeatmap",
       "http_annotation": "POST /v1/floor-heatmap:build",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "BuildFloorHeatmap",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2147,12 +2150,13 @@
       "response": "BuildFloorHeatmapResponse",
       "safety_class": "mutating",
       "service": "HeatMapService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, image bytes returned)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.ExecuteHeatmapQuery",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ExecuteHeatmapQuery",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2160,12 +2164,13 @@
       "response": "ExecuteHeatmapQueryResponse",
       "safety_class": "review",
       "service": "HeatMapService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (>=1 streamed response with progress on AVDetector.1)"
     },
     {
       "fqmn": "axxonsoft.bl.heatmap.HeatMapService.ExecuteHeatmapQueryTyped",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ExecuteHeatmapQueryTyped",
       "package": "axxonsoft.bl.heatmap",
       "proto": "axxonsoft/bl/heatmap/HeatMap.proto",
@@ -2173,7 +2178,8 @@
       "response": "ExecuteHeatmapQueryResponse",
       "safety_class": "review",
       "service": "HeatMapService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (>=1 streamed response with progress on AVDetector.1)"
     },
     {
       "fqmn": "axxonsoft.bl.layout.LayoutImagesManager.ListLayoutImages",
@@ -3049,7 +3055,7 @@
     {
       "fqmn": "axxonsoft.bl.media.MediaService.Stream",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Stream",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3057,12 +3063,13 @@
       "response": "MediaSample",
       "safety_class": "stream_read",
       "service": "MediaService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (pull stream yields a config_update sample)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.RequestConnection",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RequestConnection",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3070,12 +3077,13 @@
       "response": "RequestConnectionResponse",
       "safety_class": "review",
       "service": "MediaService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (cookie returned for video endpoint)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.RequestQoS",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RequestQoS",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3083,12 +3091,13 @@
       "response": "RequestQoSResponse",
       "safety_class": "review",
       "service": "MediaService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (OK with frameRate QoS hint)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.AwaitConnection",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "AwaitConnection",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3096,12 +3105,13 @@
       "response": "AwaitConnectionResponse",
       "safety_class": "stream_read",
       "service": "MediaService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (bidi sink-side; needs a peer offering a connection)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.ConnectEndpoint",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ConnectEndpoint",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3109,12 +3119,13 @@
       "response": "ConnectEndpointResponse",
       "safety_class": "review",
       "service": "MediaService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (NOT_FOUND; needs a real speaker sink endpoint)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.RequestTunnel",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RequestTunnel",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3122,7 +3133,8 @@
       "response": "TunnelResponse",
       "safety_class": "review",
       "service": "MediaService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (tcp config + cookie returned)"
     },
     {
       "fqmn": "axxonsoft.bl.metadata.MetadataService.PullMetadata",
@@ -3458,7 +3470,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Focus",
       "http_annotation": "POST /v1/telemetry:focus",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Focus",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3466,12 +3478,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.0)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.FocusAuto",
       "http_annotation": "POST /v1/telemetry:focusAuto",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "FocusAuto",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3479,12 +3492,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (UNIMPLEMENTED: device does not support FocusAuto)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.Iris",
       "http_annotation": "POST /v1/telemetry:iris",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "Iris",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3492,12 +3506,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.0)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.IrisAuto",
       "http_annotation": "POST /v1/telemetry:irisAuto",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "IrisAuto",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3505,7 +3520,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (UNIMPLEMENTED: device does not support IrisAuto)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AbsoluteMove",
@@ -3636,7 +3652,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PointMove",
       "http_annotation": "POST /v1/telemetry:pointMove",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "PointMove",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3644,12 +3660,13 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.2)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AreaZoom",
       "http_annotation": "POST /v1/telemetry:areaZoom",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "AreaZoom",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3657,7 +3674,8 @@
       "response": "google.protobuf.Empty",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (INTERNAL: AreaZoom operation returned error 2 on all sources)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetPresetsInfo",
@@ -3690,7 +3708,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PerformAuxiliaryOperation",
       "http_annotation": "POST /v1/telemetry:performOperations",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "PerformAuxiliaryOperation",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3698,7 +3716,8 @@
       "response": "PerformAuxiliaryOperationResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GetAuxiliaryOperations returns no operations on any source)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.GetTours",
@@ -3731,7 +3750,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.PlayTour",
       "http_annotation": "POST /v1/telemetry/tours:play",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "PlayTour",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3739,12 +3758,13 @@
       "response": "PlayTourResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; firmware does not support on-device tours)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.StopTour",
       "http_annotation": "POST /v1/telemetry/tours:stop",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "StopTour",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3752,12 +3772,13 @@
       "response": "StopTourResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; firmware does not support on-device tours)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.StartFillTour",
       "http_annotation": "POST /v1/telemetry/tours:startFill",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "StartFillTour",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3765,12 +3786,13 @@
       "response": "StartFillTourResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.SetTourPoint",
       "http_annotation": "POST /v1/telemetry/tours:setPoint",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SetTourPoint",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3778,12 +3800,13 @@
       "response": "SetTourPointResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.StopFillTour",
       "http_annotation": "POST /v1/telemetry/tours:stopFill",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "StopFillTour",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3791,12 +3814,13 @@
       "response": "StopFillTourResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.RemoveTour",
       "http_annotation": "POST /v1/telemetry/tours:remove",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "RemoveTour",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/Telemetry.proto",
@@ -3804,7 +3828,8 @@
       "response": "RemoveTourResponse",
       "safety_class": "mutating",
       "service": "TelemetryService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"
     },
     {
       "fqmn": "axxonsoft.bl.realtimerecognizer.RealtimeRecognizerService.ChangeLists",

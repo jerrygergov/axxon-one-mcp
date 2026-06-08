@@ -71,6 +71,8 @@ def create_server(
     layout_manager: Any | None = None,
     license_reads: Any | None = None,
     misc_reads: Any | None = None,
+    heatmap: Any | None = None,
+    media: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -233,6 +235,12 @@ def create_server(
     if misc_reads is not None:
         register_misc_reads_tools(server, misc_reads)
 
+    if heatmap is not None:
+        register_heatmap_tools(server, heatmap)
+
+    if media is not None:
+        register_media_tools(server, media)
+
     return server
 
 
@@ -291,6 +299,11 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
     def ptz_iris(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
         """Adjust iris (mode: continuous, relative, or absolute)."""
         return ptz.iris(access_point, session_id, value, mode)
+
+    @server.tool(name="ptz_point_move")
+    def ptz_point_move(access_point: str, session_id: int, x: float, y: float) -> dict[str, Any]:
+        """Center the camera on a normalized [0..1] image point (click-to-center). Needs a session."""
+        return ptz.point_move(access_point, session_id, x, y)
 
     @server.tool(name="ptz_absolute_move")
     def ptz_absolute_move(access_point: str, session_id: int, pan: int, tilt: int, zoom: int, mask: int = 7) -> dict[str, Any]:
@@ -1324,6 +1337,77 @@ def register_misc_reads_tools(server: Any, misc_reads: Any) -> None:
         return misc_reads.remove_generic_settings(context=context, revision=revision, confirmation=confirmation)
 
 
+def register_heatmap_tools(server: Any, heatmap: Any) -> None:
+    @server.tool(name="heatmap_connect_axxon_profile")
+    def heatmap_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the HeatMapService read layer (object/event density maps from VMDA metadata)."""
+        return heatmap.heatmap_connect_axxon_profile(profile)
+
+    @server.tool(name="build_heatmap")
+    def build_heatmap(camera_id: str = "", start_time: str = "", end_time: str = "", query: str = "",
+                      builder_access_point: str = "", mask: int = 16, image_width: int = 320, image_height: int = 240) -> dict[str, Any]:
+        """Build an object-density heatmap image for one camera over a window via HeatMapService.BuildHeatmap."""
+        kwargs = {"camera_id": camera_id, "start_time": start_time, "end_time": end_time, "query": query, "mask": mask, "image_width": image_width, "image_height": image_height}
+        if builder_access_point:
+            kwargs["builder_access_point"] = builder_access_point
+        return heatmap.build_heatmap(**kwargs)
+
+    @server.tool(name="build_events_heatmap")
+    def build_events_heatmap(start_time: str = "", end_time: str = "", builder_access_point: str = "",
+                             mask: int = 16, image_width: int = 320, image_height: int = 240) -> dict[str, Any]:
+        """Build a server-wide event-density heatmap image via HeatMapService.BuildEventsHeatmap."""
+        kwargs = {"start_time": start_time, "end_time": end_time, "mask": mask, "image_width": image_width, "image_height": image_height}
+        if builder_access_point:
+            kwargs["builder_access_point"] = builder_access_point
+        return heatmap.build_events_heatmap(**kwargs)
+
+    @server.tool(name="build_floor_heatmap")
+    def build_floor_heatmap(camera_id: str = "", start_time: str = "", end_time: str = "", query: str = "",
+                            map_guid: str = "", builder_access_point: str = "", mask: int = 16, image_width: int = 320, image_height: int = 240) -> dict[str, Any]:
+        """Build a floor-projected heatmap from a camera's VMDA data source via HeatMapService.BuildFloorHeatmap."""
+        kwargs = {"camera_id": camera_id, "start_time": start_time, "end_time": end_time, "query": query, "map_guid": map_guid, "mask": mask, "image_width": image_width, "image_height": image_height}
+        if builder_access_point:
+            kwargs["builder_access_point"] = builder_access_point
+        return heatmap.build_floor_heatmap(**kwargs)
+
+    @server.tool(name="execute_heatmap_query")
+    def execute_heatmap_query(camera_id: str = "", start_time: str = "", end_time: str = "", query: str = "", max_responses: int = 8) -> dict[str, Any]:
+        """Stream raw heatmap intervals for a camera's VMDA query via HeatMapService.ExecuteHeatmapQuery."""
+        return heatmap.execute_heatmap_query(camera_id=camera_id, start_time=start_time, end_time=end_time, query=query, max_responses=max_responses)
+
+    @server.tool(name="execute_heatmap_query_typed")
+    def execute_heatmap_query_typed(camera_id: str = "", start_time: str = "", end_time: str = "", max_responses: int = 8) -> dict[str, Any]:
+        """Stream raw heatmap intervals via a typed motion-in-area query (HeatMapService.ExecuteHeatmapQueryTyped)."""
+        return heatmap.execute_heatmap_query_typed(camera_id=camera_id, start_time=start_time, end_time=end_time, max_responses=max_responses)
+
+
+def register_media_tools(server: Any, media: Any) -> None:
+    @server.tool(name="media_connect_axxon_profile")
+    def media_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the MediaService transport-probe layer (connection/QoS/tunnel/stream probes)."""
+        return media.media_connect_axxon_profile(profile)
+
+    @server.tool(name="request_connection")
+    def request_connection(endpoint: str = "", pid: int = 0, host_id: str = "Server") -> dict[str, Any]:
+        """Request a transport cookie + connection info for a media endpoint via MediaService.RequestConnection."""
+        return media.request_connection(endpoint=endpoint, pid=pid, host_id=host_id)
+
+    @server.tool(name="request_qos")
+    def request_qos(endpoint: str = "", fps: float = 5.0) -> dict[str, Any]:
+        """Apply a frame-rate QoS hint to a media connection via MediaService.RequestQoS."""
+        return media.request_qos(endpoint=endpoint, fps=fps)
+
+    @server.tool(name="request_tunnel")
+    def request_tunnel(node: str = "Server", name: str = "") -> dict[str, Any]:
+        """Open an RPC tunnel to a node and report its transport config via MediaService.RequestTunnel."""
+        return media.request_tunnel(node=node, name=name)
+
+    @server.tool(name="stream_probe")
+    def stream_probe(endpoint: str = "", max_samples: int = 4, channel_idle_ms: int = 5000) -> dict[str, Any]:
+        """Open the pull stream for a media endpoint and tally sample types via MediaService.Stream."""
+        return media.stream_probe(endpoint=endpoint, max_samples=max_samples, channel_idle_ms=channel_idle_ms)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -1905,6 +1989,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 43 cross-service tools (acquire dynamic params, probe_volume, ping_node, generic settings get + gated save/remove). Settings writes need AXXON_MISC_WRITE_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-heatmap",
+        action="store_true",
+        help="Enable Phase 44 HeatMapService read tools (build/events/floor heatmap images + streaming heatmap queries; metadata-only).",
+    )
+    parser.add_argument(
+        "--enable-media",
+        action="store_true",
+        help="Enable Phase 44 MediaService transport-probe tools (request_connection, request_qos, request_tunnel, stream_probe; metadata-only).",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2126,6 +2220,16 @@ def main() -> int:
         from axxon_mcp_misc_reads import AxxonMcpMiscReads
 
         misc_reads = AxxonMcpMiscReads()
+    heatmap = None
+    if args.enable_heatmap:
+        from axxon_mcp_heatmap import AxxonMcpHeatmap
+
+        heatmap = AxxonMcpHeatmap()
+    media = None
+    if args.enable_media:
+        from axxon_mcp_media import AxxonMcpMedia
+
+        media = AxxonMcpMedia()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2165,6 +2269,8 @@ def main() -> int:
         layout_manager=layout_manager,
         license_reads=license_reads,
         misc_reads=misc_reads,
+        heatmap=heatmap,
+        media=media,
     )
     server.run(transport=args.transport)
     return 0

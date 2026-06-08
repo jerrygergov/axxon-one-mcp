@@ -24,6 +24,63 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 44 physical/hardware batch (TelemetryService + HeatMapService + MediaService).
+    # Serviceable on the demo stand -> tested-pass; device/firmware/server-walled -> fixture-warn.
+    # Telemetry: Focus/Iris return Empty (OK) on TelemetryControl.0; PointMove OK on
+    # TelemetryControl.2. HeatMap: BuildHeatmap/BuildEventsHeatmap/BuildFloorHeatmap return
+    # result=True with image bytes; ExecuteHeatmapQuery/ExecuteHeatmapQueryTyped stream >=1 response
+    # with progress on AVDetector.1. Media: RequestConnection returns a cookie, RequestQoS OK with
+    # frameRate, RequestTunnel returns tcp config + cookie, Stream yields a sample.
+    ("TelemetryService", "Focus"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.0)"),
+    ("TelemetryService", "Iris"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.0)"),
+    ("TelemetryService", "PointMove"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (Empty OK on TelemetryControl.2)"),
+    ("TelemetryService", "FocusAuto"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (UNIMPLEMENTED: device does not support FocusAuto)"),
+    ("TelemetryService", "IrisAuto"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (UNIMPLEMENTED: device does not support IrisAuto)"),
+    ("TelemetryService", "AreaZoom"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (INTERNAL: AreaZoom operation returned error 2 on all sources)"),
+    ("TelemetryService", "PerformAuxiliaryOperation"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GetAuxiliaryOperations returns no operations on any source)"),
+    ("TelemetryService", "PlayTour"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; firmware does not support on-device tours)"),
+    ("TelemetryService", "StopTour"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; firmware does not support on-device tours)"),
+    ("TelemetryService", "StartFillTour"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"),
+    ("TelemetryService", "SetTourPoint"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"),
+    ("TelemetryService", "StopFillTour"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"),
+    ("TelemetryService", "RemoveTour"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (GeneralError; no tour created)"),
+    ("HeatMapService", "BuildHeatmap"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, image bytes returned)"),
+    ("HeatMapService", "BuildEventsHeatmap"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, ~22KB image bytes)"),
+    ("HeatMapService", "BuildFloorHeatmap"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (result=True, image bytes returned)"),
+    ("HeatMapService", "ExecuteHeatmapQuery"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (>=1 streamed response with progress on AVDetector.1)"),
+    ("HeatMapService", "ExecuteHeatmapQueryTyped"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (>=1 streamed response with progress on AVDetector.1)"),
+    ("HeatMapService", "BuildHeatmapTyped"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (DEADLINE_EXCEEDED >120s; server-side typed-query compile hang)"),
+    ("MediaService", "RequestConnection"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (cookie returned for video endpoint)"),
+    ("MediaService", "RequestQoS"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (OK with frameRate QoS hint)"),
+    ("MediaService", "RequestTunnel"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (tcp config + cookie returned)"),
+    ("MediaService", "Stream"): (
+        "tested-pass", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (pull stream yields a config_update sample)"),
+    ("MediaService", "AwaitConnection"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (bidi sink-side; needs a peer offering a connection)"),
+    ("MediaService", "ConnectEndpoint"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (NOT_FOUND; needs a real speaker sink endpoint)"),
     # Phase 43 cross-service batch. DynamicParametersService AcquireDynamicParameters /
     # AcquireDeviceAdditionalData return status DONE on DeviceIpint.1. ArchiveVolumeService
     # ProbeVolume returns a structured NOT_A_VOLUME result. NodeNotifier Ping streams >=1

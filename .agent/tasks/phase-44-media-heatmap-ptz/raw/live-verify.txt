@@ -1,0 +1,27 @@
+=== TelemetryService (tested-pass: Focus, Iris, PointMove) ===
+Focus: {'status': 'ok', 'tool': 'focus', 'access_point': 'hosts/Server/DeviceIpint.53/TelemetryControl.0', 'value': 0.0, 'mode': 'continuous'}
+Iris: {'status': 'ok', 'tool': 'iris', 'access_point': 'hosts/Server/DeviceIpint.53/TelemetryControl.0', 'value': 0.0, 'mode': 'continuous'}
+PointMove: {'status': 'ok', 'tool': 'point_move', 'access_point': 'hosts/Server/DeviceIpint.53/TelemetryControl.2', 'x': 0.5, 'y': 0.5}
+=== TelemetryService walled (fixture-warn) ===
+FocusAuto -> WALLED UNIMPLEMENTED Device does not support FocusAuto.
+IrisAuto -> WALLED UNIMPLEMENTED Device does not support IrisAuto.
+AreaZoom -> WALLED INTERNAL AreaZoom operation returned error: 2
+PerformAuxiliaryOperation -> WALLED no aux ops: []
+StartFillTour -> {'error_code': 'GeneralError'}
+PlayTour -> {'error_code': 'GeneralError'}
+(StopTour/SetTourPoint/StopFillTour/RemoveTour all return GeneralError, no tour created)
+=== HeatMapService (tested-pass: BuildHeatmap, BuildEvents, BuildFloor, ExecHQ, ExecHQTyped) ===
+vmda camera_id: hosts/Server/AVDetector.103/SourceEndpoint.vmda
+BuildHeatmap: {'status': 'ok', 'tool': 'build_heatmap', 'result': True, 'heatmap_cells': 0, 'image_bytes': 103}
+BuildEventsHeatmap: {'status': 'ok', 'tool': 'build_events_heatmap', 'result': True, 'heatmap_cells': 0, 'image_bytes': 22538}
+BuildFloorHeatmap: {'status': 'ok', 'tool': 'build_floor_heatmap', 'result': True, 'heatmap_cells': 0, 'image_bytes': 103, 'map_guid': ''}
+ExecuteHeatmapQuery(AVDetector.1, 3d window): {'status': 'ok', 'tool': 'execute_heatmap_query', 'responses': 2, 'last_progress': '20260605T053311.801101', 'heatmap_cells': 0}
+ExecuteHeatmapQueryTyped(AVDetector.1, 3d window): {'status': 'ok', 'tool': 'execute_heatmap_query_typed', 'responses': 2, 'last_progress': '20260605T053311.801101', 'heatmap_cells': 0}
+BuildHeatmapTyped -> WALLED DEADLINE_EXCEEDED (server-side typed-query hang, >120s even at 30min/8x8/DATA)
+=== MediaService (tested-pass: RequestConnection, RequestQoS, RequestTunnel, Stream) ===
+RequestConnection: {'status': 'ok', 'tool': 'request_connection', 'endpoint': 'hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0', 'cookie_present': True, 'transport': 'NETWORK_TRANSPORT_TCP'}
+RequestQoS: {'status': 'ok', 'tool': 'request_qos', 'endpoint': 'hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0', 'fps': 5.0}
+RequestTunnel: {'status': 'ok', 'tool': 'request_tunnel', 'node': 'Server', 'proto': 'tcp', 'cookie_present': True, 'endpoint_present': True}
+Stream(stream_probe): {'status': 'ok', 'tool': 'stream_probe', 'endpoint': 'hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0', 'samples': 1, 'sample_types': {'config_update': 1}}
+AwaitConnection/ConnectEndpoint -> WALLED (need peer/speaker sink; ConnectEndpoint NOT_FOUND on DeviceIpint.1)
+=== DONE ===

@@ -32,6 +32,7 @@ def _telemetry_pb():
         "GetAuxiliaryOperationsRequest",
         "AbsolutePositionNormalized", "AbsoluteMoveNormalizedRequest",
         "ConfigurePresetRequest", "Preset", "GetToursRequest", "GetTourPointsRequest",
+        "PointMoveRequest",
     ):
         setattr(mod, name, (lambda **kw: FakeMsg(**kw)))
     return mod
@@ -39,6 +40,10 @@ def _telemetry_pb():
 
 def _helper_pb():
     return types.SimpleNamespace(Capabilities=lambda **kw: FakeMsg(**kw))
+
+
+def _primitive_pb():
+    return types.SimpleNamespace(Point=lambda **kw: FakeMsg(**kw))
 
 
 def _domain_pb():
@@ -80,6 +85,10 @@ class FakeTelemetryStub:
 
     def Iris(self, request, timeout=None):
         self.calls.append(("Iris", request))
+        return FakeMsg()
+
+    def PointMove(self, request, timeout=None):
+        self.calls.append(("PointMove", request))
         return FakeMsg()
 
     def AbsoluteMove(self, request, timeout=None):
@@ -152,6 +161,8 @@ class FakeClient:
             return _telemetry_pb()
         if name.endswith("TelemetryHelper_pb2"):
             return _helper_pb()
+        if name.endswith("Primitives_pb2"):
+            return _primitive_pb()
         if name.endswith("Domain_pb2"):
             return _domain_pb()
         raise AssertionError(f"unexpected import {name}")
@@ -225,6 +236,18 @@ class AxxonMcpPtzTests(unittest.TestCase):
         result = _ptz([PTZ_AP]).move(PTZ_AP, 1, 0.5, 0.5, mode="warp")
         self.assertEqual(result["status"], "refused")
         self.assertEqual(result["reason"], "bad-mode")
+
+    def test_point_move_ok(self) -> None:
+        ptz = _ptz([PTZ_AP])
+        result = ptz.point_move(PTZ_AP, 1, 0.5, 0.5)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["x"], 0.5)
+        self.assertIn(("PointMove",), [(c[0],) for c in ptz.client.telemetry_stub.calls])
+
+    def test_point_move_refuses_non_telemetry_endpoint(self) -> None:
+        result = _ptz([PTZ_AP]).point_move("hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0", 1, 0.5, 0.5)
+        self.assertEqual(result["status"], "refused")
+        self.assertEqual(result["reason"], "bad-access-point")
 
     def test_preset_round_trip(self) -> None:
         ptz = _ptz([PTZ_AP])

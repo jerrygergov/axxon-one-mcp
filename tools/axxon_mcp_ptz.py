@@ -203,6 +203,18 @@ class AxxonMcpPtz:
         """Adjust iris (continuous speed, relative step, or absolute)."""
         return self._common("Iris", "iris", access_point, session_id, value, mode)
 
+    def point_move(self, access_point: str, session_id: int, x: float, y: float) -> dict[str, Any]:
+        """Center the camera on a normalized [0..1] image point (click-to-center). Needs a session."""
+        if not access_point or "/TelemetryControl." not in access_point:
+            return {"status": "refused", "tool": "point_move", "reason": "bad-access-point", "message": "access_point must be a TelemetryControl endpoint."}
+        client = self.ensure_client()
+        client.authenticate_grpc()
+        tel = client.import_module("axxonsoft.bl.ptz.Telemetry_pb2")
+        prim = client.import_module("axxonsoft.bl.primitive.Primitives_pb2")
+        stub = self._telemetry_stub(client)
+        stub.PointMove(tel.PointMoveRequest(access_point=access_point, session_id=int(session_id), point=prim.Point(x=float(x), y=float(y))), timeout=client.config.timeout)
+        return {"status": "ok", "tool": "point_move", "access_point": access_point, "x": float(x), "y": float(y)}
+
     def absolute_move(self, access_point: str, session_id: int, pan: int, tilt: int, zoom: int, mask: int = 7) -> dict[str, Any]:
         """Move to an absolute pan/tilt/zoom position. mask selects which axes apply (7 = all)."""
         client = self.ensure_client()
