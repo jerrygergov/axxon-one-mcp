@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 796 tests in 0.629s
-OK
-=== admin suite ===
-Ran 24 tests in 0.027s
-OK
-=== import ===
-server import OK

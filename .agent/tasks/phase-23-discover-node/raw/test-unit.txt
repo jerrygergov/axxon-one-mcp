@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 790 tests in 0.617s
-OK
-=== discovery suite ===
-Ran 8 tests in 0.000s
-OK
-=== import ===
-server import OK

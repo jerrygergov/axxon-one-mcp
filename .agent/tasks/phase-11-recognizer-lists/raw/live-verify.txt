@@ -1,8 +1,0 @@
-connected: True
-list_recognizer_lists -> {"status": "ok", "count": 1, "lists": [{"id": "0e69bd70-9c3c-4996-9be3-97b90b9cb0cf", "name": "Intersec Face List", "type": "ELT_Face", "score": 0.7, "item_count": 6}]}
-get_recognizer_list -> {"status": "ok", "list_id": "0e69bd70-9c3c-4996-9be3-97b90b9cb0cf", "name": "<redacted-or-name>"}
-list_recognizer_items -> status=ok count=6 truncated=False
-  item summaries (redacted): [{"id": "54680499-d8e6-43cb-a647-3670844066d8", "name": "<redacted-name>", "full_name": "<redacted-name>"}, {"id": "871ee524-08cb-4faf-adfb-5c67104b848f", "name": "<redacted-name>", "full_name": "<redacted-name>"}, {"id": "b06a701e-1440-4e0f-b10d-a91e6561380c", "name": "<redacted-name>", "full_name": "<redacted-name>"}, {"id": "e0701fa5-6dd4-4473-8353-fff6aed5c5e8", "name": "<redacted-name>", "full_name": "<redacted-name>"}, {"id": "ebbe02eb-451b-4fc8-9a62-ff51959e16a8", "name": "<redacted-name>", "full_name": "<redacted-name>"}, {"id": "ee49d5f9-d434-471c-a38f-f182d23eebff", "name": "<redacted-name>", "full_name": "<redacted-name>"}]
-  contains biometric payload: False (must be False)
-
-RESULT: PASS

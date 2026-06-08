@@ -21,7 +21,16 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Agent / assistant working files (not part of the shareable project)
 .claude/
+.codex/
+.claire/
+.agent/
+.ruff_cache/
+AGENTS.md
+CLAUDE.md
+STATUS.md
 
 # Local secrets (defense in depth)
 .env

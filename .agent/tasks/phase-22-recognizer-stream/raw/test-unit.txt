@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 786 tests in 0.616s
-OK
-=== recognizer-write suite ===
-Ran 18 tests in 0.000s
-OK
-=== import ===
-server import OK

@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 793 tests in 0.624s
-OK
-=== view_objects suite ===
-Ran 28 tests in 0.063s
-OK
-=== import ===
-server import OK

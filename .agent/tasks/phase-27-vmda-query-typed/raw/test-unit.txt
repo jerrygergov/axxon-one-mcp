@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 801 tests in 0.748s
-OK
-=== metadata suite ===
-Ran 9 tests in 0.033s
-OK
-=== import ===
-server import OK

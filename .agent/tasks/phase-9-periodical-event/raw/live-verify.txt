@@ -1,9 +1,0 @@
-=== A) default plan (event_type=TargetList), 2 custom tracklets ===
-eventType: TargetList
-APPLY: {"status": "applied", "plan_id": "plan-830c97be-f25a-4575-8899-b7527d6d7bab", "created_uids": []}
-ROLLBACK: {"status": "rolled_back", "plan_id": "plan-830c97be-f25a-4575-8899-b7527d6d7bab", "removed_uids": [], "failed": []}
-
-=== B) wrong event_type (Event1) must now be a REJECTED apply ===
-APPLY(bad): {"status": "error", "message": "http_post rejected by server: BAD_EVENT_TYPE", "plan_id": "plan-3aa4a50e-42c5-4b06-aca6-845f45509e1b"}
-
-RESULT: PASS

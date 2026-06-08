@@ -1,8 +1,0 @@
-=== full suite ===
-Ran 781 tests in 0.607s
-OK
-=== groups suite ===
-Ran 10 tests in 0.000s
-OK
-=== import ===
-server import OK
