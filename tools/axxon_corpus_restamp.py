@@ -24,6 +24,17 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 47 probe-and-classify (StateControlService + TagAndTrackService). Live-probed, blocked by
+    # stand state (same wall as their already-fixture-warn read siblings) -> tested-warn-fixture-needed.
+    # ConfigurationManager.SetRevision intentionally left pending (destructive whole-config restore).
+    ("StateControlService", "SetState"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (INTERNAL 'Can't resolve reference to .../StateControl.relay0:0'; relay I/O not instantiated by the generic driver; read companions GetCurrentState/GetDefaultState already fixture-warn for the same reason)"),
+    ("TagAndTrackService", "SetMode"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (ListTrackers NOT_FOUND on device/telemetry/source; no calibrated Tag&Track tracker configured)"),
+    ("TagAndTrackService", "FollowTrack"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (no Tag&Track tracker object; ListTrackers NOT_FOUND)"),
+    ("TagAndTrackService", "MoveToCoords"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (no Tag&Track tracker object; ListTrackers NOT_FOUND)"),
     # Phase 46 reversible-write cluster (VideowallService + LogicService + GlobalTrackerService).
     # Closed (RPC executes end-to-end, reversible round-trip via shipped MCP modules) -> tested-pass.
     # Stand-walled (live-probed, blocked by stand state) -> tested-warn-fixture-needed (out of pending).
@@ -262,26 +273,9 @@ RESTAMP = {
         "tested-pass", ".agent/tasks/phase-8-finish-all/evidence.md AC4 (read pan 675/tilt 279 live)"),
     ("TelemetryService", "AbsoluteMove"): (
         "tested-pass", ".agent/tasks/phase-8-finish-all/evidence.md AC4 (moved pan 675->120, restored)"),
-    # Shipped + unit-tested but the emulator driver rejects these with "error: 1";
-    # they stay fixture-needed (need a hardware PTZ camera), now with a citation.
-    ("TelemetryService", "Move"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects continuous mode, needs hardware PTZ)"),
-    ("TelemetryService", "GoPreset"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"),
-    ("TelemetryService", "ReleaseSessionId"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; emulator rejects, needs hardware PTZ)"),
-    ("TelemetryService", "KeepAlive"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC4 (tool ships; not exercised on emulator, needs hardware PTZ)"),
-    ("TelemetryService", "SetPreset2"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"),
-    ("TelemetryService", "RemovePreset"): (
-        "tested-warn-fixture-needed",
-        ".agent/tasks/phase-8-finish-all/evidence.md AC1 (tool ships; preset writes need hardware PTZ)"),
+    # Move/GoPreset/ReleaseSessionId/KeepAlive/SetPreset2/RemovePreset were stamped
+    # tested-warn-fixture-needed in phase-8 (emulator), then superseded -> tested-pass in
+    # phase-33 against real PTZ hardware; the phase-33 entries below are the live ones.
     # Phase 5H VMDA fix: ExecuteQuery (MomentQuest) live-verified against real
     # archived objects on camera 1 (3931 intervals on day-5).
     ("VMDAService", "ExecuteQuery"): (

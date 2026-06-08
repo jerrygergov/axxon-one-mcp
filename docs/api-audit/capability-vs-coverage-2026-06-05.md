@@ -298,7 +298,25 @@ access point, 5/6 HeatMap RPCs return real results (see B.9).
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **283 tested-pass / 24 pending / 54 fixture-warn** (361 total).
+Current honest coverage: **283 tested-pass / 20 pending / 58 fixture-warn** (361 total).
+
+### Item 10ah (Phase 47): StateControl + TagAndTrack probe-and-classify -> fixture-warn (4 re-probed)
+
+Probed the 5 pending methods the triage flagged as "possibly closeable"; none are code-closeable on
+this stand, so 4 moved from `pending` to `tested-warn-fixture-needed` (matching their already
+fixture-warn read siblings) and 1 was left `pending`:
+
+- **StateControlService.SetState**: the only relay-bearing device (DeviceIpint.54, generic driver)
+  exposes `StateControl.relay0:0/0:1` in the config graph, but GetCurrentState/GetDefaultState/
+  SetState all return INTERNAL "Can't resolve reference to .../StateControl.relay0:0" — the relay
+  I/O object is not instantiated. The read companions were already fixture-warn for this reason.
+- **TagAndTrackService.SetMode/FollowTrack/MoveToCoords**: `ListTrackers` returns NOT_FOUND on the
+  device, every TelemetryControl endpoint, and the video source — no calibrated Tag&Track tracker is
+  configured (ListTrackers, the read sibling, was already fixture-warn).
+- **ConfigurationManager.SetRevision** stays `pending`: GetRevisionInfo works (461 revisions) but
+  SetRevision is a destructive whole-config restore (the restore half of backup/restore), not safely
+  reversible on a shared stand. Left for an explicitly authorized destructive pass alongside
+  RestoreBackup. No stand state was changed (every SetState attempt was rejected before applying).
 
 ### Item 10ag (Phase 46): Videowall + Logic reversible writes -> tested-pass (7 closed, 5 re-probed)
 

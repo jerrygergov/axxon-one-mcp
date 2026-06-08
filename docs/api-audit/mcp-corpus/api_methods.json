@@ -3355,7 +3355,7 @@
     {
       "fqmn": "axxonsoft.bl.ptz.TagAndTrackService.SetMode",
       "http_annotation": "POST /v1/tag_and_track/action:mode",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SetMode",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
@@ -3363,12 +3363,13 @@
       "response": "SetModeResponse",
       "safety_class": "mutating",
       "service": "TagAndTrackService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (ListTrackers NOT_FOUND on device/telemetry/source; no calibrated Tag&Track tracker configured)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TagAndTrackService.FollowTrack",
       "http_annotation": "POST /v1/tag_and_track/action:follow",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "FollowTrack",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
@@ -3376,12 +3377,13 @@
       "response": "TnTFollowTrackResponse",
       "safety_class": "mutating",
       "service": "TagAndTrackService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (no Tag&Track tracker object; ListTrackers NOT_FOUND)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TagAndTrackService.MoveToCoords",
       "http_annotation": "POST /v1/tag_and_track/action:move",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "MoveToCoords",
       "package": "axxonsoft.bl.ptz",
       "proto": "axxonsoft/bl/ptz/TagAndTrack.proto",
@@ -3389,7 +3391,8 @@
       "response": "TnTMoveToCoordsResponse",
       "safety_class": "mutating",
       "service": "TagAndTrackService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (no Tag&Track tracker object; ListTrackers NOT_FOUND)"
     },
     {
       "fqmn": "axxonsoft.bl.ptz.TelemetryService.AcquireSessionId",
@@ -4569,7 +4572,7 @@
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.SetState",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "SetState",
       "package": "axxonsoft.bl.state",
       "proto": "axxonsoft/bl/state/StateControl.proto",
@@ -4577,7 +4580,8 @@
       "response": "SetStateResponse",
       "safety_class": "mutating",
       "service": "StateControlService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (INTERNAL 'Can't resolve reference to .../StateControl.relay0:0'; relay I/O not instantiated by the generic driver; read companions GetCurrentState/GetDefaultState already fixture-warn for the same reason)"
     },
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.GetDefaultState",

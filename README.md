@@ -6,12 +6,12 @@ coverage matrix for Axxon One VMS.
 ## Status
 
 - **969 / 969** unit tests passing.
-- **283 / 361 gRPC RPCs `tested-pass`** (24 pending, 54 fixture-warn) across the
+- **283 / 361 gRPC RPCs `tested-pass`** (20 pending, 58 fixture-warn) across the
   full Integration APIs 3.0 surface (51 services). Canonical per-RPC ledger:
   [`docs/api-audit/capability-vs-coverage-2026-06-05.md`](docs/api-audit/capability-vs-coverage-2026-06-05.md)
   and `docs/api-audit/mcp-corpus/api_methods.json`. The remaining 24 pending are
   mostly destructive/irreversible (license mutations, backup/restore, domain
-  topology, cloud bind, SMTP/GSM notifiers); the 54 fixture-warn are live-probed
+  topology, cloud bind, SMTP/GSM notifiers); the 58 fixture-warn are live-probed
   but blocked by the demo stand (missing device driver, server defect, or absent
   fixture).
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
