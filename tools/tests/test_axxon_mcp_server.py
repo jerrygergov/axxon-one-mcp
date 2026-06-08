@@ -960,6 +960,37 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertTrue(operator["enabled"])
         self.assertNotIn("enable_flag", operator)
 
+    def test_default_open_enables_all_groups_and_approvals(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        env: dict[str, str] = {}
+        args = module.apply_default_open(module.build_parser().parse_args([]), environ=env)
+        enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
+        self.assertTrue(all(enables.values()))
+        for var in module.APPROVE_ENV_VARS:
+            self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
+
+    def test_read_only_enables_groups_but_no_approval_defaults(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        env: dict[str, str] = {}
+        args = module.apply_default_open(module.build_parser().parse_args(["--read-only"]), environ=env)
+        enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
+        self.assertTrue(all(enables.values()))  # groups register so reads work
+        for var in module.APPROVE_ENV_VARS:
+            self.assertNotIn(var, env, f"{var} must not be defaulted on in read-only mode")
+
+    def test_default_open_preserves_user_set_approval(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        env = {"AXXON_OPERATOR_APPROVE": "0"}
+        module.apply_default_open(module.build_parser().parse_args([]), environ=env)
+        self.assertEqual(env["AXXON_OPERATOR_APPROVE"], "0")
+
+    def test_explicit_enable_flag_not_overridden_by_default_open(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        env: dict[str, str] = {}
+        args = module.apply_default_open(module.build_parser().parse_args(["--enable-live"]), environ=env)
+        self.assertTrue(args.enable_live)
+        self.assertFalse(args.enable_operator)
+
 
 if __name__ == "__main__":
     unittest.main()

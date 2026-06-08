@@ -21,12 +21,14 @@ drive PTZ, manage alarms and macros, and more.
 
 ### Tool layers
 
-| Layer | Default | What it gives you |
-| --- | --- | --- |
-| **Knowledge** (always on) | on | `search_api_docs`, `get_api_method`, `get_verified_example`, `explain_task_recipe` — search the API corpus, verified examples, fixtures, and safety notes without a server connection. |
-| **Live read-only** | `--enable-live` | `connect_axxon_profile`, `list_cameras`, `list_archives`, `list_detectors`, `search_events`, `subscribe_events_bounded`, and more. Inspect a connected server. |
-| **Operator / config** | per-feature `--enable-*` | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation is gated behind an approval env var **and** a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
-| **Generator** | `--enable-generator`, `--enable-partner` | Generate Python / Node integration skeletons and partner plugin scaffolds. |
+All layers are **on by default** (use `--read-only` to restrict to reads).
+
+| Layer | What it gives you |
+| --- | --- |
+| **Knowledge** | `search_api_docs`, `get_api_method`, `get_verified_example`, `explain_task_recipe`, `list_capabilities` — search the API corpus, verified examples, fixtures, and safety notes without a server connection. |
+| **Live read-only** | `connect_axxon_profile`, `list_cameras`, `list_archives`, `list_detectors`, `search_events`, `subscribe_events_bounded`, and more. Inspect a connected server. |
+| **Operator / config** | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation requires a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
+| **Generator** | Generate Python / Node integration skeletons and partner plugin scaffolds. |
 
 ## Requirements
 
@@ -63,7 +65,7 @@ Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and a
   "mcpServers": {
     "axxon-one": {
       "command": "python",
-      "args": ["/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py", "--enable-all"],
+      "args": ["/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py"],
       "env": {
         "AXXON_HOST": "192.168.1.50",
         "AXXON_HTTP_URL": "http://192.168.1.50",
@@ -75,17 +77,19 @@ Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and a
 }
 ```
 
-`--enable-all` turns on **every** capability (reads, operator/config, PTZ, alarms, …) so you
-don't have to know individual flag names. It stays safe: mutating tools still require their
-approval env var **and** a per-call confirmation token before anything changes (see Safety).
-Prefer fine-grained control? Use individual `--enable-*` flags instead (see step 4).
+That's the whole setup — **host and credentials, no flags.** Running with no flags enables
+**every** capability (reads, operator/config, PTZ, alarms, …). Mutating tools still require a
+per-call confirmation token before anything changes (the assistant supplies it; see Safety), so
+nothing destructive happens by accident.
+
+Want a locked-down, reads-only deployment? Add `"--read-only"` to `args` — then mutating tools
+are disabled entirely. Want only specific groups? Use individual `--enable-*` flags (see step 4).
 
 Restart Claude Desktop, then ask it things like *"list my cameras"*, *"what events fired in
 the last hour?"*, or *"add a virtual camera named Lobby-Cam"*.
 
 > **Tip:** the assistant can call the always-on `list_capabilities` tool to see exactly what
-> this server can do and what's enabled. If something is supported but turned off, it will tell
-> you which flag to add — you'll never get a wrong "I can't".
+> this server can do — so you never get a wrong "I can't".
 
 ### Cursor, VS Code, and other MCP clients
 
@@ -130,37 +134,29 @@ export AXXON_CA=/path/to/api.ngp.root-ca.crt
 
 The server compiles the protos automatically on first use.
 
-## 4. Fine-grained control (optional)
+## 4. Restricting what's on (optional)
 
-`--enable-all` (step 2) is the simplest path. If you'd rather enable only specific groups,
-each is turned on with its own `--enable-*` flag. Run `python tools/axxon_mcp_server.py --help`
-for the full list, or ask the assistant to call `list_capabilities`. Mutating groups also require
-an approval env var plus a per-call confirmation token. Examples:
+Running with no flags enables everything (step 2). To restrict:
 
 ```bash
-# Live + operator workflows (cameras, detectors, macros, exports — plan/apply/verify/rollback)
-# Add AXXON_OPERATOR_APPROVE=1 so the apply step is allowed (plan/verify work without it).
-AXXON_OPERATOR_APPROVE=1 python tools/axxon_mcp_server.py --enable-live --enable-operator --transport stdio
+# Reads only — all mutating tools disabled
+python tools/axxon_mcp_server.py --read-only --transport stdio
 
-# Alarm lifecycle mutations
-AXXON_ALARMS_APPROVE=1 python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio
-
-# LogicService control (macros, arm-state, config, counters)
-AXXON_LOGIC_CONTROL_APPROVE=1 python tools/axxon_mcp_server.py --enable-logic-control --transport stdio
-
-# Videowall control (register/change/set-control/unregister, reversible)
-AXXON_VIDEOWALL_APPROVE=1 python tools/axxon_mcp_server.py --enable-videowall --transport stdio
-
-# PTZ / telemetry, HeatMap + Media probes, metadata/VMDA search
-python tools/axxon_mcp_server.py --enable-ptz --enable-heatmap --enable-media --enable-metadata --transport stdio
+# Only specific groups (each has its own --enable-* flag)
+python tools/axxon_mcp_server.py --enable-live --enable-ptz --transport stdio
 ```
 
-Run `python tools/axxon_mcp_server.py --help` for the full list of `--enable-*` flags.
+Run `python tools/axxon_mcp_server.py --help` for the full flag list, or ask the assistant to
+call `list_capabilities`. When you select groups explicitly, mutating groups also need their
+`AXXON_*_APPROVE` env var (e.g. `AXXON_OPERATOR_APPROVE=1`) — the no-flag default sets these for you.
 
 ## Safety model
 
-- Read-only by default; mutating tools are off until explicitly enabled.
-- Every mutation is gated by an approval env var **and** a per-call confirmation token.
+- **Everything is on by default**; use `--read-only` to disable all mutating tools.
+- Every mutation requires a **per-call confirmation token** (`CONFIRM-…`) — the assistant must pass
+  the exact token, so nothing destructive fires by accident.
+- For locked-down deployments, `--read-only` disables mutating tools entirely, and the per-group
+  `--enable-*` flags + `AXXON_*_APPROVE` env vars give fine-grained control.
 - Operator workflows expose `plan` → `apply` → `verify` → `rollback`.
 - Streaming and export tools are byte- and time-capped.
 - Secrets (passwords, tokens, cookies, raw media bytes) are never returned by tools.

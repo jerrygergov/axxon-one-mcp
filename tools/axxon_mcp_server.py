@@ -2151,8 +2151,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--enable-all",
         action="store_true",
-        help="Enable every feature group at once (full functionality). Mutations still require their "
-        "AXXON_*_APPROVE env var plus a per-call confirmation token, so this stays safe by default.",
+        help="Enable every feature group at once (full functionality).",
+    )
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Restrict to read-only: enables read groups but leaves all mutating tools disabled "
+        "(no approval gate is defaulted on). Use for locked-down deployments.",
     )
     return parser
 
@@ -2166,10 +2171,53 @@ def apply_enable_all(args: argparse.Namespace) -> argparse.Namespace:
     return args
 
 
+# Per-group mutation approval env vars. Open-by-default sets each to "1" unless --read-only is
+# passed or the user already set it, so mutations are gated only by their per-call confirmation
+# token. The confirmation-token layer in each module is unchanged.
+APPROVE_ENV_VARS = (
+    "AXXON_OPERATOR_APPROVE", "AXXON_ALARMS_APPROVE", "AXXON_LOGIC_CONTROL_APPROVE",
+    "AXXON_VIDEOWALL_APPROVE", "AXXON_ADMIN_MUTATION_APPROVE", "AXXON_BOOKMARK_MUTATION_APPROVE",
+    "AXXON_TIMEZONE_APPROVE", "AXXON_SETTINGS_APPROVE", "AXXON_GROUPS_APPROVE", "AXXON_MAP_APPROVE",
+    "AXXON_LOGIC_ALERTS_APPROVE", "AXXON_CONFIG_CHANGE_APPROVE", "AXXON_ARCHIVE_VOLUME_APPROVE",
+    "AXXON_BOOKMARK_EXTRAS_APPROVE", "AXXON_SECURITY_CREDENTIALS_APPROVE", "AXXON_AUTH_SESSIONS_APPROVE",
+    "AXXON_LAYOUT_MANAGER_APPROVE", "AXXON_AUDIT_INJECT_APPROVE", "AXXON_CONTROL_APPROVE",
+    "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
+    "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE",
+)
+
+
+def apply_default_open(args: argparse.Namespace, environ: dict[str, str] | None = None) -> argparse.Namespace:
+    """Open-by-default: with no explicit enable flag and no --read-only, enable every group and
+    default each mutation approval env var to "1" (gated still by per-call confirmation tokens).
+
+    --read-only suppresses the approval defaults so mutating tools stay disabled. An approval env
+    var the user already set is never overwritten. Explicit --enable-* flags are always respected.
+    """
+    import os as _os
+
+    env = _os.environ if environ is None else environ
+    read_only = getattr(args, "read_only", False)
+    any_enable = any(v for k, v in vars(args).items() if k.startswith("enable_"))
+
+    # No explicit --enable-* selection -> turn every group on (like --enable-all). This applies in
+    # read-only mode too: the groups register, but with the approval gates left off the mutating
+    # tools refuse, so only the read tools work.
+    if not any_enable:
+        for name in vars(args):
+            if name.startswith("enable_"):
+                setattr(args, name, True)
+
+    # Default the mutation approval gates on unless read-only; never override a user-set value.
+    if not read_only:
+        for var in APPROVE_ENV_VARS:
+            env.setdefault(var, "1")
+    return args
+
+
 def main() -> int:
     import os
 
-    args = apply_enable_all(build_parser().parse_args())
+    args = apply_default_open(apply_enable_all(build_parser().parse_args()))
     live = None
     if args.enable_live:
         from axxon_mcp_live import AxxonMcpLive
