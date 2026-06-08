@@ -54,6 +54,12 @@ class _Sample:
         return self._which
 
 
+class _ConnectResp:
+    def __init__(self, status=0, keepalive_ms=3000):
+        self.status = status
+        self.keepalive_ms = keepalive_ms
+
+
 class _EndpointRef:
     def __init__(self, access_point=""):
         self.access_point = access_point
@@ -111,12 +117,33 @@ class _MediaRequest:
         self.kw = kw
 
 
+class _EStatus:
+    @staticmethod
+    def Name(code):
+        return {0: "DONE", 1: "BUSY", 2: "LOST", 3: "FAIL"}.get(code, str(code))
+
+
+class _ConnectEndpointResponse:
+    EStatus = _EStatus
+
+
+class _ConnectEndpointRequest:
+    class Context:
+        def __init__(self, **kw):
+            self.kw = kw
+
+    def __init__(self, **kw):
+        self.kw = kw
+
+
 class _ServicePb2:
     RequestConnectionData = _RequestConnectionData
     RequestConnectionRequest = _RequestConnectionRequest
     RequestQoSRequest = _RequestQoSRequest
     TunnelRequest = _TunnelRequest
     MediaRequest = _MediaRequest
+    ConnectEndpointRequest = _ConnectEndpointRequest
+    ConnectEndpointResponse = _ConnectEndpointResponse
 
 
 _PB2_BY_NAME = {
@@ -145,6 +172,11 @@ class _Stub:
         list(requests)
         self._rec.append(("Stream",))
         return iter([_Sample("config_update"), _Sample("body"), _Sample("body")])
+
+    def ConnectEndpoint(self, requests, timeout=None):
+        list(requests)
+        self._rec.append(("ConnectEndpoint",))
+        return iter([_ConnectResp(status=0, keepalive_ms=3332)])
 
 
 class FakeClient:
@@ -211,6 +243,20 @@ class ReadTests(unittest.TestCase):
     def test_stream_probe_empty_no_wire(self) -> None:
         inst = _inst()
         out = inst.stream_probe(endpoint="")
+        self.assertEqual(out["status"], "error")
+        self.assertEqual(inst.client.calls, [])
+
+    def test_connect_endpoint_done(self) -> None:
+        module.CONNECT_HOLD_SECONDS = 0
+        out = _inst().connect_endpoint(source_endpoint="cam50/SourceEndpoint.audio:0", sink_endpoint="cam54/SinkEndpoint.0")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["connection_status"], "DONE")
+        self.assertTrue(out["connected"])
+        self.assertEqual(out["keepalive_ms"], 3332)
+
+    def test_connect_endpoint_missing_args_no_wire(self) -> None:
+        inst = _inst()
+        out = inst.connect_endpoint(source_endpoint="cam50/SourceEndpoint.audio:0", sink_endpoint="")
         self.assertEqual(out["status"], "error")
         self.assertEqual(inst.client.calls, [])
 

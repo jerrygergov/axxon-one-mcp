@@ -1,0 +1,44 @@
+{
+  "task_id": "phase-45-connect-endpoint",
+  "overall_verdict": "PASS",
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "reason": "tools/axxon_mcp_media.py:148 connect_endpoint(source_endpoint, sink_endpoint, priority) returns {status:error} and makes no wire call (returns before _stub_and_pb2) when either endpoint is empty; otherwise yields a ConnectEndpoint Context request, holds CONNECT_HOLD_SECONDS, then releases with keepalive=False, and returns connection_status + connected + keepalive_ms (metadata only, no audio bytes). Added to MEDIA_TOOL_NAMES (line 46). Wired in register_media_tools at tools/axxon_mcp_server.py:1410-1413."
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "reason": "raw/live-verify.txt (sanitized, host shown as <demo-host>) shows ConnectEndpoint returning status DONE keepalive_ms 3332 for camera-54 mic -> camera-54 speaker (4 DONE) and camera-50 mic -> camera-54 speaker (DONE, DONE), establishing a real producer->consumer audio link held with keepalive and released with keepalive=false. The wedged-sink retry caveat (repeat attempts return FAIL until the sink frees) is documented honestly as a stand resource state, not an RPC defect. Live device not reachable from here; treated sanitized artifact as the evidence per instructions."
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "reason": "docs/api-audit/mcp-corpus/api_methods.json: MediaService.ConnectEndpoint live_status=tested-pass with phase-45 AC2 citation. python3.12 tools/axxon_corpus_restamp.py reports '0 method(s) restamped' (idempotent). MediaService is 5/6 tested-pass. Totals: 276 tested-pass (253 tested-pass + 21 tested-pass-safe-record + 2 tested-pass-empty) / 36 pending / 49 fixture-warn = 361. Coverage doc docs/api-audit/capability-vs-coverage-2026-06-05.md updated (line 301 totals + phase-45 section line 303). restamp diff only touches ConnectEndpoint."
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "reason": "tools/tests/test_axxon_mcp_media.py:249 test_connect_endpoint_done asserts DONE -> connected=True, keepalive_ms=3332 (sets CONNECT_HOLD_SECONDS=0). Line 257 test_connect_endpoint_missing_args_no_wire asserts status=error and client.calls == []. Full suite: 948 passed. uvx ruff check on both production modules: All checks passed."
+    }
+  ],
+  "commands_run": [
+    "python3.12 -m pytest tools/tests/ -q  => 948 passed",
+    "python3.12 tools/axxon_corpus_restamp.py  => 0 method(s) restamped (dry-run)",
+    "uvx ruff check tools/axxon_mcp_media.py tools/axxon_mcp_server.py  => All checks passed!",
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_media.py -k connect_endpoint  => 2 passed",
+    "secret scan (git diff HEAD + untracked artifacts) for the demo host IP and plaintext credential patterns => clean"
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-45-connect-endpoint/spec.md",
+    ".agent/tasks/phase-45-connect-endpoint/evidence.md",
+    ".agent/tasks/phase-45-connect-endpoint/raw/live-verify.txt",
+    "tools/axxon_mcp_media.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_media.py",
+    "tools/axxon_corpus_restamp.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ]
+}

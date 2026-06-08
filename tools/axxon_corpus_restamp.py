@@ -80,7 +80,7 @@ RESTAMP = {
     ("MediaService", "AwaitConnection"): (
         "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (bidi sink-side; needs a peer offering a connection)"),
     ("MediaService", "ConnectEndpoint"): (
-        "tested-warn-fixture-needed", ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (NOT_FOUND; needs a real speaker sink endpoint)"),
+        "tested-pass", ".agent/tasks/phase-45-connect-endpoint/evidence.md AC2 (status DONE: camera-50 mic -> camera-54 speaker sink, real audio link established and released)"),
     # Phase 43 cross-service batch. DynamicParametersService AcquireDynamicParameters /
     # AcquireDeviceAdditionalData return status DONE on DeviceIpint.1. ArchiveVolumeService
     # ProbeVolume returns a structured NOT_A_VOLUME result. NodeNotifier Ping streams >=1

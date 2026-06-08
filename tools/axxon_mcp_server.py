@@ -1407,6 +1407,11 @@ def register_media_tools(server: Any, media: Any) -> None:
         """Open the pull stream for a media endpoint and tally sample types via MediaService.Stream."""
         return media.stream_probe(endpoint=endpoint, max_samples=max_samples, channel_idle_ms=channel_idle_ms)
 
+    @server.tool(name="connect_endpoint")
+    def connect_endpoint(source_endpoint: str = "", sink_endpoint: str = "", priority: int = 1) -> dict[str, Any]:
+        """Connect a media producer (mic) to a consumer (speaker) and report status via MediaService.ConnectEndpoint."""
+        return media.connect_endpoint(source_endpoint=source_endpoint, sink_endpoint=sink_endpoint, priority=priority)
+
 
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")

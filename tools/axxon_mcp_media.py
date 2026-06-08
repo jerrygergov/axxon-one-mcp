@@ -11,13 +11,16 @@ Tools:
 - request_tunnel: open an RPC tunnel to a node and return its transport config
 - stream_probe: open the pull stream, send one MediaRequest, read up to N samples, report sample
   oneof types only
+- connect_endpoint: connect a multimedia producer (e.g. a camera mic source) to a consumer (a
+  speaker sink) and report the connection status, then release the link (ConnectEndpoint)
 
 Every result is metadata only: cookie presence (never the raw cookie or token), transport name,
-port/byte counts, and sample-type tallies. Raw media bytes are never returned.
+port/byte counts, sample-type tallies, and connection status. Raw media bytes are never returned.
 """
 
 from __future__ import annotations
 
+import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +35,7 @@ MEDIA_PB2 = "axxonsoft.bl.media.Media_pb2"
 
 TRANSPORT_TCP = "NETWORK_TRANSPORT_TCP"
 MAX_STREAM_SAMPLES = 4
+CONNECT_HOLD_SECONDS = 1.5
 
 MEDIA_TOOL_NAMES = (
     "media_connect_axxon_profile",
@@ -39,6 +43,7 @@ MEDIA_TOOL_NAMES = (
     "request_qos",
     "request_tunnel",
     "stream_probe",
+    "connect_endpoint",
 )
 
 
@@ -139,3 +144,32 @@ class AxxonMcpMedia:
             if seen >= cap:
                 break
         return {"status": "ok", "tool": "stream_probe", "endpoint": endpoint, "samples": seen, "sample_types": counts}
+
+    def connect_endpoint(self, source_endpoint: str = "", sink_endpoint: str = "", priority: int = 1) -> dict[str, Any]:
+        """Connect a media producer (mic source) to a consumer (speaker sink), report status, release.
+
+        Sends the Context request, briefly holds the link with a keepalive, then breaks it cleanly so
+        the sink is released. Returns the connection status name (DONE on success). Raw media is never
+        relayed through this tool.
+        """
+        if not source_endpoint or not sink_endpoint:
+            return {"status": "error", "tool": "connect_endpoint", "message": "provide both source_endpoint and sink_endpoint"}
+        stub, service_pb2, _ = self._stub_and_pb2()
+        status_enum = service_pb2.ConnectEndpointResponse.EStatus
+
+        def requests():
+            yield service_pb2.ConnectEndpointRequest(request=service_pb2.ConnectEndpointRequest.Context(
+                source_endpoint=source_endpoint, sink_endpoint=sink_endpoint, priority=int(priority)))
+            time.sleep(CONNECT_HOLD_SECONDS)
+            yield service_pb2.ConnectEndpointRequest(keepalive=False)
+
+        first_status = None
+        keepalive_ms = 0
+        for response in stub.ConnectEndpoint(requests(), timeout=self._timeout()):
+            if first_status is None:
+                first_status = status_enum.Name(response.status)
+                keepalive_ms = response.keepalive_ms
+            break
+        return {"status": "ok", "tool": "connect_endpoint", "source_endpoint": source_endpoint,
+                "sink_endpoint": sink_endpoint, "connection_status": first_status, "keepalive_ms": keepalive_ms,
+                "connected": first_status == "DONE"}

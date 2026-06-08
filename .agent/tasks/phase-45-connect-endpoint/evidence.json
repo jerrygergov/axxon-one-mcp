@@ -1,0 +1,27 @@
+{
+  "task_id": "phase-45-connect-endpoint",
+  "overall_status": "PASS",
+  "updated": "2026-06-08T09:10:00+00:00",
+  "criteria": {
+    "AC1": {"status": "PASS", "proof": "tools/axxon_mcp_media.py connect_endpoint(): validates both endpoints before wire (error/no-call on empty), Context request + keepalive hold + keepalive=false release, returns connection_status/connected/keepalive_ms; wired in register_media_tools; build smoke confirms connect_endpoint registered"},
+    "AC2": {"status": "PASS", "proof": "raw/live-verify.txt: status=DONE keepalive_ms=3332 for camera-50 mic -> camera-54 speaker and camera-54 mic -> camera-54 speaker; 5 DONE across two runs; wedged-sink retry caveat documented"},
+    "AC3": {"status": "PASS", "proof": "tools/axxon_corpus_restamp.py ConnectEndpoint -> tested-pass; dry-run after write = 0; MediaService 5/6; totals 276 tested-pass / 36 pending / 49 fixture-warn"},
+    "AC4": {"status": "PASS", "proof": "raw/test-integration.txt 948 passed (2 new); production lint clean (raw/lint.txt All checks passed)"}
+  },
+  "coverage": {"tested_pass": 276, "pending": 36, "fixture_warn": 49, "total": 361, "media_service": "5/6"},
+  "changed_files": [
+    "tools/axxon_mcp_media.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "tools/tests/test_axxon_mcp_media.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -m pytest tools/tests/test_axxon_mcp_media.py -q",
+    "python3.12 -m pytest tools/tests/ -q",
+    "python3.12 tools/axxon_corpus_restamp.py",
+    "uvx ruff check tools/axxon_mcp_media.py tools/axxon_mcp_server.py"
+  ],
+  "known_gaps": []
+}

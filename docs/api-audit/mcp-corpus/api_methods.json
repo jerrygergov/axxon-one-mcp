@@ -3111,7 +3111,7 @@
     {
       "fqmn": "axxonsoft.bl.media.MediaService.ConnectEndpoint",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "ConnectEndpoint",
       "package": "axxonsoft.bl.media",
       "proto": "axxonsoft/bl/media/MediaService.proto",
@@ -3120,7 +3120,7 @@
       "safety_class": "review",
       "service": "MediaService",
       "streaming": "bidi",
-      "evidence": ".agent/tasks/phase-44-media-heatmap-ptz/evidence.md AC5 (NOT_FOUND; needs a real speaker sink endpoint)"
+      "evidence": ".agent/tasks/phase-45-connect-endpoint/evidence.md AC2 (status DONE: camera-50 mic -> camera-54 speaker sink, real audio link established and released)"
     },
     {
       "fqmn": "axxonsoft.bl.media.MediaService.RequestTunnel",

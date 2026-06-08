@@ -31,7 +31,7 @@
 
 | Capability family | Services | Have MCP tools? | Notes |
 | --- | --- | --- | --- |
-| **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs 4/6 stamped (phase-44 transport probes). |
+| **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs 5/6 stamped (phase-44 transport probes + phase-45 connect_endpoint). |
 | **Events / history** | EventHistoryService, EventDescription | ✅ strong | `search_events`, `subscribe_events_bounded`, `find_event_suppliers` — 13/13 stamped. |
 | **Live notifications** | DomainNotifier, NodeNotifier | ⚠️ thin | `domain_event_subscribe`/`node_event_subscribe` exist but all 11 RPCs unstamped. |
 | **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 15/29, RealtimeRecognizer 6/7, HeatMap 5/6 stamped (phase-44). |
@@ -298,7 +298,24 @@ access point, 5/6 HeatMap RPCs return real results (see B.9).
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **275 tested-pass / 36 pending / 50 fixture-warn** (361 total).
+Current honest coverage: **276 tested-pass / 36 pending / 49 fixture-warn** (361 total).
+
+### Item 10af (Phase 45): MediaService ConnectEndpoint -> tested-pass (MediaService 5/6)
+
+The operator provisioned audio fixtures (camera 50 mic with continuous environmental sound, camera
+54 real camera with a speaker sink). `ConnectEndpoint` then connects a producer (mic source) to a
+consumer (speaker sink) and returns `ConnectEndpointResponse{status=DONE, keepalive_ms=3332}` — a
+real mic->speaker audio link established end-to-end (5 DONE responses across two runs). Shipped the
+`connect_endpoint` MCP tool in `tools/axxon_mcp_media.py` (sends the Context request, holds with a
+keepalive, then releases with keepalive=false so no connection is left held; status metadata only,
+no raw audio relayed). Caveat: the speaker sink stays held after a DONE and does not auto-release
+between rapid retries, so immediately repeated attempts return FAIL until the sink frees — a stand
+resource state, not an RPC defect. Re-probing the other phase-44 walls against the same fixtures
+left them fixture-warn: the 10 Telemetry methods are blocked by Axxon's generic Hikvision driver on
+camera 54 (GoPreset works once a preset exists but was already tested-pass; tours return GeneralError
+even with real presets, FocusAuto/IrisAuto UNIMPLEMENTED, AreaZoom INTERNAL); BuildHeatmapTyped still
+hangs server-side; AwaitConnection is the NGP sink-side transient-object interface (CORBA exception
+on a direct client call). Only MediaService.AwaitConnection remains pending in this trio's walls.
 
 ### Item 10ae (Phase 44): Telemetry + HeatMap + Media physical/hardware batch -> +12 tested-pass
 
@@ -312,9 +329,9 @@ firmware does not support on-device tours). New read-only `tools/axxon_mcp_heatm
 with image bytes) and execute_heatmap_query / execute_heatmap_query_typed (streamed responses with
 progress); HeatMapService 5/6 (BuildHeatmapTyped fixture-warn, server-side compile hang). New
 read-only `tools/axxon_mcp_media.py` (`--enable-media`) ships request_connection / request_qos /
-request_tunnel / stream_probe (MediaService 4/6; AwaitConnection and ConnectEndpoint need a
-peer/speaker sink). All tools are metadata-only — never returning raw image bytes, media samples,
-cookies, or tokens. Also corrected the stale B.9 "HeatMapService is a dead fixture" claim, which
+request_tunnel / stream_probe (MediaService 4/6 at phase-44; ConnectEndpoint closed in phase-45 ->
+5/6, AwaitConnection still needs a peer). All tools are metadata-only — never returning raw image
+bytes, media samples, cookies, or tokens. Also corrected the stale B.9 "HeatMapService is a dead fixture" claim, which
 was a wrong-argument artifact (detector AP passed as camera_ID), not a provisioning wall.
 
 ### Item 10w (Phase 36): ConfigurationService unit changes
