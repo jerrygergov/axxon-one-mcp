@@ -63,7 +63,7 @@ Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and a
   "mcpServers": {
     "axxon-one": {
       "command": "python",
-      "args": ["/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py", "--enable-live"],
+      "args": ["/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py", "--enable-all"],
       "env": {
         "AXXON_HOST": "192.168.1.50",
         "AXXON_HTTP_URL": "http://192.168.1.50",
@@ -75,8 +75,17 @@ Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and a
 }
 ```
 
-Restart Claude Desktop, then ask it things like *"list my cameras"* or *"what events
-fired in the last hour?"*. Claude calls `connect_axxon_profile` and the read tools for you.
+`--enable-all` turns on **every** capability (reads, operator/config, PTZ, alarms, …) so you
+don't have to know individual flag names. It stays safe: mutating tools still require their
+approval env var **and** a per-call confirmation token before anything changes (see Safety).
+Prefer fine-grained control? Use individual `--enable-*` flags instead (see step 4).
+
+Restart Claude Desktop, then ask it things like *"list my cameras"*, *"what events fired in
+the last hour?"*, or *"add a virtual camera named Lobby-Cam"*.
+
+> **Tip:** the assistant can call the always-on `list_capabilities` tool to see exactly what
+> this server can do and what's enabled. If something is supported but turned off, it will tell
+> you which flag to add — you'll never get a wrong "I can't".
 
 ### Cursor, VS Code, and other MCP clients
 
@@ -121,15 +130,17 @@ export AXXON_CA=/path/to/api.ngp.root-ca.crt
 
 The server compiles the protos automatically on first use.
 
-## 4. Enabling operator and config tools
+## 4. Fine-grained control (optional)
 
-By default only read tools are active. Each group of mutating tools is turned on with its
-own `--enable-*` flag (added to `args` in your LLM config), and mutating groups also require
+`--enable-all` (step 2) is the simplest path. If you'd rather enable only specific groups,
+each is turned on with its own `--enable-*` flag. Run `python tools/axxon_mcp_server.py --help`
+for the full list, or ask the assistant to call `list_capabilities`. Mutating groups also require
 an approval env var plus a per-call confirmation token. Examples:
 
 ```bash
 # Live + operator workflows (cameras, detectors, macros, exports — plan/apply/verify/rollback)
-python tools/axxon_mcp_server.py --enable-live --enable-operator --transport stdio
+# Add AXXON_OPERATOR_APPROVE=1 so the apply step is allowed (plan/verify work without it).
+AXXON_OPERATOR_APPROVE=1 python tools/axxon_mcp_server.py --enable-live --enable-operator --transport stdio
 
 # Alarm lifecycle mutations
 AXXON_ALARMS_APPROVE=1 python tools/axxon_mcp_server.py --enable-alarms --enable-alarms-mutation --transport stdio

@@ -19,6 +19,48 @@ CORPUS_FILE_ALLOWLIST = {
     "known_behaviors.json",
 }
 
+# Capability groups surfaced by list_capabilities so the assistant can self-discover what this
+# server can do and which flag to ask the user for when a needed capability is currently disabled.
+# Each entry: create_server param -> (description, example tools, --enable flag).
+CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
+    "live": ("Live read-only inspection of a connected server", ("list_cameras", "list_archives", "search_events"), "--enable-live"),
+    "operator": ("Create/modify/delete config (cameras, detectors, layouts, macros) via plan/apply/verify/rollback", ("list_operator_workflows", "plan_operator_workflow", "apply_operator_plan"), "--enable-operator"),
+    "metadata": ("Metadata / VMDA object-track search", ("list_vmda_sources", "live_track_sample", "vmda_query"), "--enable-metadata"),
+    "view": ("Live + archive viewing (URLs, byte/time capped)", ("live_view", "archive_scrub", "stream_health"), "--enable-view"),
+    "view_objects": ("Layouts, maps, markers, walls (reads)", ("list_layouts", "list_maps", "get_markers"), "--enable-view-objects"),
+    "alarms": ("Alarm reads + raise + review lifecycle", ("list_active_alerts", "raise_alert", "alarm_subscribe"), "--enable-alarms"),
+    "logic_alerts": ("Batch alert reads/reviews across nodes", ("batch_get_active_alerts", "batch_begin_alerts_review"), "--enable-logic-alerts"),
+    "logic_control": ("Macros, arm-state, config/counters (LogicService)", ("launch_macro", "change_arm_state", "change_counters"), "--enable-logic-control"),
+    "ptz": ("PTZ / telemetry control", ("list_telemetry_sources", "ptz_absolute_move", "list_presets"), "--enable-ptz"),
+    "heatmap": ("HeatMap image + query tools (metadata only)", ("build_heatmap", "execute_heatmap_query"), "--enable-heatmap"),
+    "media": ("Media transport probes (metadata only)", ("request_connection", "stream_probe", "connect_endpoint"), "--enable-media"),
+    "recognizer": ("RealtimeRecognizer reads", ("list_recognizers", "get_recognizer_lists"), "--enable-recognizer"),
+    "recognizer_write": ("RealtimeRecognizer list writes", ("update_recognizer_list",), "--enable-recognizer-write"),
+    "discovery": ("DiscoveryService network device discovery", ("discover_devices",), "--enable-discovery"),
+    "admin": ("Security/system-health/notifier reads", ("security_inventory", "license_status", "domain_event_subscribe"), "--enable-admin"),
+    "license_reads": ("LicenseService reads (key + restrictions)", ("get_license_key", "list_license_restrictions"), "--enable-license-reads"),
+    "misc_reads": ("Cross-service batch reads", ("acquire_dynamic_parameters", "acquire_device_additional_data"), "--enable-misc-reads"),
+    "bookmarks": ("BookmarkService reads + lifecycle", ("list_bookmarks", "create_bookmark"), "--enable-bookmarks"),
+    "layout_manager": ("LayoutManager reads + rename", ("batch_get_layouts", "update_layout_name"), "--enable-layout-manager"),
+    "map_providers": ("Map provider configuration", ("list_map_providers", "configure_map_providers"), "--enable-map-providers"),
+    "groups": ("Camera/device group management", ("list_groups", "create_group"), "--enable-groups"),
+    "timezone": ("Timezone + NTP settings", ("get_timezones", "set_timezone", "set_ntp"), "--enable-timezone"),
+    "settings": ("Data-storage settings (retention/cleanup)", ("get_data_storage_settings", "update_data_storage_settings"), "--enable-settings"),
+    "audit": ("AuditEventInjector", ("audit_inject",), "--enable-audit"),
+    "videowall": ("VideowallService control (register/change/unregister)", ("videowall_list_walls", "register_wall", "unregister_wall"), "--enable-videowall"),
+    "generator": ("Generate Python/Node integration skeletons", ("list_integration_templates", "generate_integration"), "--enable-generator"),
+    "partner": ("Partner plugin SDK scaffolds", ("scaffold_plugin", "plugin_lint", "plugin_package"), "--enable-partner"),
+    "translator": ("Natural-language -> operator recipe translator", ("assemble_recipe", "validate_recipe"), "--enable-translator"),
+    "detector_archive": ("Detector schemas + archive policy reads", ("detector_schema_catalog", "archive_policy_get"), "--enable-detector-archive"),
+    "config_change": ("ConfigurationService unit changes", ("apply_unit_change",), "--enable-config-change"),
+    "archive_volume": ("ArchiveService volume resize", ("resize_archive_volume",), "--enable-archive-volume"),
+    "security_credentials": ("Reversible user credential lifecycle", ("security_user_credential_lifecycle",), "--enable-security-credentials"),
+    "auth_sessions": ("AuthenticationService session reads", ("list_auth_sessions",), "--enable-auth-sessions"),
+    "gdpr_cleanup": ("GDPR data cleanup", ("gdpr_cleanup_plan",), "--enable-gdpr-cleanup"),
+    "control": ("StateControl / device control", ("set_device_state",), "--enable-control"),
+    "server_settings": ("Server log-level + settings", ("get_server_loglevel", "set_server_loglevel"), "--enable-server"),
+}
+
 
 def default_fastmcp_factory(name: str, **kwargs: Any) -> Any:
     try:
@@ -124,6 +166,48 @@ def create_server(
     def read_remaining_gaps() -> dict[str, Any]:
         """Read the current fixture-needed coverage gap list."""
         return docs.list_remaining_gaps()
+
+    enabled_groups = {name: value is not None for name, value in (
+        ("live", live), ("operator", operator), ("generator", generator), ("partner", partner),
+        ("metadata", metadata), ("view", view), ("alarms", alarms), ("view_objects", view_objects),
+        ("detector_archive", detector_archive), ("admin", admin), ("bookmarks", bookmarks),
+        ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
+        ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
+        ("timezone", timezone), ("server_settings", server_settings), ("groups", groups),
+        ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
+        ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
+        ("archive_volume", archive_volume), ("security_credentials", security_credentials),
+        ("auth_sessions", auth_sessions), ("layout_manager", layout_manager), ("license_reads", license_reads),
+        ("misc_reads", misc_reads), ("heatmap", heatmap), ("media", media), ("videowall", videowall),
+    )}
+
+    @server.tool(name="list_capabilities")
+    def list_capabilities() -> dict[str, Any]:
+        """Report every capability group, whether it is enabled, and the flag to enable a disabled one.
+
+        Call this first when unsure whether the server can do something (e.g. create a camera).
+        A disabled group is not a missing feature: tell the user to add the named flag (or
+        --enable-all) and restart. No server connection required.
+        """
+        groups_out = []
+        for key, (description, examples, flag) in CAPABILITY_GROUPS.items():
+            on = enabled_groups.get(key, False)
+            entry = {"key": key, "description": description, "example_tools": list(examples), "enabled": on}
+            if not on:
+                entry["enable_flag"] = flag
+            groups_out.append(entry)
+        enabled_count = sum(1 for g in groups_out if g["enabled"])
+        return {
+            "status": "ok",
+            "enabled_count": enabled_count,
+            "total": len(groups_out),
+            "groups": groups_out,
+            "hint": (
+                "If a capability you need shows enabled=false, it is supported but not turned on. "
+                "Ask the user to add its enable_flag (or --enable-all for everything) to the MCP "
+                "server args and restart. Mutations additionally need their AXXON_*_APPROVE env var."
+            ),
+        }
 
     if live is not None:
         register_live_tools(server, live)
@@ -2064,13 +2148,28 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
     )
+    parser.add_argument(
+        "--enable-all",
+        action="store_true",
+        help="Enable every feature group at once (full functionality). Mutations still require their "
+        "AXXON_*_APPROVE env var plus a per-call confirmation token, so this stays safe by default.",
+    )
     return parser
+
+
+def apply_enable_all(args: argparse.Namespace) -> argparse.Namespace:
+    """Force every ``enable_*`` flag True when ``--enable-all`` was passed."""
+    if getattr(args, "enable_all", False):
+        for name in vars(args):
+            if name.startswith("enable_"):
+                setattr(args, name, True)
+    return args
 
 
 def main() -> int:
     import os
 
-    args = build_parser().parse_args()
+    args = apply_enable_all(build_parser().parse_args())
     live = None
     if args.enable_live:
         from axxon_mcp_live import AxxonMcpLive

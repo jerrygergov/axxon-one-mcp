@@ -349,6 +349,7 @@ class AxxonMcpServerTests(unittest.TestCase):
                 "get_verified_example",
                 "explain_task_recipe",
                 "list_remaining_gaps",
+                "list_capabilities",
             },
         )
         self.assertIn("axxon://mcp-corpus/{name}", server.resources)
@@ -925,6 +926,39 @@ class AxxonMcpServerTests(unittest.TestCase):
         # server and fails loudly if any two groups collide.
         server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP, **groups)
         self.assertGreater(len(server.tools), 0)
+
+    def test_enable_all_flips_every_enable_flag(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        args = module.apply_enable_all(module.build_parser().parse_args(["--enable-all"]))
+        enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
+        self.assertTrue(all(enables.values()))
+        self.assertGreater(len(enables), 30)
+
+    def test_enable_all_equals_all_individual_flags(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        all_args = module.apply_enable_all(module.build_parser().parse_args(["--enable-all"]))
+        enables = [k for k in vars(all_args) if k.startswith("enable_") and k != "enable_all"]
+        flags = [f"--enable-{k[len('enable_'):].replace('_', '-')}" for k in enables]
+        each_args = module.build_parser().parse_args(flags)
+        for k in enables:
+            self.assertTrue(getattr(each_args, k), f"{k} not set by its individual flag")
+
+    def test_list_capabilities_reports_disabled_with_flag(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        self.assertIn("list_capabilities", server.tools)
+        caps = server.tools["list_capabilities"]()
+        operator = next(g for g in caps["groups"] if g["key"] == "operator")
+        self.assertFalse(operator["enabled"])
+        self.assertEqual(operator["enable_flag"], "--enable-operator")
+        self.assertEqual(caps["enabled_count"], 0)
+
+    def test_list_capabilities_reports_enabled_group(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        server = module.create_server(docs=StubDocs(), operator=object(), fastmcp_factory=FakeFastMCP)
+        operator = next(g for g in server.tools["list_capabilities"]()["groups"] if g["key"] == "operator")
+        self.assertTrue(operator["enabled"])
+        self.assertNotIn("enable_flag", operator)
 
 
 if __name__ == "__main__":
