@@ -1271,9 +1271,9 @@ def register_layout_manager_tools(server: Any, layout_manager: Any) -> None:
         """Read a layout by id (etag-conditional) via LayoutManager.BatchGetLayouts."""
         return layout_manager.batch_get_layouts(layout_id=layout_id, etag=etag)
 
-    @server.tool(name="layouts_on_view")
-    def layouts_on_view(layout_id: str = "", display_name: str = "") -> dict[str, Any]:
-        """Push a layout to the view via LayoutManager.LayoutsOnView."""
+    @server.tool(name="layout_manager_layouts_on_view")
+    def layout_manager_layouts_on_view(layout_id: str = "", display_name: str = "") -> dict[str, Any]:
+        """Push a single layout to the view via LayoutManager.LayoutsOnView (by layout_id)."""
         return layout_manager.layouts_on_view(layout_id=layout_id, display_name=display_name)
 
     @server.tool(name="update_layout_name")
@@ -1524,9 +1524,9 @@ def register_videowall_tools(server: Any, videowall: Any) -> None:
         """Connect the approval-gated VideowallService control layer to the env profile."""
         return videowall.videowall_connect_axxon_profile(profile)
 
-    @server.tool(name="list_walls")
-    def list_walls() -> dict[str, Any]:
-        """List registered videowall coordinators via ListWalls."""
+    @server.tool(name="videowall_list_walls")
+    def videowall_list_walls() -> dict[str, Any]:
+        """List registered videowall coordinators via VideowallService.ListWalls."""
         return videowall.list_walls()
 
     @server.tool(name="register_wall")

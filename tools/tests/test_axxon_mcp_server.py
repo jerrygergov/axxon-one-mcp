@@ -20,7 +20,10 @@ class FakeFastMCP:
 
     def tool(self, name: str | None = None, **_kwargs: object):
         def decorator(func):
-            self.tools[name or func.__name__] = func
+            key = name or func.__name__
+            if key in self.tools:
+                raise ValueError(f"duplicate tool registration: {key!r}")
+            self.tools[key] = func
             return func
 
         return decorator
@@ -904,6 +907,24 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertIn("valid", validate_result)
         explain_result = server.tools["explain_recipe"]([])
         self.assertIsNotNone(explain_result)
+
+    def test_all_feature_groups_register_without_duplicate_tool_names(self) -> None:
+        """Enabling every feature group at once must not register two tools under one name."""
+        module = importlib.import_module("axxon_mcp_server")
+
+        class AnyStub:
+            # accept any attribute access / call so each register_* function runs.
+            def __getattr__(self, _name):
+                return lambda *a, **k: {"status": "ok"}
+
+        params = inspect.signature(module.create_server).parameters
+        skip = {"docs", "corpus_dir", "fastmcp_factory"}
+        groups = {name: AnyStub() for name in params if name not in skip}
+
+        # FakeFastMCP raises on duplicate tool names, so this builds the full
+        # server and fails loudly if any two groups collide.
+        server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP, **groups)
+        self.assertGreater(len(server.tools), 0)
 
 
 if __name__ == "__main__":

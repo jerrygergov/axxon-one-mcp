@@ -33,7 +33,7 @@ VIDEOWALL_PB2 = "axxonsoft.bl.videowall.Videowall_pb2"
 
 VIDEOWALL_TOOL_NAMES = (
     "videowall_connect_axxon_profile",
-    "list_walls",
+    "videowall_list_walls",
     "register_wall",
     "change_wall",
     "set_control_data",

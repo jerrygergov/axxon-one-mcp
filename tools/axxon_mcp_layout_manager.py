@@ -25,7 +25,7 @@ LAYOUT_PB2 = "axxonsoft.bl.layout.LayoutManager_pb2"
 LAYOUT_MANAGER_TOOL_NAMES = (
     "layout_manager_connect_axxon_profile",
     "batch_get_layouts",
-    "layouts_on_view",
+    "layout_manager_layouts_on_view",
     "update_layout_name",
 )
 
