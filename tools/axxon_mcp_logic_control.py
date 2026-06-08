@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""LogicService operator-control tools for Axxon One MCP (Phase 16).
+"""LogicService operator-control tools for Axxon One MCP (Phase 16, 46).
 
-Two operator mutations plus a read helper:
+Operator mutations plus read helpers:
 - list_launchable_macros: ListMacros, classify manual vs autorule macros.
 - launch_macro: LaunchMacro by id.
 - change_arm_state: ChangeArmState for a bounded, auto-reverting window.
+- change_config: ChangeConfig, overriding only the fields the caller passes
+  (round-trippable against GetConfig).
+- change_counters: ChangeCounters, add a counter by guid+name or remove by guid.
+- counter_action: CounterAction START/STOP/CLEANUP on a counter guid.
 
 Mutations are gated behind `AXXON_LOGIC_CONTROL_APPROVE=1` plus a per-call
 confirmation token, mirroring the audit-injector idiom. ChangeArmState always
@@ -28,16 +32,23 @@ LOGIC_CONTROL_APPROVE_ENV = "AXXON_LOGIC_CONTROL_APPROVE"
 LOGIC_CONTROL_CONFIRMATION = "CONFIRM-logic-control"
 LOGIC_PROTO = "axxonsoft/bl/logic/LogicService.proto"
 LOGIC_PB2 = "axxonsoft.bl.logic.LogicService_pb2"
+MACRO_PB2 = "axxonsoft.bl.logic.Macro_pb2"
 EVENTS_PB2 = "axxonsoft.bl.events.Events_pb2"
 
 ARM_TIMEOUT_CAP_S = 300
 ARM_STATES = {"disarm": "CS_Disarm", "arm": "CS_Arm", "arm_private": "CS_ArmPrivate"}
+
+CONFIG_FIELDS = ("user_alert_ttl", "rule_alert_ttl", "conditional_ttl", "max_event_age", "event_cleanup_period")
+COUNTER_OPERATIONS = {"start": "START", "stop": "STOP", "cleanup": "CLEANUP", "start_with_cleanup": "START_WITH_CLEANUP"}
 
 LOGIC_CONTROL_TOOL_NAMES = (
     "logic_control_connect_axxon_profile",
     "list_launchable_macros",
     "launch_macro",
     "change_arm_state",
+    "change_config",
+    "change_counters",
+    "counter_action",
 )
 
 
@@ -142,3 +153,51 @@ class AxxonMcpLogicControl:
         request = pb2.ChangeArmStateRequest(camera_ap=camera_ap, state=state_value, timeout=Duration(seconds=applied))
         stub.ChangeArmState(request, timeout=client.config.timeout)
         return {"status": "applied", "camera_ap": camera_ap, "state": state, "timeout_s": applied, "auto_reverts": True}
+
+    def change_config(self, overrides: dict[str, int] | None = None, confirmation: str = "") -> dict[str, Any]:
+        gated = self._gate(confirmation)
+        if gated is not None:
+            return gated
+        unknown = [k for k in (overrides or {}) if k not in CONFIG_FIELDS]
+        if not overrides or unknown:
+            return {"status": "error", "message": f"overrides must set one or more of {list(CONFIG_FIELDS)}", "unknown": unknown}
+        stub, pb2 = self._stub_and_pb2()
+        timeout = self.ensure_client().config.timeout
+        current = stub.GetConfig(pb2.GetConfigRequest(), timeout=timeout)
+        applied = {f: int(overrides.get(f, getattr(current, f).seconds)) for f in CONFIG_FIELDS}
+        request = pb2.ChangeConfigRequest(**{f: pb2.Duration(seconds=applied[f]) for f in CONFIG_FIELDS})
+        stub.ChangeConfig(request, timeout=timeout)
+        previous = {f: getattr(current, f).seconds for f in overrides}
+        return {"status": "applied", "applied": applied, "previous": previous, "reversible": True}
+
+    def change_counters(self, add: dict[str, str] | None = None, remove_guid: str = "", confirmation: str = "") -> dict[str, Any]:
+        gated = self._gate(confirmation)
+        if gated is not None:
+            return gated
+        add = add or {}
+        if bool(add) == bool(str(remove_guid or "").strip()):
+            return {"status": "error", "message": "provide exactly one of add (guid+name) or remove_guid"}
+        if add and not (str(add.get("guid", "")).strip() and str(add.get("name", "")).strip()):
+            return {"status": "error", "message": "add requires both guid and name"}
+        stub, pb2 = self._stub_and_pb2()
+        if add:
+            counter = pb2.CounterConfig(guid=add["guid"], name=add["name"], host_id=add.get("host_id", ""), autostart=bool(add.get("autostart", False)))
+            stub.ChangeCounters(pb2.ChangeCountersRequest(modified_counters=[counter]), timeout=self.ensure_client().config.timeout)
+            return {"status": "added", "guid": add["guid"], "name": add["name"]}
+        stub.ChangeCounters(pb2.ChangeCountersRequest(removed_counters=[remove_guid]), timeout=self.ensure_client().config.timeout)
+        return {"status": "removed", "guid": remove_guid}
+
+    def counter_action(self, counter: str = "", operation: str = "start", confirmation: str = "") -> dict[str, Any]:
+        gated = self._gate(confirmation)
+        if gated is not None:
+            return gated
+        if not str(counter or "").strip():
+            return {"status": "error", "message": "counter (guid) is required"}
+        enum_name = COUNTER_OPERATIONS.get(str(operation).lower())
+        if enum_name is None:
+            return {"status": "error", "message": f"operation must be one of {list(COUNTER_OPERATIONS)}, got {operation!r}"}
+        stub, pb2 = self._stub_and_pb2()
+        macro = self.ensure_client().import_module(MACRO_PB2)
+        action = macro.CounterAction(counter=counter, operation=getattr(macro.CounterAction, enum_name))
+        stub.CounterAction(pb2.CounterActionRequest(action=action), timeout=self.ensure_client().config.timeout)
+        return {"status": "applied", "counter": counter, "operation": operation}

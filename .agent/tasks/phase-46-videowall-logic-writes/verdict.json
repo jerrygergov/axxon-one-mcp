@@ -1,0 +1,39 @@
+{
+  "task_id": "phase-46-videowall-logic-writes",
+  "overall_verdict": "PASS",
+  "verified_at": "2026-06-08T00:00:00+00:00",
+  "verifier": "task-verifier (fresh pass)",
+  "commands_run": [
+    {"cmd": "python3.12 -m pytest tools/tests/test_axxon_mcp_videowall.py tools/tests/test_axxon_mcp_logic_control.py -q", "result": "33 passed"},
+    {"cmd": "python3.12 -m pytest tools/tests/ -q", "result": "969 passed"},
+    {"cmd": "python3.12 tools/axxon_corpus_restamp.py", "result": "0 method(s) restamped (idempotent dry-run); --write also 0, JSON unchanged"},
+    {"cmd": "uvx ruff check tools/axxon_mcp_videowall.py tools/axxon_mcp_logic_control.py tools/axxon_mcp_server.py", "result": "All checks passed!"}
+  ],
+  "artifacts_used": [
+    ".agent/tasks/phase-46-videowall-logic-writes/spec.md",
+    ".agent/tasks/phase-46-videowall-logic-writes/evidence.md",
+    ".agent/tasks/phase-46-videowall-logic-writes/evidence.json",
+    ".agent/tasks/phase-46-videowall-logic-writes/raw/live-verify.txt",
+    "tools/axxon_mcp_videowall.py",
+    "tools/axxon_mcp_logic_control.py",
+    "tools/axxon_mcp_server.py",
+    "tools/axxon_corpus_restamp.py",
+    "tools/tests/test_axxon_mcp_videowall.py",
+    "tools/tests/test_axxon_mcp_logic_control.py",
+    "docs/api-audit/mcp-corpus/api_methods.json",
+    "docs/api-audit/capability-vs-coverage-2026-06-05.md"
+  ],
+  "criteria": [
+    {"id": "AC1", "status": "PASS", "reason": "tools/axxon_mcp_videowall.py AxxonMcpVideowall exposes the 6 tools (list_walls ungated + register_wall/change_wall/set_control_data/unregister_wall gated by AXXON_VIDEOWALL_APPROVE + CONFIRM-videowall). register_wall returns cookie_present/wall_id/seq_number and never the raw cookie; cookie tracked internally in self._cookies keyed by wall_id (lines 116-127). change_wall/unregister_wall validate wall_id via cookie lookup before any stub call (133-135, 154-156); set_control_data validates non-empty wall_id (144-145). Gate runs before arg-validation, both before _stub_and_pb2. Server wiring complete in axxon_mcp_server.py: videowall param (76), conditional register (245-246), register_videowall_tools def (1521), --enable-videowall flag (2058), flag-gated instantiation (2294-2298), videowall=videowall kwarg (2340)."},
+    {"id": "AC2", "status": "PASS", "reason": "tools/axxon_mcp_logic_control.py adds change_config (GetConfig then overrides only passed fields, returns previous+applied, rejects empty/unknown before wire; 157-171), change_counters (exactly one of add or remove_guid, validates guid+name before wire; 173-188), counter_action (validates counter + operation enum before wire; 190-203). All three gated and in LOGIC_CONTROL_TOOL_NAMES (44-52). Registered in register_logic_control_tools (server 1505-1518, inside def at 1484)."},
+    {"id": "AC3", "status": "PASS", "reason": "raw/live-verify.txt is sanitized (host shown as <demo-host>, credentials redacted; secret scan for the demo host IP and plaintext credential patterns returned no matches). It substantiates reversible round-trips for all 7 closed methods: videowall register->list(2)->change(new_seq 1)->set-control(new_seq 2)->unregister->baseline(1); change_config 300->301->300 confirmed via GetConfig; change_counters add->ListCounters->counter_action START (is_active true)->remove->empty. The 5 stand-walled methods are live re-probed and blocked (BatchCompleteAlertsReview unreachable=['Server']; GlobalTracker ClearProfiles UNIMPLEMENTED, ChangeGlobalTrackerProfiles/BindGlobalTrackProfile INTERNAL, ChangeProfiles commits but stream terminates INTERNAL). No residue."},
+    {"id": "AC4", "status": "PASS", "reason": "docs/api-audit/mcp-corpus/api_methods.json: the 7 closed methods are tested-pass and the 5 re-probed methods are tested-warn-fixture-needed (moved out of pending), verified by direct read. Totals: pending=24, tested-warn-fixture-needed=54, total=361; tested-pass family=283 (tested-pass 260 + tested-pass-safe-record 21 + tested-pass-empty 2). restamp dry-run reports 0 method(s) restamped (idempotent); --write also 0 and leaves JSON unchanged. Coverage doc headline (283/24/54) and phase-46 section updated; VideowallService 6/7, LogicService 24/29."},
+    {"id": "AC5", "status": "PASS", "reason": "Both test files assert no-wire on bad args (client.calls == []) for disabled-gate, wrong-confirmation, and each missing/invalid required arg; register asserts cookie absent from output (assertNotIn('cookie', out)) and cookie tracked internally; no-secret-leak tests assert the FakeConfig password sentinel never appears in outputs. Reruns: videowall+logic 33 passed, full suite 969 passed, ruff All checks passed."}
+  ],
+  "coverage": {"tested_pass": 283, "pending": 24, "fixture_warn": 54, "total": 361, "videowall_service": "6/7", "logic_service": "24/29"},
+  "notes": [
+    "api_methods.json shows as modified in the working tree; the diff is exactly the phase-46 restamp (12 methods out of pending plus evidence citations), and restamp is idempotent (0 restamped on both dry-run and --write).",
+    "The 283 tested-pass figure is the aggregate of the tested-pass family (tested-pass + tested-pass-safe-record + tested-pass-empty), consistent with the spec and the coverage-doc headline."
+  ],
+  "known_gaps": []
+}

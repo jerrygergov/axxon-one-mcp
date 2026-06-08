@@ -1,0 +1,2 @@
+build smoke: registered 13 tools from the two register fns
+all 8 new phase-46 tools present: ['change_config', 'change_counters', 'change_wall', 'counter_action', 'list_walls', 'register_wall', 'set_control_data', 'unregister_wall']

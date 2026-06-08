@@ -1955,7 +1955,7 @@
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.ChangeGlobalTrackerProfiles",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ChangeGlobalTrackerProfiles",
       "package": "axxonsoft.bl.globaltracker",
       "proto": "axxonsoft/bl/globalTracker/GlobalTracker.proto",
@@ -1963,12 +1963,13 @@
       "response": "ChangeGlobalTrackerProfilesResponse",
       "safety_class": "mutating",
       "service": "GlobalTrackerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (INTERNAL 'Failed to change global tracker profiles'; no global tracker object on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.ChangeProfiles",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ChangeProfiles",
       "package": "axxonsoft.bl.globaltracker",
       "proto": "axxonsoft/bl/globalTracker/GlobalTracker.proto",
@@ -1976,7 +1977,8 @@
       "response": "ChangeProfilesResponse",
       "safety_class": "mutating",
       "service": "GlobalTrackerService",
-      "streaming": "bidi"
+      "streaming": "bidi",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (profile store commits add/remove confirmed via GetProfile, but response stream always terminates INTERNAL; global-tracker notify side absent)"
     },
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.GetGlobalTrackerProfiles",
@@ -2007,7 +2009,7 @@
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.ClearProfiles",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "ClearProfiles",
       "package": "axxonsoft.bl.globaltracker",
       "proto": "axxonsoft/bl/globalTracker/GlobalTracker.proto",
@@ -2015,12 +2017,13 @@
       "response": "ClearProfilesResponse",
       "safety_class": "mutating",
       "service": "GlobalTrackerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (UNIMPLEMENTED; no global tracker object on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.BindGlobalTrackProfile",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "BindGlobalTrackProfile",
       "package": "axxonsoft.bl.globaltracker",
       "proto": "axxonsoft/bl/globalTracker/GlobalTracker.proto",
@@ -2028,7 +2031,8 @@
       "response": "BindGlobalTrackProfileResponse",
       "safety_class": "mutating",
       "service": "GlobalTrackerService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (INTERNAL; no global tracker object on this stand)"
     },
     {
       "fqmn": "axxonsoft.bl.globaltracker.GlobalTrackerService.GetGlobalTrackBestVisibilityPositions",
@@ -2628,7 +2632,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchCompleteAlertsReview",
       "http_annotation": "POST /v1/logic_service/batchcompletealertsreview",
-      "live_status": "pending",
+      "live_status": "tested-warn-fixture-needed",
       "method": "BatchCompleteAlertsReview",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2636,7 +2640,8 @@
       "response": "BatchCompleteAlertsReviewResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "server"
+      "streaming": "server",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (write-path returns unreachable=['Server'] though read-path resolves it; AIT_USER-only alerts, needs a rule-raised alert)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.BatchEscalateAlerts",
@@ -2739,7 +2744,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.ChangeConfig",
       "http_annotation": "PUT /v1/logic_service/config",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeConfig",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2747,7 +2752,8 @@
       "response": "ChangeConfigResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (GetConfig -> ChangeConfig user_alert_ttl 300->301 -> GetConfig confirms -> restore to 300)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.GetConfig",
@@ -2791,7 +2797,7 @@
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.ChangeCounters",
       "http_annotation": "POST /v1/logic_service/counters:change",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeCounters",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2799,12 +2805,13 @@
       "response": "ChangeCountersResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (ChangeCounters add throwaway counter -> ListCounters shows it -> remove -> empty)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.CounterAction",
       "http_annotation": "POST /v1/logic_service/counters:action",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "CounterAction",
       "package": "axxonsoft.bl.logic",
       "proto": "axxonsoft/bl/logic/LogicService.proto",
@@ -2812,7 +2819,8 @@
       "response": "CounterActionResponse",
       "safety_class": "mutating",
       "service": "LogicService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (CounterAction START -> GetCounterState is_active=true)"
     },
     {
       "fqmn": "axxonsoft.bl.logic.LogicService.GetCounterState",
@@ -4707,7 +4715,7 @@
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.RegisterWall",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "RegisterWall",
       "package": "axxonsoft.bl.videowall",
       "proto": "axxonsoft/bl/videowall/Videowall.proto",
@@ -4715,12 +4723,13 @@
       "response": "RegisterWallResponse",
       "safety_class": "mutating",
       "service": "VideowallService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (RegisterWall -> ListWalls shows it -> UnregisterWall; reversible, cookie_present only)"
     },
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.UnregisterWall",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "UnregisterWall",
       "package": "axxonsoft.bl.videowall",
       "proto": "axxonsoft/bl/videowall/Videowall.proto",
@@ -4728,12 +4737,13 @@
       "response": "UnregisterWallResponse",
       "safety_class": "mutating",
       "service": "VideowallService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (UnregisterWall -> ListWalls back to baseline, no residue)"
     },
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.ChangeWall",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "ChangeWall",
       "package": "axxonsoft.bl.videowall",
       "proto": "axxonsoft/bl/videowall/Videowall.proto",
@@ -4741,7 +4751,8 @@
       "response": "ChangeWallResponse",
       "safety_class": "mutating",
       "service": "VideowallService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (ChangeWall new_seq_number 1 on a registered wall)"
     },
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.ListWalls",
@@ -4772,7 +4783,7 @@
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.SetControlData",
       "http_annotation": "",
-      "live_status": "pending",
+      "live_status": "tested-pass",
       "method": "SetControlData",
       "package": "axxonsoft.bl.videowall",
       "proto": "axxonsoft/bl/videowall/Videowall.proto",
@@ -4780,7 +4791,8 @@
       "response": "SetControlDataResponse",
       "safety_class": "mutating",
       "service": "VideowallService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (SetControlData new_seq_number 2 with matching seq_number)"
     },
     {
       "fqmn": "axxonsoft.bl.videowall.VideowallService.GetMyControlData",

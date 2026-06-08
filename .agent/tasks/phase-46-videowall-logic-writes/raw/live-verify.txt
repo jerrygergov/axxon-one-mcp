@@ -1,0 +1,38 @@
+Phase 46 live verification — VideowallService + LogicService reversible writes
+Stand: <demo-host> (gRPC TLS :20109, CN=Server). Credentials from env, redacted.
+Each closed method exercised through the SHIPPED MCP module (AxxonMcpVideowall /
+AxxonMcpLogicControl), gated by approval env + confirmation token. All mutations
+reversed; baseline restored. The 5 stand-walled methods re-probed and left fixture-warn.
+
+=== VIDEOWALL reversible round-trip (shipped AxxonMcpVideowall) ===
+list_walls before: 1 walls
+register_wall -> {'status': 'registered', 'cookie_present': True, 'seq_number': 0} wall_id_present True
+list_walls after register: present = True ( 2 walls)
+change_wall -> {'status': 'changed', 'new_seq_number': 1}
+set_control_data -> {'status': 'set', 'new_seq_number': 2}
+unregister_wall -> {'status': 'unregistered', 'wall_id': '5d72449f-cc13-4294-993b-fd04029c90ba|hosts/Server/VideowallCoordinator.0/Coordinator'}
+list_walls after unregister: gone = True ( 1 walls) -> back to baseline: True
+
+=== LOGIC change_config reversible round-trip (shipped AxxonMcpLogicControl) ===
+original user_alert_ttl: 300
+change_config bump -> {'status': 'applied', 'previous': {'user_alert_ttl': 300}} applied.user_alert_ttl 301
+verified user_alert_ttl now: 301
+restored user_alert_ttl: 300 -> reversible: True
+
+=== LOGIC change_counters + counter_action reversible round-trip ===
+change_counters add -> {'status': 'added', 'guid': 'bebe0e48-f734-4a70-97ab-1a52a3c8c52f', 'name': 'mcp-phase46-counter'}
+ListCounters shows it: True
+counter_action start -> {'status': 'applied', 'counter': 'bebe0e48-f734-4a70-97ab-1a52a3c8c52f', 'operation': 'start'}
+GetCounterState is_active: True
+change_counters remove -> {'status': 'removed', 'guid': 'bebe0e48-f734-4a70-97ab-1a52a3c8c52f'}
+ListCounters after remove count: 0 -> gone: True
+
+=== RE-PROBE of the 5 stand-walled methods (stay fixture-warn) ===
+BatchCompleteAlertsReview: read-path sees 1 alert(s) via node=Server, but complete -> success [] failure [] unreachable ['Server'] [FIXTURE-WALL: write-path node unreachable + AIT_USER-only alerts]
+ClearProfiles: StatusCode.UNIMPLEMENTED <_InactiveRpcError of RPC that terminated with: [FIXTURE-WALL: no global tracker object on this stand]
+ChangeGlobalTrackerProfiles: StatusCode.INTERNAL <_InactiveRpcError of RPC that terminated with: [FIXTURE-WALL: no global tracker object on this stand]
+BindGlobalTrackProfile: StatusCode.INTERNAL <_InactiveRpcError of RPC that terminated with: [FIXTURE-WALL: no global tracker object on this stand]
+ChangeProfiles: StatusCode.INTERNAL commits the write but response stream terminates <_MultiThreadedRendezvous of RPC that terminated with: [FIXTURE-WALL: global-tracker notify side absent]
+ChangeProfiles probe profile cleaned up
+
+All phase-46 mutations reversible; no residue left on the stand.

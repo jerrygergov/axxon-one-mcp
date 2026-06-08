@@ -24,6 +24,33 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
+    # Phase 46 reversible-write cluster (VideowallService + LogicService + GlobalTrackerService).
+    # Closed (RPC executes end-to-end, reversible round-trip via shipped MCP modules) -> tested-pass.
+    # Stand-walled (live-probed, blocked by stand state) -> tested-warn-fixture-needed (out of pending).
+    ("VideowallService", "RegisterWall"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (RegisterWall -> ListWalls shows it -> UnregisterWall; reversible, cookie_present only)"),
+    ("VideowallService", "ChangeWall"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (ChangeWall new_seq_number 1 on a registered wall)"),
+    ("VideowallService", "SetControlData"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (SetControlData new_seq_number 2 with matching seq_number)"),
+    ("VideowallService", "UnregisterWall"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (UnregisterWall -> ListWalls back to baseline, no residue)"),
+    ("LogicService", "ChangeConfig"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (GetConfig -> ChangeConfig user_alert_ttl 300->301 -> GetConfig confirms -> restore to 300)"),
+    ("LogicService", "ChangeCounters"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (ChangeCounters add throwaway counter -> ListCounters shows it -> remove -> empty)"),
+    ("LogicService", "CounterAction"): (
+        "tested-pass", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (CounterAction START -> GetCounterState is_active=true)"),
+    ("LogicService", "BatchCompleteAlertsReview"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (write-path returns unreachable=['Server'] though read-path resolves it; AIT_USER-only alerts, needs a rule-raised alert)"),
+    ("GlobalTrackerService", "ChangeGlobalTrackerProfiles"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (INTERNAL 'Failed to change global tracker profiles'; no global tracker object on this stand)"),
+    ("GlobalTrackerService", "ClearProfiles"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (UNIMPLEMENTED; no global tracker object on this stand)"),
+    ("GlobalTrackerService", "BindGlobalTrackProfile"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (INTERNAL; no global tracker object on this stand)"),
+    ("GlobalTrackerService", "ChangeProfiles"): (
+        "tested-warn-fixture-needed", ".agent/tasks/phase-46-videowall-logic-writes/evidence.md AC3 (profile store commits add/remove confirmed via GetProfile, but response stream always terminates INTERNAL; global-tracker notify side absent)"),
     # Phase 44 physical/hardware batch (TelemetryService + HeatMapService + MediaService).
     # Serviceable on the demo stand -> tested-pass; device/firmware/server-walled -> fixture-warn.
     # Telemetry: Focus/Iris return Empty (OK) on TelemetryControl.0; PointMove OK on

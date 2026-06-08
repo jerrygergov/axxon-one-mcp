@@ -73,6 +73,7 @@ def create_server(
     misc_reads: Any | None = None,
     heatmap: Any | None = None,
     media: Any | None = None,
+    videowall: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -240,6 +241,9 @@ def create_server(
 
     if media is not None:
         register_media_tools(server, media)
+
+    if videowall is not None:
+        register_videowall_tools(server, videowall)
 
     return server
 
@@ -1498,6 +1502,53 @@ def register_logic_control_tools(server: Any, logic_control: Any) -> None:
         """Arm/disarm a camera (disarm/arm/arm_private) for a bounded, auto-reverting window via ChangeArmState."""
         return logic_control.change_arm_state(camera_ap, state, timeout_s, confirmation)
 
+    @server.tool(name="change_config")
+    def change_config(overrides: dict[str, int] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Override LogicService alert/event TTL fields via ChangeConfig (round-trippable). Gated by approval env + confirmation."""
+        return logic_control.change_config(overrides, confirmation)
+
+    @server.tool(name="change_counters")
+    def change_counters(add: dict[str, str] | None = None, remove_guid: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Add a counter (add={guid,name}) or remove one (remove_guid) via ChangeCounters. Gated by approval env + confirmation."""
+        return logic_control.change_counters(add, remove_guid, confirmation)
+
+    @server.tool(name="counter_action")
+    def counter_action(counter: str = "", operation: str = "start", confirmation: str = "") -> dict[str, Any]:
+        """Run START/STOP/CLEANUP on a counter guid via CounterAction. Gated by approval env + confirmation."""
+        return logic_control.counter_action(counter, operation, confirmation)
+
+
+def register_videowall_tools(server: Any, videowall: Any) -> None:
+    @server.tool(name="videowall_connect_axxon_profile")
+    def videowall_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the approval-gated VideowallService control layer to the env profile."""
+        return videowall.videowall_connect_axxon_profile(profile)
+
+    @server.tool(name="list_walls")
+    def list_walls() -> dict[str, Any]:
+        """List registered videowall coordinators via ListWalls."""
+        return videowall.list_walls()
+
+    @server.tool(name="register_wall")
+    def register_wall(name: str = "", display_name: str = "", host_name: str = "axxon-mcp", confirmation: str = "") -> dict[str, Any]:
+        """Register a videowall via RegisterWall; returns cookie_present + wall_id (no raw cookie). Gated by approval env + confirmation."""
+        return videowall.register_wall(name, display_name, host_name, confirmation)
+
+    @server.tool(name="change_wall")
+    def change_wall(wall_id: str = "", seq_number: int = 0, data: bytes = b"", confirmation: str = "") -> dict[str, Any]:
+        """Update a registered wall payload via ChangeWall (by wall_id). Gated by approval env + confirmation."""
+        return videowall.change_wall(wall_id, seq_number, data, confirmation)
+
+    @server.tool(name="set_control_data")
+    def set_control_data(wall_id: str = "", seq_number: int = 0, data: bytes = b"", confirmation: str = "") -> dict[str, Any]:
+        """Push control data to a wall via SetControlData (by wall_id + seq_number). Gated by approval env + confirmation."""
+        return videowall.set_control_data(wall_id, seq_number, data, confirmation)
+
+    @server.tool(name="unregister_wall")
+    def unregister_wall(wall_id: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Unregister a videowall via UnregisterWall (by wall_id), reversing register_wall. Gated by approval env + confirmation."""
+        return videowall.unregister_wall(wall_id, confirmation)
+
 
 def register_settings_tools(server: Any, settings: Any) -> None:
     @server.tool(name="settings_connect_axxon_profile")
@@ -2004,6 +2055,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 44 MediaService transport-probe tools (request_connection, request_qos, request_tunnel, stream_probe; metadata-only).",
     )
     parser.add_argument(
+        "--enable-videowall",
+        action="store_true",
+        help="Enable Phase 46 VideowallService control tools (register/change/set-control-data/unregister; approval-gated, reversible).",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2235,6 +2291,11 @@ def main() -> int:
         from axxon_mcp_media import AxxonMcpMedia
 
         media = AxxonMcpMedia()
+    videowall = None
+    if args.enable_videowall:
+        from axxon_mcp_videowall import AxxonMcpVideowall
+
+        videowall = AxxonMcpVideowall()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -2276,6 +2337,7 @@ def main() -> int:
         misc_reads=misc_reads,
         heatmap=heatmap,
         media=media,
+        videowall=videowall,
     )
     server.run(transport=args.transport)
     return 0

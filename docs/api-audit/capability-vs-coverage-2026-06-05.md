@@ -34,10 +34,10 @@
 | **Live + archive view** | MediaService, ArchiveService, ExportService, StatisticService | ✅ partial | `live_view`, `snapshot_batch`, `archive_scrub/frame/mjpeg`, `stream_health`. MediaService raw RPCs 5/6 stamped (phase-44 transport probes + phase-45 connect_endpoint). |
 | **Events / history** | EventHistoryService, EventDescription | ✅ strong | `search_events`, `subscribe_events_bounded`, `find_event_suppliers` — 13/13 stamped. |
 | **Live notifications** | DomainNotifier, NodeNotifier | ⚠️ thin | `domain_event_subscribe`/`node_event_subscribe` exist but all 11 RPCs unstamped. |
-| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 15/29, RealtimeRecognizer 6/7, HeatMap 5/6 stamped (phase-44). |
+| **Detectors / analytics config** | LogicService, ExternalDetectorService, RealtimeRecognizerService, AcfaService, HeatMapService, VMDAService, MetadataService | ⚠️ partial | Rich tooling for AV/AppData detectors; LogicService 24/29 (phase-46 config/counters), RealtimeRecognizer 6/7, HeatMap 5/6 stamped (phase-44). |
 | **PTZ / telemetry** | TelemetryService, TagAndTrackService | ✅ partial | `ptz_*` tools (incl. `ptz_point_move`); TelemetryService 22/32 stamped (10 device/firmware fixture-warn). TagAndTrack 0/4. |
 | **Alarms / macros** | LogicService | ✅ strong | Full alarm lifecycle + `raise_alert` + macro workflows. |
-| **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService mutations 1/7, LayoutManager 5/5. |
+| **Layouts / maps / videowalls** | LayoutManager, LayoutImagesManager, MapService, VideowallService | ✅ partial | Reads + operator workflows; VideowallService 6/7 (register/change/set-control/unregister reversible, phase-46), LayoutManager 5/5. |
 | **Bookmarks** | BookmarkService | ✅ strong | reads + lifecycle; UpdateBookmark/SetExportedTime/RenderTrack open. |
 | **Security / users / roles** | SecurityService, AuthenticationService, GroupManager | ✅ partial | 28/35 SecurityService (7 LDAP fixture-warn); Authentication 8/12 (4 TFA/approval/public-key fixture-warn). |
 | **System health / license / time** | LicenseService, TimeZoneManager, DomainSettingsService, ServerSettings, NgpNodeService | ✅ partial | `system_health`, `license_status`, `time_status`. License 6/11. |
@@ -46,7 +46,7 @@
 | **Audit injection** | AuditEventInjector | ❌ none | 0/7 — no tool. |
 | **External text/POS/ACS events** | TextEventSupportService, ExternalDetectorService | ❌ none | injection only via generated templates, no first-class tool. |
 | **Notifier channels (email/SMS)** | EMailNotifier, GSMNotifier, GenericSettingsService | ❌ none | 0 tools — notification-action config absent. |
-| **Global tracker / cross-camera** | GlobalTrackerService | ❌ weak | 1/7. |
+| **Global tracker / cross-camera** | GlobalTrackerService | ❌ weak | 1/7; remaining 4 mutations re-probed in phase-46 and fixture-warn (no global tracker object on this stand). |
 | **Misc settings / KV / files** | SharedKVStorageService, FileSystemBrowser, InstallationPackageProvider | ✅/⚠️ | KV 4/4, FS 3/3; InstallationPackage 1/2. |
 
 ---
@@ -298,7 +298,29 @@ access point, 5/6 HeatMap RPCs return real results (see B.9).
    for `TextEventSupportService` (POS/ACS text).
 4. **Then** declare the roadmap's "≤20 pending" definition-of-done met — with evidence, not narrative.
 
-Current honest coverage: **276 tested-pass / 36 pending / 49 fixture-warn** (361 total).
+Current honest coverage: **283 tested-pass / 24 pending / 54 fixture-warn** (361 total).
+
+### Item 10ag (Phase 46): Videowall + Logic reversible writes -> tested-pass (7 closed, 5 re-probed)
+
+Closed the reversible-write cluster across three services that the ledger still listed as `pending`.
+Live probing sorted the 12 pending methods into code-closeable vs stand-walled, and the 7
+code-closeable methods were shipped + live-verified through their MCP modules:
+
+- **VideowallService** new module `axxon_mcp_videowall.py` (approval-gated, `AXXON_VIDEOWALL_APPROVE`):
+  `register_wall` -> `ListWalls` shows it -> `change_wall` (new_seq 1) -> `set_control_data`
+  (new_seq 2) -> `unregister_wall` -> baseline restored. The raw cookie is never returned
+  (`cookie_present` only; tracked internally and chained by `wall_id`). VideowallService now 6/7.
+- **LogicService** added to `axxon_mcp_logic_control.py`: `change_config` (GetConfig -> bump
+  user_alert_ttl 300->301 -> restore), `change_counters` (add throwaway counter -> ListCounters ->
+  remove), `counter_action` (START -> GetCounterState is_active=true). LogicService now 24/29.
+
+The 5 stand-walled methods were re-probed live and moved from `pending` to
+`tested-warn-fixture-needed` (no longer never-probed): `LogicService.BatchCompleteAlertsReview`
+(write-path returns `unreachable=['Server']` while the read-path resolves it; AIT_USER-only alerts,
+needs a rule-raised alert — same wall as CompleteAlertReview); `GlobalTrackerService` ×4
+(ChangeGlobalTrackerProfiles/ClearProfiles/BindGlobalTrackProfile UNIMPLEMENTED/INTERNAL, and
+ChangeProfiles commits the add/remove confirmed via GetProfile but always terminates the response
+stream INTERNAL — all because no global tracker object is configured on this stand).
 
 ### Item 10af (Phase 45): MediaService ConnectEndpoint -> tested-pass (MediaService 5/6)
 
