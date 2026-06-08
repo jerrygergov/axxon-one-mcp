@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Generated webhook bridge for $SUBJECT.
+
+Reads recent events from EventHistoryService.ReadEvents within a bounded time
+window and POSTs each event as JSON to WEBHOOK_URL. Stops on first count or
+duration cap. Webhook URL never logged; payload bodies redacted before send.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import time
+
+DURATION_SECONDS = $DURATION
+COUNT_CAP = $COUNT
+SUBJECT = "$SUBJECT"
+HISTORY_WINDOW_SECONDS = 3600
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD", "WEBHOOK_URL")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def event_to_payload(item) -> dict:
+    return {
+        "id": getattr(item, "id", ""),
+        "subject": getattr(item, "subject", ""),
+        "type": getattr(item, "type", 0),
+        "timestamp": getattr(item, "timestamp", ""),
+    }
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    import requests
+
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.events.EventHistory_pb2 import ReadEventsRequest, SearchFilter, SearchFilterArray
+    from axxonsoft.bl.events.EventHistory_pb2_grpc import EventHistoryServiceStub
+    from axxonsoft.bl.primitive.Primitives_pb2 import TimeRange
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    webhook_host = os.environ["WEBHOOK_URL"].split("/")[2] if "//" in os.environ["WEBHOOK_URL"] else "<webhook>"
+    logging.info(
+        "user=%s password=%s host=%s subject=%s webhook_host=%s",
+        user,
+        redact(os.environ["AXXON_PASSWORD"]),
+        host,
+        SUBJECT,
+        webhook_host,
+    )
+
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=DURATION_SECONDS,
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    forwarded = 0
+    failed = 0
+    deadline = time.time() + DURATION_SECONDS
+    now_ms = int(time.time() * 1000)
+    begin_ms = now_ms - HISTORY_WINDOW_SECONDS * 1000
+    range_msg = TimeRange(begin_time=str(begin_ms), end_time=str(now_ms))
+    filters = SearchFilterArray(filters=[SearchFilter(subjects=[SUBJECT])])
+    session = requests.Session()
+    with grpc.secure_channel(host, composite, options=options) as channel:
+        stub = EventHistoryServiceStub(channel)
+        try:
+            for response in stub.ReadEvents(ReadEventsRequest(range=range_msg, filters=filters), timeout=DURATION_SECONDS):
+                for item in response.items:
+                    payload = event_to_payload(item)
+                    try:
+                        result = session.post(os.environ["WEBHOOK_URL"], json=payload, timeout=5)
+                        if result.ok:
+                            forwarded += 1
+                        else:
+                            failed += 1
+                    except requests.RequestException:
+                        failed += 1
+                    if forwarded + failed >= COUNT_CAP or time.time() >= deadline:
+                        break
+                if forwarded + failed >= COUNT_CAP or time.time() >= deadline:
+                    break
+        except grpc.RpcError as exc:
+            logging.warning("rpc closed: %s", exc.code())
+    print(json.dumps({"subject": SUBJECT, "forwarded": forwarded, "failed": failed, "duration_cap": DURATION_SECONDS, "count_cap": COUNT_CAP}))
+    return 0 if failed == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

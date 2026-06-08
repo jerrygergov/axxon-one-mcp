@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Build artifacts / generated stubs
+.generated/
+/tmp/axxon-grpc-py/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Agent / assistant working files (not part of the shareable project)
+.claude/
+.codex/
+.claire/
+.agent/
+.ruff_cache/
+AGENTS.md
+CLAUDE.md
+STATUS.md
+
+# Local secrets (defense in depth)
+.env
+.env.local
+*.pem
+*.key
+
+# AxxonSoft copyrighted material kept locally for reference but never published
+docs/integration-apis-3.0/
+docs/grpc-proto-files/
+Integration APIs 3.0.pdf
+
+# Archived legacy probe runs (kept locally, not published)
+docs/api-test-runs/

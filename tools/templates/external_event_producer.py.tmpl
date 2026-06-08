@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Generated external event producer for $ACCESS_POINT ($EVENT_TYPE).
+
+Preflight: resolves the detector via HTTP /grpc envelope for
+ConfigurationService.ListUnits and refuses if `detector != ExternalDetector`.
+Then raises the event via the /v1 REST endpoint.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = $DURATION
+BYTE_CAP = $BYTE_CAP
+ACCESS_POINT = "$ACCESS_POINT"
+EVENT_TYPE = "$EVENT_TYPE"
+
+REQUIRED_ENV = ("AXXON_HTTP_URL", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def fetch_bearer(base: str, auth: tuple[str, str], timeout: int) -> str:
+    response = requests.post(
+        base + "/grpc",
+        auth=auth,
+        json={
+            "method": "axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2",
+            "data": {"user_name": auth[0], "password": auth[1]},
+        },
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    token = response.json().get("token_value")
+    if not token:
+        raise RuntimeError("no token_value in /grpc auth response")
+    return token
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    global requests
+    import requests
+
+    base = os.environ["AXXON_HTTP_URL"].rstrip("/")
+    auth = (os.environ["AXXON_USERNAME"], os.environ["AXXON_PASSWORD"])
+    logging.info("user=%s password=%s base=%s ap=%s type=%s", auth[0], redact(auth[1]), base, ACCESS_POINT, EVENT_TYPE)
+
+    bearer = fetch_bearer(base, auth, DURATION_SECONDS)
+    bearer_headers = {"Authorization": "Bearer " + bearer}
+
+    # Preflight: ListUnits(unit_uids=[parent]) via HTTP /grpc envelope
+    parent_ap = ACCESS_POINT.rsplit("/", 1)[0]
+    preflight = requests.post(
+        base + "/grpc",
+        headers=bearer_headers,
+        json={
+            "method": "axxonsoft.bl.config.ConfigurationService.ListUnits",
+            "data": {"unit_uids": [parent_ap]},
+        },
+        timeout=DURATION_SECONDS,
+    )
+    if preflight.status_code != 200:
+        logging.error("preflight failed: %s body=%s", preflight.status_code, preflight.text[:400])
+        return 3
+    units = preflight.json().get("units", [])
+    detector = ""
+    for unit in units:
+        if unit.get("uid") == parent_ap or unit.get("access_point", "").startswith(parent_ap):
+            for prop in unit.get("properties", []):
+                if prop.get("id") == "detector":
+                    detector = prop.get("value_string", "")
+                    break
+            break
+    if detector != "ExternalDetector":
+        logging.error("ap=%s is not ExternalDetector (got %r)", ACCESS_POINT, detector)
+        return 4
+
+    if EVENT_TYPE == "TargetList":
+        endpoint = "/v1/detectors/external:raisePeriodicalEvent"
+        body = {"access_point": ACCESS_POINT, "event_type": EVENT_TYPE, "target_list": {"targets": []}}
+    else:
+        endpoint = "/v1/detectors/external:raiseOccasionalEvent"
+        body = {"access_point": ACCESS_POINT, "event_type": EVENT_TYPE}
+
+    response = requests.post(base + endpoint, headers=bearer_headers, json=body, timeout=DURATION_SECONDS)
+    logging.info("raise status=%s bytes=%d", response.status_code, len(response.content[:BYTE_CAP]))
+    print(json.dumps({"access_point": ACCESS_POINT, "event_type": EVENT_TYPE, "status": response.status_code}))
+    return 0 if response.ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

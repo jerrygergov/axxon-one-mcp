@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Generated inventory snapshot for an Axxon One server.
+
+Runs ListCameras + ListArchives + ListUnits once and writes a single JSON
+snapshot to OUTPUT_PATH. No streaming, no mutation. Suitable for periodic
+CMDB sync jobs.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import time
+
+DURATION_SECONDS = 60
+BYTE_CAP = $BYTE_CAP
+OUTPUT_PATH = "$OUTPUT_PATH"
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def message_to_dict(message) -> dict:
+    from google.protobuf.json_format import MessageToDict
+    return MessageToDict(message, preserving_proto_field_name=True)
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.config.ConfigurationService_pb2 import ListUnitsRequest
+    from axxonsoft.bl.config.ConfigurationService_pb2_grpc import ConfigurationServiceStub
+    from axxonsoft.bl.domain.Domain_pb2 import ListCamerasRequest
+    from axxonsoft.bl.domain.Domain_pb2_grpc import DomainServiceStub
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    logging.info("user=%s password=%s host=%s output=%s", user, redact(os.environ["AXXON_PASSWORD"]), host, OUTPUT_PATH)
+
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=DURATION_SECONDS,
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    snapshot: dict = {"timestamp_ms": int(time.time() * 1000), "host": host, "cameras": [], "units": []}
+    bytes_total = 0
+    with grpc.secure_channel(host, composite, options=options) as channel:
+        camera_stream = DomainServiceStub(channel).ListCameras(ListCamerasRequest(view=0), timeout=DURATION_SECONDS)
+        for response in camera_stream:
+            for camera in response.items:
+                entry = message_to_dict(camera)
+                bytes_total += len(json.dumps(entry))
+                snapshot["cameras"].append(entry)
+                if bytes_total >= BYTE_CAP:
+                    break
+            if bytes_total >= BYTE_CAP:
+                break
+        if bytes_total < BYTE_CAP:
+            units_response = ConfigurationServiceStub(channel).ListUnits(ListUnitsRequest(), timeout=DURATION_SECONDS)
+            for unit in units_response.units:
+                entry = message_to_dict(unit)
+                bytes_total += len(json.dumps(entry))
+                snapshot["units"].append(entry)
+                if bytes_total >= BYTE_CAP:
+                    break
+
+    output_path = os.path.expanduser(OUTPUT_PATH)
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as fh:
+        json.dump(snapshot, fh, indent=2, sort_keys=True)
+    print(json.dumps({"output": output_path, "cameras": len(snapshot["cameras"]), "units": len(snapshot["units"]), "bytes": bytes_total}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

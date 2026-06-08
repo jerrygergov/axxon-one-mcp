@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Generated export inspector for camera $CAMERA_AP.
+
+Lists current export sessions on the server via `ExportService.ListSessions`.
+A full export start/poll/download/destroy workflow is owned by the operator
+layer (`axxon_export_smoke.py`); this template emits the safe inventory call
+that integration consumers actually want first. Bytes/time caps are applied.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = 60
+BYTE_CAP = $BYTE_CAP
+WINDOW_SECONDS = $WINDOW
+CAMERA_AP = "$CAMERA_AP"
+BEGIN = "$BEGIN"
+END = "$END"
+FORMAT = "$FORMAT"
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.mmexport.ExportService_pb2 import ListSessionsRequest
+    from axxonsoft.bl.mmexport.ExportService_pb2_grpc import ExportServiceStub
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    logging.info(
+        "user=%s password=%s host=%s camera=%s window=%ds",
+        user,
+        redact(os.environ["AXXON_PASSWORD"]),
+        host,
+        CAMERA_AP,
+        WINDOW_SECONDS,
+    )
+
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=DURATION_SECONDS,
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    inspected = 0
+    bytes_seen = 0
+    try:
+        with grpc.secure_channel(host, composite, options=options) as channel:
+            stub = ExportServiceStub(channel)
+            stream = stub.ListSessions(ListSessionsRequest(page_size=20), timeout=DURATION_SECONDS)
+            for response in stream:
+                for session_info in response.sessions:
+                    inspected += 1
+                    bytes_seen += session_info.ByteSize()
+                    if bytes_seen >= BYTE_CAP:
+                        break
+                if bytes_seen >= BYTE_CAP:
+                    break
+    finally:
+        print(json.dumps({"camera_ap": CAMERA_AP, "sessions_inspected": inspected, "bytes_seen": bytes_seen}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

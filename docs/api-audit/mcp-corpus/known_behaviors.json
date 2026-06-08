@@ -1,0 +1,67 @@
+{
+  "behaviors": [
+    {
+      "coverage_counts": {
+        "fixture-needed": 6,
+        "verified": 27
+      },
+      "source": "docs/api-audit/pdf-gap-coverage-matrix.json",
+      "topic": "coverage_status"
+    },
+    {
+      "behavior": "Demo stand can read legacy HTTP bookmarks with Bearer auth; documented legacy HTTP create endpoints return HTTP 501. Use gRPC BookmarkService for a runnable lifecycle.",
+      "source": "docs/api-audit/bookmark-smoke-latest.md",
+      "topic": "legacy_http_bookmarks"
+    },
+    {
+      "behavior": "PDF DELETE /archive/contents/bookmarks/ dispatch is verified only with a codex-nonexistent no-op target; real archive deletion remains maintenance-window work.",
+      "source": "docs/api-audit/delete-video-noop-probe-latest.md",
+      "topic": "legacy_http_delete_video"
+    },
+    {
+      "behavior": "Demo Web server upgrades /events to HTTP 101 but closes during receive in the current fixture.",
+      "source": "docs/api-audit/subscription-smoke-latest.md",
+      "topic": "websocket_events"
+    },
+    {
+      "behavior": "Device-embedded /Sources/src.* access points (under DeviceIpint.*) appear in inventory but are unresolvable for ArchiveService.GetHistory2 on this demo stand. Use MultimediaStorage.*/Sources/src.* archive sources instead. Camera SourceEndpoint access points are not valid GetHistory2 targets.",
+      "source": "docs/api-audit/mcp-live-smoke-latest.md",
+      "topic": "archive_storage_source_resolution"
+    },
+    {
+      "behavior": "SecurityService.EnableGoogleAuth/DisableGoogleAuth (proto SecurityService.proto:1000-1002) are split into a dedicated fixture-needed row. No live TFA mutation evidence exists on the demo stand; an OTP/authenticator fixture plus an isolated test user are required before enable/disable can be exercised with rollback.",
+      "source": "docs/api-audit/security-mutation-smoke-latest.md",
+      "topic": "tfa_mutations_unverified"
+    },
+    {
+      "behavior": "FormatVolumes/Reindex/CancelReindex are verified only via no-op dispatch against codex-nonexistent volume ids; cloud archive and link operations are documented from the PDF only. Real format/reindex/cancel-reindex/cloud/link operations remain approval-only until an isolated storage fixture or explicit maintenance-window approval is in place.",
+      "source": "docs/api-audit/archive-management-noop-smoke-latest.md",
+      "topic": "archive_management_destructive_paths"
+    },
+    {
+      "behavior": "MCP Phase 3 operator workflow temp_camera was live-verified end-to-end against the demo stand on 2026-05-13: plan -> bad-confirmation reject -> apply -> verify -> rollback -> post-verify clean. Audit log records every action.",
+      "source": "docs/api-audit/mcp-operator-smoke-latest.md",
+      "topic": "operator_temp_camera_live_verified"
+    },
+    {
+      "behavior": "MCP Phase 3 operator exposes 7 workflows, all live-verified end-to-end on demo 2026-05-14: temp_camera, temp_archive, temp_av_detector, temp_appdata_detector, temp_device_template, external_event_inject, temp_macro. temp_appdata_detector is the only chained workflow: when no vmda_source_ap is supplied it first creates a SceneDescription AVDetector, waits on DomainService.ListComponents for the SourceEndpoint.vmda to publish, then creates the AppDataDetector. Rollback removes both in reverse order. temp_device_template uses ConfigurationService.ChangeTemplates over HTTP /grpc; temp_macro uses LogicService.ChangeMacros over direct gRPC with a client-generated GUID; external_event_inject uses /v1/detectors/external:raiseOccasionalEvent with bearer auth and RFC3339 timestamp (Z suffix).",
+      "source": "docs/api-audit/mcp-operator-smoke-latest.md",
+      "topic": "operator_workflows_2026_05_14"
+    },
+    {
+      "behavior": "/v1/detectors/external:raiseOccasionalEvent requires RFC3339 timestamps with Z suffix (e.g. 2026-05-14T14:48:55.123456Z). The compact %Y%m%dT%H%M%S.fff form is rejected with 'timestamp string too short' (INVALID_ARGUMENT on google.protobuf.Timestamp).",
+      "source": "docs/api-audit/mcp-operator-smoke-latest.md",
+      "topic": "external_event_timestamp_format"
+    },
+    {
+      "behavior": "Creating an AVDetector with detector=SceneDescription against a video source AP causes the server to materialize a SourceEndpoint.vmda component endpoint under the new AVDetector UID (format: <av_uid>/SourceEndpoint.vmda). The endpoint is published asynchronously and shows up in DomainService.ListComponents within a couple of seconds. The MCP operator's temp_appdata_detector workflow exploits this to chain-create a vmda source on demand when the caller has none.",
+      "source": "docs/api-audit/mcp-operator-smoke-latest.md",
+      "topic": "scene_avdetector_publishes_vmda_endpoint"
+    },
+    {
+      "behavior": "AppDataDetector and AVDetector have disjoint detector enums. Passing AVDetector kinds (e.g. MotionDetection, SceneDescription, NeuroTracker) as the detector property of an AppDataDetector causes ConfigurationService.ChangeConfig to reject the add as malformed. Valid AppDataDetector kinds include MoveInZone and other appdata-specific values.",
+      "source": "docs/api-audit/mcp-operator-smoke-latest.md",
+      "topic": "appdata_detector_kind_mismatch"
+    }
+  ]
+}

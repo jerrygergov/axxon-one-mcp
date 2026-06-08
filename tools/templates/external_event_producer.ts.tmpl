@@ -1,0 +1,114 @@
+/**
+ * Generated external event producer for $ACCESS_POINT ($EVENT_TYPE).
+ *
+ * Preflight: resolves the detector via HTTP /grpc envelope for
+ * ConfigurationService.ListUnits and refuses if detector != ExternalDetector.
+ * Then raises the event via the /v1 REST endpoint.
+ * All credentials are read from process.env.
+ */
+
+import * as https from 'https';
+import * as http from 'http';
+import { URL } from 'url';
+
+const DURATION_SECONDS = $DURATION;
+const BYTE_CAP = $BYTE_CAP;
+const ACCESS_POINT = '$ACCESS_POINT';
+const EVENT_TYPE = '$EVENT_TYPE';
+
+const REQUIRED_ENV = ['AXXON_HTTP_URL', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function postJson(baseUrl: string, path: string, body: object, headers: Record<string, string> = {}): Promise<{ status: number; data: Buffer }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(path, baseUrl);
+    const payload = Buffer.from(JSON.stringify(body));
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.request(
+      { hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': payload.length, ...headers } },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, data: Buffer.concat(chunks) }));
+      },
+    );
+    req.on('error', reject);
+    req.setTimeout(DURATION_SECONDS * 1000, () => { req.destroy(new Error('timeout')); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function fetchBearer(base: string, user: string): Promise<string> {
+  const authBasic = Buffer.from(`${user}:${process.env.AXXON_PASSWORD}`).toString('base64');
+  const resp = await postJson(base, '/grpc', {
+    method: 'axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2',
+    data: { user_name: user, password: process.env.AXXON_PASSWORD },
+  }, { Authorization: `Basic ${authBasic}` });
+  const token: string = JSON.parse(resp.data.toString()).token_value;
+  if (!token) throw new Error('no token_value in /grpc auth response');
+  return token;
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const base = process.env.AXXON_HTTP_URL!.replace(/\/$/, '');
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} base=${base} ap=${ACCESS_POINT} type=${EVENT_TYPE}`);
+
+  const bearer = await fetchBearer(base, user);
+  const bearerHeaders = { Authorization: `Bearer ${bearer}` };
+
+  // Preflight: ListUnits(unit_uids=[parent]) via HTTP /grpc envelope
+  const parentAp = ACCESS_POINT.split('/').slice(0, -1).join('/');
+  const preflight = await postJson(base, '/grpc', {
+    method: 'axxonsoft.bl.config.ConfigurationService.ListUnits',
+    data: { unit_uids: [parentAp] },
+  }, bearerHeaders);
+
+  if (preflight.status !== 200) {
+    console.error(`preflight failed: ${preflight.status} body=${preflight.data.slice(0, BYTE_CAP).toString()}`);
+    return 3;
+  }
+  const units: Array<Record<string, unknown>> = JSON.parse(preflight.data.toString()).units ?? [];
+  let detector = '';
+  for (const unit of units) {
+    if (unit['uid'] === parentAp || String(unit['access_point'] ?? '').startsWith(parentAp)) {
+      for (const prop of (unit['properties'] as Array<Record<string, unknown>>) ?? []) {
+        if (prop['id'] === 'detector') { detector = String(prop['value_string'] ?? ''); break; }
+      }
+      break;
+    }
+  }
+  if (detector !== 'ExternalDetector') {
+    console.error(`ap=${ACCESS_POINT} is not ExternalDetector (got ${JSON.stringify(detector)})`);
+    return 4;
+  }
+
+  const endpoint = EVENT_TYPE === 'TargetList'
+    ? '/v1/detectors/external:raisePeriodicalEvent'
+    : '/v1/detectors/external:raiseOccasionalEvent';
+  const body = EVENT_TYPE === 'TargetList'
+    ? { access_point: ACCESS_POINT, event_type: EVENT_TYPE, target_list: { targets: [] } }
+    : { access_point: ACCESS_POINT, event_type: EVENT_TYPE };
+
+  const resp = await postJson(base, endpoint, body, bearerHeaders);
+  console.info(`raise status=${resp.status} bytes=${resp.data.slice(0, BYTE_CAP).length}`);
+  console.log(JSON.stringify({ access_point: ACCESS_POINT, event_type: EVENT_TYPE, status: resp.status }));
+  return resp.status >= 200 && resp.status < 300 ? 0 : 1;
+}
+
+main().then(code => process.exit(code));

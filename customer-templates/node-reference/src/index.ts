@@ -1,0 +1,122 @@
+/**
+ * Generated runnable plugin scaffold: axxon-reference-plugin.
+ *
+ * A minimal but complete Axxon One plugin entrypoint. It authenticates over direct gRPC
+ * (CN from AXXON_TLS_CN), lists cameras via DomainService.ListCameras with a bounded retry,
+ * and prints a JSON summary. Credentials come only from process.env. Extend `runPlugin`
+ * with your own logic; keep all calls bounded and credentials env-only.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const PLUGIN_NAME = 'axxon-reference-plugin';
+const DURATION_SECONDS = 30;
+const MAX_RETRIES = 3;
+const RETRY_BACKOFF_SECONDS = 2;
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function withRetry<T>(call: () => Promise<T>, label: string): Promise<T> {
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await call();
+    } catch (err) {
+      lastErr = err;
+      console.warn(`${label} attempt ${attempt + 1}/${MAX_RETRIES} failed: ${err}`);
+      await sleep(RETRY_BACKOFF_SECONDS * (attempt + 1) * 1000);
+    }
+  }
+  throw lastErr;
+}
+
+export async function runPlugin(): Promise<Record<string, unknown>> {
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`plugin=${PLUGIN_NAME} user=${user} password=${redact(process.env.AXXON_PASSWORD!)} host=${host}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+
+  const authProto = loadProto(path.join(stubsPath, 'Authentication.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair = await withRetry<string>(() => new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') { reject(new Error(`auth failed error_code=${res['error_code']}`)); return; }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }), 'authenticate');
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const domainProto = loadProto(path.join(stubsPath, 'Domain.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const DomainService = domainProto['axxonsoft']?.['bl']?.['domain']?.['DomainService'] as unknown as grpc.ServiceClientConstructor;
+  const domainClient = new DomainService(host, composite, channelOptions);
+
+  const cameras = await withRetry<string[]>(() => new Promise((resolve) => {
+    const collected: string[] = [];
+    const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+    const call = (domainClient as Record<string, Function>)['ListCameras']({ view: 0 }, { deadline }) as NodeJS.EventEmitter;
+    call.on('data', (page: Record<string, Array<Record<string, string>>>) => {
+      for (const camera of page['items'] ?? []) collected.push(camera['access_point'] ?? '');
+    });
+    call.on('error', () => resolve(collected));
+    call.on('end', () => resolve(collected));
+  }), 'list_cameras');
+
+  return { plugin: PLUGIN_NAME, cameras: cameras.length };
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+  const summary = await runPlugin();
+  console.log(JSON.stringify(summary));
+  return 0;
+}
+
+if (require.main === module) {
+  main().then(code => process.exit(code));
+}

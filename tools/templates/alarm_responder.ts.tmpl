@@ -1,0 +1,120 @@
+/**
+ * Generated bounded alarm responder for camera $CAMERA_AP.
+ *
+ * Reads the camera's active alerts via LogicService.GetActiveAlerts, then for each alert
+ * runs the review lifecycle BeginAlertReview -> CompleteAlertReview. Stops on the first
+ * COUNT_CAP or DURATION_SECONDS cap. All credentials are read from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const DURATION_SECONDS = $DURATION;
+const COUNT_CAP = $COUNT;
+const CAMERA_AP = '$CAMERA_AP';
+const OPERATOR = '$OPERATOR';
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function unary<T>(client: grpc.Client, method: string, request: object, deadline: Date): Promise<T> {
+  return new Promise((resolve, reject) => {
+    (client as Record<string, Function>)[method](
+      request,
+      { deadline },
+      (err: grpc.ServiceError | null, res: T) => {
+        if (err) reject(err); else resolve(res);
+      },
+    );
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated alarm_responder`);
+  console.info(`target=${host} camera=${CAMERA_AP} operator=${OPERATOR} duration=${DURATION_SECONDS}s count_cap=${COUNT_CAP}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const logicProtoPath = path.join(stubsPath, 'LogicService.proto');
+  const logicProto = loadProto(logicProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const LogicService = logicProto['axxonsoft']?.['bl']?.['logic']?.['LogicService'] as unknown as grpc.ServiceClientConstructor;
+  const logicClient = new LogicService(host, composite, channelOptions);
+
+  const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+  const active = await unary<Record<string, Array<Record<string, string>>>>(
+    logicClient, 'GetActiveAlerts', { camera_ap: CAMERA_AP }, deadline,
+  ).catch(() => ({ alerts: [] }));
+
+  let handled = 0;
+  for (const alert of active['alerts'] ?? []) {
+    if (handled >= COUNT_CAP || Date.now() >= deadline.getTime()) break;
+    const alertId = String(alert['guid'] ?? '');
+    const ok = await (async () => {
+      await unary(logicClient, 'BeginAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId }, deadline);
+      await unary(logicClient, 'CompleteAlertReview', { camera_ap: CAMERA_AP, alert_id: alertId, severity: 'SV_ALARM' }, deadline);
+    })().then(() => true).catch((err) => { console.warn(`alert ${alertId} review failed: ${err}`); return false; });
+    if (ok) handled++;
+  }
+
+  console.log(JSON.stringify({ camera_ap: CAMERA_AP, operator: OPERATOR, handled, duration_cap: DURATION_SECONDS, count_cap: COUNT_CAP }));
+  return 0;
+}
+
+main().then(code => process.exit(code));

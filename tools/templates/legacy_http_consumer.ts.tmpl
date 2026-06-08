@@ -1,0 +1,103 @@
+/**
+ * Generated HTTP consumer for $VERB $PATH (auth=$AUTH_MODE).
+ *
+ * Performs a single bounded HTTP request to the Axxon One legacy HTTP API.
+ * All credentials are read from process.env.
+ */
+
+import * as https from 'https';
+import * as http from 'http';
+import { URL } from 'url';
+
+const DURATION_SECONDS = $DURATION;
+const BYTE_CAP = $BYTE_CAP;
+const PATH = '$PATH';
+const VERB = '$VERB';
+const AUTH_MODE = '$AUTH_MODE';
+
+const REQUIRED_ENV = ['AXXON_HTTP_URL', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function request(baseUrl: string, verb: string, path: string, headers: Record<string, string> = {}): Promise<{ status: number; data: Buffer }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(path, baseUrl);
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.request(
+      { hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: url.pathname + url.search, method: verb, headers },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, data: Buffer.concat(chunks) }));
+      },
+    );
+    req.on('error', reject);
+    req.setTimeout(DURATION_SECONDS * 1000, () => { req.destroy(new Error('timeout')); });
+    req.end();
+  });
+}
+
+function postJson(baseUrl: string, path: string, body: object, headers: Record<string, string> = {}): Promise<{ status: number; data: Buffer }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(path, baseUrl);
+    const payload = Buffer.from(JSON.stringify(body));
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.request(
+      { hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: url.pathname, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': payload.length, ...headers } },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, data: Buffer.concat(chunks) }));
+      },
+    );
+    req.on('error', reject);
+    req.setTimeout(DURATION_SECONDS * 1000, () => { req.destroy(new Error('timeout')); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function fetchBearer(base: string, user: string): Promise<string> {
+  const authBasic = Buffer.from(`${user}:${process.env.AXXON_PASSWORD}`).toString('base64');
+  const resp = await postJson(base, '/grpc', {
+    method: 'axxonsoft.bl.auth.AuthenticationService.AuthenticateEx2',
+    data: { user_name: user, password: process.env.AXXON_PASSWORD },
+  }, { Authorization: `Basic ${authBasic}` });
+  const token: string = JSON.parse(resp.data.toString()).token_value;
+  if (!token) throw new Error('no token_value in /grpc auth response');
+  return token;
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const base = process.env.AXXON_HTTP_URL!.replace(/\/$/, '');
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} base=${base} path=${PATH}`);
+
+  const headers: Record<string, string> = {};
+  if (AUTH_MODE === 'bearer') {
+    headers['Authorization'] = 'Bearer ' + await fetchBearer(base, user);
+  } else {
+    headers['Authorization'] = 'Basic ' + Buffer.from(`${user}:${process.env.AXXON_PASSWORD}`).toString('base64');
+  }
+
+  const resp = await request(base, VERB, PATH, headers);
+  const body = resp.data.slice(0, BYTE_CAP);
+  console.info(`status=${resp.status} bytes=${body.length}`);
+  console.log(JSON.stringify({ path: PATH, status: resp.status, bytes: body.length }));
+  return resp.status >= 200 && resp.status < 300 ? 0 : 1;
+}
+
+main().then(code => process.exit(code));

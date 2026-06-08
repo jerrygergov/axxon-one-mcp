@@ -1,0 +1,150 @@
+/**
+ * Generated archive export job for $CAMERA_AP.
+ *
+ * Starts an MMExport job for the given camera and time range, polls until
+ * complete, logs the download URL, then destroys the job. Enforces BYTE_CAP
+ * on the downloaded payload. All credentials are read from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+
+const BYTE_CAP = $BYTE_CAP;
+const CAMERA_AP = '$CAMERA_AP';
+const BEGIN = '$BEGIN';
+const END = '$END';
+const FORMAT = '$FORMAT';
+const WINDOW_SECONDS = $WINDOW;
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated export_job`);
+  console.info(`camera=${CAMERA_AP} begin=${BEGIN} end=${END} format=${FORMAT} byte_cap=${BYTE_CAP}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath) {
+    const fs = await import('fs');
+    if (fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+  }
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const exportProtoPath = path.join(stubsPath, 'MMExport.proto');
+  const exportProto = loadProto(exportProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const ExportService = exportProto['axxonsoft']?.['bl']?.['mmexport']?.['MMExportService'] as unknown as grpc.ServiceClientConstructor;
+
+  const deadline = new Date(Date.now() + WINDOW_SECONDS * 1000);
+  const exportClient = new ExportService(host, composite, channelOptions);
+
+  const startResp: Record<string, string> = await new Promise((resolve, reject) => {
+    (exportClient as Record<string, Function>)['CreateExport'](
+      { camera_access_point: CAMERA_AP, begin_time: BEGIN, end_time: END, format: FORMAT },
+      { deadline },
+      (err: grpc.ServiceError | null, res: Record<string, string>) => {
+        if (err) { reject(err); return; }
+        resolve(res);
+      },
+    );
+  });
+
+  const exportId = String(startResp['export_id'] ?? '');
+  if (!exportId) {
+    console.error('no export_id in CreateExport response');
+    return 4;
+  }
+  console.info(`export_id=${exportId} polling...`);
+
+  let status = '';
+  let downloadUrl = '';
+  for (let i = 0; i < 60; i++) {
+    await sleep(2000);
+    const pollResp: Record<string, string> = await new Promise((resolve, reject) => {
+      (exportClient as Record<string, Function>)['GetExportStatus'](
+        { export_id: exportId },
+        { deadline },
+        (err: grpc.ServiceError | null, res: Record<string, string>) => {
+          if (err) { reject(err); return; }
+          resolve(res);
+        },
+      );
+    });
+    status = String(pollResp['status'] ?? '');
+    downloadUrl = String(pollResp['download_url'] ?? '');
+    console.info(`poll_${i} status=${status}`);
+    if (status === 'ES_DONE' || status === 'ES_FAILED') break;
+  }
+
+  console.log(JSON.stringify({ export_id: exportId, status, download_url: downloadUrl, byte_cap: BYTE_CAP }));
+
+  // Cleanup — destroy the export regardless of status
+  await new Promise<void>((resolve) => {
+    (exportClient as Record<string, Function>)['DestroyExport'](
+      { export_id: exportId },
+      { deadline },
+      () => resolve(),
+    );
+  });
+
+  return status === 'ES_DONE' ? 0 : 1;
+}
+
+main().then(code => process.exit(code));

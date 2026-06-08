@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""Generated direct gRPC consumer for $FQMN.
+
+Reads credentials from environment only. Applies a hard call deadline.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+
+DURATION_SECONDS = $DURATION
+FQMN = "$FQMN"
+PACKAGE = "$PACKAGE"
+SERVICE = "$SERVICE"
+METHOD = "$METHOD"
+REQUEST_TYPE = "$REQUEST_TYPE"
+PROTO = "$PROTO"
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def banner() -> None:
+    logging.info("axxon-one-mcp generated grpc_consumer")
+    logging.info("target=%s method=%s", os.environ.get("AXXON_HOST", "<unset>"), FQMN)
+    logging.info(
+        "user=%s password=%s tls_cn=%s",
+        os.environ.get("AXXON_USERNAME", "<unset>"),
+        redact(os.environ.get("AXXON_PASSWORD", "")),
+        os.environ.get("AXXON_TLS_CN", "<unset>"),
+    )
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    banner()
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+
+    proto_module_path = PROTO.replace("/", ".").rsplit(".proto", 1)[0]
+    request_module_name = proto_module_path + "_pb2"
+    stub_module_name = proto_module_path + "_pb2_grpc"
+    request_module = __import__(request_module_name, fromlist=["*"])
+    stub_module = __import__(stub_module_name, fromlist=["*"])
+    request_cls = getattr(request_module, REQUEST_TYPE)
+    stub_cls = getattr(stub_module, SERVICE + "Stub")
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+    with grpc.secure_channel(host, base_creds, options=options) as channel:
+        auth = AuthenticationServiceStub(channel)
+        token_response = auth.AuthenticateEx2(
+            AuthenticateRequest(
+                user_name=os.environ["AXXON_USERNAME"],
+                password=os.environ["AXXON_PASSWORD"],
+            ),
+            timeout=DURATION_SECONDS,
+        )
+        if token_response.error_code != 0:
+            logging.error("auth failed error_code=%s", token_response.error_code)
+            return 3
+        metadata = ((token_response.token_name, token_response.token_value),)
+        auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata, None))
+        composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+    with grpc.secure_channel(host, composite, options=options) as channel:
+        stub = stub_cls(channel)
+        response = getattr(stub, METHOD)(request_cls(), timeout=DURATION_SECONDS)
+        printable = str(response)[:4000]
+        logging.info("response_chars=%d", len(printable))
+        print(json.dumps({"fqmn": FQMN, "preview_chars": len(printable)}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

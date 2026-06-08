@@ -1,0 +1,133 @@
+/**
+ * Generated inventory snapshot for an Axxon One server.
+ *
+ * Runs ListCameras + ListUnits once and writes a single JSON snapshot to
+ * OUTPUT_PATH. No streaming, no mutation. Suitable for periodic CMDB sync.
+ * Enforces BYTE_CAP on the serialised output. All credentials from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const BYTE_CAP = $BYTE_CAP;
+const OUTPUT_PATH = '$OUTPUT_PATH';
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function unary<T>(client: grpc.Client, method: string, request: object, deadline: Date): Promise<T> {
+  return new Promise((resolve, reject) => {
+    (client as Record<string, Function>)[method](
+      request,
+      { deadline },
+      (err: grpc.ServiceError | null, res: T) => {
+        if (err) reject(err); else resolve(res);
+      },
+    );
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated inventory_sync`);
+  console.info(`target=${host} output=${OUTPUT_PATH} byte_cap=${BYTE_CAP}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const deadline = new Date(Date.now() + 60000);
+
+  // ListCameras via DomainService
+  const domainProtoPath = path.join(stubsPath, 'Domain.proto');
+  const domainProto = loadProto(domainProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const DomainService = domainProto['axxonsoft']?.['bl']?.['domain']?.['DomainService'] as unknown as grpc.ServiceClientConstructor;
+  const domainClient = new DomainService(host, composite, channelOptions);
+
+  const cameras: unknown[] = [];
+  await new Promise<void>((resolve) => {
+    const call = (domainClient as Record<string, Function>)['ListCameras'](
+      { page_size: 200 },
+      { deadline },
+    ) as NodeJS.EventEmitter;
+    call.on('data', (page: Record<string, unknown[]>) => {
+      for (const cam of page['cameras'] ?? []) cameras.push(cam);
+    });
+    call.on('error', () => resolve());
+    call.on('end', () => resolve());
+  });
+
+  // ListUnits via ConfigurationService
+  const configProtoPath = path.join(stubsPath, 'ConfigurationService.proto');
+  const configProto = loadProto(configProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const ConfigService = configProto['axxonsoft']?.['bl']?.['config']?.['ConfigurationService'] as unknown as grpc.ServiceClientConstructor;
+  const configClient = new ConfigService(host, composite, channelOptions);
+
+  const units: unknown[] = [];
+  const unitsResp = await unary<Record<string, unknown[]>>(configClient, 'ListUnits', { unit_uids: [] }, deadline).catch(() => null);
+  if (unitsResp) units.push(...(unitsResp['units'] ?? []));
+
+  const snapshot = { cameras, units, captured_at: new Date().toISOString() };
+  const payload = JSON.stringify(snapshot, null, 2);
+  const capped = payload.slice(0, BYTE_CAP);
+  fs.writeFileSync(OUTPUT_PATH, capped, 'utf8');
+  console.info(`written bytes=${capped.length} cameras=${cameras.length} units=${units.length}`);
+  console.log(JSON.stringify({ output: OUTPUT_PATH, cameras: cameras.length, units: units.length, bytes: capped.length }));
+  return 0;
+}
+
+main().then(code => process.exit(code));
