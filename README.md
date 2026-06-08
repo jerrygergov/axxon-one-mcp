@@ -5,7 +5,15 @@ coverage matrix for Axxon One VMS.
 
 ## Status
 
-- **669 / 669** unit tests passing on `main`.
+- **969 / 969** unit tests passing.
+- **283 / 361 gRPC RPCs `tested-pass`** (24 pending, 54 fixture-warn) across the
+  full Integration APIs 3.0 surface (51 services). Canonical per-RPC ledger:
+  [`docs/api-audit/capability-vs-coverage-2026-06-05.md`](docs/api-audit/capability-vs-coverage-2026-06-05.md)
+  and `docs/api-audit/mcp-corpus/api_methods.json`. The remaining 24 pending are
+  mostly destructive/irreversible (license mutations, backup/restore, domain
+  topology, cloud bind, SMTP/GSM notifiers); the 54 fixture-warn are live-probed
+  but blocked by the demo stand (missing device driver, server defect, or absent
+  fixture).
 - **39** PDF gap-coverage matrix rows. 32 verified, 2 partial, and 5
   fixture-blocked rows (hardware / process gates on the demo stand are
   documented under `docs/api-audit/`).
@@ -87,6 +95,10 @@ and [`STATUS.md`](STATUS.md) for the current handoff document and remaining road
 | 6B — Partner SDK kit + distribution | ✅ shipped |
 | 7 — NL → plan translator | ✅ shipped + live-verified |
 | 8 — Final gap closure (PTZ, 5F-B2, schedules) | ✅ shipped + live-verified |
+| 9–43 — Per-service gRPC coverage sweep | ✅ shipped (see capability-vs-coverage ledger) |
+| 44 — Physical/hardware (Telemetry / HeatMap / Media) | ✅ shipped (driver/server caveats) |
+| 45 — MediaService ConnectEndpoint (mic → speaker) | ✅ shipped + live-verified |
+| 46 — Videowall + Logic reversible writes | ✅ shipped + live-verified |
 
 Full plan: [`docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md`](docs/superpowers/specs/2026-05-16-axxon-mcp-full-coverage-roadmap.md).
 
@@ -209,6 +221,17 @@ AXXON_ADMIN_MUTATION_APPROVE=1 \
 AXXON_HOST=<host> AXXON_HTTP_URL=http://<host> \
 AXXON_TLS_CN=<your-tls-cn> AXXON_USERNAME=<u> \
 python tools/axxon_mcp_server.py --enable-admin-mutations --transport stdio
+
+# + HeatMap / Media transport-probe read tools (Phase 44/45, metadata-only)
+python tools/axxon_mcp_server.py --enable-heatmap --enable-media --transport stdio
+
+# + LogicService operator-control mutations (Phase 16/46) — config + counters + macros + arm-state
+AXXON_LOGIC_CONTROL_APPROVE=1 \
+python tools/axxon_mcp_server.py --enable-logic-control --transport stdio
+
+# + VideowallService control mutations (Phase 46) — register/change/set-control/unregister, reversible
+AXXON_VIDEOWALL_APPROVE=1 \
+python tools/axxon_mcp_server.py --enable-videowall --transport stdio
 ```
 
 ### Live tools (read-only)
