@@ -2070,9 +2070,9 @@ def register_partner_tools(server: Any, kit: Any) -> None:
         return kit.plugin_lint(path)
 
     @server.tool(name="plugin_package")
-    def plugin_package(path: str, output: str, fmt: str = "zip") -> dict[str, Any]:
-        """Package a clean plugin repo into an archive with a SHA-256 manifest."""
-        return kit.plugin_package(path, fmt, output)
+    def plugin_package(path: str, output: str, fmt: str = "zip", version: str = "0.0.0") -> dict[str, Any]:
+        """Package a clean plugin repo into a versioned archive with an embedded SHA-256 manifest."""
+        return kit.plugin_package(path, fmt, output, version)
 
 
 def register_operator_tools(server: Any, operator: Any) -> None:

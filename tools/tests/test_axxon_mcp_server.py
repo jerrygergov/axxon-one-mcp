@@ -826,8 +826,8 @@ class AxxonMcpServerTests(unittest.TestCase):
             def plugin_lint(self, path):
                 return {"ok": True, "findings": []}
 
-            def plugin_package(self, path, fmt, output):
-                return {"status": "ok", "archive": str(output), "manifest": {"format": fmt}}
+            def plugin_package(self, path, fmt, output, version="0.0.0"):
+                return {"status": "ok", "archive": str(output), "manifest": {"format": fmt, "version": version}}
 
         server = module.create_server(docs=StubDocs(), partner=StubPartner(), fastmcp_factory=FakeFastMCP)
         self.assertLessEqual(partner_tools, set(server.tools))

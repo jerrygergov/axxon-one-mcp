@@ -146,40 +146,98 @@ class PackageTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_package_zip(self) -> None:
-        """AC6/AC8: zip package writes an archive and a sha256 manifest of every file."""
+        """AC1/AC3/AC5: zip package writes a versioned archive with prefixed members and embedded manifest."""
         out = self.root / "out.zip"
-        result = self.kit.plugin_package(self.repo, "zip", out)
+        result = self.kit.plugin_package(self.repo, "zip", out, version="1.2.3")
         self.assertEqual(result["status"], "ok")
         manifest = result["manifest"]
         self.assertEqual(manifest["format"], "zip")
+        self.assertEqual(manifest["version"], "1.2.3")
         self.assertEqual(manifest["file_count"], len(manifest["files"]))
         self.assertTrue(out.exists())
+        prefix = "repo-1.2.3"
+        self.assertEqual(result["prefix"], prefix)
         with zipfile.ZipFile(out) as zf:
-            self.assertEqual(set(zf.namelist()), set(manifest["files"]))
+            names = set(zf.namelist())
+            expected = {f"{prefix}/{rel}" for rel in manifest["files"]} | {f"{prefix}/manifest.json"}
+            self.assertEqual(names, expected)
         for digest in manifest["files"].values():
             self.assertEqual(len(digest), 64)
 
     def test_package_targz(self) -> None:
-        """AC8: tar.gz package writes a valid archive."""
+        """AC3/AC5: tar.gz package writes a prefixed archive with embedded manifest."""
         out = self.root / "out.tar.gz"
-        result = self.kit.plugin_package(self.repo, "tar.gz", out)
+        result = self.kit.plugin_package(self.repo, "tar.gz", out, version="2.0.0")
         self.assertEqual(result["status"], "ok")
         self.assertTrue(out.exists())
+        prefix = "repo-2.0.0"
         with tarfile.open(out, "r:gz") as tf:
             names = {m.name for m in tf.getmembers() if m.isfile()}
-        self.assertEqual(names, set(result["manifest"]["files"]))
+        expected = {f"{prefix}/{rel}" for rel in result["manifest"]["files"]} | {f"{prefix}/manifest.json"}
+        self.assertEqual(names, expected)
+
+    def test_package_embedded_manifest_matches(self) -> None:
+        """AC1: the manifest.json inside the archive matches the returned file hashes."""
+        out = self.root / "out.zip"
+        result = self.kit.plugin_package(self.repo, "zip", out, version="1.0.0")
+        prefix = result["prefix"]
+        with zipfile.ZipFile(out) as zf:
+            embedded = json.loads(zf.read(f"{prefix}/manifest.json"))
+        self.assertEqual(embedded["files"], result["manifest"]["files"])
+        self.assertEqual(embedded["version"], "1.0.0")
+        self.assertNotIn("manifest.json", embedded["files"])
+
+    def test_package_default_output_name_has_version(self) -> None:
+        """AC3: omitting output yields a name-version filename."""
+        result = self.kit.plugin_package(self.repo, "zip", None, version="3.4.5")
+        self.assertTrue(result["archive"].endswith("repo-3.4.5.zip"))
+        self.assertTrue(Path(result["archive"]).exists())
+
+    def test_package_pins_python_deps(self) -> None:
+        """AC2: requirements.txt deps are pinned/flagged in the manifest."""
+        (self.repo / "requirements.txt").write_text(
+            "grpcio==1.60.0\nprotobuf>=4.25\n# comment\nrequests\n", encoding="utf-8"
+        )
+        result = self.kit.plugin_package(self.repo, "zip", self.root / "out.zip")
+        deps = result["manifest"]["dependencies"]
+        self.assertEqual(deps["grpcio"], {"version": "1.60.0", "pinned": True})
+        self.assertFalse(deps["protobuf"]["pinned"])
+        self.assertFalse(deps["requests"]["pinned"])
+
+    def test_package_pins_node_deps(self) -> None:
+        """AC2: package.json dependencies are pinned/flagged in the manifest."""
+        node_repo = self.root / "noderepo"
+        write_repo(node_repo, self.kit.scaffold_plugin("node-bridge", "node")["files"])
+        (node_repo / "package.json").write_text(
+            json.dumps({"name": "node-bridge", "dependencies": {"a": "1.2.3", "b": "^4.5.6", "c": "*"}}),
+            encoding="utf-8",
+        )
+        result = self.kit.plugin_package(node_repo, "zip", self.root / "node.zip")
+        deps = result["manifest"]["dependencies"]
+        self.assertTrue(deps["a"]["pinned"])
+        self.assertFalse(deps["b"]["pinned"])
+        self.assertFalse(deps["c"]["pinned"])
+
+    def test_collect_dependencies_empty(self) -> None:
+        """AC2: a repo with no requirements.txt or package.json yields an empty deps map."""
+        plain = write_repo(self.root / "plain", {"main.py": "print('hi')\n"})
+        rel_files = {p.relative_to(plain).as_posix(): p for p in self.mod._iter_repo_files(plain)}
+        self.assertEqual(self.mod._collect_dependencies(rel_files), {})
 
     def test_package_bad_format(self) -> None:
-        """AC8: unsupported format is refused."""
+        """AC4: unsupported format is refused."""
         result = self.kit.plugin_package(self.repo, "rar", self.root / "out.rar")
         self.assertEqual(result["status"], "refused")
+        self.assertEqual(result["reason"], "unsupported_format")
 
     def test_package_refuses_dirty_repo(self) -> None:
-        """AC7: a repo that does not lint clean is refused for packaging."""
+        """AC4: a repo that does not lint clean is refused and writes no archive."""
         (self.repo / "leak.py").write_text("password = 'hunter2hunter2'\n", encoding="utf-8")
-        result = self.kit.plugin_package(self.repo, "zip", self.root / "out.zip")
+        out = self.root / "out.zip"
+        result = self.kit.plugin_package(self.repo, "zip", out)
         self.assertEqual(result["status"], "refused")
         self.assertIn("lint", result["reason"])
+        self.assertFalse(out.exists())
 
 
 if __name__ == "__main__":
