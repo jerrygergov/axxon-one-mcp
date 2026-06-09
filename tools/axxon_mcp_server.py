@@ -64,6 +64,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "scene_description": ("Per-camera scene descriptions (analytics geometry)", ("list_scene_description",), "--enable-scene-description"),
     "package_availability": ("Installer-package availability check", ("check_package_availability",), "--enable-package-availability"),
     "domain_topology": ("Domain + node enumeration (EnumerateNodes)", ("enumerate_nodes",), "--enable-domain-topology"),
+    "config_revisions": ("Config revision history + capped backup-collectibility probe", ("get_revision_info", "collect_backup_probe"), "--enable-config-revisions"),
 }
 
 
@@ -109,6 +110,7 @@ def create_server(
     scene_description: Any | None = None,
     package_availability: Any | None = None,
     domain_topology: Any | None = None,
+    config_revisions: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -185,7 +187,8 @@ def create_server(
         ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
         ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
         ("event_taxonomy", event_taxonomy), ("scene_description", scene_description),
-        ("package_availability", package_availability), ("domain_topology", domain_topology), ("groups", groups),
+        ("package_availability", package_availability), ("domain_topology", domain_topology),
+        ("config_revisions", config_revisions), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -304,6 +307,9 @@ def create_server(
 
     if domain_topology is not None:
         register_domain_topology_tools(server, domain_topology)
+
+    if config_revisions is not None:
+        register_config_revisions_tools(server, config_revisions)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1831,6 +1837,29 @@ def register_domain_topology_tools(server: Any, domain_topology: Any) -> None:
         return domain_topology.enumerate_nodes()
 
 
+def register_config_revisions_tools(server: Any, config_revisions: Any) -> None:
+    @server.tool(name="config_revisions_connect_axxon_profile")
+    def config_revisions_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ConfigurationManager layer to the env profile."""
+        return config_revisions.config_revisions_connect_axxon_profile(profile)
+
+    @server.tool(name="get_revision_info")
+    def get_revision_info(config_type: str = "LOCAL_CONFIG", nodes: list[str] | None = None) -> dict[str, Any]:
+        """Read config revision history per node ("LOCAL_CONFIG"|"SHARED_CONFIG")."""
+        return config_revisions.get_revision_info(config_type, nodes)
+
+    @server.tool(name="collect_backup_probe")
+    def collect_backup_probe(
+        types: list[str] | None = None,
+        node: str = "",
+        max_chunks: int | None = None,
+        max_bytes: int | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Probe backup collectibility and tally size (chunk/byte/time capped); blob never returned."""
+        return config_revisions.collect_backup_probe(types, node, max_chunks, max_bytes, timeout)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2176,6 +2205,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable DomainManager reads (enumerate_nodes: domain + node topology). Read-only.",
     )
     parser.add_argument(
+        "--enable-config-revisions",
+        action="store_true",
+        help="Enable ConfigurationManager reads (get_revision_info, collect_backup_probe). Read-only, capped.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2495,6 +2529,11 @@ def main() -> int:
         from axxon_mcp_domain_topology import AxxonMcpDomainTopology
 
         domain_topology = AxxonMcpDomainTopology()
+    config_revisions = None
+    if args.enable_config_revisions:
+        from axxon_mcp_config_revisions import AxxonMcpConfigRevisions
+
+        config_revisions = AxxonMcpConfigRevisions()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2610,6 +2649,7 @@ def main() -> int:
         scene_description=scene_description,
         package_availability=package_availability,
         domain_topology=domain_topology,
+        config_revisions=config_revisions,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
