@@ -38,6 +38,9 @@ _ROLLBACK_NOTES: dict[str, str] = {
 }
 _DEFAULT_ROLLBACK_NOTE = "rollback available via rollback_operator_plan"
 
+# Per-call confirmation token for the end-to-end run_recipe apply path.
+RUN_RECIPE_CONFIRMATION = "CONFIRM-run-recipe"
+
 # ---------------------------------------------------------------------------
 # Intent rule table — deterministic keyword/pattern matching.
 #
@@ -161,6 +164,17 @@ def _external_event_params(ctx: dict) -> dict:
     return out
 
 
+def _closest(needle: str, candidates: list[str], limit: int = 5) -> list[str]:
+    """Return up to `limit` catalog entries closest to `needle` (case-insensitive)."""
+    import difflib
+
+    matches = difflib.get_close_matches(needle, candidates, n=limit, cutoff=0.4)
+    if matches:
+        return matches
+    low = needle.lower()
+    return [c for c in candidates if low in c.lower()][:limit]
+
+
 # Each rule: (keywords_all, excludes_any, workflows_list, priority)
 # workflows_list is a list of (workflow_name, param_fn, why_template)
 # Higher priority wins. Rules are matched against the full lowercased intent string.
@@ -225,6 +239,20 @@ _INTENT_RULES: list[tuple[frozenset, frozenset, list[tuple[str, Callable, str]],
         frozenset(),
         [("create_macro", _macro_params, "create automation macro")],
         8,
+    ),
+    # I-5b: Scheduled export — "schedule an export every night" maps to an automation macro
+    (
+        frozenset({"schedule", "export"}),
+        frozenset(),
+        [("create_macro", _macro_params, "create scheduled-export automation macro")],
+        9,
+    ),
+    # I-10b: Raise a test alarm/event on a sensor — higher priority than the bare "event" rule
+    (
+        frozenset({"raise"}),
+        frozenset(),
+        [("external_event_inject", _external_event_params, "inject external alarm or sensor event")],
+        7,
     ),
     # I-7: Add camera to existing layout — "add camera to existing layout"
     (
@@ -334,12 +362,56 @@ class AxxonMcpTranslator:
     """
 
     operator_factory: Callable[[], Any]
+    devices_factory: Callable[[], Any] | None = None
     _operator: Any | None = field(default=None, init=False, repr=False)
+    _devices: Any | None = field(default=None, init=False, repr=False)
 
     def _ensure_operator(self) -> Any:
         if self._operator is None:
             self._operator = self.operator_factory()
         return self._operator
+
+    def _ensure_devices(self) -> Any | None:
+        if self.devices_factory is None:
+            return None
+        if self._devices is None:
+            self._devices = self.devices_factory()
+        return self._devices
+
+    # ------------------------------------------------------------------
+    # resolve_device
+    # ------------------------------------------------------------------
+
+    def resolve_device(self, vendor: str = "", model: str = "", context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Validate a vendor/model pair against the live device catalog.
+
+        Args:
+            vendor: Device vendor name (e.g. "Axis").
+            model: Device model name (e.g. "P1448").
+            context: Unused placeholder for parity with other methods.
+
+        Returns:
+            ``{"status": "virtual"}`` when no vendor/model is supplied (the create_camera Virtual
+            default applies); ``{"status": "ok", "vendor", "model", "traits"}`` when the pair exists;
+            ``{"status": "gap", "message", "suggestions"}`` when the vendor or model is unknown.
+        """
+        vendor = (vendor or "").strip()
+        model = (model or "").strip()
+        if not vendor and not model:
+            return {"status": "virtual", "tool": "resolve_device", "message": "no vendor/model supplied; create_camera uses the Virtual default"}
+        devices = self._ensure_devices()
+        if devices is None:
+            return {"status": "gap", "tool": "resolve_device", "message": "devices_catalog is not enabled; cannot resolve vendor/model", "suggestions": []}
+        vendors = list((devices.list_vendors().get("vendors")) or [])
+        if vendor not in vendors:
+            return {"status": "gap", "tool": "resolve_device", "message": f"unknown vendor {vendor!r}", "suggestions": _closest(vendor, vendors)}
+        models = [d.get("model", "") for d in (devices.list_devices(vendor=vendor).get("devices") or []) if d.get("vendor") == vendor]
+        if model and model not in models:
+            # Prefer fuzzy matches; if none are close, fall back to the vendor's actual model list.
+            suggestions = _closest(model, models) or models[:5]
+            return {"status": "gap", "tool": "resolve_device", "message": f"unknown model {model!r} for vendor {vendor!r}", "suggestions": suggestions}
+        device = devices.get_device(vendor=vendor, model=model).get("device") or {}
+        return {"status": "ok", "tool": "resolve_device", "vendor": vendor, "model": model, "traits": device.get("traits", {})}
 
     # ------------------------------------------------------------------
     # assemble_recipe
@@ -382,6 +454,20 @@ class AxxonMcpTranslator:
             {"workflow": wf, "params": param_fn(context), "why": why}
             for (wf, param_fn, why) in matched
         ]
+
+        # Validate a named vendor/model against the live catalog before emitting create_camera,
+        # so a typo is caught here with suggestions rather than silently falling back to Virtual.
+        if (context.get("vendor") or context.get("model")) and any(s["workflow"] == "create_camera" for s in steps):
+            resolved = self.resolve_device(context.get("vendor", ""), context.get("model", ""), context)
+            if resolved["status"] == "gap":
+                return {"status": "device_unresolved", "intent_text": intent_text,
+                        "message": resolved["message"], "suggestions": resolved.get("suggestions", [])}
+            if resolved["status"] == "ok":
+                for step in steps:
+                    if step["workflow"] == "create_camera":
+                        step["params"]["vendor"] = resolved["vendor"]
+                        step["params"]["model"] = resolved["model"]
+
         return {"intent_text": intent_text, "steps": steps}
 
     # ------------------------------------------------------------------
@@ -520,6 +606,55 @@ class AxxonMcpTranslator:
 
         return {"text": "\n".join(lines)}
 
+    # ------------------------------------------------------------------
+    # run_recipe (assemble -> validate -> gated apply -> rollback handles)
+    # ------------------------------------------------------------------
+
+    def run_recipe(self, intent_text: str, context: dict[str, Any] | None = None, confirmation: str = "", apply: bool = False) -> dict[str, Any]:
+        """Assemble + validate a recipe, and optionally apply it behind a per-call confirmation.
+
+        With ``apply=False`` (default) this performs zero mutations and returns the validated dry
+        preview. With ``apply=True`` it applies each validated step only when ``confirmation`` equals
+        RUN_RECIPE_CONFIRMATION and no step validated as a gap; otherwise it refuses. The operator's
+        own approval gate still applies inside ``operator.apply``.
+
+        Args:
+            intent_text: Free-text intent.
+            context: Optional structured context (fixture values, vendor/model, etc.).
+            confirmation: Must equal RUN_RECIPE_CONFIRMATION to apply.
+            apply: When True, apply the validated steps; otherwise return a dry preview.
+
+        Returns:
+            Dict with ``status`` and either a ``validation`` preview (dry) or ``applied_steps``.
+        """
+        assembled = self.assemble_recipe(intent_text, context)
+        if "steps" not in assembled:
+            return {"status": assembled.get("status", "unsupported"), "tool": "run_recipe", "detail": assembled}
+        validation = self.validate_recipe(assembled)
+
+        if not apply:
+            return {"status": "ok", "tool": "run_recipe", "mode": "dry", "intent_text": intent_text,
+                    "valid": validation["valid"], "validation": validation}
+
+        if confirmation != RUN_RECIPE_CONFIRMATION:
+            return {"status": "gap", "tool": "run_recipe", "message": f"apply requires confirmation={RUN_RECIPE_CONFIRMATION}", "validation": validation}
+        if not validation["valid"]:
+            return {"status": "invalid", "tool": "run_recipe", "message": "recipe has gap steps; refusing to apply", "gaps": validation["gaps"], "validation": validation}
+
+        operator = self._ensure_operator()
+        applied_steps: list[dict[str, Any]] = []
+        for step in validation["steps"]:
+            result = operator.apply(step["plan_id"], step["confirmation_token"])
+            applied_steps.append({
+                "workflow": step["workflow"],
+                "plan_id": step["plan_id"],
+                "apply_status": result.get("status"),
+                "created_uids": result.get("created_uids", []),
+                "rollback_confirmation_token": step["rollback_confirmation_token"],
+            })
+        return {"status": "applied", "tool": "run_recipe", "mode": "apply", "intent_text": intent_text,
+                "applied_steps": applied_steps}
+
 
 # ---------------------------------------------------------------------------
 # MCP registration
@@ -546,3 +681,13 @@ def register_translator_tools(server: Any, translator: AxxonMcpTranslator) -> No
     def explain_recipe(recipe: list[dict[str, Any]] | dict[str, Any]) -> dict[str, Any]:
         """Return a human-readable explanation of a recipe including risk, rollback, and time estimates."""
         return translator.explain_recipe(recipe)
+
+    @server.tool(name="resolve_device")
+    def resolve_device(vendor: str = "", model: str = "", context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Validate a vendor/model pair against the live device catalog (ok / gap+suggestions / virtual)."""
+        return translator.resolve_device(vendor, model, context)
+
+    @server.tool(name="run_recipe")
+    def run_recipe(intent_text: str, context: dict[str, Any] | None = None, confirmation: str = "", apply: bool = False) -> dict[str, Any]:
+        """Assemble + validate a recipe; with apply=True and a confirmation token, apply it (gated)."""
+        return translator.run_recipe(intent_text, context or {}, confirmation, apply)

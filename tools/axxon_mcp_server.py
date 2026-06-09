@@ -2603,7 +2603,12 @@ def main() -> int:
                 enabled=False,
             )
 
-        translator = AxxonMcpTranslator(operator_factory=_make_operator)
+        def _make_devices() -> Any:
+            from axxon_mcp_devices_catalog import AxxonMcpDevicesCatalog
+
+            return AxxonMcpDevicesCatalog()
+
+        translator = AxxonMcpTranslator(operator_factory=_make_operator, devices_factory=_make_devices)
     ptz = None
     if args.enable_ptz:
         from axxon_mcp_ptz import AxxonMcpPtz
