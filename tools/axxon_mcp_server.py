@@ -68,6 +68,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "filesystem_browser": ("Server-side filesystem browsing (list dir, file info, free space)", ("list_directory", "get_space"), "--enable-filesystem-browser"),
     "devices_catalog": ("Supported-device catalog (vendors, models, traits) for adding cameras", ("list_vendors", "list_devices", "get_device"), "--enable-devices-catalog"),
     "global_tracker": ("Cross-camera tracking profile metadata reads (no images)", ("get_profile",), "--enable-global-tracker"),
+    "shared_kv": ("Shared key-value store reads + gated commit (plugin/integration state)", ("list_records", "get_records", "commit_record"), "--enable-shared-kv"),
 }
 
 
@@ -117,6 +118,7 @@ def create_server(
     filesystem_browser: Any | None = None,
     devices_catalog: Any | None = None,
     global_tracker: Any | None = None,
+    shared_kv: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -195,7 +197,8 @@ def create_server(
         ("event_taxonomy", event_taxonomy), ("scene_description", scene_description),
         ("package_availability", package_availability), ("domain_topology", domain_topology),
         ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
-        ("devices_catalog", devices_catalog), ("global_tracker", global_tracker), ("groups", groups),
+        ("devices_catalog", devices_catalog), ("global_tracker", global_tracker),
+        ("shared_kv", shared_kv), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -326,6 +329,9 @@ def create_server(
 
     if global_tracker is not None:
         register_global_tracker_tools(server, global_tracker)
+
+    if shared_kv is not None:
+        register_shared_kv_tools(server, shared_kv)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1942,6 +1948,38 @@ def register_global_tracker_tools(server: Any, global_tracker: Any) -> None:
         return global_tracker.get_profile(profile_id, max_items)
 
 
+def register_shared_kv_tools(server: Any, shared_kv: Any) -> None:
+    @server.tool(name="shared_kv_connect_axxon_profile")
+    def shared_kv_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the SharedKVStorageService layer to the env profile."""
+        return shared_kv.shared_kv_connect_axxon_profile(profile)
+
+    @server.tool(name="list_records")
+    def list_records(prefix: str = "", view: str = "") -> dict[str, Any]:
+        """List shared-KV records under a key prefix (reads are ungated)."""
+        return shared_kv.list_records(prefix, view)
+
+    @server.tool(name="get_records")
+    def get_records(keys: list[str] | None = None, prefix: str = "", view: str = "") -> dict[str, Any]:
+        """Batch-read specific shared-KV records by key (optionally under a prefix)."""
+        return shared_kv.get_records(keys, prefix, view)
+
+    @server.tool(name="get_records_stream")
+    def get_records_stream(prefix: str = "", view: str = "", max_chunks: int | None = None) -> dict[str, Any]:
+        """Stream shared-KV record chunks under a prefix (chunk-capped); values not returned."""
+        return shared_kv.get_records_stream(prefix, view, max_chunks)
+
+    @server.tool(name="commit_record")
+    def commit_record(
+        prefix: str = "",
+        set_records: list[dict[str, Any]] | None = None,
+        removed: list[dict[str, Any]] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Commit shared-KV records (set/remove); gated by AXXON_SHARED_KV_APPROVE=1 + confirmation token."""
+        return shared_kv.commit_record(prefix, set_records, removed, confirmation)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2307,6 +2345,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable GlobalTrackerService get_profile (cross-camera profile metadata, no images). Read-only.",
     )
     parser.add_argument(
+        "--enable-shared-kv",
+        action="store_true",
+        help="Enable SharedKVStorageService reads + gated commit_record (writes need AXXON_SHARED_KV_APPROVE=1).",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2425,7 +2468,7 @@ APPROVE_ENV_VARS = (
     "AXXON_BOOKMARK_EXTRAS_APPROVE", "AXXON_SECURITY_CREDENTIALS_APPROVE", "AXXON_AUTH_SESSIONS_APPROVE",
     "AXXON_LAYOUT_MANAGER_APPROVE", "AXXON_AUDIT_INJECT_APPROVE", "AXXON_CONTROL_APPROVE",
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
-    "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE",
+    "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
 )
 
 
@@ -2646,6 +2689,11 @@ def main() -> int:
         from axxon_mcp_global_tracker import AxxonMcpGlobalTracker
 
         global_tracker = AxxonMcpGlobalTracker()
+    shared_kv = None
+    if args.enable_shared_kv:
+        from axxon_mcp_shared_kv import AxxonMcpSharedKv
+
+        shared_kv = AxxonMcpSharedKv()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2765,6 +2813,7 @@ def main() -> int:
         filesystem_browser=filesystem_browser,
         devices_catalog=devices_catalog,
         global_tracker=global_tracker,
+        shared_kv=shared_kv,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
