@@ -17,7 +17,7 @@ drive PTZ, manage alarms and macros, and more.
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **251 MCP tools** across four layers (see below).
+- **282 MCP tools** across four layers (see below).
 
 ### Tool layers
 
@@ -174,7 +174,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 ## Tests
 
 ```bash
-python3.12 -m pytest tools/tests/ -q     # 967 unit tests, offline (no server needed)
+python3.12 -m pytest tools/tests/ -q     # 1065 unit tests, offline (no server needed)
 ```
 
 ## Layout
