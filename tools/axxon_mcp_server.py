@@ -69,6 +69,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "devices_catalog": ("Supported-device catalog (vendors, models, traits) for adding cameras", ("list_vendors", "list_devices", "get_device"), "--enable-devices-catalog"),
     "global_tracker": ("Cross-camera tracking profile metadata reads (no images)", ("get_profile",), "--enable-global-tracker"),
     "shared_kv": ("Shared key-value store reads + gated commit (plugin/integration state)", ("list_records", "get_records", "commit_record"), "--enable-shared-kv"),
+    "state_control": ("Device state reads + gated SetState (e.g. PTZ patrol controllers)", ("get_current_state", "set_state"), "--enable-state-control"),
 }
 
 
@@ -119,6 +120,7 @@ def create_server(
     devices_catalog: Any | None = None,
     global_tracker: Any | None = None,
     shared_kv: Any | None = None,
+    state_control: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -198,7 +200,7 @@ def create_server(
         ("package_availability", package_availability), ("domain_topology", domain_topology),
         ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
         ("devices_catalog", devices_catalog), ("global_tracker", global_tracker),
-        ("shared_kv", shared_kv), ("groups", groups),
+        ("shared_kv", shared_kv), ("state_control", state_control), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -332,6 +334,9 @@ def create_server(
 
     if shared_kv is not None:
         register_shared_kv_tools(server, shared_kv)
+
+    if state_control is not None:
+        register_state_control_tools(server, state_control)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1980,6 +1985,28 @@ def register_shared_kv_tools(server: Any, shared_kv: Any) -> None:
         return shared_kv.commit_record(prefix, set_records, removed, confirmation)
 
 
+def register_state_control_tools(server: Any, state_control: Any) -> None:
+    @server.tool(name="state_control_connect_axxon_profile")
+    def state_control_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the StateControlService layer to the env profile."""
+        return state_control.state_control_connect_axxon_profile(profile)
+
+    @server.tool(name="get_current_state")
+    def get_current_state(access_point: str = "") -> dict[str, Any]:
+        """Read the current state directive result for a state-controllable access point."""
+        return state_control.get_current_state(access_point)
+
+    @server.tool(name="get_default_state")
+    def get_default_state(access_point: str = "") -> dict[str, Any]:
+        """Read the default state directive result for a state-controllable access point."""
+        return state_control.get_default_state(access_point)
+
+    @server.tool(name="set_state")
+    def set_state(access_point: str = "", directive: str = "STATE_DIRECTIVE_NEUTRAL", priority: str = "PRIORITY_USER", confirmation: str = "") -> dict[str, Any]:
+        """Set a device state directive (reversible). Gated by AXXON_STATE_CONTROL_APPROVE=1 + confirmation."""
+        return state_control.set_state(access_point, directive, priority, confirmation)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2350,6 +2377,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable SharedKVStorageService reads + gated commit_record (writes need AXXON_SHARED_KV_APPROVE=1).",
     )
     parser.add_argument(
+        "--enable-state-control",
+        action="store_true",
+        help="Enable StateControlService state reads + gated set_state (writes need AXXON_STATE_CONTROL_APPROVE=1).",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2469,6 +2501,7 @@ APPROVE_ENV_VARS = (
     "AXXON_LAYOUT_MANAGER_APPROVE", "AXXON_AUDIT_INJECT_APPROVE", "AXXON_CONTROL_APPROVE",
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
+    "AXXON_STATE_CONTROL_APPROVE",
 )
 
 
@@ -2699,6 +2732,11 @@ def main() -> int:
         from axxon_mcp_shared_kv import AxxonMcpSharedKv
 
         shared_kv = AxxonMcpSharedKv()
+    state_control = None
+    if args.enable_state_control:
+        from axxon_mcp_state_control import AxxonMcpStateControl
+
+        state_control = AxxonMcpStateControl()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2819,6 +2857,7 @@ def main() -> int:
         devices_catalog=devices_catalog,
         global_tracker=global_tracker,
         shared_kv=shared_kv,
+        state_control=state_control,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
