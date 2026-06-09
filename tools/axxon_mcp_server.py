@@ -59,6 +59,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "gdpr_cleanup": ("GDPR data cleanup", ("gdpr_cleanup_plan",), "--enable-gdpr-cleanup"),
     "control": ("StateControl / device control", ("set_device_state",), "--enable-control"),
     "server_settings": ("Server log-level + settings", ("get_server_loglevel", "set_server_loglevel"), "--enable-server"),
+    "statistics": ("Server/stream statistics reads (CPU/disk/FPS/bitrate health)", ("get_statistics",), "--enable-statistics"),
 }
 
 
@@ -99,6 +100,7 @@ def create_server(
     settings: Any | None = None,
     timezone: Any | None = None,
     server_settings: Any | None = None,
+    statistics: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -173,7 +175,7 @@ def create_server(
         ("detector_archive", detector_archive), ("admin", admin), ("bookmarks", bookmarks),
         ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
         ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
-        ("timezone", timezone), ("server_settings", server_settings), ("groups", groups),
+        ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -277,6 +279,9 @@ def create_server(
 
     if server_settings is not None:
         register_server_settings_tools(server, server_settings)
+
+    if statistics is not None:
+        register_statistics_tools(server, statistics)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1744,6 +1749,18 @@ def register_server_settings_tools(server: Any, server_settings: Any) -> None:
         return server_settings.drop_logs(nodes, confirmation)
 
 
+def register_statistics_tools(server: Any, statistics: Any) -> None:
+    @server.tool(name="statistics_connect_axxon_profile")
+    def statistics_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the StatisticService layer to the env profile."""
+        return statistics.statistics_connect_axxon_profile(profile)
+
+    @server.tool(name="get_statistics")
+    def get_statistics(keys: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        """Read server/stream statistics (CPU/disk/FPS/bitrate health); empty keys = all points."""
+        return statistics.get_statistics(keys)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2064,6 +2081,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 20 ServerSettings tools (set_log_level, drop_logs). Writes need AXXON_SERVER_APPROVE=1.",
     )
     parser.add_argument(
+        "--enable-statistics",
+        action="store_true",
+        help="Enable StatisticService reads (get_statistics: CPU/disk/FPS/bitrate health). Read-only.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2358,6 +2380,11 @@ def main() -> int:
         from axxon_mcp_server_settings import AxxonMcpServerSettings
 
         server_settings = AxxonMcpServerSettings()
+    statistics = None
+    if args.enable_statistics:
+        from axxon_mcp_statistics import AxxonMcpStatistics
+
+        statistics = AxxonMcpStatistics()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2468,6 +2495,7 @@ def main() -> int:
         settings=settings,
         timezone=timezone,
         server_settings=server_settings,
+        statistics=statistics,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
