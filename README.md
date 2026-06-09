@@ -17,7 +17,7 @@ drive PTZ, manage alarms and macros, and more.
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **282 MCP tools** across four layers (see below).
+- **287 MCP tools** across four layers (see below).
 
 ### Tool layers
 
