@@ -169,16 +169,29 @@ irreversible op is labeled as such in its plan output.
 
 ### Phase D — Authoring kit + partner SDK depth
 
-**Why.** Generator + partner scaffolds exist (Python + Node). Customers want more templates
-and C#.
+**Status (reconciled 2026-06-09): the template/language work is already shipped.** The generator
+has **13 templates, each in Python AND Node/TypeScript** (`tools/templates/*.{py,ts}.tmpl`),
+including the ones this section originally listed as "to build": `alarm_responder`,
+`scheduled_exporter`, `dashboard_backend`, `ml_detector_bridge`, `external_event_producer`,
+`webhook_bridge`, `inventory_sync`, plus `plugin_scaffold`. The partner SDK kit
+(`scaffold_plugin` / `plugin_lint` / `plugin_package`) and the static verifier
+(`verify_integration` / `verify_dir`, rejecting embedded secrets, missing caps, unsafe HTTP
+defaults) are also shipped. Tools: `list_integration_templates`, `generate_integration`,
+`verify_integration`, `scaffold_plugin`, `plugin_lint`, `plugin_package`.
 
-**Scope.** New templates (alarm responder, PTZ controller, ML-detector bridge, scheduled
-exporter, dashboard backend, full plugin scaffold) across Python / Node / C#; static verifier
-extended to all three (reject embedded secrets, missing caps, unsafe HTTP defaults); optional
-bundle signing.
+**Remaining (not yet built).**
+- **C# as a third language** — entirely absent today (no `.cs.tmpl`, no `csharp` branch). Full C#
+  parity = a `.cs.tmpl` + a `csharp` build branch for each of the 13 templates, a `.csproj`
+  dependency emitter, a `csharp` CI branch, `csharp` static-verifier rules, and `"csharp"` added
+  to each template's `languages`. Deferred (large mechanical surface; C# can't be compile-verified
+  on this stand).
+- **Bundle signing** — optional `--sign` flag emitting a manifest with per-file hashes so
+  distributors can pin templates. Not yet implemented.
+- **`ptz_controller` template** — listed originally; not present (PTZ has tool coverage but no
+  generator template).
 
-**Acceptance.** Every template produces a runnable bundle that connects to the stand and
-lists cameras; the static verifier is the single source of truth for safety.
+**Acceptance.** Every shipped template produces a runnable bundle; the static verifier is the
+single source of truth for safety. (Both already hold for Python + Node.)
 
 ### Phase E — NL → plan translator depth (deepen the existing `assemble_recipe`)
 
