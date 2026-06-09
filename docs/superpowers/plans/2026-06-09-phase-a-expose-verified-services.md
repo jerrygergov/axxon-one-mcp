@@ -222,11 +222,32 @@ Four more single-unary-read groups, same pattern as Step 1. One commit per group
 - `README.md`: bump the tool count and add the new groups to the layer table if it enumerates them.
 - Commit: `docs: Phase A — 10 services exposed, status refreshed`.
 
-### Step 10 — Fresh verification pass
+### Step 10 — Fresh verification pass (offline + full live)
 - Fresh-session verifier judges current code + current command output (not chat claims).
-- Gate: `python3.12 -m unittest discover -s tools/tests` **and** `python3.12 -m pytest tools/tests/ -q`
+- **Offline gate:** `python3.12 -m unittest discover -s tools/tests` **and** `python3.12 -m pytest tools/tests/ -q`
   both green; `--help` lists the 10 new flags; `list_capabilities` reports the 10 new groups.
-- If not PASS → `problems.md`, smallest safe fix, reverify.
+- **Full live gate (every new tool, not just one-read-per-group like Step 8):** exercise **all 31
+  new Phase A tools** against the real stand and record a PASS/WARN/FAIL per tool. This is the gate
+  that turns unit-correct into verified-live: live proto field shapes, the dotted-proto
+  `Node.Ancillary` stub resolving at runtime, `GetDevice` needing a real vendor/model that exists,
+  `collect_backup_probe`/`get_records_stream`/V2 streams actually streaming, and the
+  `shared_kv.commit_record` round-trip.
+  - Run via a Sonnet sub-agent with the live env (`AXXON_HOST`, `AXXON_HTTP_URL`, `AXXON_USERNAME`,
+    `AXXON_PASSWORD`, `AXXON_TLS_CN=Server`, `AXXON_CA`, `AXXON_PROTO_DIR`). Reads work over HTTP
+    `/grpc` with no CA; direct-gRPC tools need the gitignored CA + protos symlinked into the run
+    location. **Symlink in, run, then REMOVE the symlink before any commit** — it must never be
+    committed.
+  - Retry transient `urlopen`/`DEADLINE_EXCEEDED` up to 3× before judging FAIL (stand is remote).
+  - Mutations are reversible only: `shared_kv.commit_record` uses a `codex-*` key set then removed
+    (rollback verified by re-reading). No other new tool mutates.
+  - A tool that the stand cannot exercise (e.g. `get_profile` with no tracker fixture, `get_device`
+    with no matching model) is recorded `WARN: fixture-needed` with the precise missing object, not
+    FAIL.
+  - Capture sanitized evidence to `docs/api-audit/phase-a-live-verification-latest.md`
+    (host→`%3Cdemo-host%3E`, user→`%3Cdemo-user%3E`, CA/tokens/passwords→`%3Credacted%3E`;
+    `AXXON_TLS_CN=Server` may stay; `hosts/Server/...` UIDs may stay).
+- If not PASS (offline or live) → `problems.md`, smallest safe fix, reverify. A documented
+  `WARN: fixture-needed` is not a FAIL.
 
 ---
 
@@ -239,9 +260,10 @@ Four more single-unary-read groups, same pattern as Step 1. One commit per group
 | AC3 | Every new read tool returns `{status:"ok", tool:...}` with summarized fields and **no raw secrets**. | unit tests with sentinel-secret assertions |
 | AC4 | Streaming tools (`ListVendorsV2`, `ListDevicesV2`, `GetRecordsStream`, `CollectBackup`, `GetProfile`) enforce entry/byte/time caps with partial-result reporting. | cap-path unit tests |
 | AC5 | `shared_kv.commit_record` refuses without a valid `confirm` token and without `AXXON_SHARED_KV_APPROVE`; is reversible. | unit tests + smoke rollback |
-| AC6 | Live smoke calls one read from each of the 10 groups against the stand and reports PASS/WARN/FAIL; sanitized evidence committed. | `axxon_phase_a_smoke.py` run |
+| AC6 | Step-8 smoke calls one read from each of the 10 groups against the stand and reports PASS/WARN/FAIL; sanitized evidence committed. | `axxon_phase_a_smoke.py` run |
 | AC7 | Full offline suite green (`unittest` + `pytest`), tool count and `STATUS.md` §3 updated and self-consistent. | both test runners; regenerate STATUS §3 table |
 | AC8 | No proto / CA / secret committed; no symlink committed; evidence sanitized. | `git status`; `git check-ignore`; grep evidence for host/user/secret |
+| AC9 | **All 31 new Phase A tools** exercised against the real stand in Step 10, each PASS or documented `WARN: fixture-needed` (zero FAIL); `commit_record` round-trip reverted; sanitized live evidence committed; symlink removed before commit. | Step-10 live run via Sonnet sub-agent; `docs/api-audit/phase-a-live-verification-latest.md` |
 
 ---
 
