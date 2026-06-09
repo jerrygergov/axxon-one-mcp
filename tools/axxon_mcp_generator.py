@@ -31,6 +31,9 @@ DEFAULT_SCHEDULE_INTERVAL_SECONDS = 300
 MIN_INTERVAL_SECONDS = 60
 MAX_SCHEDULED_RUNS = 100
 DEFAULT_SCHEDULED_RUNS = 12
+MAX_PTZ_MAGNITUDE = 1.0
+MAX_PTZ_HOLD_MS = 5000
+DEFAULT_PTZ_HOLD_MS = 800
 
 ALLOWED_IMPORTS = {
     "grpc",
@@ -200,6 +203,14 @@ TEMPLATE_CATALOG: list[TemplateInfo] = [
         summary="Runnable plugin repo skeleton (auth + ListCameras, retry, env loader, test, CI, README, LICENSE).",
         required_params=["name"],
         required_fixtures=[],
+        required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
+        languages=["python", "node"],
+    ),
+    TemplateInfo(
+        name="ptz_controller",
+        summary="Bounded PTZ controller: acquire a telemetry session, read start position, do one bounded move, then restore the start position and release. Requires a PTZ-capable TelemetryControl access point.",
+        required_params=["telemetry_ap"],
+        required_fixtures=["ptz-telemetry-control"],
         required_env=["AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD"],
         languages=["python", "node"],
     ),
@@ -397,6 +408,8 @@ class Generator:
             return self._build_dashboard_backend(request, info)
         if request.template == "plugin_scaffold":
             return self._build_plugin_scaffold(request, info)
+        if request.template == "ptz_controller":
+            return self._build_ptz_controller(request, info)
         return GenerationRefusal(request.template, "unknown_template", request.template)
 
     def _build_grpc_consumer(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
@@ -764,6 +777,46 @@ class Generator:
                 required_env=info.required_env,
             )
         body = _render(_read_template("alarm_responder"), values)
+        return GeneratedBundle(
+            template=request.template,
+            files={
+                "main.py": body,
+                "README.md": readme,
+                "requirements.txt": "grpcio>=1.60\nprotobuf>=4.25\n",
+            },
+            required_env=info.required_env,
+        )
+
+    def _build_ptz_controller(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
+        if not request.allow_mutation:
+            return GenerationRefusal(
+                request.template,
+                "refused_mutation",
+                "PTZ control moves a physical camera; pass allow_mutation=True to override",
+            )
+        ap = request.params["telemetry_ap"]
+        pan = float(request.params.get("pan", 0.1))
+        tilt = float(request.params.get("tilt", 0.0))
+        hold_ms = int(request.params.get("hold_ms", DEFAULT_PTZ_HOLD_MS))
+        if abs(pan) > MAX_PTZ_MAGNITUDE or abs(tilt) > MAX_PTZ_MAGNITUDE or hold_ms > MAX_PTZ_HOLD_MS:
+            return GenerationRefusal(
+                request.template,
+                "cap_exceeded",
+                f"|pan|,|tilt|<= {MAX_PTZ_MAGNITUDE}, hold_ms<= {MAX_PTZ_HOLD_MS}",
+            )
+        values = {"TELEMETRY_AP": ap, "PAN": str(pan), "TILT": str(tilt), "HOLD_MS": str(hold_ms)}
+        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": ap, "TEMPLATE": "ptz_controller"})
+        if request.language == "node":
+            return GeneratedBundle(
+                template=request.template,
+                files={
+                    "src/index.ts": _render(_read_ts_template("ptz_controller"), values),
+                    "README.md": readme,
+                    "package.json": _ts_package_json(ap),
+                },
+                required_env=info.required_env,
+            )
+        body = _render(_read_template("ptz_controller"), values)
         return GeneratedBundle(
             template=request.template,
             files={

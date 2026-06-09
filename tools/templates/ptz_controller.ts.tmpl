@@ -1,0 +1,126 @@
+/**
+ * Generated bounded PTZ controller for telemetry access point $TELEMETRY_AP.
+ *
+ * Acquires a telemetry session, reads the start position, performs ONE bounded move, holds
+ * briefly, restores the exact start position (rollback), and releases the session. The move
+ * drives a physical camera, so it is only emitted when mutation was authorised. Pan/tilt
+ * magnitudes and the hold window are capped at generation time. Credentials come from process.env.
+ */
+
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const TELEMETRY_AP = '$TELEMETRY_AP';
+const PAN = $PAN;
+const TILT = $TILT;
+const HOLD_MS = $HOLD_MS;
+const TIMEOUT_SECONDS = 30;
+
+const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
+
+function redact(value: string): string {
+  if (!value) return '';
+  return value.slice(0, 2) + '***';
+}
+
+function checkEnv(): string[] {
+  return REQUIRED_ENV.filter(name => !process.env[name]);
+}
+
+function loadProto(protoPath: string): grpc.GrpcObject {
+  const pkgDef = protoLoader.loadSync(protoPath, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
+  return grpc.loadPackageDefinition(pkgDef);
+}
+
+function unary<T>(client: grpc.Client, method: string, request: object, deadline: Date): Promise<T> {
+  return new Promise((resolve, reject) => {
+    (client as Record<string, Function>)[method](
+      request,
+      { deadline },
+      (err: grpc.ServiceError | null, res: T) => {
+        if (err) reject(err); else resolve(res);
+      },
+    );
+  });
+}
+
+async function main(): Promise<number> {
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    console.error(`missing env: ${missing.join(',')}`);
+    return 2;
+  }
+
+  const host = process.env.AXXON_HOST!;
+  const tlsCn = process.env.AXXON_TLS_CN!;
+  const user = process.env.AXXON_USERNAME!;
+  console.info(`axxon-one-mcp generated ptz_controller`);
+  console.info(`target=${host} ap=${TELEMETRY_AP} pan=${PAN} tilt=${TILT} hold_ms=${HOLD_MS}`);
+  console.info(`user=${user} password=${redact(process.env.AXXON_PASSWORD!)} tls_cn=${tlsCn}`);
+
+  const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
+  const caPath = process.env.AXXON_CA;
+  let caData: Buffer | null = null;
+  if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
+
+  const authProtoPath = path.join(stubsPath, 'Authentication.proto');
+  const authProto = loadProto(authProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+
+  const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
+  const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
+
+  const tokenPair: string = await new Promise((resolve, reject) => {
+    const authClient = new AuthService(host, sslCreds, channelOptions);
+    (authClient as Record<string, Function>)['AuthenticateEx2'](
+      { user_name: user, password: process.env.AXXON_PASSWORD },
+      (err: grpc.ServiceError | null, res: Record<string, string | number>) => {
+        if (err) { reject(err); return; }
+        if (res['error_code'] !== 0 && res['error_code'] !== '0') {
+          reject(new Error(`auth failed error_code=${res['error_code']}`)); return;
+        }
+        resolve(String(res['token_name']) + ':' + String(res['token_value']));
+      },
+    );
+  }).catch((err) => { console.error(`authentication error: ${err}`); process.exit(3); }) as string;
+
+  const [tn, tv] = tokenPair.split(':');
+  const metaCreds = grpc.credentials.createFromMetadataGenerator((_p, cb) => {
+    const meta = new grpc.Metadata();
+    meta.add(tn, tv);
+    cb(null, meta);
+  });
+  const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
+
+  const telProtoPath = path.join(stubsPath, 'Telemetry.proto');
+  const telProto = loadProto(telProtoPath) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
+  const TelemetryService = telProto['axxonsoft']?.['bl']?.['ptz']?.['TelemetryService'] as unknown as grpc.ServiceClientConstructor;
+  const client = new TelemetryService(host, composite, channelOptions);
+
+  const deadline = () => new Date(Date.now() + TIMEOUT_SECONDS * 1000);
+  const result: Record<string, unknown> = { telemetry_ap: TELEMETRY_AP, moved: false, restored: false };
+
+  const session = await unary<Record<string, number>>(client, 'AcquireSessionId', { access_point: TELEMETRY_AP, host_name: 'ptz-controller' }, deadline());
+  const sessionId = session['session_id'];
+  try {
+    const start = await unary<Record<string, Record<string, number>>>(client, 'GetPositionInformation', { access_point: TELEMETRY_AP }, deadline());
+    const pos = start['absolute_position'] ?? { pan: 0, tilt: 0, zoom: 0 };
+    result['start_position'] = pos;
+    // MoveRequest.Mode.MODE_CONTINUOUS = 0 (enums loaded as strings; the proto name is accepted).
+    await unary(client, 'Move', { access_point: TELEMETRY_AP, session_id: sessionId, mode: 'MODE_CONTINUOUS', val_pan: PAN, val_tilt: TILT }, deadline());
+    await new Promise(r => setTimeout(r, HOLD_MS));
+    await unary(client, 'Move', { access_point: TELEMETRY_AP, session_id: sessionId, mode: 'MODE_CONTINUOUS', val_pan: 0, val_tilt: 0 }, deadline());
+    result['moved'] = true;
+    await unary(client, 'AbsoluteMove', { access_point: TELEMETRY_AP, session_id: sessionId, absolute_position: { pan: pos['pan'], tilt: pos['tilt'], zoom: pos['zoom'], mask: 7 } }, deadline());
+    result['restored'] = true;
+  } finally {
+    await unary(client, 'ReleaseSessionId', { access_point: TELEMETRY_AP, session_id: sessionId }, deadline()).catch(() => undefined);
+  }
+
+  console.log(JSON.stringify(result));
+  return 0;
+}
+
+main().then(code => process.exit(code));

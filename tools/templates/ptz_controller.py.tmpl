@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Generated bounded PTZ controller for telemetry access point $TELEMETRY_AP.
+
+Acquires a telemetry control session, reads the camera's start position, performs ONE bounded
+move, holds briefly, then restores the exact start position and releases the session. The move
+is mutating (it drives a physical camera), so the generator only emits this bundle when mutation
+was explicitly authorised. Pan/tilt magnitudes and the hold window are capped at generation time.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+import time
+
+TELEMETRY_AP = "$TELEMETRY_AP"
+PAN = $PAN
+TILT = $TILT
+HOLD_MS = $HOLD_MS
+
+REQUIRED_ENV = ("AXXON_HOST", "AXXON_TLS_CN", "AXXON_USERNAME", "AXXON_PASSWORD")
+TIMEOUT_SECONDS = 30
+
+
+def redact(value: str) -> str:
+    if not value:
+        return ""
+    return value[:2] + "***"
+
+
+def load_ca() -> bytes | None:
+    ca_path = os.environ.get("AXXON_CA")
+    if ca_path and os.path.isfile(ca_path):
+        with open(ca_path, "rb") as fh:
+            return fh.read()
+    return None
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    missing = [name for name in REQUIRED_ENV if not os.environ.get(name)]
+    if missing:
+        logging.error("missing env: %s", ",".join(missing))
+        return 2
+    sys.path.insert(0, os.environ.get("AXXON_STUBS_PATH", "/tmp/axxon-grpc-py"))
+    import grpc
+    from axxonsoft.bl.auth.Authentication_pb2 import AuthenticateRequest
+    from axxonsoft.bl.auth.Authentication_pb2_grpc import AuthenticationServiceStub
+    from axxonsoft.bl.ptz.Telemetry_pb2 import (
+        AbsoluteMoveRequest,
+        AbsolutePosition,
+        AcquireSessionRequest,
+        GetPositionInformationRequest,
+        MoveRequest,
+        SessionRequest,
+    )
+    from axxonsoft.bl.ptz.Telemetry_pb2_grpc import TelemetryServiceStub
+
+    host = os.environ["AXXON_HOST"]
+    tls_cn = os.environ["AXXON_TLS_CN"]
+    user = os.environ["AXXON_USERNAME"]
+    logging.info("user=%s password=%s host=%s ap=%s", user, redact(os.environ["AXXON_PASSWORD"]), host, TELEMETRY_AP)
+
+    ca = load_ca()
+    base_creds = grpc.ssl_channel_credentials(root_certificates=ca) if ca else grpc.ssl_channel_credentials()
+    options = (("grpc.ssl_target_name_override", tls_cn),)
+
+    with grpc.secure_channel(host, base_creds, options=options) as auth_channel:
+        token = AuthenticationServiceStub(auth_channel).AuthenticateEx2(
+            AuthenticateRequest(user_name=user, password=os.environ["AXXON_PASSWORD"]),
+            timeout=TIMEOUT_SECONDS,
+        )
+        if token.error_code != 0:
+            logging.error("auth failed error_code=%s", token.error_code)
+            return 3
+    metadata_pair = ((token.token_name, token.token_value),)
+    auth_creds = grpc.metadata_call_credentials(lambda _ctx, cb: cb(metadata_pair, None))
+    composite = grpc.composite_channel_credentials(base_creds, auth_creds)
+
+    # MoveRequest.Mode.MODE_CONTINUOUS = 0 (referenced as int to avoid a nested-enum import).
+    MODE_CONTINUOUS = 0
+    result = {"telemetry_ap": TELEMETRY_AP, "moved": False, "restored": False}
+    with grpc.secure_channel(host, composite, options=options) as channel:
+        stub = TelemetryServiceStub(channel)
+        session = stub.AcquireSessionId(AcquireSessionRequest(access_point=TELEMETRY_AP, host_name="ptz-controller"), timeout=TIMEOUT_SECONDS)
+        session_id = session.session_id
+        try:
+            start = stub.GetPositionInformation(GetPositionInformationRequest(access_point=TELEMETRY_AP), timeout=TIMEOUT_SECONDS)
+            start_pos = start.absolute_position
+            result["start_position"] = {"pan": start_pos.pan, "tilt": start_pos.tilt, "zoom": start_pos.zoom}
+            # One bounded continuous nudge, then stop.
+            stub.Move(MoveRequest(access_point=TELEMETRY_AP, session_id=session_id, mode=MODE_CONTINUOUS, val_pan=PAN, val_tilt=TILT), timeout=TIMEOUT_SECONDS)
+            time.sleep(HOLD_MS / 1000.0)
+            stub.Move(MoveRequest(access_point=TELEMETRY_AP, session_id=session_id, mode=MODE_CONTINUOUS, val_pan=0.0, val_tilt=0.0), timeout=TIMEOUT_SECONDS)
+            result["moved"] = True
+            # Restore the exact start position (rollback).
+            restore = AbsolutePosition(pan=start_pos.pan, tilt=start_pos.tilt, zoom=start_pos.zoom, mask=7)
+            stub.AbsoluteMove(AbsoluteMoveRequest(access_point=TELEMETRY_AP, session_id=session_id, absolute_position=restore), timeout=TIMEOUT_SECONDS)
+            result["restored"] = True
+        finally:
+            stub.ReleaseSessionId(SessionRequest(access_point=TELEMETRY_AP, session_id=session_id), timeout=TIMEOUT_SECONDS)
+    print(json.dumps(result))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

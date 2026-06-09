@@ -112,6 +112,7 @@ class GeneratorTests(unittest.TestCase):
                     "scheduled_exporter",
                     "ml_detector_bridge",
                     "dashboard_backend",
+                    "ptz_controller",
                     "plugin_scaffold",
                 ]
             ),
