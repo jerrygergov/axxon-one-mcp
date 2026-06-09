@@ -65,6 +65,9 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "package_availability": ("Installer-package availability check", ("check_package_availability",), "--enable-package-availability"),
     "domain_topology": ("Domain + node enumeration (EnumerateNodes)", ("enumerate_nodes",), "--enable-domain-topology"),
     "config_revisions": ("Config revision history + capped backup-collectibility probe", ("get_revision_info", "collect_backup_probe"), "--enable-config-revisions"),
+    "filesystem_browser": ("Server-side filesystem browsing (list dir, file info, free space)", ("list_directory", "get_space"), "--enable-filesystem-browser"),
+    "devices_catalog": ("Supported-device catalog (vendors, models, traits) for adding cameras", ("list_vendors", "list_devices", "get_device"), "--enable-devices-catalog"),
+    "global_tracker": ("Cross-camera tracking profile metadata reads (no images)", ("get_profile",), "--enable-global-tracker"),
 }
 
 
@@ -111,6 +114,9 @@ def create_server(
     package_availability: Any | None = None,
     domain_topology: Any | None = None,
     config_revisions: Any | None = None,
+    filesystem_browser: Any | None = None,
+    devices_catalog: Any | None = None,
+    global_tracker: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -188,7 +194,8 @@ def create_server(
         ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
         ("event_taxonomy", event_taxonomy), ("scene_description", scene_description),
         ("package_availability", package_availability), ("domain_topology", domain_topology),
-        ("config_revisions", config_revisions), ("groups", groups),
+        ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
+        ("devices_catalog", devices_catalog), ("global_tracker", global_tracker), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -310,6 +317,15 @@ def create_server(
 
     if config_revisions is not None:
         register_config_revisions_tools(server, config_revisions)
+
+    if filesystem_browser is not None:
+        register_filesystem_browser_tools(server, filesystem_browser)
+
+    if devices_catalog is not None:
+        register_devices_catalog_tools(server, devices_catalog)
+
+    if global_tracker is not None:
+        register_global_tracker_tools(server, global_tracker)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1860,6 +1876,72 @@ def register_config_revisions_tools(server: Any, config_revisions: Any) -> None:
         return config_revisions.collect_backup_probe(types, node, max_chunks, max_bytes, timeout)
 
 
+def register_filesystem_browser_tools(server: Any, filesystem_browser: Any) -> None:
+    @server.tool(name="filesystem_browser_connect_axxon_profile")
+    def filesystem_browser_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the FileSystemBrowser layer to the env profile."""
+        return filesystem_browser.filesystem_browser_connect_axxon_profile(profile)
+
+    @server.tool(name="list_directory")
+    def list_directory(path: str = "", node_name: str = "", type: str = "", name_pattern: str = "", page_size: int | None = None, page_token: str = "") -> dict[str, Any]:
+        """List a server-side directory (entry-capped); empty path lists the root."""
+        return filesystem_browser.list_directory(path, node_name, type, name_pattern, page_size, page_token)
+
+    @server.tool(name="get_file_info")
+    def get_file_info(path: str = "", node_name: str = "") -> dict[str, Any]:
+        """Read info for one file or directory (path, type, perms, size, parent path)."""
+        return filesystem_browser.get_file_info(path, node_name)
+
+    @server.tool(name="get_space")
+    def get_space(path: str = "", node_name: str = "") -> dict[str, Any]:
+        """Read filesystem capacity and free space for a path."""
+        return filesystem_browser.get_space(path, node_name)
+
+
+def register_devices_catalog_tools(server: Any, devices_catalog: Any) -> None:
+    @server.tool(name="devices_catalog_connect_axxon_profile")
+    def devices_catalog_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the DevicesCatalog layer to the env profile."""
+        return devices_catalog.devices_catalog_connect_axxon_profile(profile)
+
+    @server.tool(name="list_vendors")
+    def list_vendors(category: str = "", filter: str = "", node_name: str = "") -> dict[str, Any]:
+        """List supported device vendors, optionally filtered by category and text."""
+        return devices_catalog.list_vendors(category, filter, node_name)
+
+    @server.tool(name="list_vendors_v2")
+    def list_vendors_v2(category: str = "", filter: str = "", node_name: str = "", max_pages: int | None = None) -> dict[str, Any]:
+        """Stream supported device vendors (page-capped), de-duplicated across pages."""
+        return devices_catalog.list_vendors_v2(category, filter, node_name, max_pages)
+
+    @server.tool(name="list_devices")
+    def list_devices(category: str = "", vendor: str = "", filter: str = "", node_name: str = "") -> dict[str, Any]:
+        """List supported device models, optionally filtered by category/vendor/text."""
+        return devices_catalog.list_devices(category, vendor, filter, node_name)
+
+    @server.tool(name="list_devices_v2")
+    def list_devices_v2(category: str = "", vendor: str = "", filter: str = "", node_name: str = "", max_pages: int | None = None) -> dict[str, Any]:
+        """Stream supported device models (page-capped)."""
+        return devices_catalog.list_devices_v2(category, vendor, filter, node_name, max_pages)
+
+    @server.tool(name="get_device")
+    def get_device(vendor: str = "", model: str = "", node_name: str = "") -> dict[str, Any]:
+        """Read one supported model's traits; both vendor and model are required."""
+        return devices_catalog.get_device(vendor, model, node_name)
+
+
+def register_global_tracker_tools(server: Any, global_tracker: Any) -> None:
+    @server.tool(name="global_tracker_connect_axxon_profile")
+    def global_tracker_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the GlobalTrackerService layer to the env profile."""
+        return global_tracker.global_tracker_connect_axxon_profile(profile)
+
+    @server.tool(name="get_profile")
+    def get_profile(profile_id: str = "", max_items: int | None = None) -> dict[str, Any]:
+        """Read a global-tracker profile by id (metadata only; images never loaded/returned)."""
+        return global_tracker.get_profile(profile_id, max_items)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2210,6 +2292,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable ConfigurationManager reads (get_revision_info, collect_backup_probe). Read-only, capped.",
     )
     parser.add_argument(
+        "--enable-filesystem-browser",
+        action="store_true",
+        help="Enable FileSystemBrowser reads (list_directory, get_file_info, get_space). Read-only.",
+    )
+    parser.add_argument(
+        "--enable-devices-catalog",
+        action="store_true",
+        help="Enable DevicesCatalog reads (list_vendors, list_devices, get_device) for adding cameras. Read-only.",
+    )
+    parser.add_argument(
+        "--enable-global-tracker",
+        action="store_true",
+        help="Enable GlobalTrackerService get_profile (cross-camera profile metadata, no images). Read-only.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2534,6 +2631,21 @@ def main() -> int:
         from axxon_mcp_config_revisions import AxxonMcpConfigRevisions
 
         config_revisions = AxxonMcpConfigRevisions()
+    filesystem_browser = None
+    if args.enable_filesystem_browser:
+        from axxon_mcp_filesystem_browser import AxxonMcpFilesystemBrowser
+
+        filesystem_browser = AxxonMcpFilesystemBrowser()
+    devices_catalog = None
+    if args.enable_devices_catalog:
+        from axxon_mcp_devices_catalog import AxxonMcpDevicesCatalog
+
+        devices_catalog = AxxonMcpDevicesCatalog()
+    global_tracker = None
+    if args.enable_global_tracker:
+        from axxon_mcp_global_tracker import AxxonMcpGlobalTracker
+
+        global_tracker = AxxonMcpGlobalTracker()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2650,6 +2762,9 @@ def main() -> int:
         package_availability=package_availability,
         domain_topology=domain_topology,
         config_revisions=config_revisions,
+        filesystem_browser=filesystem_browser,
+        devices_catalog=devices_catalog,
+        global_tracker=global_tracker,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
