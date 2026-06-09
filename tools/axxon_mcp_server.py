@@ -60,6 +60,10 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "control": ("StateControl / device control", ("set_device_state",), "--enable-control"),
     "server_settings": ("Server log-level + settings", ("get_server_loglevel", "set_server_loglevel"), "--enable-server"),
     "statistics": ("Server/stream statistics reads (CPU/disk/FPS/bitrate health)", ("get_statistics",), "--enable-statistics"),
+    "event_taxonomy": ("Event grouping tags (event-filter field descriptors)", ("get_event_grouping_tags",), "--enable-event-taxonomy"),
+    "scene_description": ("Per-camera scene descriptions (analytics geometry)", ("list_scene_description",), "--enable-scene-description"),
+    "package_availability": ("Installer-package availability check", ("check_package_availability",), "--enable-package-availability"),
+    "domain_topology": ("Domain + node enumeration (EnumerateNodes)", ("enumerate_nodes",), "--enable-domain-topology"),
 }
 
 
@@ -101,6 +105,10 @@ def create_server(
     timezone: Any | None = None,
     server_settings: Any | None = None,
     statistics: Any | None = None,
+    event_taxonomy: Any | None = None,
+    scene_description: Any | None = None,
+    package_availability: Any | None = None,
+    domain_topology: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -175,7 +183,9 @@ def create_server(
         ("detector_archive", detector_archive), ("admin", admin), ("bookmarks", bookmarks),
         ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
         ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
-        ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics), ("groups", groups),
+        ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
+        ("event_taxonomy", event_taxonomy), ("scene_description", scene_description),
+        ("package_availability", package_availability), ("domain_topology", domain_topology), ("groups", groups),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -282,6 +292,18 @@ def create_server(
 
     if statistics is not None:
         register_statistics_tools(server, statistics)
+
+    if event_taxonomy is not None:
+        register_event_taxonomy_tools(server, event_taxonomy)
+
+    if scene_description is not None:
+        register_scene_description_tools(server, scene_description)
+
+    if package_availability is not None:
+        register_package_availability_tools(server, package_availability)
+
+    if domain_topology is not None:
+        register_domain_topology_tools(server, domain_topology)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -1761,6 +1783,54 @@ def register_statistics_tools(server: Any, statistics: Any) -> None:
         return statistics.get_statistics(keys)
 
 
+def register_event_taxonomy_tools(server: Any, event_taxonomy: Any) -> None:
+    @server.tool(name="event_taxonomy_connect_axxon_profile")
+    def event_taxonomy_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the EventDescription layer to the env profile."""
+        return event_taxonomy.event_taxonomy_connect_axxon_profile(profile)
+
+    @server.tool(name="get_event_grouping_tags")
+    def get_event_grouping_tags() -> dict[str, Any]:
+        """Read event grouping tags (field descriptors used to group/filter events)."""
+        return event_taxonomy.get_event_grouping_tags()
+
+
+def register_scene_description_tools(server: Any, scene_description: Any) -> None:
+    @server.tool(name="scene_description_connect_axxon_profile")
+    def scene_description_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the NgpNodeService layer to the env profile."""
+        return scene_description.scene_description_connect_axxon_profile(profile)
+
+    @server.tool(name="list_scene_description")
+    def list_scene_description(page_token: str = "", page_size: int = 0) -> dict[str, Any]:
+        """List per-camera scene descriptions (one page); page_size=0 lets the server choose."""
+        return scene_description.list_scene_description(page_token, page_size)
+
+
+def register_package_availability_tools(server: Any, package_availability: Any) -> None:
+    @server.tool(name="package_availability_connect_axxon_profile")
+    def package_availability_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the InstallationPackageProvider layer to the env profile."""
+        return package_availability.package_availability_connect_axxon_profile(profile)
+
+    @server.tool(name="check_package_availability")
+    def check_package_availability(system: str = "Linux", machine: str = "") -> dict[str, Any]:
+        """Check installer-package availability for an OS ("Windows"|"Linux") and optional machine."""
+        return package_availability.check_package_availability(system, machine)
+
+
+def register_domain_topology_tools(server: Any, domain_topology: Any) -> None:
+    @server.tool(name="domain_topology_connect_axxon_profile")
+    def domain_topology_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the DomainManager layer to the env profile."""
+        return domain_topology.domain_topology_connect_axxon_profile(profile)
+
+    @server.tool(name="enumerate_nodes")
+    def enumerate_nodes() -> dict[str, Any]:
+        """Enumerate the domain and its member / free / other nodes (read-only)."""
+        return domain_topology.enumerate_nodes()
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2086,6 +2156,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable StatisticService reads (get_statistics: CPU/disk/FPS/bitrate health). Read-only.",
     )
     parser.add_argument(
+        "--enable-event-taxonomy",
+        action="store_true",
+        help="Enable EventDescription reads (get_event_grouping_tags). Read-only.",
+    )
+    parser.add_argument(
+        "--enable-scene-description",
+        action="store_true",
+        help="Enable NgpNodeService reads (list_scene_description: per-camera scene geometry). Read-only.",
+    )
+    parser.add_argument(
+        "--enable-package-availability",
+        action="store_true",
+        help="Enable InstallationPackageProvider reads (check_package_availability). Read-only.",
+    )
+    parser.add_argument(
+        "--enable-domain-topology",
+        action="store_true",
+        help="Enable DomainManager reads (enumerate_nodes: domain + node topology). Read-only.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2385,6 +2475,26 @@ def main() -> int:
         from axxon_mcp_statistics import AxxonMcpStatistics
 
         statistics = AxxonMcpStatistics()
+    event_taxonomy = None
+    if args.enable_event_taxonomy:
+        from axxon_mcp_event_taxonomy import AxxonMcpEventTaxonomy
+
+        event_taxonomy = AxxonMcpEventTaxonomy()
+    scene_description = None
+    if args.enable_scene_description:
+        from axxon_mcp_scene_description import AxxonMcpSceneDescription
+
+        scene_description = AxxonMcpSceneDescription()
+    package_availability = None
+    if args.enable_package_availability:
+        from axxon_mcp_package_availability import AxxonMcpPackageAvailability
+
+        package_availability = AxxonMcpPackageAvailability()
+    domain_topology = None
+    if args.enable_domain_topology:
+        from axxon_mcp_domain_topology import AxxonMcpDomainTopology
+
+        domain_topology = AxxonMcpDomainTopology()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2496,6 +2606,10 @@ def main() -> int:
         timezone=timezone,
         server_settings=server_settings,
         statistics=statistics,
+        event_taxonomy=event_taxonomy,
+        scene_description=scene_description,
+        package_availability=package_availability,
+        domain_topology=domain_topology,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,
