@@ -991,6 +991,29 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertTrue(args.enable_live)
         self.assertFalse(args.enable_operator)
 
+    def test_operator_group_builds_without_credentials(self) -> None:
+        """Regression: the operator group must construct lazily so the server boots with no password."""
+        import os
+        from unittest import mock
+
+        from axxon_api_client import AxxonApiClient, AxxonClientConfig
+        from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
+
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AXXON_PASSWORD", None)
+            config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[2])
+        self.assertFalse(config.password)  # no creds
+        # Mirrors main(): the live client is only built inside the factory, not at construction.
+        registry = OperatorRegistry(
+            client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
+            host=f"hosts/{config.tls_cn}",
+            enabled=False,
+        )
+        self.assertIsNotNone(registry)
+        # Building the client eagerly would raise; deferring means only an actual call would.
+        with self.assertRaises(ValueError):
+            AxxonApiClient(config)
+
 
 if __name__ == "__main__":
     unittest.main()

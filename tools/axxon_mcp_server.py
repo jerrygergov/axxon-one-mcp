@@ -2549,9 +2549,11 @@ def main() -> int:
 
         explicit = os.environ.get("AXXON_OPERATOR_APPROVE") == "1"
         config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
-        api_client = AxxonApiClient(config)
+        # Build the live client lazily: the server must boot with no credentials, and
+        # AxxonApiClient requires a password. Constructing it inside the factory defers that
+        # until an operator tool is actually called (and the gate already needs approval+token).
         operator = OperatorRegistry(
-            client_factory=lambda: AxxonOperatorClient(api_client),
+            client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
             host=f"hosts/{config.tls_cn}",
             enabled=explicit,
         )
@@ -2627,11 +2629,11 @@ def main() -> int:
         from axxon_mcp_translator import AxxonMcpTranslator
 
         config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
-        api_client = AxxonApiClient(config)
 
         def _make_operator() -> OperatorRegistry:
+            # Lazy client (see operator group): boot must not require credentials.
             return OperatorRegistry(
-                client_factory=lambda: AxxonOperatorClient(api_client),
+                client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
                 host=f"hosts/{config.tls_cn}",
                 enabled=False,
             )
