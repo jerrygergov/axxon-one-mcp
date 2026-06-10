@@ -1,7 +1,7 @@
 # Axxon One MCP — Full-Coverage Roadmap
 
-**Date:** 2026-05-16 (original) · **Reconciled against `main`:** 2026-06-09
-**Status:** Active roadmap
+**Date:** 2026-05-16 (original) · **Reconciled against `main`:** 2026-06-10
+**Status:** Phases A, B (attainable), D, E done. Only Phase C remains (blocked on user).
 **Spec type:** multi-phase roadmap (decomposition doc, not a single implementation spec)
 
 > **Reconciliation note (2026-06-09).** The original roadmap's status tables were written
@@ -28,7 +28,7 @@
 
 ---
 
-## 2. Where the project actually is (2026-06-09)
+## 2. Where the project actually is (2026-06-10)
 
 Numbers are pulled from the repo, not prose. See `STATUS.md` for the regeneration commands.
 
@@ -39,10 +39,11 @@ Numbers are pulled from the repo, not prose. See `STATUS.md` for the regeneratio
 | RPCs live-verified | 283 (78%) |
 | RPCs fixture-blocked | 58 |
 | RPCs pending | 20 |
-| MCP tools registered | 255 |
-| Capability groups | 37 |
-| Services with a dedicated tool group | 33 / 51 |
-| Offline unit tests | 976 passing |
+| MCP tools registered | 286 |
+| Capability groups | 47 |
+| Generator templates | 14 (each Python + Node) |
+| Services with a dedicated tool group | 43 / 51 |
+| Offline unit tests | 1105 passing |
 
 **All four original layers shipped and went well past the original plan:**
 
@@ -52,7 +53,7 @@ Numbers are pulled from the repo, not prose. See `STATUS.md` for the regeneratio
 | Live read-only inventory + events + bounded streams | shipped |
 | Operator (plan / apply / verify / rollback) — cameras, detectors, layouts, maps, macros, alarms, PTZ, videowall, settings, users/roles, archive policy | shipped |
 | Generator (Python + Node integration skeletons, partner plugin scaffolds) | shipped |
-| NL → operator recipe translator (`assemble_recipe`, `validate_recipe`) | shipped (early form) |
+| NL → operator recipe translator (`assemble_recipe`, `validate_recipe`, `resolve_device`, `run_recipe`) | shipped (Phase E depth) |
 
 Original Phases 5A (live/archive view), 5C (alarms), 5D (videowall/layouts/maps),
 5E (detector + archive depth), and 5F (security/users/system-health) are **done and on
@@ -63,33 +64,35 @@ unbuilt.
 
 ## 3. The remaining gap (re-derived from the current repo)
 
-The headline coverage number (78% verified) understates the real remaining work in one
-direction and overstates it in another:
+The verified-but-no-tool backlog (10 services with live RPCs that an LLM could not call) is
+**closed** — Phase A exposed all 10 as tool groups, and the pre-existing groups were swept
+live with 0 drift / 0 fail (`docs/api-audit/preexisting-tools-audit-latest.md`). What remains
+is infra-blocked or deliberately deferred:
 
-1. **Verified ≠ callable.** 18 of 51 services have **no dedicated MCP tool group**. Ten of
-   those have RPCs that pass live but cannot be invoked by an LLM through a tool. This is the
-   highest-value gap for the "everything the desktop client can do" goal — the API works, it
-   just isn't exposed. (Full list in `STATUS.md` §3.)
-2. **58 fixture-blocked RPCs** need hardware / driver / infra the stand lacks (PTZ device
-   modes, TFA/OTP, control panels, water-level, Tag&Track tracker, isolated archive volume).
-3. **20 pending RPCs** are deliberately-deferred destructive / infra operations (license
+1. **58 fixture-blocked RPCs** need hardware / driver / infra the stand lacks (PTZ device
+   modes, TFA/OTP, control panels, water-level, a configured Tag&Track component, isolated
+   archive volume, LDAP server). Code is ready; fixtures are not.
+2. **20 pending RPCs** are deliberately-deferred destructive / infra operations (license
    distribute/drop, node add/drop/proclaim, config revision set / restore, cloud bind,
-   backup make/cancel, email/SMS send, installer download).
+   backup make/cancel, email/SMS send, installer download). These are Phase C, gated on the
+   user.
 
-### 3.1 Verified-but-no-tool services (the expose-as-tool backlog)
+### 3.1 The 10 verified-but-no-tool services — now exposed (Phase A)
 
-| Service | Verified RPCs | User value |
+These all flipped to `tool group? = yes` in `STATUS.md` §3:
+
+| Service | Tool group | Verified RPCs |
 | --- | --- | --- |
-| DevicesCatalog | `ListVendors(V2)`, `ListDevices(V2)`, `GetDevice` | driver/vendor catalog for "add a camera aligned with the docs" |
-| SharedKVStorageService | `ListRecords`, `BatchGetRecords`, `Commit`, `GetRecordsStream` | plugin / integration shared state |
-| FileSystemBrowser | `ListDirectory`, `GetFileInfo`, `GetSpace` | export-path picking, storage UX |
-| ConfigurationManager | `GetRevisionInfo`, `CollectBackup` | config revision history + backup (read) |
-| GlobalTrackerService | `GetProfile` (rest fixture-blocked) | cross-camera tracking profiles |
-| StatisticService | `GetStatistics` | stream / server health for dashboards |
-| EventDescription | `GetEventGroupingTags` | event taxonomy for filter building |
-| DomainManager | `EnumerateNodes` (mutations pending) | multi-node topology read |
-| NgpNodeService | `ListSceneDescription` | scene geometry for analytics |
-| InstallationPackageProvider | `CheckPackageAvailability` | update / package availability |
+| DevicesCatalog | `devices_catalog` | `ListVendors(V2)`, `ListDevices(V2)`, `GetDevice` |
+| SharedKVStorageService | `shared_kv` | `ListRecords`, `BatchGetRecords`, `Commit`, `GetRecordsStream` |
+| FileSystemBrowser | `filesystem_browser` | `ListDirectory`, `GetFileInfo`, `GetSpace` |
+| ConfigurationManager | `config_revisions` | `GetRevisionInfo`, `CollectBackup` |
+| GlobalTrackerService | `global_tracker` | `GetProfile` (rest fixture-blocked) |
+| StatisticService | `statistics` | `GetStatistics` |
+| EventDescription | `event_taxonomy` | `GetEventGroupingTags` |
+| DomainManager | `domain_topology` | `EnumerateNodes` (mutations pending) |
+| NgpNodeService | `scene_description` | `ListSceneDescription` |
+| InstallationPackageProvider | `package_availability` | `CheckPackageAvailability` |
 
 ---
 
@@ -110,50 +113,48 @@ direction and overstates it in another:
 
 ---
 
-## 5. Remaining phases
+## 5. Phase status
 
-Order reflects user value, then dependency. Each phase still runs the repo proof loop
-(freeze spec → build TDD → evidence → fresh verify → fix) and ends with updated coverage
-numbers, sanitized evidence under `docs/api-audit/`, new unit tests, and a stand smoke.
+A, B (attainable subset), D, and E are **done and on `main`**, each through the proof loop
+with sanitized evidence under `docs/api-audit/`. Only **Phase C** (destructive/infra RPCs)
+remains as buildable work, and it is blocked on the user's go-ahead + throwaway targets.
+The fixture-procurement tail is infra-blocked, not code.
 
-### Phase A — Expose the verified-but-no-tool services
+### Phase A — Expose the verified-but-no-tool services — DONE
 
-**Why first.** Pure upside: 10 services already pass live; wrapping them turns working RPCs
-into LLM-callable capabilities with no fixture or infra dependency. Closes the single
-largest "the desktop client can do this but the MCP can't" gap.
+All 10 services now have a dedicated tool group (`devices_catalog`, `shared_kv`,
+`filesystem_browser`, `statistics`, `config_revisions`, `event_taxonomy`, `domain_topology`,
+`scene_description`, `package_availability`, `global_tracker`), each with validation/redaction
+tests and a live smoke. Evidence: `docs/api-audit/phase-a-*-latest.md`. See `STATUS.md` §3.
 
-**Scope (one tool group per service, reads first):**
-- `devices_catalog` — `list_vendors`, `list_devices`, `get_device` (the camera-driver catalog).
-- `shared_kv` — `list_records`, `get_records`, `commit_record` (plugin state; `commit` is mutating → confirmation token).
-- `filesystem_browser` — `list_directory`, `get_file_info`, `get_space` (read-only, byte-capped listing).
-- `statistics` — `get_statistics` (stream/server health).
-- `config_revisions` — `get_revision_info`, `collect_backup` (read; `collect_backup` byte-capped).
-- `event_taxonomy` — `get_event_grouping_tags`.
-- `domain_topology` — `enumerate_nodes` (read; node add/drop stays pending/gated).
-- `scene_description` — `list_scene_description`.
-- `package_availability` — `check_package_availability`.
-- `global_tracker` — `get_profile` read tool (rest documented fixture-needed).
+### Phase B — Close fixture-blocked RPCs — attainable subset DONE; rest infra-blocked
 
-**Acceptance.** Each new group has argument-validation + redaction unit tests, a stand smoke
-that returns real data (or a clean fixture-needed report), and flips the service's `tool
-group?` to `yes` in `STATUS.md`. `devices_catalog` additionally feeds the camera-add recipe.
+Closed what the stand can satisfy: PTZ telemetry verification (move + presets with position
+rollback), `state_control` (gated SetState), and GDPR cleanup. Evidence:
+`docs/api-audit/phase-b-*-latest.md`. The remaining 58 fixture-blocked RPCs need hardware/infra
+the stand lacks (PTZ device modes, TFA/OTP, control panel, isolated archive volume, GlobalTracker
+profile, LDAP server). Tag&Track specifically needs a Tag&Track *component* configured on the
+stand — the stand has trackers and PTZ but no bound Tag&Track unit, so `ListTrackers` resolves
+nothing. These flip to `tested-pass` only as fixtures are procured.
 
-### Phase B — Close fixture-blocked RPCs (fixture procurement track)
+### Phase D — Authoring kit + partner SDK depth — DONE
 
-**Why.** 58 RPCs are one fixture away from `tested-pass`. This is infra, not code.
+14 generator templates, each in Python AND Node (`tools/templates/*.{py,ts}.tmpl`), including
+`alarm_responder`, `scheduled_exporter`, `dashboard_backend`, `ml_detector_bridge`,
+`ptz_controller`, plus the consumer/producer/bridge set and `plugin_scaffold`. The partner SDK
+(`scaffold_plugin` / `plugin_lint` / `plugin_package`) and the static verifier
+(`verify_integration` / `verify_dir`) are shipped; `plugin_package` produces a versioned
+`name-version/` archive with an embedded SHA-256 `manifest.json` and pinned dependencies.
+**Deferred by choice:** bundle signing (no untrusted distribution channel to protect) and a
+C# language branch (large mechanical surface, not compile-verifiable on this stand).
 
-**Scope.** Per fixture, document the exact required object and either procure it on the stand
-or ship the tool with an auto-detected `status: fixture-needed`:
-- PTZ-capable device → 10 TelemetryService methods + 4 TagAndTrackService methods.
-- TFA / OTP fixture → Securityize Google-auth + AuthenticationService federated flows.
-- Control panel + water-level device → StateControlService.
-- Isolated `codex-*` archive volume → ArchiveService maintenance, archive policy update.
-- GlobalTracker profile fixture → 6 GlobalTrackerService methods.
+### Phase E — NL → plan translator depth — DONE
 
-**Acceptance.** Each fixture either flips its RPCs to `tested-pass` with sanitized evidence,
-or the tool ships fixture-gated with a precise required-object list auto-detected at runtime.
+`assemble_recipe` composes only registered workflows; `validate_recipe` flags fixture gaps /
+caps / missing approvals; `resolve_device` and `run_recipe` (dry by default) added. Evidence:
+`docs/api-audit/phase-e-translator-depth-latest.md`.
 
-### Phase C — Wire the pending destructive / infra RPCs behind hard gates
+### Phase C — Wire the pending destructive / infra RPCs behind hard gates — NOT STARTED (blocked on user)
 
 **Why.** The 20 pending RPCs are the last of the desktop-client surface (multi-node domain,
 license distribution, config restore, email/SMS notifications, cloud bind, backup).
@@ -166,46 +167,6 @@ license distribution, config restore, email/SMS notifications, cloud bind, backu
 
 **Acceptance.** No pending RPC is callable without an approval flag + per-call token; every
 irreversible op is labeled as such in its plan output.
-
-### Phase D — Authoring kit + partner SDK depth
-
-**Status (reconciled 2026-06-09): the template/language work is already shipped.** The generator
-has **13 templates, each in Python AND Node/TypeScript** (`tools/templates/*.{py,ts}.tmpl`),
-including the ones this section originally listed as "to build": `alarm_responder`,
-`scheduled_exporter`, `dashboard_backend`, `ml_detector_bridge`, `external_event_producer`,
-`webhook_bridge`, `inventory_sync`, plus `plugin_scaffold`. The partner SDK kit
-(`scaffold_plugin` / `plugin_lint` / `plugin_package`) and the static verifier
-(`verify_integration` / `verify_dir`, rejecting embedded secrets, missing caps, unsafe HTTP
-defaults) are also shipped. Tools: `list_integration_templates`, `generate_integration`,
-`verify_integration`, `scaffold_plugin`, `plugin_lint`, `plugin_package`.
-
-**Remaining (not yet built).**
-- **C# as a third language** — entirely absent today (no `.cs.tmpl`, no `csharp` branch). Full C#
-  parity = a `.cs.tmpl` + a `csharp` build branch for each of the 13 templates, a `.csproj`
-  dependency emitter, a `csharp` CI branch, `csharp` static-verifier rules, and `"csharp"` added
-  to each template's `languages`. Deferred (large mechanical surface; C# can't be compile-verified
-  on this stand).
-- **Bundle signing** — optional `--sign` flag emitting a manifest with per-file hashes so
-  distributors can pin templates. Not yet implemented.
-- **`ptz_controller` template** — listed originally; not present (PTZ has tool coverage but no
-  generator template).
-
-**Acceptance.** Every shipped template produces a runnable bundle; the static verifier is the
-single source of truth for safety. (Both already hold for Python + Node.)
-
-### Phase E — NL → plan translator depth (deepen the existing `assemble_recipe`)
-
-**Why.** The translator exists in early form. The headline value is "describe in English, get
-a verified plan" across *all* operator workflows.
-
-**Scope.** `assemble_recipe` composes only registered workflows; `validate_recipe` rejects
-anything outside the registry and flags fixture gaps / caps / missing approvals;
-`explain_recipe` shows the exact RPC sequence + rollback strategy before apply. Translator
-never invents API shapes.
-
-**Acceptance.** A reference suite of 10 intents (camera + detector, alarm responder, export
-schedule, layout + map, role + permission, …) round-trips assemble → validate → apply with
-rollback verified against the stand.
 
 ---
 
@@ -223,17 +184,10 @@ rollback verified against the stand.
 
 ## 7. Ordering
 
-```
-Phase A (expose verified services)  ── highest value, no fixtures
-Phase B (fixtures) ─┐
-Phase C (gated destructive) ─┤
-                    ├─► Phase E (NL translator depth) ── composes everything
-Phase D (templates + SDK) ──┘
-```
-
-- **A first** — pure upside, unblocks the camera-add recipe via `devices_catalog`.
-- **B and C** are infra/risk tracks that can run in parallel with D.
-- **E last** — it composes the workflows the other phases register.
+A → D → E shipped in that order (highest value first, translator last since it composes the
+rest). B's attainable subset shipped alongside; its remainder is fixture-blocked. C is the
+only buildable phase left and is gated on the user (destructive ops need explicit go-ahead +
+throwaway targets).
 
 ---
 
@@ -252,7 +206,8 @@ Phase D (templates + SDK) ──┘
 
 ## 9. Immediate next step
 
-Start **Phase A** (expose the 10 verified-but-no-tool services), leading with
-`devices_catalog` because it directly serves "add a camera aligned with the documentation."
-Carry the fixture debt (Phase B) and the gated-destructive backlog (Phase C) as parallel
-tracks.
+Nothing is actionable without input. The only buildable phase left is **Phase C** (wire the
+20 pending destructive/infra RPCs behind hard gates), which needs the user's explicit
+go-ahead plus throwaway targets before any work starts. The fixture-blocked tail advances
+only as the stand gains hardware/infra. Everything else (A, B-attainable, D, E) is done and
+live-verified on `main`.

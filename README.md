@@ -17,7 +17,9 @@ drive PTZ, manage alarms and macros, and more.
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **291 MCP tools** across four layers (see below).
+- **286 MCP tools** across 47 capability groups in four layers (see below). Every
+  pre-existing and new tool group is live-verified against a real stand
+  ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md)).
 
 ### Tool layers
 
@@ -28,7 +30,7 @@ All layers are **on by default** (use `--read-only` to restrict to reads).
 | **Knowledge** | `search_api_docs`, `get_api_method`, `get_verified_example`, `explain_task_recipe`, `list_capabilities` — search the API corpus, verified examples, fixtures, and safety notes without a server connection. |
 | **Live read-only** | `connect_axxon_profile`, `list_cameras`, `list_archives`, `list_detectors`, `search_events`, `subscribe_events_bounded`, and more. Inspect a connected server. |
 | **Operator / config** | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation requires a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
-| **Generator** | Generate Python / Node integration skeletons and partner plugin scaffolds. |
+| **Generator** | Generate Python / Node integration skeletons (14 templates, each in both languages) and versioned partner plugin scaffolds. |
 
 ## Requirements
 
@@ -174,7 +176,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 ## Tests
 
 ```bash
-python3.12 -m pytest tools/tests/ -q     # 1065 unit tests, offline (no server needed)
+python3.12 -m pytest tools/tests/ -q     # 1105 unit tests, offline (no server needed)
 ```
 
 ## Layout
