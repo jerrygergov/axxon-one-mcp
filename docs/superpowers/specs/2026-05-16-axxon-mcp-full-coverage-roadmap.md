@@ -1,8 +1,10 @@
 # Axxon One MCP — Full-Coverage Roadmap
 
-**Date:** 2026-05-16 (original) · **Reconciled against `main`:** 2026-06-10
-**Status:** Phases A, B (attainable), D, E done. Only Phase C remains (blocked on user).
+**Date:** 2026-05-16 (original) · **Reconciled against `main`:** 2026-06-11
+**Status:** Phases A, B (attainable), D, E done. Only Phase C remains in this phase plan (blocked on user).
 **Spec type:** multi-phase roadmap (decomposition doc, not a single implementation spec)
+
+Canonical service-by-service target map: [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](../../ALL_IN_ONE_VMS_API_ROADMAP.md).
 
 > **Reconciliation note (2026-06-09).** The original roadmap's status tables were written
 > when ~146/361 RPCs were verified and Phases 5C–5F were "not started." The codebase has
@@ -36,14 +38,14 @@ Numbers are pulled from the repo, not prose. See `STATUS.md` for the regeneratio
 | --- | ---: |
 | gRPC services | 51 |
 | gRPC RPCs total | 361 |
-| RPCs live-verified | 283 (78%) |
-| RPCs fixture-blocked | 58 |
+| RPCs live-verified | 286 (79%) |
+| RPCs fixture-blocked | 55 |
 | RPCs pending | 20 |
-| MCP tools registered | 286 |
+| MCP tools registered | 291 all-enabled runtime tools |
 | Capability groups | 47 |
 | Generator templates | 14 (each Python + Node) |
-| Services with a dedicated tool group | 43 / 51 |
-| Offline unit tests | 1105 passing |
+| Services with intent-level tool coverage | 44 / 51 |
+| Offline unit tests | 1106 passing |
 
 **All four original layers shipped and went well past the original plan:**
 
@@ -69,7 +71,7 @@ The verified-but-no-tool backlog (10 services with live RPCs that an LLM could n
 live with 0 drift / 0 fail (`docs/api-audit/preexisting-tools-audit-latest.md`). What remains
 is infra-blocked or deliberately deferred:
 
-1. **58 fixture-blocked RPCs** need hardware / driver / infra the stand lacks (PTZ device
+1. **55 fixture-blocked RPCs** need hardware / driver / infra the stand lacks (PTZ device
    modes, TFA/OTP, control panels, water-level, a configured Tag&Track component, isolated
    archive volume, LDAP server). Code is ready; fixtures are not.
 2. **20 pending RPCs** are deliberately-deferred destructive / infra operations (license
@@ -131,7 +133,7 @@ tests and a live smoke. Evidence: `docs/api-audit/phase-a-*-latest.md`. See `STA
 
 Closed what the stand can satisfy: PTZ telemetry verification (move + presets with position
 rollback), `state_control` (gated SetState), and GDPR cleanup. Evidence:
-`docs/api-audit/phase-b-*-latest.md`. The remaining 58 fixture-blocked RPCs need hardware/infra
+`docs/api-audit/phase-b-*-latest.md`. The remaining 55 fixture-blocked RPCs need hardware/infra
 the stand lacks (PTZ device modes, TFA/OTP, control panel, isolated archive volume, GlobalTracker
 profile, LDAP server). Tag&Track specifically needs a Tag&Track *component* configured on the
 stand — the stand has trackers and PTZ but no bound Tag&Track unit, so `ListTrackers` resolves
@@ -206,8 +208,8 @@ throwaway targets).
 
 ## 9. Immediate next step
 
-Nothing is actionable without input. The only buildable phase left is **Phase C** (wire the
-20 pending destructive/infra RPCs behind hard gates), which needs the user's explicit
-go-ahead plus throwaway targets before any work starts. The fixture-blocked tail advances
-only as the stand gains hardware/infra. Everything else (A, B-attainable, D, E) is done and
-live-verified on `main`.
+Within this historical phase plan, nothing is actionable without input. The only buildable
+phase left is **Phase C** (wire the 20 pending destructive/infra RPCs behind hard gates),
+which needs the user's explicit go-ahead plus throwaway targets before any work starts.
+The fixture-blocked tail advances only as the stand gains hardware/infra. Broader future
+capability polish is tracked in `docs/ALL_IN_ONE_VMS_API_ROADMAP.md`.

@@ -7,17 +7,20 @@ integrations against it — in plain language.
 
 The goal is full coverage of what the desktop client can do: view live and archive,
 pull events, read and change configuration, add cameras / detectors / layouts,
-drive PTZ, manage alarms and macros, and more.
+drive PTZ, manage alarms and macros, and more. The service-by-service target map
+is in [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](docs/ALL_IN_ONE_VMS_API_ROADMAP.md).
 
 ## What it covers
 
 - **51 services, 361 gRPC RPCs** mapped from the Integration API.
-- **283 RPCs are live-verified** (`tested-pass`) against a real stand. The rest are
+- **286 RPCs are live-verified** (`tested-pass`) against a real stand. The rest are
   either blocked by a stand fixture (`fixture-warn`) or not yet exercised (`pending`).
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **286 MCP tools** across 47 capability groups in four layers (see below). Every
+- **291 MCP tools** across 47 capability groups in four layers (see below). This is the
+  all-enabled runtime count: 286 tools registered in `tools/axxon_mcp_server.py` plus
+  5 delegated translator tools from `tools/axxon_mcp_translator.py`. Every
   pre-existing and new tool group is live-verified against a real stand
   ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md)).
 
@@ -176,7 +179,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 ## Tests
 
 ```bash
-python3.12 -m pytest tools/tests/ -q     # 1105 unit tests, offline (no server needed)
+python3.12 -m unittest discover -s tools/tests     # 1106 unit tests, offline (no server needed)
 ```
 
 ## Layout

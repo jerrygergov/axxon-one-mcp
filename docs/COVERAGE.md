@@ -2,8 +2,10 @@
 
 Live status of each Axxon One gRPC RPC exposed by this MCP server, generated from
 `docs/api-audit/mcp-corpus/api_methods.json` (the authoritative source).
+For the broader "everything the VMS can do" target and intent-level MCP coverage
+comparison, see [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](ALL_IN_ONE_VMS_API_ROADMAP.md).
 
-**283 / 361 RPCs live-verified** across 51 services (20 pending, 58 fixture-blocked).
+**286 / 361 RPCs live-verified** across 51 services (20 pending, 55 fixture-blocked).
 
 - **tested-pass** — exercised end-to-end against a live server, returns a valid response.
 - **fixture-warn** — the RPC works but the test stand lacks a required fixture (specific device driver, hardware, or server feature), so a clean pass needs that fixture.
@@ -59,8 +61,7 @@ Live status of each Axxon One gRPC RPC exposed by this MCP server, generated fro
 | EMailNotifier | 0 | 2 | 1 | 3 |
 | GSMNotifier | 0 | 0 | 2 | 2 |
 | RealtimeRecognizerExternalService | 0 | 1 | 0 | 1 |
-| StateControlService | 0 | 3 | 0 | 3 |
+| StateControlService | 3 | 0 | 0 | 3 |
 | TagAndTrackService | 0 | 4 | 0 | 4 |
 | TextEventSupportService | 0 | 1 | 0 | 1 |
-| **Total** | **283** | **58** | **20** | **361** |
-
+| **Total** | **286** | **55** | **20** | **361** |

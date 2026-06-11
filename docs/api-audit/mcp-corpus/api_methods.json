@@ -4572,7 +4572,7 @@
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.SetState",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass-safe-record",
       "method": "SetState",
       "package": "axxonsoft.bl.state",
       "proto": "axxonsoft/bl/state/StateControl.proto",
@@ -4581,12 +4581,12 @@
       "safety_class": "mutating",
       "service": "StateControlService",
       "streaming": "none",
-      "evidence": ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (INTERNAL 'Can't resolve reference to .../StateControl.relay0:0'; relay I/O not instantiated by the generic driver; read companions GetCurrentState/GetDefaultState already fixture-warn for the same reason)"
+      "evidence": "docs/api-audit/phase-b-state-control-gdpr-latest.md (StateControl SetState ON applied, observed, then reverted by dropping the override)"
     },
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.GetDefaultState",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetDefaultState",
       "package": "axxonsoft.bl.state",
       "proto": "axxonsoft/bl/state/StateControl.proto",
@@ -4594,12 +4594,13 @@
       "response": "GetDefaultStateResponse",
       "safety_class": "read",
       "service": "StateControlService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": "docs/api-audit/phase-b-state-control-gdpr-latest.md (get_default_state(ap) PASS)"
     },
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.GetCurrentState",
       "http_annotation": "",
-      "live_status": "tested-warn-fixture-needed",
+      "live_status": "tested-pass",
       "method": "GetCurrentState",
       "package": "axxonsoft.bl.state",
       "proto": "axxonsoft/bl/state/StateControl.proto",
@@ -4607,7 +4608,8 @@
       "response": "GetCurrentStateResponse",
       "safety_class": "read",
       "service": "StateControlService",
-      "streaming": "none"
+      "streaming": "none",
+      "evidence": "docs/api-audit/phase-b-state-control-gdpr-latest.md (get_current_state(ap) PASS before and after reversible SetState)"
     },
     {
       "fqmn": "axxonsoft.bl.statistics.StatisticService.GetStatistics",
