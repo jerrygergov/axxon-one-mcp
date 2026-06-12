@@ -18,11 +18,12 @@ is in [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](docs/ALL_IN_ONE_VMS_API_ROADMAP.md)
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **291 MCP tools** across 47 capability groups in four layers (see below). This is the
-  all-enabled runtime count: 286 tools registered in `tools/axxon_mcp_server.py` plus
-  5 delegated translator tools from `tools/axxon_mcp_translator.py`. Every
-  pre-existing and new tool group is live-verified against a real stand
-  ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md)).
+- **293 MCP tools** across 48 capability groups in five layers (see below). This is the
+  all-enabled runtime count: 288 tools registered in `tools/axxon_mcp_server.py` plus
+  5 delegated translator tools from `tools/axxon_mcp_translator.py`. Existing live-audited
+  groups are covered by the latest real-stand audit
+  ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md));
+  the Phase 1 `site_graph` group is read-only and unit-verified offline.
 
 ### Tool layers
 
@@ -32,6 +33,7 @@ All layers are **on by default** (use `--read-only` to restrict to reads).
 | --- | --- |
 | **Knowledge** | `search_api_docs`, `get_api_method`, `get_verified_example`, `explain_task_recipe`, `list_capabilities` — search the API corpus, verified examples, fixtures, and safety notes without a server connection. |
 | **Live read-only** | `connect_axxon_profile`, `list_cameras`, `list_archives`, `list_detectors`, `search_events`, `subscribe_events_bounded`, and more. Inspect a connected server. |
+| **Site graph** | `site_graph_connect_axxon_profile`, `build_site_graph` — join cameras, archives, detectors, layouts, maps, permissions, health, access points, and event suppliers into one read-only graph. |
 | **Operator / config** | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation requires a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
 | **Generator** | Generate Python / Node integration skeletons (14 templates, each in both languages) and versioned partner plugin scaffolds. |
 
@@ -179,7 +181,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 ## Tests
 
 ```bash
-python3.12 -m unittest discover -s tools/tests     # 1106 unit tests, offline (no server needed)
+python3.12 -m unittest discover -s tools/tests     # 1114 unit tests, offline (no server needed)
 ```
 
 ## Layout

@@ -70,6 +70,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "global_tracker": ("Cross-camera tracking profile metadata reads (no images)", ("get_profile",), "--enable-global-tracker"),
     "shared_kv": ("Shared key-value store reads + gated commit (plugin/integration state)", ("list_records", "get_records", "commit_record"), "--enable-shared-kv"),
     "state_control": ("Device state reads + gated SetState (e.g. PTZ patrol controllers)", ("get_current_state", "set_state"), "--enable-state-control"),
+    "site_graph": ("Unified read-only site graph for planners and generators", ("build_site_graph",), "--enable-site-graph"),
 }
 
 
@@ -121,6 +122,7 @@ def create_server(
     global_tracker: Any | None = None,
     shared_kv: Any | None = None,
     state_control: Any | None = None,
+    site_graph: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -201,6 +203,7 @@ def create_server(
         ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
         ("devices_catalog", devices_catalog), ("global_tracker", global_tracker),
         ("shared_kv", shared_kv), ("state_control", state_control), ("groups", groups),
+        ("site_graph", site_graph),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -337,6 +340,9 @@ def create_server(
 
     if state_control is not None:
         register_state_control_tools(server, state_control)
+
+    if site_graph is not None:
+        register_site_graph_tools(server, site_graph)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -2007,6 +2013,24 @@ def register_state_control_tools(server: Any, state_control: Any) -> None:
         return state_control.set_state(access_point, directive, priority, confirmation)
 
 
+def register_site_graph_tools(server: Any, site_graph: Any) -> None:
+    @server.tool(name="site_graph_connect_axxon_profile")
+    def site_graph_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the read-only site graph layer to the env profile."""
+        return site_graph.site_graph_connect_axxon_profile(profile)
+
+    @server.tool(name="build_site_graph")
+    def build_site_graph(
+        include_layouts: bool = True,
+        include_maps: bool = True,
+        include_permissions: bool = True,
+        include_health: bool = True,
+        limit: int = 500,
+    ) -> dict[str, Any]:
+        """Build a unified read-only graph of cameras, archives, detectors, maps, permissions, and health."""
+        return site_graph.build_site_graph(include_layouts, include_maps, include_permissions, include_health, limit)
+
+
 def register_groups_tools(server: Any, groups: Any) -> None:
     @server.tool(name="groups_connect_axxon_profile")
     def groups_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2382,6 +2406,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable StateControlService state reads + gated set_state (writes need AXXON_STATE_CONTROL_APPROVE=1).",
     )
     parser.add_argument(
+        "--enable-site-graph",
+        action="store_true",
+        help="Enable read-only unified site graph tools for planners and integration generators.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2739,6 +2768,11 @@ def main() -> int:
         from axxon_mcp_state_control import AxxonMcpStateControl
 
         state_control = AxxonMcpStateControl()
+    site_graph = None
+    if args.enable_site_graph:
+        from axxon_mcp_site_graph import AxxonMcpSiteGraph
+
+        site_graph = AxxonMcpSiteGraph()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -2860,6 +2894,7 @@ def main() -> int:
         global_tracker=global_tracker,
         shared_kv=shared_kv,
         state_control=state_control,
+        site_graph=site_graph,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,

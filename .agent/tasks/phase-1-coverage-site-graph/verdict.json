@@ -1,0 +1,164 @@
+{
+  "task_id": "phase-1-coverage-site-graph",
+  "overall_verdict": "PASS",
+  "verifier": {
+    "mode": "local_fresh_verification_after_verifier_agent_unavailable",
+    "notes": [
+      "First task-verifier agent errored due usage limits.",
+      "Second task-verifier agent timed out repeatedly without writing verdict.json and was closed.",
+      "This verdict was produced from a fresh local verification pass against current repository files and freshly rerun commands."
+    ]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "current_state_verified": [
+        "tools/axxon_mcp_site_graph.py defines AxxonMcpSiteGraph, SITE_GRAPH_TOOL_NAMES, site_graph_connect_axxon_profile, connect_axxon_profile alias, ensure_client, and build_site_graph.",
+        "site_graph_connect_axxon_profile supports env profile, rejects non-env profiles with gap, uses lazy client construction, and returns a redacted public profile with read-only mode."
+      ],
+      "evidence": [
+        "tools/axxon_mcp_site_graph.py",
+        "tools/tests/test_axxon_mcp_site_graph.py",
+        "raw/verifier_site_graph_unittest.txt"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "current_state_verified": [
+        "build_site_graph returns status, tool, summary, collections, nodes, edges, gaps, and source_sections.",
+        "Collections include cameras, archives, detectors, appdata detectors, layouts, maps, markers, permissions, health, access points, event suppliers, and metadata endpoints.",
+        "Edges include source, target, and type and cover host, camera/archive/source, detector/event/metadata, layout/map/reference, marker/access-point, permission, and health relationships."
+      ],
+      "evidence": [
+        "tools/axxon_mcp_site_graph.py",
+        "tools/tests/test_axxon_mcp_site_graph.py",
+        "raw/verifier_site_graph_unittest.txt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "current_state_verified": [
+        "Optional section collection uses structured fixture-needed gaps and preserves already collected graph data.",
+        "Focused test verifies maps failure returns warn status, preserves camera collection data, and reports a sanitized maps gap."
+      ],
+      "evidence": [
+        "tools/axxon_mcp_site_graph.py",
+        "tools/tests/test_axxon_mcp_site_graph.py",
+        "raw/verifier_site_graph_unittest.txt"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "current_state_verified": [
+        "redact_site_graph redacts secret-like keys and text, redacts bearer assignments, and converts bytes/bytearray to raw-byte metadata.",
+        "Verifier sentinel scan found no site graph test sentinels in production/docs/evidence/raw artifacts."
+      ],
+      "evidence": [
+        "tools/axxon_mcp_site_graph.py",
+        "tools/tests/test_axxon_mcp_site_graph.py",
+        "raw/verifier_site_graph_unittest.txt",
+        "raw/verifier_secret_scan.txt"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "current_state_verified": [
+        "tools/axxon_mcp_server.py registers site_graph in CAPABILITY_GROUPS, create_server parameters, enabled group reporting, conditional tool registration, parser flag, main instantiation, and create_server call.",
+        "list_capabilities reports site_graph disabled with --enable-site-graph and enabled without enable_flag when provided.",
+        "CLI help contains --enable-site-graph."
+      ],
+      "evidence": [
+        "tools/axxon_mcp_server.py",
+        "tools/tests/test_axxon_mcp_server.py",
+        "raw/verifier_server_unittest.txt",
+        "raw/verifier_help_enable_site_graph.txt"
+      ]
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "current_state_verified": [
+        "README.md reports 293 MCP tools across 48 capability groups and documents the read-only Site graph layer.",
+        "docs/ALL_IN_ONE_VMS_API_ROADMAP.md reports 293 tools, 48 groups, and marks Phase 1 site_graph implemented.",
+        "docs/COVERAGE.md has no diff, so per-RPC counts remain unchanged.",
+        "Tool-count verifier output shows 288 server-local tools, 288 unique server-local tools, 0 duplicates, 5 delegated translator tools, 293 runtime tools, and 48 capability groups."
+      ],
+      "evidence": [
+        "README.md",
+        "docs/ALL_IN_ONE_VMS_API_ROADMAP.md",
+        "docs/COVERAGE.md",
+        "raw/verifier_tool_count.txt"
+      ]
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "current_state_verified": [
+        "tools/tests/test_axxon_mcp_site_graph.py contains focused offline tests for connect, graph joins, summary counts, node IDs, edge types/schema, dedupe, partial gaps, and redaction.",
+        "tools/tests/test_axxon_mcp_server.py contains parser, registration, and list_capabilities coverage.",
+        "Focused verifier test commands pass."
+      ],
+      "evidence": [
+        "tools/tests/test_axxon_mcp_site_graph.py",
+        "tools/tests/test_axxon_mcp_server.py",
+        "raw/verifier_site_graph_unittest.txt",
+        "raw/verifier_server_unittest.txt"
+      ]
+    },
+    {
+      "id": "AC8",
+      "status": "PASS",
+      "current_state_verified": [
+        "No optional live smoke script was added or run.",
+        "No proto files, CA files, live credentials, raw images, raw media, or symlinks were added.",
+        "Existing untracked docs/Axxon_One_Integration_APIs.postman_collection.json remains untouched user state."
+      ],
+      "evidence": [
+        "git status --short",
+        "raw/verifier_secret_scan.txt"
+      ]
+    }
+  ],
+  "commands_rerun": [
+    {
+      "command": "python3.12 -m unittest discover -s tools/tests -p 'test_axxon_mcp_site_graph.py'",
+      "status": "PASS",
+      "artifact": "raw/verifier_site_graph_unittest.txt",
+      "summary": "Ran 6 tests; OK"
+    },
+    {
+      "command": "python3.12 -m unittest tools/tests/test_axxon_mcp_server.py",
+      "status": "PASS",
+      "artifact": "raw/verifier_server_unittest.txt",
+      "summary": "Ran 28 tests; OK"
+    },
+    {
+      "command": "python3.12 tools/axxon_mcp_server.py --help | rg -- '--enable-site-graph'",
+      "status": "PASS",
+      "artifact": "raw/verifier_help_enable_site_graph.txt"
+    },
+    {
+      "command": "python3.12 -m unittest discover -s tools/tests",
+      "status": "PASS",
+      "artifact": "raw/verifier_full_unittest.txt",
+      "summary": "Ran 1114 tests; OK"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "artifact": "raw/verifier_git_diff_check.txt"
+    },
+    {
+      "command": "site graph sentinel scan",
+      "status": "PASS",
+      "artifact": "raw/verifier_secret_scan.txt",
+      "summary": "no site graph sentinel leaks"
+    }
+  ],
+  "problems_file": null
+}

@@ -32,8 +32,8 @@ The public site states that Integration API documentation is not public and must
 | RPCs fixture-blocked | 55 | `tested-warn-fixture-needed` statuses |
 | RPCs pending | 20 | deliberate destructive/infra operations |
 | HTTP `/v1` endpoints cataloged | 221 | `docs/api-audit/mcp-corpus/http_endpoints.json` |
-| Actual all-enabled MCP tools | 291 | 286 server-local decorators plus 5 delegated translator tools |
-| Advertised capability groups | 47 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
+| Actual all-enabled MCP tools | 293 | 288 server-local decorators plus 5 delegated translator tools |
+| Advertised capability groups | 48 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
 | Generator templates | 14 x Python + Node | `TEMPLATE_CATALOG` in `tools/axxon_mcp_generator.py` |
 | Services with intent-level tool coverage | 44 / 51 | all except the seven fixture/infra tails listed below |
 
@@ -56,7 +56,7 @@ The all-in-one MCP should stay layered:
 
 | Product/API area | Full MCP capability target | Current project status | Next gap |
 | --- | --- | --- | --- |
-| Domain and inventory | Discover nodes, servers, cameras, archives, devices, components, access points, capabilities, maps, and object relationships. | Strong via `live`, `view`, `admin`, `domain_topology`, `devices_catalog`. | Add higher-level "site graph" resource that joins cameras, archives, detectors, layouts, maps, permissions, and health. |
+| Domain and inventory | Discover nodes, servers, cameras, archives, devices, components, access points, capabilities, maps, and object relationships. | Strong via `live`, `view`, `admin`, `domain_topology`, `devices_catalog`, and Phase 1 `site_graph`. | Add richer planner recipes that consume the site graph for onboarding, search, and integration generation. |
 | IP device onboarding | Discover devices, browse supported vendors/models, probe devices, create cameras, apply templates, bulk import, set archive recording, assign coordinates. | Strong for catalog/discovery and operator camera/template workflows; partial for bulk CSV/import UX. | Add a bulk onboarding planner that validates CSV/JSON and emits one rollbackable plan per camera. |
 | Configuration tree | List units/templates/factories, inspect properties, change unit properties, create/remove devices/detectors/archives/layouts/maps/macros. | Strong generic config and many intent workflows. | Add schema-first config assistant that exposes property descriptors, constraints, defaults, and before/after diff. |
 | Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; partial for GlobalTracker and RealtimeRecognizerExternal fixtures. | Add detector playbooks for every documented detector family and fixture-gated global tracking profile workflows. |
@@ -97,7 +97,7 @@ The all-in-one MCP should stay layered:
 | `SharedKVStorageService` | List/get/stream/commit shared records. | Covered by `shared_kv`. | Add plugin-state recipes. |
 | `ExternalDetectorService` | Raise occasional/periodical external detector events. | Covered indirectly by operator workflows and generator templates. | Add first-class external detector group with periodical event lifecycle. |
 | `DiscoveryService` | Discover/probe devices and progress streams. | Covered by `discovery`. | Add discovery-to-camera-onboarding flow. |
-| `DomainService` | Domain topology, host info, cameras, archives, devices, components, maps, access-point mapping. | Strong via `live`, `view`, `admin`, `domain_topology`. | Add joined site graph resource. |
+| `DomainService` | Domain topology, host info, cameras, archives, devices, components, maps, access-point mapping. | Strong via `live`, `view`, `admin`, `domain_topology`, and the Phase 1 `site_graph` join. | Add planner-specific graph slices once downstream planners need smaller views. |
 | `DomainManager` | Enumerate/add/drop nodes, proclaim domain. | Read enumeration covered. | Phase C destructive multi-node domain tools only with throwaway targets. |
 | `TextEventSupportService` | Resolve text-event details. | Missing first-class group. | Add POS/text-event group when fixture exists. |
 | `EventHistoryService` | Events/counts/text/LPR/alerts/bookmarks/prompt/similar/stranger searches. | Strong via `live`, `alarms`, `metadata`, `heatmap`. | Add dashboard-ready aggregate wrappers. |
@@ -156,7 +156,7 @@ The local HTTP corpus catalogs 221 annotated `/v1` endpoints. Exact paths live i
 
 1. **Phase C destructive/infra tools:** `BackupSourceService`, `CloudService`, license distribute/drop/document creation, `DomainManager.AddNode/DropNode/ProclaimDomain`, `ConfigurationManager.SetRevision/RestoreBackup`, email/SMS send, installer package download, archive clear/format/reindex/delete. These require explicit throwaway targets, irreversible labels, confirmation tokens, and sanitized evidence.
 2. **Fixture procurement:** Tag&Track component, non-production PTZ modes/tours, TFA/OTP and LDAP server, GlobalTracker profile fixtures, RealtimeRecognizerExternal fixture, POS/text-event source, SMTP/GSM, isolated archive volume, client-local HTTP API target, WebSocket/Web server fixture, control panels/water-level devices.
-3. **Intent polish:** first-class `export`, `notification`, `tag_and_track`, `client_api`, `web_api`, `site_graph`, and `bulk_onboarding` groups.
+3. **Intent polish:** first-class `export`, `notification`, `tag_and_track`, `client_api`, `web_api`, and `bulk_onboarding` groups. Phase 1 added the read-only `site_graph` group; future work should consume it from planners and generators rather than rejoining inventory ad hoc.
 4. **Partner depth:** add richer generated examples for dashboards, CSV camera import, archive retention policy, map/layout editing, and event-to-third-party bridges. Defer C# until compile-verifiable.
 
 ## Safety Policy Requirements

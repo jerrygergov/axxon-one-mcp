@@ -312,6 +312,30 @@ class StubPtz:
         return {"status": "ok", "operations": ["wiper"]}
 
 
+class StubSiteGraph:
+    def site_graph_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read-only"}
+
+    def build_site_graph(
+        self,
+        include_layouts: bool = True,
+        include_maps: bool = True,
+        include_permissions: bool = True,
+        include_health: bool = True,
+        limit: int = 500,
+    ):
+        return {
+            "status": "ok",
+            "tool": "build_site_graph",
+            "include_layouts": include_layouts,
+            "include_maps": include_maps,
+            "include_permissions": include_permissions,
+            "include_health": include_health,
+            "limit": limit,
+            "summary": {"node_count": 1, "edge_count": 0},
+        }
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -387,6 +411,47 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(intervals["hours"], 2.0)
         bounded = server.tools["subscribe_events_bounded"](["hosts/Server/AppDataDetector.27/EventSupplier"], ["ET_DETECTOR"], 3.0, 10)
         self.assertEqual(bounded["limit"], 10)
+
+    def test_create_server_registers_site_graph_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        site_graph_tools = {"site_graph_connect_axxon_profile", "build_site_graph"}
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in site_graph_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("site_graph", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-site-graph"])
+        self.assertTrue(args.enable_site_graph)
+
+        server = module.create_server(docs=StubDocs(), site_graph=StubSiteGraph(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(site_graph_tools, set(server.tools))
+        self.assertEqual(
+            server.tools["site_graph_connect_axxon_profile"]("env"),
+            {"connected": True, "profile_name": "env", "mode": "read-only"},
+        )
+        graph = server.tools["build_site_graph"](False, True, False, True, 25)
+        self.assertEqual(graph["tool"], "build_site_graph")
+        self.assertFalse(graph["include_layouts"])
+        self.assertFalse(graph["include_permissions"])
+        self.assertEqual(graph["limit"], 25)
+
+    def test_list_capabilities_reports_site_graph_disabled_and_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "site_graph")
+        self.assertFalse(disabled["enabled"])
+        self.assertEqual(disabled["enable_flag"], "--enable-site-graph")
+        self.assertIn("build_site_graph", disabled["example_tools"])
+
+        enabled_server = module.create_server(
+            docs=StubDocs(),
+            site_graph=StubSiteGraph(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "site_graph")
+        self.assertTrue(enabled["enabled"])
+        self.assertNotIn("enable_flag", enabled)
 
     def test_create_server_registers_operator_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
