@@ -1,0 +1,39 @@
+..................................usage: axxon_export_smoke.py [-h] [--host HOST] [--grpc-port GRPC_PORT]
+                             [--http-port HTTP_PORT] [--http-url HTTP_URL]
+                             [--username USERNAME] [--password PASSWORD]
+                             [--tls-cn TLS_CN] [--ca CA]
+                             [--proto-dir PROTO_DIR] [--stubs-dir STUBS_DIR]
+                             [--timeout TIMEOUT] [--report-dir REPORT_DIR]
+                             [--camera-ap CAMERA_AP] [--hours HOURS]
+                             [--poll-attempts POLL_ATTEMPTS]
+                             [--poll-delay POLL_DELAY]
+                             [--max-download-bytes MAX_DOWNLOAD_BYTES]
+                             [--chunk-size-kb CHUNK_SIZE_KB]
+                             [--max-file-size MAX_FILE_SIZE]
+                             [--live-duration-seconds LIVE_DURATION_SECONDS]
+                             [--i-understand-this-mutates] [--confirm CONFIRM]
+                             [--verbose]
+axxon_export_smoke.py: error: --i-understand-this-mutates is required because this tool starts export sessions and writes export files
+.usage: axxon_http_export_smoke.py [-h] [--host HOST] [--grpc-port GRPC_PORT]
+                                  [--http-port HTTP_PORT]
+                                  [--http-url HTTP_URL] [--username USERNAME]
+                                  [--password PASSWORD] [--tls-cn TLS_CN]
+                                  [--ca CA] [--proto-dir PROTO_DIR]
+                                  [--stubs-dir STUBS_DIR] [--timeout TIMEOUT]
+                                  [--report-dir REPORT_DIR]
+                                  [--camera-ap CAMERA_AP] [--hours HOURS]
+                                  [--waittimeout-ms WAITTIMEOUT_MS]
+                                  [--poll-attempts POLL_ATTEMPTS]
+                                  [--poll-delay POLL_DELAY]
+                                  [--max-download-bytes MAX_DOWNLOAD_BYTES]
+                                  [--max-file-size MAX_FILE_SIZE]
+                                  [--i-understand-this-mutates]
+                                  [--confirm CONFIRM] [--verbose]
+axxon_http_export_smoke.py: error: --i-understand-this-mutates is required because this tool starts and deletes a legacy HTTP export
+....................................................................
+----------------------------------------------------------------------
+Ran 103 tests in 0.316s
+
+OK
+
+exit_code=0

@@ -1,0 +1,237 @@
+{
+    "task_id": "phase-2-first-class-export-group",
+    "builder": "task-builder",
+    "verdict_json_written": false,
+    "problems_md_written": false,
+    "live_smoke": {
+        "status": "WARN",
+        "attempted": false,
+        "reason": "Offline unit/regression completion was sufficient; live stand/proto symlink would add secrets and timing risk."
+    },
+    "summary": {
+        "ac1_ac19": "PASS",
+        "tool_counts": {
+            "server_local": 296,
+            "delegated_translator": 5,
+            "all_enabled_runtime": 301,
+            "capability_groups": 49,
+            "export_tools": 8
+        }
+    },
+    "raw_artifacts": {
+        "red_export_unittest": ".agent/tasks/phase-2-first-class-export-group/raw/red_export_unittest.txt",
+        "red_server_unittest": ".agent/tasks/phase-2-first-class-export-group/raw/red_server_unittest.txt",
+        "green_export_unittest": ".agent/tasks/phase-2-first-class-export-group/raw/green_export_unittest.txt",
+        "green_server_unittest": ".agent/tasks/phase-2-first-class-export-group/raw/green_server_unittest.txt",
+        "adjacent_export_regressions": ".agent/tasks/phase-2-first-class-export-group/raw/adjacent_export_regressions.txt",
+        "full_unittest": ".agent/tasks/phase-2-first-class-export-group/raw/full_unittest.txt",
+        "git_diff_check": ".agent/tasks/phase-2-first-class-export-group/raw/git_diff_check.txt",
+        "tool_count": ".agent/tasks/phase-2-first-class-export-group/raw/tool_count.txt",
+        "secret_scan": ".agent/tasks/phase-2-first-class-export-group/raw/secret_scan.txt",
+        "help_enable_export": ".agent/tasks/phase-2-first-class-export-group/raw/help_enable_export.txt",
+        "coverage_diff": ".agent/tasks/phase-2-first-class-export-group/raw/coverage_diff.txt"
+    },
+    "criteria": [
+        {
+            "id": "AC1",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:25 defines EXPORT_APPROVE_ENV and EXPORT_CONFIRMATION.",
+                "tools/axxon_mcp_export.py:46 defines EXPORT_TOOL_NAMES.",
+                "tools/axxon_mcp_export.py:155 defines dataclass AxxonMcpExport with factories.",
+                "raw/green_export_unittest.txt: Ran 11 tests ... OK."
+            ]
+        },
+        {
+            "id": "AC2",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:46 lists all eight required export tool names.",
+                "tools/axxon_mcp_server.py:1575 registers the eight export tools.",
+                "raw/tool_count.txt: export_tool_count=8."
+            ]
+        },
+        {
+            "id": "AC3",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:171 implements env-only connect with public_config_summary, mode, approval_env, and factory construction.",
+                "tools/tests/test_axxon_mcp_export.py:265 verifies lazy construction and no password sentinel leakage."
+            ]
+        },
+        {
+            "id": "AC4",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:216 builds a capped snapshot plan and validates missing inputs.",
+                "tools/axxon_mcp_export.py:261 returns planned metadata, approval env, and confirmation without starting a session.",
+                "tools/tests/test_axxon_mcp_export.py:280 covers validation/caps/no wire access."
+            ]
+        },
+        {
+            "id": "AC5",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:201 enforces approval/confirmation.",
+                "tools/axxon_mcp_export.py:295 builds snapshot options with codex-owned file/comment marker and store_result_by_export_agent=False.",
+                "tools/axxon_mcp_export.py:353 records owned sessions.",
+                "tools/tests/test_axxon_mcp_export.py:305 and :316 cover gates and option construction."
+            ]
+        },
+        {
+            "id": "AC6",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:373 summarizes file metadata.",
+                "tools/axxon_mcp_export.py:396 implements owned-only status.",
+                "tools/tests/test_axxon_mcp_export.py:332 covers unknown refusal and normalized metadata."
+            ]
+        },
+        {
+            "id": "AC7",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:427 implements gated owned download with byte/chunk/time caps, sha256, truncation, mime_type, and no raw bytes in response.",
+                "tools/tests/test_axxon_mcp_export.py:348 verifies gates, caps, hash, truncation, and no raw byte content."
+            ]
+        },
+        {
+            "id": "AC8",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:408 implements module artifact root path policy and symlink/escape checks.",
+                "tools/tests/test_axxon_mcp_export.py:379 verifies valid save plus absolute, traversal, separator, and symlink rejection."
+            ]
+        },
+        {
+            "id": "AC9",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:516 implements gated owned-only stop.",
+                "tools/axxon_mcp_export.py:531 implements gated owned-only destroy and ownership removal.",
+                "tools/axxon_mcp_export.py:546 implements gated cleanup.",
+                "tools/tests/test_axxon_mcp_export.py:420 covers unknown refusal, gate refusal, stop, destroy, and idempotent refusal after removal."
+            ]
+        },
+        {
+            "id": "AC10",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_export.py:138 defines owned session tracking.",
+                "tools/axxon_mcp_export.py:546 reports attempted/stopped/destroyed/skipped/failed counts.",
+                "tools/tests/test_axxon_mcp_export.py:441 covers cleanup counts and removal.",
+                "tools/tests/test_axxon_mcp_export.py:454 covers failed start and failed cleanup retaining ownership."
+            ]
+        },
+        {
+            "id": "AC11",
+            "status": "PASS",
+            "proof": [
+                "tools/axxon_mcp_server.py:37 adds CAPABILITY_GROUPS export.",
+                "tools/axxon_mcp_server.py:143 adds create_server(export=...).",
+                "tools/axxon_mcp_server.py:213 tracks enabled export group.",
+                "tools/axxon_mcp_server.py:397 calls register_export_tools.",
+                "tools/axxon_mcp_server.py:2598 adds --enable-export.",
+                "tools/axxon_mcp_server.py:2647 adds AXXON_EXPORT_APPROVE.",
+                "tools/axxon_mcp_server.py:2970 constructs AxxonMcpExport in main.",
+                "raw/green_server_unittest.txt: Ran 30 tests ... OK."
+            ]
+        },
+        {
+            "id": "AC12",
+            "status": "PASS",
+            "proof": [
+                "README.md:21 documents 301 tools, 49 groups, 296 server-local plus 5 translator.",
+                "docs/ALL_IN_ONE_VMS_API_ROADMAP.md:35 documents the same counts.",
+                "raw/tool_count.txt proves server_local_tool_count=296, delegated_translator_tool_count=5, all_enabled_runtime_tool_count=301, capability_group_count=49."
+            ]
+        },
+        {
+            "id": "AC13",
+            "status": "PASS",
+            "proof": [
+                "docs/ALL_IN_ONE_VMS_API_ROADMAP.md:64 adds Export product capability with caps/path/cleanup.",
+                "docs/ALL_IN_ONE_VMS_API_ROADMAP.md:119 updates ExportService coverage.",
+                "docs/ALL_IN_ONE_VMS_API_ROADMAP.md:160 removes export from unresolved intent-polish backlog.",
+                "raw/coverage_diff.txt shows no docs/COVERAGE.md diff."
+            ]
+        },
+        {
+            "id": "AC14",
+            "status": "PASS",
+            "proof": [
+                "raw/red_export_unittest.txt captured ModuleNotFoundError before implementation.",
+                "raw/red_server_unittest.txt captured missing export capability/env failures before implementation."
+            ]
+        },
+        {
+            "id": "AC15",
+            "status": "PASS",
+            "proof": [
+                "tools/tests/test_axxon_mcp_export.py:15-224 define fake config/proto/stub/client objects.",
+                "tools/tests/test_axxon_mcp_export.py:247-472 cover AC1-AC10 behaviors offline.",
+                "raw/green_export_unittest.txt: Ran 11 tests ... OK."
+            ]
+        },
+        {
+            "id": "AC16",
+            "status": "PASS",
+            "proof": [
+                "tools/tests/test_axxon_mcp_server.py:339 defines StubExport.",
+                "tools/tests/test_axxon_mcp_server.py:538 covers export flag, capability, create_server, and registrations.",
+                "tools/tests/test_axxon_mcp_server.py:574 covers list_capabilities disabled/enabled export.",
+                "tools/tests/test_axxon_mcp_server.py:1159 covers default-open approval env.",
+                "raw/green_server_unittest.txt: Ran 30 tests ... OK."
+            ]
+        },
+        {
+            "id": "AC17",
+            "status": "PASS",
+            "proof": [
+                "raw/adjacent_export_regressions.txt covers server, export_preflight, export_smoke, http_export_smoke, generator, generator_6a_inc2, generator_6a_inc4, and customer_templates.",
+                "raw/adjacent_export_regressions.txt: Ran 103 tests ... OK."
+            ]
+        },
+        {
+            "id": "AC18",
+            "status": "PASS",
+            "proof": [
+                ".agent/tasks/phase-2-first-class-export-group/evidence.md exists.",
+                ".agent/tasks/phase-2-first-class-export-group/evidence.json exists.",
+                "raw artifacts include red/green/focused/adjacent/full test logs, git diff check, count proof, help proof, coverage diff, and scan output.",
+                "raw/secret_scan.txt exit_code=0; findings are test sentinels, API parameter names, policy text, and unit-test byte fixtures only."
+            ]
+        },
+        {
+            "id": "AC19",
+            "status": "PASS",
+            "proof": [
+                "raw/full_unittest.txt: Ran 1127 tests ... OK, exit_code=0.",
+                "raw/git_diff_check.txt: exit_code=0."
+            ]
+        },
+        {
+            "id": "AC20",
+            "status": "WARN",
+            "proof": [
+                "Fresh verifier owns verdict.json; builder did not create it."
+            ]
+        },
+        {
+            "id": "AC21",
+            "status": "WARN",
+            "proof": [
+                "Controlled live smoke was not attempted to avoid proto symlink/secrets/timing risk; offline verification is captured."
+            ]
+        },
+        {
+            "id": "AC22",
+            "status": "WARN",
+            "proof": [
+                "Builder did not commit or push; parent/verifier owns that after PASS."
+            ]
+        }
+    ]
+}
+
+exit_code=0

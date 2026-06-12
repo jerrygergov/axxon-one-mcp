@@ -32,12 +32,12 @@ The public site states that Integration API documentation is not public and must
 | RPCs fixture-blocked | 55 | `tested-warn-fixture-needed` statuses |
 | RPCs pending | 20 | deliberate destructive/infra operations |
 | HTTP `/v1` endpoints cataloged | 221 | `docs/api-audit/mcp-corpus/http_endpoints.json` |
-| Actual all-enabled MCP tools | 293 | 288 server-local decorators plus 5 delegated translator tools |
-| Advertised capability groups | 48 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
+| Actual all-enabled MCP tools | 301 | 296 server-local decorators plus 5 delegated translator tools |
+| Advertised capability groups | 49 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
 | Generator templates | 14 x Python + Node | `TEMPLATE_CATALOG` in `tools/axxon_mcp_generator.py` |
 | Services with intent-level tool coverage | 44 / 51 | all except the seven fixture/infra tails listed below |
 
-Important counting rule: the old AST shortcut counted only decorators in `tools/axxon_mcp_server.py` and reported 286 tools. The runtime all-enabled server also registers five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
+Important counting rule: the runtime all-enabled server registers 296 server-local tools in `tools/axxon_mcp_server.py` plus five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
 
 ## Target Architecture
 
@@ -50,7 +50,7 @@ The all-in-one MCP should stay layered:
 | Live read-only | Inventory, states, events, archive intervals, statistics, metadata samples, media/export probes, layouts/maps/walls, security/license summaries, and bounded subscriptions. |
 | Controlled operator | Plan/apply/verify/rollback workflows with confirmation tokens for every mutation; dry-run by default for high-risk or destructive classes. |
 | Partner authoring | Python/Node generators, plugin scaffold/lint/package, natural-language recipe assembly, and runnable examples for integrations. |
-| Safety/audit | Read-only mode, per-group enable flags, per-tool risk classes, rollback classification, stream/file caps, no secret/media-byte leakage, and sanitized evidence. |
+| Safety/audit | Read-only mode, per-group enable flags, per-tool risk classes, rollback classification, stream/export/file caps, safe export artifact paths, no secret/media-byte leakage, and sanitized evidence. |
 
 ## Product Capability Map
 
@@ -61,6 +61,7 @@ The all-in-one MCP should stay layered:
 | Configuration tree | List units/templates/factories, inspect properties, change unit properties, create/remove devices/detectors/archives/layouts/maps/macros. | Strong generic config and many intent workflows. | Add schema-first config assistant that exposes property descriptors, constraints, defaults, and before/after diff. |
 | Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; partial for GlobalTracker and RealtimeRecognizerExternal fixtures. | Add detector playbooks for every documented detector family and fixture-gated global tracking profile workflows. |
 | Live video and snapshots | Produce safe live stream URLs, snapshots, stream health, GreenStream/high-low quality hints, media transport probes, bounded media samples. | Strong for safe URLs/snapshots/probes; raw streaming is capped. | Add embeddable video component and web-client helper docs/templates. |
+| Export | Plan/start/status/download/stop/destroy snapshot exports through `ExportService`, with owned-session cleanup, approval gates, byte/chunk/time caps, and module-owned download paths. | Covered by the first-class `export` group; HTTP/gRPC export smokes remain adjacent regression helpers. | Optional live fixture smoke can deepen evidence when a safe archive interval and export agent are available. |
 | Archive viewing | Archive history, calendars, intervals, scrub/frame/MJPEG, stream info, bookmarks, protected clips, delete intervals, reindex/format/resize. | Strong for safe reads and bookmark lifecycle; partial for destructive archive maintenance. | Put clear/format/reindex/delete under explicit destructive Phase C plans with throwaway fixtures. |
 | Search | Event search, LPR/text/alert/bookmark search, VMDA/object/prompt/similar/stranger search, heatmap searches. | Strong for event and VMDA/heatmap paths when fixtures exist. | Add task-first search tools that hide RPC shape and return dashboard-ready aggregates. |
 | Events and alarms | Historical event reads/counts, bounded live subscriptions, detector/external events, alarm lifecycle, alert review/escalation, dashboards. | Strong via `live`, `alarms`, `logic_alerts`, `admin`, `audit`, external event workflows. | Add WebSocket `/events` parity when a Web server fixture is available. |
@@ -115,7 +116,7 @@ The all-in-one MCP should stay layered:
 | `MapService` | Maps, images, markers, providers, cleanup. | Covered by `view_objects`, `map_providers`, `operator`, `gdpr_cleanup`. | Add map image upload and marker bulk planner. |
 | `MediaService` | Bidi stream, connection/QoS/tunnel, endpoint bridging. | Covered as capped probes by `media`; live/archive view wraps safe paths. | Add production stream adapters outside MCP response body. |
 | `MetadataService` | Bidi metadata stream. | Covered by `metadata` and live metadata sample. | Add typed track normalization for dashboards. |
-| `ExportService` | Export sessions, state, stop/destroy, download stream. | Generator/export smokes exist; not a first-class live MCP group. | Add `export` group with job caps, download path policy, cleanup. |
+| `ExportService` | Export sessions, state, stop/destroy, download stream. | Covered by the first-class `export` group with job caps, download path policy, and owned-session cleanup; generator/export smokes remain as adjacent helpers. | Add optional live evidence when a safe archive interval and export agent fixture are available. |
 | `NgpNodeService` | Scene description. | Covered by `scene_description`. | Merge scene geometry with detector/map planners. |
 | `EMailNotifier` | Send email, state, send mode. | Missing first-class group. | SMTP fixture-gated notification group. |
 | `GSMNotifier` | Send SMS, state. | Missing first-class group. | GSM fixture-gated notification group. |
@@ -156,7 +157,7 @@ The local HTTP corpus catalogs 221 annotated `/v1` endpoints. Exact paths live i
 
 1. **Phase C destructive/infra tools:** `BackupSourceService`, `CloudService`, license distribute/drop/document creation, `DomainManager.AddNode/DropNode/ProclaimDomain`, `ConfigurationManager.SetRevision/RestoreBackup`, email/SMS send, installer package download, archive clear/format/reindex/delete. These require explicit throwaway targets, irreversible labels, confirmation tokens, and sanitized evidence.
 2. **Fixture procurement:** Tag&Track component, non-production PTZ modes/tours, TFA/OTP and LDAP server, GlobalTracker profile fixtures, RealtimeRecognizerExternal fixture, POS/text-event source, SMTP/GSM, isolated archive volume, client-local HTTP API target, WebSocket/Web server fixture, control panels/water-level devices.
-3. **Intent polish:** first-class `export`, `notification`, `tag_and_track`, `client_api`, `web_api`, and `bulk_onboarding` groups. Phase 1 added the read-only `site_graph` group; future work should consume it from planners and generators rather than rejoining inventory ad hoc.
+3. **Intent polish:** first-class `notification`, `tag_and_track`, `client_api`, `web_api`, and `bulk_onboarding` groups. Phase 1 added the read-only `site_graph` group and Phase 2 added the approval-gated `export` group; future work should consume them from planners and generators rather than rejoining inventory ad hoc.
 4. **Partner depth:** add richer generated examples for dashboards, CSV camera import, archive retention policy, map/layout editing, and event-to-third-party bridges. Defer C# until compile-verifiable.
 
 ## Safety Policy Requirements
@@ -166,7 +167,7 @@ The local HTTP corpus catalogs 221 annotated `/v1` endpoints. Exact paths live i
 | Secrets | Never return passwords, tokens, cookies, CA material, license keys, raw biometric vectors, or raw media bytes in tool responses/evidence. |
 | Mutations | Require enable flag/env approval and a per-call confirmation token. Prefer plan/apply/verify/rollback. |
 | Irreversible actions | Mark explicitly as irreversible or no-rollback before apply. Require a second acknowledgement for destructive archive/license/domain/config restore operations. |
-| Streams/downloads | Enforce count, time, byte, and destination caps. Return metadata or saved artifact path, not unbounded payloads. |
+| Streams/downloads | Enforce count, time, byte, and destination caps. Return metadata or saved artifact path, not unbounded payloads; export downloads stay under the module-owned artifact root. |
 | Live stand evidence | Sanitize host/user/password/token/CA. `AXXON_TLS_CN=Server` and intrinsic `hosts/Server/...` UIDs may remain. Retry transient remote stand timeouts up to three times. |
 | Generated code | Use env credentials only, include safe defaults, no committed secrets, and tests/lint scaffolds. |
 

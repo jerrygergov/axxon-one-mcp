@@ -34,6 +34,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "ptz": ("PTZ / telemetry control", ("list_telemetry_sources", "ptz_absolute_move", "list_presets"), "--enable-ptz"),
     "heatmap": ("HeatMap image + query tools (metadata only)", ("build_heatmap", "execute_heatmap_query"), "--enable-heatmap"),
     "media": ("Media transport probes (metadata only)", ("request_connection", "stream_probe", "connect_endpoint"), "--enable-media"),
+    "export": ("ExportService snapshots, capped downloads, and owned-session cleanup", ("export_start_snapshot", "export_download", "export_cleanup_owned"), "--enable-export"),
     "recognizer": ("RealtimeRecognizer reads", ("list_recognizers", "get_recognizer_lists"), "--enable-recognizer"),
     "recognizer_write": ("RealtimeRecognizer list writes", ("update_recognizer_list",), "--enable-recognizer-write"),
     "discovery": ("DiscoveryService network device discovery", ("discover_devices",), "--enable-discovery"),
@@ -139,6 +140,7 @@ def create_server(
     misc_reads: Any | None = None,
     heatmap: Any | None = None,
     media: Any | None = None,
+    export: Any | None = None,
     videowall: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -208,7 +210,7 @@ def create_server(
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
         ("auth_sessions", auth_sessions), ("layout_manager", layout_manager), ("license_reads", license_reads),
-        ("misc_reads", misc_reads), ("heatmap", heatmap), ("media", media), ("videowall", videowall),
+        ("misc_reads", misc_reads), ("heatmap", heatmap), ("media", media), ("export", export), ("videowall", videowall),
     )}
 
     @server.tool(name="list_capabilities")
@@ -391,6 +393,9 @@ def create_server(
 
     if media is not None:
         register_media_tools(server, media)
+
+    if export is not None:
+        register_export_tools(server, export)
 
     if videowall is not None:
         register_videowall_tools(server, videowall)
@@ -1567,6 +1572,110 @@ def register_media_tools(server: Any, media: Any) -> None:
         return media.connect_endpoint(source_endpoint=source_endpoint, sink_endpoint=sink_endpoint, priority=priority)
 
 
+def register_export_tools(server: Any, export: Any) -> None:
+    @server.tool(name="export_connect_axxon_profile")
+    def export_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the ExportService layer to the env profile; responses are metadata-only."""
+        return export.export_connect_axxon_profile(profile)
+
+    @server.tool(name="export_plan_snapshot")
+    def export_plan_snapshot(
+        camera_access_point: str = "",
+        archive_access_point: str = "",
+        timestamp: str = "",
+        max_file_size: int = 1_048_576,
+        max_download_bytes: int = 262_144,
+        max_chunks: int = 16,
+        chunk_size_kb: int = 64,
+        timeout_s: float = 10.0,
+        filename_stem: str = "",
+    ) -> dict[str, Any]:
+        """Plan a short archived JPEG snapshot export without starting a session."""
+        return export.export_plan_snapshot(
+            camera_access_point=camera_access_point,
+            archive_access_point=archive_access_point,
+            timestamp=timestamp,
+            max_file_size=max_file_size,
+            max_download_bytes=max_download_bytes,
+            max_chunks=max_chunks,
+            chunk_size_kb=chunk_size_kb,
+            timeout_s=timeout_s,
+            filename_stem=filename_stem,
+        )
+
+    @server.tool(name="export_start_snapshot")
+    def export_start_snapshot(
+        camera_access_point: str = "",
+        archive_access_point: str = "",
+        timestamp: str = "",
+        confirmation: str = "",
+        max_file_size: int = 1_048_576,
+        max_download_bytes: int = 262_144,
+        max_chunks: int = 16,
+        chunk_size_kb: int = 64,
+        timeout_s: float = 10.0,
+        filename_stem: str = "",
+    ) -> dict[str, Any]:
+        """Start an owned snapshot export. Requires AXXON_EXPORT_APPROVE=1 and CONFIRM-export."""
+        return export.export_start_snapshot(
+            camera_access_point=camera_access_point,
+            archive_access_point=archive_access_point,
+            timestamp=timestamp,
+            confirmation=confirmation,
+            max_file_size=max_file_size,
+            max_download_bytes=max_download_bytes,
+            max_chunks=max_chunks,
+            chunk_size_kb=chunk_size_kb,
+            timeout_s=timeout_s,
+            filename_stem=filename_stem,
+        )
+
+    @server.tool(name="export_status")
+    def export_status(session_id: str = "") -> dict[str, Any]:
+        """Read bounded ExportService state for an owned session."""
+        return export.export_status(session_id=session_id)
+
+    @server.tool(name="export_download")
+    def export_download(
+        session_id: str = "",
+        file_path: str = "",
+        confirmation: str = "",
+        destination_name: str = "",
+        max_bytes: int = 262_144,
+        max_chunks: int = 16,
+        chunk_size_kb: int = 64,
+        timeout_s: float = 10.0,
+        save: bool = True,
+    ) -> dict[str, Any]:
+        """Download an owned export file under caps, optionally saving under the module artifact root."""
+        return export.export_download(
+            session_id=session_id,
+            file_path=file_path,
+            confirmation=confirmation,
+            destination_name=destination_name,
+            max_bytes=max_bytes,
+            max_chunks=max_chunks,
+            chunk_size_kb=chunk_size_kb,
+            timeout_s=timeout_s,
+            save=save,
+        )
+
+    @server.tool(name="export_stop")
+    def export_stop(session_id: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Stop an owned export session. Requires AXXON_EXPORT_APPROVE=1 and CONFIRM-export."""
+        return export.export_stop(session_id=session_id, confirmation=confirmation)
+
+    @server.tool(name="export_destroy")
+    def export_destroy(session_id: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Destroy an owned export session. Requires AXXON_EXPORT_APPROVE=1 and CONFIRM-export."""
+        return export.export_destroy(session_id=session_id, confirmation=confirmation)
+
+    @server.tool(name="export_cleanup_owned")
+    def export_cleanup_owned(confirmation: str = "", stop_running: bool = True, destroy: bool = True) -> dict[str, Any]:
+        """Stop/destroy only sessions owned by this export tool and report cleanup counts."""
+        return export.export_cleanup_owned(confirmation=confirmation, stop_running=stop_running, destroy=destroy)
+
+
 def register_recognizer_tools(server: Any, recognizer: Any) -> None:
     @server.tool(name="recognizer_connect_axxon_profile")
     def recognizer_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2486,6 +2595,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 44 MediaService transport-probe tools (request_connection, request_qos, request_tunnel, stream_probe; metadata-only).",
     )
     parser.add_argument(
+        "--enable-export",
+        action="store_true",
+        help="Enable ExportService snapshot/export tools (plan/start/status/download/stop/destroy/cleanup). Export actions need AXXON_EXPORT_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-videowall",
         action="store_true",
         help="Enable Phase 46 VideowallService control tools (register/change/set-control-data/unregister; approval-gated, reversible).",
@@ -2530,7 +2644,7 @@ APPROVE_ENV_VARS = (
     "AXXON_LAYOUT_MANAGER_APPROVE", "AXXON_AUDIT_INJECT_APPROVE", "AXXON_CONTROL_APPROVE",
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
-    "AXXON_STATE_CONTROL_APPROVE",
+    "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE",
 )
 
 
@@ -2853,6 +2967,11 @@ def main() -> int:
         from axxon_mcp_media import AxxonMcpMedia
 
         media = AxxonMcpMedia()
+    export = None
+    if args.enable_export:
+        from axxon_mcp_export import AxxonMcpExport
+
+        export = AxxonMcpExport()
     videowall = None
     if args.enable_videowall:
         from axxon_mcp_videowall import AxxonMcpVideowall
@@ -2911,6 +3030,7 @@ def main() -> int:
         misc_reads=misc_reads,
         heatmap=heatmap,
         media=media,
+        export=export,
         videowall=videowall,
     )
     server.run(transport=args.transport)

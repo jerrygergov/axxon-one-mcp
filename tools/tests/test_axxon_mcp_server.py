@@ -336,6 +336,88 @@ class StubSiteGraph:
         }
 
 
+class StubExport:
+    def export_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read+export"}
+
+    def export_plan_snapshot(
+        self,
+        camera_access_point: str = "",
+        archive_access_point: str = "",
+        timestamp: str = "",
+        max_file_size: int = 0,
+        max_download_bytes: int = 0,
+        max_chunks: int = 0,
+        chunk_size_kb: int = 0,
+        timeout_s: float = 0.0,
+        filename_stem: str = "",
+    ):
+        return {
+            "status": "planned",
+            "camera_access_point": camera_access_point,
+            "archive_access_point": archive_access_point,
+            "timestamp": timestamp,
+            "max_file_size": max_file_size,
+            "max_download_bytes": max_download_bytes,
+            "max_chunks": max_chunks,
+            "chunk_size_kb": chunk_size_kb,
+            "timeout_s": timeout_s,
+            "filename_stem": filename_stem,
+        }
+
+    def export_start_snapshot(
+        self,
+        camera_access_point: str = "",
+        archive_access_point: str = "",
+        timestamp: str = "",
+        confirmation: str = "",
+        max_file_size: int = 0,
+        max_download_bytes: int = 0,
+        max_chunks: int = 0,
+        chunk_size_kb: int = 0,
+        timeout_s: float = 0.0,
+        filename_stem: str = "",
+    ):
+        return {"status": "started", "session_id": "session-1", "confirmation": confirmation}
+
+    def export_status(self, session_id: str = ""):
+        return {"status": "ok", "session_id": session_id}
+
+    def export_download(
+        self,
+        session_id: str = "",
+        file_path: str = "",
+        confirmation: str = "",
+        destination_name: str = "",
+        max_bytes: int = 0,
+        max_chunks: int = 0,
+        chunk_size_kb: int = 0,
+        timeout_s: float = 0.0,
+        save: bool = True,
+    ):
+        return {
+            "status": "ok",
+            "session_id": session_id,
+            "file_path": file_path,
+            "confirmation": confirmation,
+            "destination_name": destination_name,
+            "max_bytes": max_bytes,
+            "max_chunks": max_chunks,
+            "chunk_size_kb": chunk_size_kb,
+            "timeout_s": timeout_s,
+            "save": save,
+        }
+
+    def export_stop(self, session_id: str = "", confirmation: str = ""):
+        return {"status": "stopped", "session_id": session_id, "confirmation": confirmation}
+
+    def export_destroy(self, session_id: str = "", confirmation: str = ""):
+        return {"status": "destroyed", "session_id": session_id, "confirmation": confirmation}
+
+    def export_cleanup_owned(self, confirmation: str = "", stop_running: bool = True, destroy: bool = True):
+        return {"status": "ok", "confirmation": confirmation, "stop_running": stop_running, "destroy": destroy}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -450,6 +532,55 @@ class AxxonMcpServerTests(unittest.TestCase):
             fastmcp_factory=FakeFastMCP,
         )
         enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "site_graph")
+        self.assertTrue(enabled["enabled"])
+        self.assertNotIn("enable_flag", enabled)
+
+    def test_create_server_registers_export_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        export_tools = {
+            "export_connect_axxon_profile",
+            "export_plan_snapshot",
+            "export_start_snapshot",
+            "export_status",
+            "export_download",
+            "export_stop",
+            "export_destroy",
+            "export_cleanup_owned",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in export_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("export", module.CAPABILITY_GROUPS)
+        self.assertIn("export", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-export"])
+        self.assertTrue(args.enable_export)
+
+        server = module.create_server(docs=StubDocs(), export=StubExport(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(export_tools, set(server.tools))
+        self.assertEqual(server.tools["export_connect_axxon_profile"]("env")["mode"], "read+export")
+        plan = server.tools["export_plan_snapshot"]("cam", "archive", "2026-06-12T10:00:00Z", 123, 456, 7, 8, 9.0, "clip")
+        self.assertEqual(plan["filename_stem"], "clip")
+        started = server.tools["export_start_snapshot"]("cam", "archive", "2026-06-12T10:00:00Z", "CONFIRM-export")
+        self.assertEqual(started["session_id"], "session-1")
+        self.assertEqual(server.tools["export_status"]("session-1")["session_id"], "session-1")
+        downloaded = server.tools["export_download"]("session-1", "file-id", "CONFIRM-export", "clip.bin", 1024)
+        self.assertEqual(downloaded["destination_name"], "clip.bin")
+        self.assertEqual(server.tools["export_stop"]("session-1", "CONFIRM-export")["status"], "stopped")
+        self.assertEqual(server.tools["export_destroy"]("session-1", "CONFIRM-export")["status"], "destroyed")
+        self.assertEqual(server.tools["export_cleanup_owned"]("CONFIRM-export", False, True)["stop_running"], False)
+
+    def test_list_capabilities_reports_export_disabled_and_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "export")
+        self.assertFalse(disabled["enabled"])
+        self.assertEqual(disabled["enable_flag"], "--enable-export")
+        self.assertIn("export_start_snapshot", disabled["example_tools"])
+
+        enabled_server = module.create_server(docs=StubDocs(), export=StubExport(), fastmcp_factory=FakeFastMCP)
+        enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "export")
         self.assertTrue(enabled["enabled"])
         self.assertNotIn("enable_flag", enabled)
 
@@ -1031,6 +1162,7 @@ class AxxonMcpServerTests(unittest.TestCase):
         args = module.apply_default_open(module.build_parser().parse_args([]), environ=env)
         enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
         self.assertTrue(all(enables.values()))
+        self.assertIn("AXXON_EXPORT_APPROVE", module.APPROVE_ENV_VARS)
         for var in module.APPROVE_ENV_VARS:
             self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
 
