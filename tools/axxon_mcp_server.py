@@ -72,6 +72,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "shared_kv": ("Shared key-value store reads + gated commit (plugin/integration state)", ("list_records", "get_records", "commit_record"), "--enable-shared-kv"),
     "state_control": ("Device state reads + gated SetState (e.g. PTZ patrol controllers)", ("get_current_state", "set_state"), "--enable-state-control"),
     "site_graph": ("Unified read-only site graph for planners and generators", ("build_site_graph",), "--enable-site-graph"),
+    "bulk_onboarding": ("Bulk CSV/JSON camera onboarding planner with gated apply/verify/rollback", ("bulk_onboarding_plan", "bulk_onboarding_apply_plan", "bulk_onboarding_verify_plan"), "--enable-bulk-onboarding"),
 }
 
 
@@ -124,6 +125,7 @@ def create_server(
     shared_kv: Any | None = None,
     state_control: Any | None = None,
     site_graph: Any | None = None,
+    bulk_onboarding: Any | None = None,
     groups: Any | None = None,
     discovery: Any | None = None,
     gdpr_cleanup: Any | None = None,
@@ -205,7 +207,7 @@ def create_server(
         ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
         ("devices_catalog", devices_catalog), ("global_tracker", global_tracker),
         ("shared_kv", shared_kv), ("state_control", state_control), ("groups", groups),
-        ("site_graph", site_graph),
+        ("site_graph", site_graph), ("bulk_onboarding", bulk_onboarding),
         ("discovery", discovery), ("gdpr_cleanup", gdpr_cleanup), ("control", control),
         ("map_providers", map_providers), ("logic_alerts", logic_alerts), ("config_change", config_change),
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
@@ -345,6 +347,9 @@ def create_server(
 
     if site_graph is not None:
         register_site_graph_tools(server, site_graph)
+
+    if bulk_onboarding is not None:
+        register_bulk_onboarding_tools(server, bulk_onboarding)
 
     if groups is not None:
         register_groups_tools(server, groups)
@@ -2344,6 +2349,84 @@ def register_translator_tools(server: Any, translator: Any) -> None:
     _register(server, translator)
 
 
+def register_bulk_onboarding_tools(server: Any, bulk_onboarding: Any) -> None:
+    @server.tool(name="bulk_onboarding_connect_axxon_profile")
+    def bulk_onboarding_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the bulk onboarding layer to the env profile without applying changes."""
+        return bulk_onboarding.bulk_onboarding_connect_axxon_profile(profile)
+
+    @server.tool(name="bulk_onboarding_schema")
+    def bulk_onboarding_schema() -> dict[str, Any]:
+        """Return accepted bulk onboarding manifest fields, source rules, gates, and redaction policy."""
+        return bulk_onboarding.bulk_onboarding_schema()
+
+    @server.tool(name="bulk_onboarding_validate_manifest")
+    def bulk_onboarding_validate_manifest(
+        rows: list[dict[str, Any]] | None = None,
+        csv_text: str = "",
+        json_text: str = "",
+        options: dict[str, Any] | None = None,
+        path: str = "",
+        file: str = "",
+        filename: str = "",
+        manifest_path: str = "",
+    ) -> dict[str, Any]:
+        """Validate inline CSV/JSON/row manifests against catalog, discovery, site graph, templates, and archives."""
+        return bulk_onboarding.bulk_onboarding_validate_manifest(
+            rows,
+            csv_text,
+            json_text,
+            options,
+            path,
+            file,
+            filename,
+            manifest_path,
+        )
+
+    @server.tool(name="bulk_onboarding_plan")
+    def bulk_onboarding_plan(
+        rows: list[dict[str, Any]] | None = None,
+        csv_text: str = "",
+        json_text: str = "",
+        options: dict[str, Any] | None = None,
+        path: str = "",
+        file: str = "",
+        filename: str = "",
+        manifest_path: str = "",
+    ) -> dict[str, Any]:
+        """Build a deterministic rollbackable per-camera and batch-level onboarding plan."""
+        return bulk_onboarding.bulk_onboarding_plan(
+            rows,
+            csv_text,
+            json_text,
+            options,
+            path,
+            file,
+            filename,
+            manifest_path,
+        )
+
+    @server.tool(name="bulk_onboarding_apply_plan")
+    def bulk_onboarding_apply_plan(batch_plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Apply a stored bulk onboarding plan when approval env and confirmation gates pass."""
+        return bulk_onboarding.bulk_onboarding_apply_plan(batch_plan_id, confirmation)
+
+    @server.tool(name="bulk_onboarding_verify_plan")
+    def bulk_onboarding_verify_plan(batch_plan_id: str) -> dict[str, Any]:
+        """Verify planned/applied/rolled-back bulk onboarding state with injectable readers."""
+        return bulk_onboarding.bulk_onboarding_verify_plan(batch_plan_id)
+
+    @server.tool(name="bulk_onboarding_rollback_plan")
+    def bulk_onboarding_rollback_plan(batch_plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Roll back only recorded applied bulk onboarding steps in reverse order."""
+        return bulk_onboarding.bulk_onboarding_rollback_plan(batch_plan_id, confirmation)
+
+    @server.tool(name="bulk_onboarding_audit_log")
+    def bulk_onboarding_audit_log() -> dict[str, Any]:
+        """Return the sanitized in-memory bulk onboarding audit trail."""
+        return bulk_onboarding.bulk_onboarding_audit_log()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the docs-only Axxon One MCP server.")
     parser.add_argument("--corpus-dir", type=Path, default=DEFAULT_CORPUS_DIR)
@@ -2520,6 +2603,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable read-only unified site graph tools for planners and integration generators.",
     )
     parser.add_argument(
+        "--enable-bulk-onboarding",
+        action="store_true",
+        help="Enable bulk CSV/JSON camera onboarding planner/orchestrator. Apply/rollback need AXXON_BULK_ONBOARDING_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-groups",
         action="store_true",
         help="Enable Phase 21 GroupManager tools (change_groups, set_objects_membership). Writes need AXXON_GROUPS_APPROVE=1.",
@@ -2644,7 +2732,7 @@ APPROVE_ENV_VARS = (
     "AXXON_LAYOUT_MANAGER_APPROVE", "AXXON_AUDIT_INJECT_APPROVE", "AXXON_CONTROL_APPROVE",
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
-    "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE",
+    "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE", "AXXON_BULK_ONBOARDING_APPROVE",
 )
 
 
@@ -2887,6 +2975,11 @@ def main() -> int:
         from axxon_mcp_site_graph import AxxonMcpSiteGraph
 
         site_graph = AxxonMcpSiteGraph()
+    bulk_onboarding = None
+    if args.enable_bulk_onboarding:
+        from axxon_mcp_bulk_onboarding import AxxonMcpBulkOnboarding
+
+        bulk_onboarding = AxxonMcpBulkOnboarding()
     groups = None
     if args.enable_groups:
         from axxon_mcp_groups import AxxonMcpGroups
@@ -3014,6 +3107,7 @@ def main() -> int:
         shared_kv=shared_kv,
         state_control=state_control,
         site_graph=site_graph,
+        bulk_onboarding=bulk_onboarding,
         groups=groups,
         discovery=discovery,
         gdpr_cleanup=gdpr_cleanup,

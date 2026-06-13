@@ -418,6 +418,62 @@ class StubExport:
         return {"status": "ok", "confirmation": confirmation, "stop_running": stop_running, "destroy": destroy}
 
 
+class StubBulkOnboarding:
+    def bulk_onboarding_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "bulk-onboarding"}
+
+    def bulk_onboarding_schema(self):
+        return {"status": "ok", "input_sources": ["rows", "csv_text", "json_text"]}
+
+    def bulk_onboarding_validate_manifest(
+        self,
+        rows=None,
+        csv_text: str = "",
+        json_text: str = "",
+        options=None,
+        path: str = "",
+        file: str = "",
+        filename: str = "",
+        manifest_path: str = "",
+    ):
+        return {
+            "status": "ok",
+            "rows": list(rows or []),
+            "csv_text": csv_text,
+            "json_text": json_text,
+            "options": dict(options or {}),
+            "path": path,
+            "file": file,
+            "filename": filename,
+            "manifest_path": manifest_path,
+        }
+
+    def bulk_onboarding_plan(
+        self,
+        rows=None,
+        csv_text: str = "",
+        json_text: str = "",
+        options=None,
+        path: str = "",
+        file: str = "",
+        filename: str = "",
+        manifest_path: str = "",
+    ):
+        return {"status": "planned", "rows": list(rows or []), "options": dict(options or {})}
+
+    def bulk_onboarding_apply_plan(self, batch_plan_id: str, confirmation: str):
+        return {"status": "applied", "batch_plan_id": batch_plan_id, "confirmation": confirmation}
+
+    def bulk_onboarding_verify_plan(self, batch_plan_id: str):
+        return {"status": "verified", "batch_plan_id": batch_plan_id}
+
+    def bulk_onboarding_rollback_plan(self, batch_plan_id: str, confirmation: str):
+        return {"status": "rolled_back", "batch_plan_id": batch_plan_id, "confirmation": confirmation}
+
+    def bulk_onboarding_audit_log(self):
+        return {"status": "ok", "entries": []}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -581,6 +637,71 @@ class AxxonMcpServerTests(unittest.TestCase):
 
         enabled_server = module.create_server(docs=StubDocs(), export=StubExport(), fastmcp_factory=FakeFastMCP)
         enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "export")
+        self.assertTrue(enabled["enabled"])
+        self.assertNotIn("enable_flag", enabled)
+
+    def test_create_server_registers_bulk_onboarding_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        bulk_tools = {
+            "bulk_onboarding_connect_axxon_profile",
+            "bulk_onboarding_schema",
+            "bulk_onboarding_validate_manifest",
+            "bulk_onboarding_plan",
+            "bulk_onboarding_apply_plan",
+            "bulk_onboarding_verify_plan",
+            "bulk_onboarding_rollback_plan",
+            "bulk_onboarding_audit_log",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in bulk_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("bulk_onboarding", module.CAPABILITY_GROUPS)
+        self.assertIn("bulk_onboarding", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-bulk-onboarding"])
+        self.assertTrue(args.enable_bulk_onboarding)
+
+        server = module.create_server(
+            docs=StubDocs(),
+            bulk_onboarding=StubBulkOnboarding(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        self.assertLessEqual(bulk_tools, set(server.tools))
+        self.assertEqual(server.tools["bulk_onboarding_connect_axxon_profile"]("env")["mode"], "bulk-onboarding")
+        self.assertEqual(server.tools["bulk_onboarding_schema"]()["input_sources"], ["rows", "csv_text", "json_text"])
+        validated = server.tools["bulk_onboarding_validate_manifest"]([{"display_name": "A"}])
+        self.assertEqual(validated["rows"], [{"display_name": "A"}])
+        plan = server.tools["bulk_onboarding_plan"]([{"display_name": "A"}], "", "", {"detector_profile": "av_motion"})
+        self.assertEqual(plan["options"], {"detector_profile": "av_motion"})
+        self.assertEqual(
+            server.tools["bulk_onboarding_apply_plan"]("bulk-plan-1", "CONFIRM-bulk-onboarding")["status"],
+            "applied",
+        )
+        self.assertEqual(server.tools["bulk_onboarding_verify_plan"]("bulk-plan-1")["status"], "verified")
+        self.assertEqual(
+            server.tools["bulk_onboarding_rollback_plan"](
+                "bulk-plan-1",
+                "CONFIRM-bulk-onboarding-rollback",
+            )["status"],
+            "rolled_back",
+        )
+        self.assertEqual(server.tools["bulk_onboarding_audit_log"]()["entries"], [])
+
+    def test_list_capabilities_reports_bulk_onboarding_disabled_and_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "bulk_onboarding")
+        self.assertFalse(disabled["enabled"])
+        self.assertEqual(disabled["enable_flag"], "--enable-bulk-onboarding")
+        self.assertIn("bulk_onboarding_plan", disabled["example_tools"])
+
+        enabled_server = module.create_server(
+            docs=StubDocs(),
+            bulk_onboarding=StubBulkOnboarding(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "bulk_onboarding")
         self.assertTrue(enabled["enabled"])
         self.assertNotIn("enable_flag", enabled)
 
@@ -1163,6 +1284,7 @@ class AxxonMcpServerTests(unittest.TestCase):
         enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
         self.assertTrue(all(enables.values()))
         self.assertIn("AXXON_EXPORT_APPROVE", module.APPROVE_ENV_VARS)
+        self.assertIn("AXXON_BULK_ONBOARDING_APPROVE", module.APPROVE_ENV_VARS)
         for var in module.APPROVE_ENV_VARS:
             self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
 
@@ -1187,6 +1309,18 @@ class AxxonMcpServerTests(unittest.TestCase):
         args = module.apply_default_open(module.build_parser().parse_args(["--enable-live"]), environ=env)
         self.assertTrue(args.enable_live)
         self.assertFalse(args.enable_operator)
+
+    def test_bulk_onboarding_group_builds_without_credentials(self) -> None:
+        """Regression: enabling bulk onboarding must construct lazily with no live password."""
+        import os
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AXXON_PASSWORD", None)
+            from axxon_mcp_bulk_onboarding import AxxonMcpBulkOnboarding
+
+            registry = AxxonMcpBulkOnboarding()
+        self.assertIsNotNone(registry)
 
     def test_operator_group_builds_without_credentials(self) -> None:
         """Regression: the operator group must construct lazily so the server boots with no password."""

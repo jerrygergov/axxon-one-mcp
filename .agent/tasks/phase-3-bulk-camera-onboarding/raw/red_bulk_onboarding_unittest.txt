@@ -1,0 +1,305 @@
+EEEEEEEEEEEEEEEEE
+======================================================================
+ERROR: test_apply_records_partial_failure_and_rollback_reverses_only_applied_steps (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_apply_records_partial_failure_and_rollback_reverses_only_applied_steps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 380, in test_apply_records_partial_failure_and_rollback_reverses_only_applied_steps
+    registry = make_registry(mutation_client=client, env=env)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_apply_requires_known_planned_confirmation_and_env_gate (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_apply_requires_known_planned_confirmation_and_env_gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 351, in test_apply_requires_known_planned_confirmation_and_env_gate
+    registry = make_registry(env=env)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_archive_template_and_detector_validation (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_archive_template_and_detector_validation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 284, in test_archive_template_and_detector_validation
+    registry = make_registry(site_graph=FakeSiteGraph(archives=[], templates=[]))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_audit_log_covers_actions_and_redacts_manifest_secrets (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_audit_log_covers_actions_and_redacts_manifest_secrets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 436, in test_audit_log_covers_actions_and_redacts_manifest_secrets
+    registry = make_registry(env=env)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_connect_env_is_lazy_and_non_env_returns_gap (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_connect_env_is_lazy_and_non_env_returns_gap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 163, in test_connect_env_is_lazy_and_non_env_returns_gap
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_csv_json_rows_parse_with_exclusive_sources_and_row_numbers (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_csv_json_rows_parse_with_exclusive_sources_and_row_numbers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 197, in test_csv_json_rows_parse_with_exclusive_sources_and_row_numbers
+    registry = make_registry()
+               ^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_discovery_unavailable_warns_unless_required (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_discovery_unavailable_warns_unless_required)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 274, in test_discovery_unavailable_warns_unless_required
+    registry = make_registry(discovery=FakeDiscovery(unavailable=True))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_module_imports_and_exposes_constants_without_connecting (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_module_imports_and_exposes_constants_without_connecting)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 138, in test_module_imports_and_exposes_constants_without_connecting
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_plan_emits_deterministic_per_camera_metadata_without_detector_by_default (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_plan_emits_deterministic_per_camera_metadata_without_detector_by_default)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 307, in test_plan_emits_deterministic_per_camera_metadata_without_detector_by_default
+    registry = make_registry()
+               ^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_plan_handles_templates_archives_and_opt_in_detectors (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_plan_handles_templates_archives_and_opt_in_detectors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 327, in test_plan_handles_templates_archives_and_opt_in_detectors
+    registry = make_registry()
+               ^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_plan_refuses_apply_ready_entries_for_error_rows (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_plan_refuses_apply_ready_entries_for_error_rows)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 343, in test_plan_refuses_apply_ready_entries_for_error_rows
+    registry = make_registry(catalog=FakeCatalog([]))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_rejects_path_like_import_options_and_non_object_rows (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_rejects_path_like_import_options_and_non_object_rows)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 226, in test_rejects_path_like_import_options_and_non_object_rows
+    registry = make_registry()
+               ^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_rollback_requires_approval_and_confirmation (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_rollback_requires_approval_and_confirmation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 398, in test_rollback_requires_approval_and_confirmation
+    registry = make_registry(env=env)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_schema_describes_sources_fields_profiles_and_redaction (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_schema_describes_sources_fields_profiles_and_redaction)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 187, in test_schema_describes_sources_fields_profiles_and_redaction
+    registry = make_registry()
+               ^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_validation_and_errors_redact_nested_secrets (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_validation_and_errors_redact_nested_secrets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 302, in test_validation_and_errors_redact_nested_secrets
+    result = make_registry(catalog=FakeCatalog([])).bulk_onboarding_validate_manifest(rows=[row])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_validation_reports_required_duplicates_catalog_discovery_site_conflicts (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_validation_reports_required_duplicates_catalog_discovery_site_conflicts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 260, in test_validation_reports_required_duplicates_catalog_discovery_site_conflicts
+    result = make_registry(site_graph=site_graph, discovery=discovery).bulk_onboarding_validate_manifest(rows=rows)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+======================================================================
+ERROR: test_verify_reports_created_missing_and_rolled_back_state (test_axxon_mcp_bulk_onboarding.BulkOnboardingTests.test_verify_reports_created_missing_and_rolled_back_state)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 416, in test_verify_reports_created_missing_and_rolled_back_state
+    registry = make_registry(mutation_client=client, env=env)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_bulk_onboarding.py", line 102, in make_registry
+    module = importlib.import_module("axxon_mcp_bulk_onboarding")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_bulk_onboarding'
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.004s
+
+FAILED (errors=17)

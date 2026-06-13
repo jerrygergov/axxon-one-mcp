@@ -1,0 +1,23 @@
+{
+  "bulk_onboarding_group_present": true,
+  "bulk_onboarding_tools": [
+    "bulk_onboarding_connect_axxon_profile",
+    "bulk_onboarding_schema",
+    "bulk_onboarding_validate_manifest",
+    "bulk_onboarding_plan",
+    "bulk_onboarding_apply_plan",
+    "bulk_onboarding_verify_plan",
+    "bulk_onboarding_rollback_plan",
+    "bulk_onboarding_audit_log"
+  ],
+  "capability_group_count": 50,
+  "duplicate_server_tool_names": [],
+  "duplicate_translator_tool_names": [],
+  "server_local_tool_count": 304,
+  "server_local_unique_tool_count": 304,
+  "total_tools": 309,
+  "translator_delegated_tool_count": 5,
+  "translator_delegated_unique_tool_count": 5
+}
+
+[exit_code] 0
