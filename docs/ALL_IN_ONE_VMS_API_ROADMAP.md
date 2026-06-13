@@ -1,6 +1,6 @@
 # Axxon One All-In-One MCP Roadmap
 
-**Reconciled:** 2026-06-12
+**Reconciled:** 2026-06-13
 **Purpose:** define the full VMS/API capability surface the MCP should cover, compare it with this repository, and give future builders a task-first map without relying on chat history.
 
 ## Source Baseline
@@ -32,12 +32,12 @@ The public site states that Integration API documentation is not public and must
 | RPCs fixture-blocked | 55 | `tested-warn-fixture-needed` statuses |
 | RPCs pending | 20 | deliberate destructive/infra operations |
 | HTTP `/v1` endpoints cataloged | 221 | `docs/api-audit/mcp-corpus/http_endpoints.json` |
-| Actual all-enabled MCP tools | 309 | 304 server-local decorators plus 5 delegated translator tools |
-| Advertised capability groups | 50 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
+| Actual all-enabled MCP tools | 317 | 312 server-local decorators plus 5 delegated translator tools |
+| Advertised capability groups | 51 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
 | Generator templates | 14 x Python + Node | `TEMPLATE_CATALOG` in `tools/axxon_mcp_generator.py` |
 | Services with intent-level tool coverage | 44 / 51 | all except the seven fixture/infra tails listed below |
 
-Important counting rule: the runtime all-enabled server registers 304 server-local tools in `tools/axxon_mcp_server.py` plus five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
+Important counting rule: the runtime all-enabled server registers 312 server-local tools in `tools/axxon_mcp_server.py` plus five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
 
 ## Target Architecture
 
@@ -59,7 +59,7 @@ The all-in-one MCP should stay layered:
 | Domain and inventory | Discover nodes, servers, cameras, archives, devices, components, access points, capabilities, maps, and object relationships. | Strong via `live`, `view`, `admin`, `domain_topology`, `devices_catalog`, and Phase 1 `site_graph`. | Add richer planner recipes that consume the site graph for onboarding, search, and integration generation. |
 | IP device onboarding | Discover devices, browse supported vendors/models, probe devices, create cameras, apply templates, bulk import, set archive recording, assign coordinates. | Strong for catalog/discovery, operator camera/template workflows, and Phase 3 `bulk_onboarding` CSV/JSON validation/planning/apply/verify/rollback. | Add richer coordinate/layout/map placement planners and optional live smoke evidence for safe onboarding fixtures. |
 | Configuration tree | List units/templates/factories, inspect properties, change unit properties, create/remove devices/detectors/archives/layouts/maps/macros. | Strong generic config and many intent workflows. | Add schema-first config assistant that exposes property descriptors, constraints, defaults, and before/after diff. |
-| Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; partial for GlobalTracker and RealtimeRecognizerExternal fixtures. | Add detector playbooks for every documented detector family and fixture-gated global tracking profile workflows. |
+| Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; Phase 4 added first-class `detector_playbooks` for task-first AVDetector/AppDataDetector creation, parameter edits, descriptor-backed masks/areas/lines, external detector events, VMDA/AppData preflight, metadata/heatmap guidance, and honest fixture-needed GlobalTracker/RealtimeRecognizerExternal/TagAndTrack handling. | Fixture-backed GlobalTracker profile mutations, RealtimeRecognizerExternal retrieval, and Tag&Track control still need safe non-production fixtures before becoming apply-ready. |
 | Live video and snapshots | Produce safe live stream URLs, snapshots, stream health, GreenStream/high-low quality hints, media transport probes, bounded media samples. | Strong for safe URLs/snapshots/probes; raw streaming is capped. | Add embeddable video component and web-client helper docs/templates. |
 | Export | Plan/start/status/download/stop/destroy snapshot exports through `ExportService`, with owned-session cleanup, approval gates, byte/chunk/time caps, and module-owned download paths. | Covered by the first-class `export` group; HTTP/gRPC export smokes remain adjacent regression helpers. | Optional live fixture smoke can deepen evidence when a safe archive interval and export agent are available. |
 | Archive viewing | Archive history, calendars, intervals, scrub/frame/MJPEG, stream info, bookmarks, protected clips, delete intervals, reindex/format/resize. | Strong for safe reads and bookmark lifecycle; partial for destructive archive maintenance. | Put clear/format/reindex/delete under explicit destructive Phase C plans with throwaway fixtures. |
@@ -96,7 +96,7 @@ The all-in-one MCP should stay layered:
 | `FileSystemBrowser` | Directory/file/space reads. | Covered by `filesystem_browser`. | Add path allow/deny policy for locked deployments. |
 | `ServerSettings` | Log level and log cleanup. | Covered by `server_settings`. | Add log drop irreversible labeling to docs output. |
 | `SharedKVStorageService` | List/get/stream/commit shared records. | Covered by `shared_kv`. | Add plugin-state recipes. |
-| `ExternalDetectorService` | Raise occasional/periodical external detector events. | Covered indirectly by operator workflows and generator templates. | Add first-class external detector group with periodical event lifecycle. |
+| `ExternalDetectorService` | Raise occasional/periodical external detector events. | Covered by operator workflows and Phase 4 detector playbooks, with bounded/sanitized occasional and periodical event planning. | Add live fixture evidence for richer periodical event lifecycle behavior when a safe external detector source is available. |
 | `DiscoveryService` | Discover/probe devices and progress streams. | Covered by `discovery`; correlated by `bulk_onboarding` for advisory IP/MAC/vendor/model checks. | Add optional live discovery-to-camera smoke evidence when a safe fixture is available. |
 | `DomainService` | Domain topology, host info, cameras, archives, devices, components, maps, access-point mapping. | Strong via `live`, `view`, `admin`, `domain_topology`, and the Phase 1 `site_graph` join. | Add planner-specific graph slices once downstream planners need smaller views. |
 | `DomainManager` | Enumerate/add/drop nodes, proclaim domain. | Read enumeration covered. | Phase C destructive multi-node domain tools only with throwaway targets. |
@@ -157,7 +157,7 @@ The local HTTP corpus catalogs 221 annotated `/v1` endpoints. Exact paths live i
 
 1. **Phase C destructive/infra tools:** `BackupSourceService`, `CloudService`, license distribute/drop/document creation, `DomainManager.AddNode/DropNode/ProclaimDomain`, `ConfigurationManager.SetRevision/RestoreBackup`, email/SMS send, installer package download, archive clear/format/reindex/delete. These require explicit throwaway targets, irreversible labels, confirmation tokens, and sanitized evidence.
 2. **Fixture procurement:** Tag&Track component, non-production PTZ modes/tours, TFA/OTP and LDAP server, GlobalTracker profile fixtures, RealtimeRecognizerExternal fixture, POS/text-event source, SMTP/GSM, isolated archive volume, client-local HTTP API target, WebSocket/Web server fixture, control panels/water-level devices.
-3. **Intent polish:** first-class `notification`, `tag_and_track`, `client_api`, and `web_api` groups. Phase 1 added the read-only `site_graph` group, Phase 2 added the approval-gated `export` group, and Phase 3 added approval-gated `bulk_onboarding`; future work should consume them from planners and generators rather than rejoining inventory ad hoc.
+3. **Intent polish:** first-class `notification`, `tag_and_track`, `client_api`, and `web_api` groups. Phase 1 added the read-only `site_graph` group, Phase 2 added the approval-gated `export` group, Phase 3 added approval-gated `bulk_onboarding`, and Phase 4 added approval-gated `detector_playbooks`; future work should consume them from planners and generators rather than rejoining inventory ad hoc.
 4. **Partner depth:** add richer generated examples for dashboards, CSV camera import, archive retention policy, map/layout editing, and event-to-third-party bridges. Defer C# until compile-verifiable.
 
 ## Safety Policy Requirements

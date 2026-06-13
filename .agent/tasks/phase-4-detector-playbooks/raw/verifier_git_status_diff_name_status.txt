@@ -1,0 +1,23 @@
+ M README.md
+ M docs/ALL_IN_ONE_VMS_API_ROADMAP.md
+ M tools/axxon_mcp_server.py
+ M tools/tests/test_axxon_mcp_server.py
+?? docs/Axxon_One_Integration_APIs.postman_collection.json
+?? docs/api-audit/mutation-playbooks/
+?? tools/axxon_mcp_detector_playbooks.py
+?? tools/tests/test_axxon_mcp_detector_playbooks.py
+
+--- diff-name-status ---
+M	README.md
+M	docs/ALL_IN_ONE_VMS_API_ROADMAP.md
+M	tools/axxon_mcp_server.py
+M	tools/tests/test_axxon_mcp_server.py
+
+--- untracked files ---
+docs/Axxon_One_Integration_APIs.postman_collection.json
+docs/api-audit/mutation-playbooks/detector-parameters.md
+docs/api-audit/mutation-playbooks/external-events.md
+tools/axxon_mcp_detector_playbooks.py
+tools/tests/test_axxon_mcp_detector_playbooks.py
+
+[exit_code] 0

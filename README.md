@@ -18,14 +18,14 @@ is in [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](docs/ALL_IN_ONE_VMS_API_ROADMAP.md)
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **309 MCP tools** across 50 capability groups in seven layers (see below). This is the
-  all-enabled runtime count: 304 tools registered in `tools/axxon_mcp_server.py` plus
+- **317 MCP tools** across 51 capability groups in eight layers (see below). This is the
+  all-enabled runtime count: 312 tools registered in `tools/axxon_mcp_server.py` plus
   5 delegated translator tools from `tools/axxon_mcp_translator.py`. Existing live-audited
   groups are covered by the latest real-stand audit
   ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md));
   the Phase 1 `site_graph` group is read-only and unit-verified offline, and the Phase 2
-  `export` group and Phase 3 `bulk_onboarding` group are approval-gated and unit-verified
-  offline.
+  `export` group, Phase 3 `bulk_onboarding` group, and Phase 4 `detector_playbooks` group
+  are approval-gated and unit-verified offline.
 
 ### Tool layers
 
@@ -39,6 +39,7 @@ All layers are **on by default** (use `--read-only` to restrict to reads).
 | **Operator / config** | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation requires a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
 | **Export** | `export_plan_snapshot`, `export_start_snapshot`, `export_status`, `export_download`, `export_cleanup_owned` — plan/start/status/download/cleanup for owned snapshot exports with approval, byte, chunk, timeout, and path caps. |
 | **Bulk onboarding** | `bulk_onboarding_schema`, `bulk_onboarding_validate_manifest`, `bulk_onboarding_plan`, `bulk_onboarding_apply_plan`, `bulk_onboarding_verify_plan`, `bulk_onboarding_rollback_plan` — validate inline CSV/JSON camera manifests, plan catalog/discovery/site-graph-aware onboarding, and apply/rollback with approval. |
+| **Detector playbooks** | `list_detector_playbooks`, `detector_playbook_parameter_schema`, `plan_detector_playbook`, `apply_detector_playbook_plan`, `verify_detector_playbook_plan`, `rollback_detector_playbook_plan` — task-first AVDetector/AppDataDetector, geometry, external-event, VMDA/AppData, metadata/heatmap, and fixture-needed analytics workflows. |
 | **Generator** | Generate Python / Node integration skeletons (14 templates, each in both languages) and versioned partner plugin scaffolds. |
 
 ## Requirements
@@ -175,6 +176,9 @@ call `list_capabilities`. When you select groups explicitly, mutating groups als
 - Bulk onboarding apply/rollback requires `AXXON_BULK_ONBOARDING_APPROVE=1` plus
   `CONFIRM-bulk-onboarding` or `CONFIRM-bulk-onboarding-rollback`; manifests are inline
   `rows`, `csv_text`, or `json_text` only and path/URL imports are rejected.
+- Detector playbook apply/rollback requires `AXXON_DETECTOR_PLAYBOOKS_APPROVE=1` plus
+  `CONFIRM-detector-playbooks` or `CONFIRM-detector-playbooks-rollback`; public responses
+  expose only playbook plan IDs, while underlying operator plan IDs and confirmations stay internal.
 - Streaming and export tools are byte- and time-capped.
 - Secrets (passwords, tokens, cookies, raw media bytes) are never returned by tools.
 
@@ -191,7 +195,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 ## Tests
 
 ```bash
-python3.12 -m unittest discover -s tools/tests     # 1147 unit tests, offline (no server needed)
+python3.12 -m unittest discover -s tools/tests     # 1156 unit tests, offline (no server needed)
 ```
 
 ## Layout

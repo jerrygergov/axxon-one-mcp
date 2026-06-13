@@ -1,0 +1,157 @@
+{
+  "task_id": "phase-4-detector-playbooks",
+  "final_status": "BUILDER_READY_WITH_CONCERNS",
+  "branch": "main",
+  "current_head": "32d46b1d267e3f06c8f0eaa2634ce0d4946315dd",
+  "commit_sha": null,
+  "pushed_branch": null,
+  "commit_push_note": "Not committed or pushed per explicit user instruction.",
+  "fresh_verifier_note": "Fresh verifier agent was not run because the user explicitly instructed not to spawn additional agents.",
+  "checks": [
+    {
+      "name": "RED focused tests",
+      "command": "python3.12 -m unittest tools/tests/test_axxon_mcp_detector_playbooks.py tools/tests/test_axxon_mcp_server.py",
+      "status": "FAIL_EXPECTED",
+      "artifact": "raw/red_detector_playbooks_and_server_pipefail.txt"
+    },
+    {
+      "name": "GREEN focused tests",
+      "command": "python3.12 -m unittest tools/tests/test_axxon_mcp_detector_playbooks.py tools/tests/test_axxon_mcp_server.py",
+      "status": "PASS",
+      "artifact": "raw/green_detector_playbooks_and_server.txt"
+    },
+    {
+      "name": "Adjacent regressions",
+      "command": "python3.12 -m unittest tools/tests/test_axxon_mcp_detector_archive.py tools/tests/test_axxon_api_client_detector_archive.py tools/tests/test_axxon_mcp_operator.py",
+      "status": "PASS",
+      "artifact": "raw/adjacent_regressions.txt"
+    },
+    {
+      "name": "Full unittest discovery",
+      "command": "python3.12 -m unittest discover -s tools/tests",
+      "status": "PASS",
+      "artifact": "raw/full_unittest.txt",
+      "observed_tests": 1156
+    },
+    {
+      "name": "git diff --check",
+      "command": "git diff --check",
+      "status": "PASS",
+      "artifact": "raw/final_git_diff_check.txt"
+    },
+    {
+      "name": "Tool and group count",
+      "status": "PASS",
+      "artifact": "raw/tool_group_counts.txt",
+      "tool_count": 317,
+      "server_local_count": 312,
+      "translator_tool_count": 5,
+      "group_count": 51,
+      "detector_playbooks_tool_count": 8
+    },
+    {
+      "name": "Coverage stability",
+      "status": "PASS",
+      "artifact": "raw/docs_coverage_stability.txt"
+    },
+    {
+      "name": "Secret/proto/material scan",
+      "status": "PASS",
+      "artifact": "raw/secret_proto_scan_added_lines.txt"
+    },
+    {
+      "name": "No commit/push/verifier note",
+      "status": "INFO",
+      "artifact": "raw/no_commit_push_or_verifier_agent.txt"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt", "raw/tool_group_counts.txt"]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt", "raw/tool_group_counts.txt"]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt", "raw/adjacent_regressions.txt"]
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC7",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt", "raw/adjacent_regressions.txt"]
+    },
+    {
+      "id": "AC8",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC9",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC10",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt"]
+    },
+    {
+      "id": "AC11",
+      "status": "PASS",
+      "evidence": ["raw/green_detector_playbooks_and_server.txt", "raw/secret_proto_scan_added_lines.txt"]
+    },
+    {
+      "id": "AC12",
+      "status": "PASS",
+      "evidence": ["raw/red_detector_playbooks_and_server_pipefail.txt", "raw/green_detector_playbooks_and_server.txt", "raw/full_unittest.txt"]
+    },
+    {
+      "id": "AC13",
+      "status": "PASS",
+      "evidence": ["raw/docs_coverage_stability.txt", "raw/tool_group_counts.txt"]
+    },
+    {
+      "id": "AC14",
+      "status": "PASS",
+      "evidence": ["evidence.md", "evidence.json", "raw/"]
+    },
+    {
+      "id": "AC15",
+      "status": "UNKNOWN",
+      "evidence": ["raw/full_unittest.txt", "raw/final_git_diff_check.txt", "raw/no_commit_push_or_verifier_agent.txt"],
+      "notes": "Full tests and diff check passed. Fresh verifier, commit, and push were intentionally not performed due explicit user instruction."
+    }
+  ],
+  "material_statement": {
+    "no_axxonsoft_proto_files_added": true,
+    "no_ca_files_or_material_added": true,
+    "no_tickets_added": true,
+    "no_credentials_added": true,
+    "no_raw_media_added": true,
+    "no_raw_metadata_payloads_added": true,
+    "no_biometric_vectors_added": true,
+    "no_license_keys_added": true,
+    "artifact": "raw/secret_proto_scan_added_lines.txt"
+  }
+}

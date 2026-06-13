@@ -1,0 +1,396 @@
+diff --git a/README.md b/README.md
+index 98eaf55..fb94fa7 100644
+--- a/README.md
++++ b/README.md
+@@ -18,14 +18,14 @@ is in [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](docs/ALL_IN_ONE_VMS_API_ROADMAP.md)
+   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
+   authoritative per-RPC status (machine-readable) lives in
+   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
+-- **309 MCP tools** across 50 capability groups in seven layers (see below). This is the
+-  all-enabled runtime count: 304 tools registered in `tools/axxon_mcp_server.py` plus
++- **317 MCP tools** across 51 capability groups in eight layers (see below). This is the
++  all-enabled runtime count: 312 tools registered in `tools/axxon_mcp_server.py` plus
+   5 delegated translator tools from `tools/axxon_mcp_translator.py`. Existing live-audited
+   groups are covered by the latest real-stand audit
+   ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md));
+   the Phase 1 `site_graph` group is read-only and unit-verified offline, and the Phase 2
+-  `export` group and Phase 3 `bulk_onboarding` group are approval-gated and unit-verified
+-  offline.
++  `export` group, Phase 3 `bulk_onboarding` group, and Phase 4 `detector_playbooks` group
++  are approval-gated and unit-verified offline.
+
+ ### Tool layers
+
+@@ -39,6 +39,7 @@ All layers are **on by default** (use `--read-only` to restrict to reads).
+ | **Operator / config** | Mutating tools (cameras, detectors, layouts, macros, alarms, PTZ, videowall, settings). Every mutation requires a per-call confirmation token, with plan / apply / verify / rollback where it applies. |
+ | **Export** | `export_plan_snapshot`, `export_start_snapshot`, `export_status`, `export_download`, `export_cleanup_owned` — plan/start/status/download/cleanup for owned snapshot exports with approval, byte, chunk, timeout, and path caps. |
+ | **Bulk onboarding** | `bulk_onboarding_schema`, `bulk_onboarding_validate_manifest`, `bulk_onboarding_plan`, `bulk_onboarding_apply_plan`, `bulk_onboarding_verify_plan`, `bulk_onboarding_rollback_plan` — validate inline CSV/JSON camera manifests, plan catalog/discovery/site-graph-aware onboarding, and apply/rollback with approval. |
++| **Detector playbooks** | `list_detector_playbooks`, `detector_playbook_parameter_schema`, `plan_detector_playbook`, `apply_detector_playbook_plan`, `verify_detector_playbook_plan`, `rollback_detector_playbook_plan` — task-first AVDetector/AppDataDetector, geometry, external-event, VMDA/AppData, metadata/heatmap, and fixture-needed analytics workflows. |
+ | **Generator** | Generate Python / Node integration skeletons (14 templates, each in both languages) and versioned partner plugin scaffolds. |
+
+ ## Requirements
+@@ -175,6 +176,9 @@ call `list_capabilities`. When you select groups explicitly, mutating groups als
+ - Bulk onboarding apply/rollback requires `AXXON_BULK_ONBOARDING_APPROVE=1` plus
+   `CONFIRM-bulk-onboarding` or `CONFIRM-bulk-onboarding-rollback`; manifests are inline
+   `rows`, `csv_text`, or `json_text` only and path/URL imports are rejected.
++- Detector playbook apply/rollback requires `AXXON_DETECTOR_PLAYBOOKS_APPROVE=1` plus
++  `CONFIRM-detector-playbooks` or `CONFIRM-detector-playbooks-rollback`; public responses
++  expose only playbook plan IDs, while underlying operator plan IDs and confirmations stay internal.
+ - Streaming and export tools are byte- and time-capped.
+ - Secrets (passwords, tokens, cookies, raw media bytes) are never returned by tools.
+
+@@ -191,7 +195,7 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
+ ## Tests
+
+ ```bash
+-python3.12 -m unittest discover -s tools/tests     # 1147 unit tests, offline (no server needed)
++python3.12 -m unittest discover -s tools/tests     # 1156 unit tests, offline (no server needed)
+ ```
+
+ ## Layout
+diff --git a/docs/ALL_IN_ONE_VMS_API_ROADMAP.md b/docs/ALL_IN_ONE_VMS_API_ROADMAP.md
+index b695551..a16b74a 100644
+--- a/docs/ALL_IN_ONE_VMS_API_ROADMAP.md
++++ b/docs/ALL_IN_ONE_VMS_API_ROADMAP.md
+@@ -1,6 +1,6 @@
+ # Axxon One All-In-One MCP Roadmap
+
+-**Reconciled:** 2026-06-12
++**Reconciled:** 2026-06-13
+ **Purpose:** define the full VMS/API capability surface the MCP should cover, compare it with this repository, and give future builders a task-first map without relying on chat history.
+
+ ## Source Baseline
+@@ -32,12 +32,12 @@ The public site states that Integration API documentation is not public and must
+ | RPCs fixture-blocked | 55 | `tested-warn-fixture-needed` statuses |
+ | RPCs pending | 20 | deliberate destructive/infra operations |
+ | HTTP `/v1` endpoints cataloged | 221 | `docs/api-audit/mcp-corpus/http_endpoints.json` |
+-| Actual all-enabled MCP tools | 309 | 304 server-local decorators plus 5 delegated translator tools |
+-| Advertised capability groups | 50 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
++| Actual all-enabled MCP tools | 317 | 312 server-local decorators plus 5 delegated translator tools |
++| Advertised capability groups | 51 | `CAPABILITY_GROUPS` in `tools/axxon_mcp_server.py` |
+ | Generator templates | 14 x Python + Node | `TEMPLATE_CATALOG` in `tools/axxon_mcp_generator.py` |
+ | Services with intent-level tool coverage | 44 / 51 | all except the seven fixture/infra tails listed below |
+
+-Important counting rule: the runtime all-enabled server registers 304 server-local tools in `tools/axxon_mcp_server.py` plus five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
++Important counting rule: the runtime all-enabled server registers 312 server-local tools in `tools/axxon_mcp_server.py` plus five delegated translator tools from `tools/axxon_mcp_translator.py`: `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`, and `run_recipe`.
+
+ ## Target Architecture
+
+@@ -59,7 +59,7 @@ The all-in-one MCP should stay layered:
+ | Domain and inventory | Discover nodes, servers, cameras, archives, devices, components, access points, capabilities, maps, and object relationships. | Strong via `live`, `view`, `admin`, `domain_topology`, `devices_catalog`, and Phase 1 `site_graph`. | Add richer planner recipes that consume the site graph for onboarding, search, and integration generation. |
+ | IP device onboarding | Discover devices, browse supported vendors/models, probe devices, create cameras, apply templates, bulk import, set archive recording, assign coordinates. | Strong for catalog/discovery, operator camera/template workflows, and Phase 3 `bulk_onboarding` CSV/JSON validation/planning/apply/verify/rollback. | Add richer coordinate/layout/map placement planners and optional live smoke evidence for safe onboarding fixtures. |
+ | Configuration tree | List units/templates/factories, inspect properties, change unit properties, create/remove devices/detectors/archives/layouts/maps/macros. | Strong generic config and many intent workflows. | Add schema-first config assistant that exposes property descriptors, constraints, defaults, and before/after diff. |
+-| Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; partial for GlobalTracker and RealtimeRecognizerExternal fixtures. | Add detector playbooks for every documented detector family and fixture-gated global tracking profile workflows. |
++| Detectors and analytics | Configure AVDetector/AppDataDetector/RealtimeRecognizer/GlobalTracker, detector masks/areas, metadata schemas, tracks, heatmaps, archive analytics search. | Strong common detector workflows and reads; Phase 4 added first-class `detector_playbooks` for task-first AVDetector/AppDataDetector creation, parameter edits, descriptor-backed masks/areas/lines, external detector events, VMDA/AppData preflight, metadata/heatmap guidance, and honest fixture-needed GlobalTracker/RealtimeRecognizerExternal/TagAndTrack handling. | Fixture-backed GlobalTracker profile mutations, RealtimeRecognizerExternal retrieval, and Tag&Track control still need safe non-production fixtures before becoming apply-ready. |
+ | Live video and snapshots | Produce safe live stream URLs, snapshots, stream health, GreenStream/high-low quality hints, media transport probes, bounded media samples. | Strong for safe URLs/snapshots/probes; raw streaming is capped. | Add embeddable video component and web-client helper docs/templates. |
+ | Export | Plan/start/status/download/stop/destroy snapshot exports through `ExportService`, with owned-session cleanup, approval gates, byte/chunk/time caps, and module-owned download paths. | Covered by the first-class `export` group; HTTP/gRPC export smokes remain adjacent regression helpers. | Optional live fixture smoke can deepen evidence when a safe archive interval and export agent are available. |
+ | Archive viewing | Archive history, calendars, intervals, scrub/frame/MJPEG, stream info, bookmarks, protected clips, delete intervals, reindex/format/resize. | Strong for safe reads and bookmark lifecycle; partial for destructive archive maintenance. | Put clear/format/reindex/delete under explicit destructive Phase C plans with throwaway fixtures. |
+@@ -96,7 +96,7 @@ The all-in-one MCP should stay layered:
+ | `FileSystemBrowser` | Directory/file/space reads. | Covered by `filesystem_browser`. | Add path allow/deny policy for locked deployments. |
+ | `ServerSettings` | Log level and log cleanup. | Covered by `server_settings`. | Add log drop irreversible labeling to docs output. |
+ | `SharedKVStorageService` | List/get/stream/commit shared records. | Covered by `shared_kv`. | Add plugin-state recipes. |
+-| `ExternalDetectorService` | Raise occasional/periodical external detector events. | Covered indirectly by operator workflows and generator templates. | Add first-class external detector group with periodical event lifecycle. |
++| `ExternalDetectorService` | Raise occasional/periodical external detector events. | Covered by operator workflows and Phase 4 detector playbooks, with bounded/sanitized occasional and periodical event planning. | Add live fixture evidence for richer periodical event lifecycle behavior when a safe external detector source is available. |
+ | `DiscoveryService` | Discover/probe devices and progress streams. | Covered by `discovery`; correlated by `bulk_onboarding` for advisory IP/MAC/vendor/model checks. | Add optional live discovery-to-camera smoke evidence when a safe fixture is available. |
+ | `DomainService` | Domain topology, host info, cameras, archives, devices, components, maps, access-point mapping. | Strong via `live`, `view`, `admin`, `domain_topology`, and the Phase 1 `site_graph` join. | Add planner-specific graph slices once downstream planners need smaller views. |
+ | `DomainManager` | Enumerate/add/drop nodes, proclaim domain. | Read enumeration covered. | Phase C destructive multi-node domain tools only with throwaway targets. |
+@@ -157,7 +157,7 @@ The local HTTP corpus catalogs 221 annotated `/v1` endpoints. Exact paths live i
+
+ 1. **Phase C destructive/infra tools:** `BackupSourceService`, `CloudService`, license distribute/drop/document creation, `DomainManager.AddNode/DropNode/ProclaimDomain`, `ConfigurationManager.SetRevision/RestoreBackup`, email/SMS send, installer package download, archive clear/format/reindex/delete. These require explicit throwaway targets, irreversible labels, confirmation tokens, and sanitized evidence.
+ 2. **Fixture procurement:** Tag&Track component, non-production PTZ modes/tours, TFA/OTP and LDAP server, GlobalTracker profile fixtures, RealtimeRecognizerExternal fixture, POS/text-event source, SMTP/GSM, isolated archive volume, client-local HTTP API target, WebSocket/Web server fixture, control panels/water-level devices.
+-3. **Intent polish:** first-class `notification`, `tag_and_track`, `client_api`, and `web_api` groups. Phase 1 added the read-only `site_graph` group, Phase 2 added the approval-gated `export` group, and Phase 3 added approval-gated `bulk_onboarding`; future work should consume them from planners and generators rather than rejoining inventory ad hoc.
++3. **Intent polish:** first-class `notification`, `tag_and_track`, `client_api`, and `web_api` groups. Phase 1 added the read-only `site_graph` group, Phase 2 added the approval-gated `export` group, Phase 3 added approval-gated `bulk_onboarding`, and Phase 4 added approval-gated `detector_playbooks`; future work should consume them from planners and generators rather than rejoining inventory ad hoc.
+ 4. **Partner depth:** add richer generated examples for dashboards, CSV camera import, archive retention policy, map/layout editing, and event-to-third-party bridges. Defer C# until compile-verifiable.
+
+ ## Safety Policy Requirements
+diff --git a/tools/axxon_mcp_server.py b/tools/axxon_mcp_server.py
+index 37af4d7..0a47c78 100644
+--- a/tools/axxon_mcp_server.py
++++ b/tools/axxon_mcp_server.py
+@@ -53,6 +53,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
+     "partner": ("Partner plugin SDK scaffolds", ("scaffold_plugin", "plugin_lint", "plugin_package"), "--enable-partner"),
+     "translator": ("Natural-language -> operator recipe translator", ("assemble_recipe", "validate_recipe"), "--enable-translator"),
+     "detector_archive": ("Detector schemas + archive policy reads", ("detector_schema_catalog", "archive_policy_get"), "--enable-detector-archive"),
++    "detector_playbooks": ("Task-first detector creation/configuration playbooks with gated apply/verify/rollback", ("plan_detector_playbook", "apply_detector_playbook_plan", "list_detector_playbooks"), "--enable-detector-playbooks"),
+     "config_change": ("ConfigurationService unit changes", ("apply_unit_change",), "--enable-config-change"),
+     "archive_volume": ("ArchiveService volume resize", ("resize_archive_volume",), "--enable-archive-volume"),
+     "security_credentials": ("Reversible user credential lifecycle", ("security_user_credential_lifecycle",), "--enable-security-credentials"),
+@@ -100,6 +101,7 @@ def create_server(
+     alarm_mutator: Any | None = None,
+     view_objects: Any | None = None,
+     detector_archive: Any | None = None,
++    detector_playbooks: Any | None = None,
+     admin: Any | None = None,
+     admin_mutator: Any | None = None,
+     bookmarks: Any | None = None,
+@@ -198,7 +200,7 @@ def create_server(
+     enabled_groups = {name: value is not None for name, value in (
+         ("live", live), ("operator", operator), ("generator", generator), ("partner", partner),
+         ("metadata", metadata), ("view", view), ("alarms", alarms), ("view_objects", view_objects),
+-        ("detector_archive", detector_archive), ("admin", admin), ("bookmarks", bookmarks),
++        ("detector_archive", detector_archive), ("detector_playbooks", detector_playbooks), ("admin", admin), ("bookmarks", bookmarks),
+         ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
+         ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
+         ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
+@@ -273,6 +275,9 @@ def create_server(
+     if detector_archive is not None:
+         register_detector_archive_tools(server, detector_archive)
+
++    if detector_playbooks is not None:
++        register_detector_playbooks_tools(server, detector_playbooks)
++
+     if admin is not None:
+         register_admin_tools(server, admin)
+
+@@ -803,6 +808,48 @@ def register_detector_archive_tools(server: Any, detector_archive: Any) -> None:
+         return detector_archive.analytics_fixture_report()
+
+
++def register_detector_playbooks_tools(server: Any, detector_playbooks: Any) -> None:
++    @server.tool(name="detector_playbooks_connect_axxon_profile")
++    def detector_playbooks_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
++        """Connect detector playbooks to an env-backed Axxon profile without applying changes."""
++        return detector_playbooks.detector_playbooks_connect_axxon_profile(profile)
++
++    @server.tool(name="list_detector_playbooks")
++    def list_detector_playbooks(include_live: bool = True) -> dict[str, Any]:
++        """List detector playbook intents, descriptor policy, gates, and family support matrix."""
++        return detector_playbooks.list_detector_playbooks(include_live)
++
++    @server.tool(name="detector_playbook_parameter_schema")
++    def detector_playbook_parameter_schema(unit_type: str, detector_kind: str, intent: str = "") -> dict[str, Any]:
++        """Return detector descriptor schema augmented with playbook-required params."""
++        return detector_playbooks.detector_playbook_parameter_schema(unit_type, detector_kind, intent)
++
++    @server.tool(name="plan_detector_playbook")
++    def plan_detector_playbook(intent: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
++        """Build a detector playbook plan without applying or rolling back mutations."""
++        return detector_playbooks.plan_detector_playbook(intent, params or {})
++
++    @server.tool(name="apply_detector_playbook_plan")
++    def apply_detector_playbook_plan(playbook_plan_id: str, confirmation: str) -> dict[str, Any]:
++        """Apply a detector playbook plan after approval env and confirmation gates pass."""
++        return detector_playbooks.apply_detector_playbook_plan(playbook_plan_id, confirmation)
++
++    @server.tool(name="verify_detector_playbook_plan")
++    def verify_detector_playbook_plan(playbook_plan_id: str) -> dict[str, Any]:
++        """Verify an applied detector playbook plan using the underlying operator workflow."""
++        return detector_playbooks.verify_detector_playbook_plan(playbook_plan_id)
++
++    @server.tool(name="rollback_detector_playbook_plan")
++    def rollback_detector_playbook_plan(playbook_plan_id: str, confirmation: str) -> dict[str, Any]:
++        """Roll back a detector playbook plan after approval env and rollback confirmation gates pass."""
++        return detector_playbooks.rollback_detector_playbook_plan(playbook_plan_id, confirmation)
++
++    @server.tool(name="detector_playbooks_audit_log")
++    def detector_playbooks_audit_log() -> dict[str, Any]:
++        """Return the sanitized in-memory detector playbooks audit trail."""
++        return detector_playbooks.detector_playbooks_audit_log()
++
++
+ def register_view_tools(server: Any, view: Any) -> None:
+     @server.tool(name="view_connect_axxon_profile")
+     def view_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+@@ -2477,6 +2524,11 @@ def build_parser() -> argparse.ArgumentParser:
+         action="store_true",
+         help="Enable Phase 5E read tools for detectors, metadata, and archive policies.",
+     )
++    parser.add_argument(
++        "--enable-detector-playbooks",
++        action="store_true",
++        help="Enable Phase 4 detector playbook planner/orchestrator. Apply/rollback need AXXON_DETECTOR_PLAYBOOKS_APPROVE=1.",
++    )
+     parser.add_argument(
+         "--enable-admin",
+         action="store_true",
+@@ -2733,6 +2785,7 @@ APPROVE_ENV_VARS = (
+     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
+     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
+     "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE", "AXXON_BULK_ONBOARDING_APPROVE",
++    "AXXON_DETECTOR_PLAYBOOKS_APPROVE",
+ )
+
+
+@@ -2829,6 +2882,22 @@ def main() -> int:
+         from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
+
+         detector_archive = AxxonMcpDetectorArchive()
++    detector_playbooks = None
++    if args.enable_detector_playbooks:
++        from axxon_api_client import AxxonApiClient, AxxonClientConfig
++        from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
++        from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
++        from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
++
++        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
++        detector_playbooks = AxxonMcpDetectorPlaybooks(
++            detector_archive=AxxonMcpDetectorArchive(),
++            operator=OperatorRegistry(
++                client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
++                host=f"hosts/{config.tls_cn}",
++                enabled=True,
++            ),
++        )
+     admin = None
+     if args.enable_admin:
+         from axxon_mcp_admin import AxxonMcpAdmin
+@@ -3082,6 +3151,7 @@ def main() -> int:
+         alarm_mutator=alarm_mutator,
+         view_objects=view_objects,
+         detector_archive=detector_archive,
++        detector_playbooks=detector_playbooks,
+         admin=admin,
+         admin_mutator=admin_mutator,
+         bookmarks=bookmarks,
+diff --git a/tools/tests/test_axxon_mcp_server.py b/tools/tests/test_axxon_mcp_server.py
+index 6d5080d..8b32fc1 100644
+--- a/tools/tests/test_axxon_mcp_server.py
++++ b/tools/tests/test_axxon_mcp_server.py
+@@ -474,6 +474,32 @@ class StubBulkOnboarding:
+         return {"status": "ok", "entries": []}
+
+
++class StubDetectorPlaybooks:
++    def detector_playbooks_connect_axxon_profile(self, profile: str = "env"):
++        return {"connected": True, "profile_name": profile, "mode": "detector-playbooks"}
++
++    def list_detector_playbooks(self, include_live: bool = True):
++        return {"status": "ok", "include_live": include_live, "intents": ["create_av_detector"]}
++
++    def detector_playbook_parameter_schema(self, unit_type: str, detector_kind: str, intent: str = ""):
++        return {"status": "ok", "unit_type": unit_type, "detector_kind": detector_kind, "intent": intent}
++
++    def plan_detector_playbook(self, intent: str, params: dict | None = None):
++        return {"status": "planned", "intent": intent, "params": dict(params or {})}
++
++    def apply_detector_playbook_plan(self, playbook_plan_id: str, confirmation: str):
++        return {"status": "applied", "playbook_plan_id": playbook_plan_id, "confirmation": confirmation}
++
++    def verify_detector_playbook_plan(self, playbook_plan_id: str):
++        return {"status": "verified", "playbook_plan_id": playbook_plan_id}
++
++    def rollback_detector_playbook_plan(self, playbook_plan_id: str, confirmation: str):
++        return {"status": "rolled_back", "playbook_plan_id": playbook_plan_id, "confirmation": confirmation}
++
++    def detector_playbooks_audit_log(self):
++        return {"status": "ok", "entries": []}
++
++
+ class AxxonMcpServerTests(unittest.TestCase):
+     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
+         module = importlib.import_module("axxon_mcp_server")
+@@ -705,6 +731,82 @@ class AxxonMcpServerTests(unittest.TestCase):
+         self.assertTrue(enabled["enabled"])
+         self.assertNotIn("enable_flag", enabled)
+
++    def test_create_server_registers_detector_playbooks_tools_only_when_enabled(self) -> None:
++        module = importlib.import_module("axxon_mcp_server")
++        detector_playbook_tools = {
++            "detector_playbooks_connect_axxon_profile",
++            "list_detector_playbooks",
++            "detector_playbook_parameter_schema",
++            "plan_detector_playbook",
++            "apply_detector_playbook_plan",
++            "verify_detector_playbook_plan",
++            "rollback_detector_playbook_plan",
++            "detector_playbooks_audit_log",
++        }
++        operator_workflow_tools = {
++            "list_operator_workflows",
++            "plan_operator_workflow",
++            "apply_operator_plan",
++            "verify_operator_plan",
++            "rollback_operator_plan",
++        }
++
++        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
++        for name in detector_playbook_tools:
++            self.assertNotIn(name, docs_only.tools)
++
++        self.assertIn("detector_playbooks", module.CAPABILITY_GROUPS)
++        self.assertIn("detector_playbooks", inspect.signature(module.create_server).parameters)
++        args = module.build_parser().parse_args(["--enable-detector-playbooks"])
++        self.assertTrue(args.enable_detector_playbooks)
++
++        server = module.create_server(
++            docs=StubDocs(),
++            detector_playbooks=StubDetectorPlaybooks(),
++            fastmcp_factory=FakeFastMCP,
++        )
++        self.assertEqual(detector_playbook_tools.intersection(server.tools), detector_playbook_tools)
++        self.assertTrue(operator_workflow_tools.isdisjoint(server.tools))
++        self.assertEqual(
++            server.tools["detector_playbooks_connect_axxon_profile"]("env")["mode"],
++            "detector-playbooks",
++        )
++        self.assertFalse(server.tools["list_detector_playbooks"](False)["include_live"])
++        schema = server.tools["detector_playbook_parameter_schema"]("AVDetector", "MotionDetection", "create_av_detector")
++        self.assertEqual(schema["intent"], "create_av_detector")
++        plan = server.tools["plan_detector_playbook"]("create_av_detector", {"display_name": "Motion"})
++        self.assertEqual(plan["intent"], "create_av_detector")
++        self.assertEqual(
++            server.tools["apply_detector_playbook_plan"]("detector-playbook-plan-1", "CONFIRM-detector-playbooks")["status"],
++            "applied",
++        )
++        self.assertEqual(server.tools["verify_detector_playbook_plan"]("detector-playbook-plan-1")["status"], "verified")
++        self.assertEqual(
++            server.tools["rollback_detector_playbook_plan"](
++                "detector-playbook-plan-1",
++                "CONFIRM-detector-playbooks-rollback",
++            )["status"],
++            "rolled_back",
++        )
++        self.assertEqual(server.tools["detector_playbooks_audit_log"]()["entries"], [])
++
++    def test_list_capabilities_reports_detector_playbooks_disabled_and_enabled(self) -> None:
++        module = importlib.import_module("axxon_mcp_server")
++        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
++        disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
++        self.assertFalse(disabled["enabled"])
++        self.assertEqual(disabled["enable_flag"], "--enable-detector-playbooks")
++        self.assertIn("plan_detector_playbook", disabled["example_tools"])
++
++        enabled_server = module.create_server(
++            docs=StubDocs(),
++            detector_playbooks=StubDetectorPlaybooks(),
++            fastmcp_factory=FakeFastMCP,
++        )
++        enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
++        self.assertTrue(enabled["enabled"])
++        self.assertNotIn("enable_flag", enabled)
++
+     def test_create_server_registers_operator_tools_only_when_enabled(self) -> None:
+         module = importlib.import_module("axxon_mcp_server")
+         docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+@@ -1285,6 +1387,7 @@ class AxxonMcpServerTests(unittest.TestCase):
+         self.assertTrue(all(enables.values()))
+         self.assertIn("AXXON_EXPORT_APPROVE", module.APPROVE_ENV_VARS)
+         self.assertIn("AXXON_BULK_ONBOARDING_APPROVE", module.APPROVE_ENV_VARS)
++        self.assertIn("AXXON_DETECTOR_PLAYBOOKS_APPROVE", module.APPROVE_ENV_VARS)
+         for var in module.APPROVE_ENV_VARS:
+             self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
+
+@@ -1322,6 +1425,23 @@ class AxxonMcpServerTests(unittest.TestCase):
+             registry = AxxonMcpBulkOnboarding()
+         self.assertIsNotNone(registry)
+
++    def test_detector_playbooks_group_builds_without_credentials(self) -> None:
++        """Regression: detector playbooks must construct lazily with no live password."""
++        import os
++        from unittest import mock
++
++        with mock.patch.dict(os.environ, {}, clear=False):
++            os.environ.pop("AXXON_PASSWORD", None)
++            from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
++            from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
++            from axxon_mcp_operator import OperatorRegistry
++
++            registry = AxxonMcpDetectorPlaybooks(
++                detector_archive=AxxonMcpDetectorArchive(),
++                operator=OperatorRegistry(client_factory=lambda: (_ for _ in ()).throw(AssertionError("lazy"))),
++            )
++        self.assertIsNotNone(registry)
++
+     def test_operator_group_builds_without_credentials(self) -> None:
+         """Regression: the operator group must construct lazily so the server boots with no password."""
+         import os

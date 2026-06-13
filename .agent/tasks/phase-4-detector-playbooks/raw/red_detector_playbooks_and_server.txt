@@ -1,0 +1,147 @@
+EEEEEE..........F...........F.E....E......
+======================================================================
+ERROR: test_apply_verify_and_rollback_are_phase_gated_and_delegate_internal_tokens (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_apply_verify_and_rollback_are_phase_gated_and_delegate_internal_tokens)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 401, in test_apply_verify_and_rollback_are_phase_gated_and_delegate_internal_tokens
+    playbooks = _playbooks(operator=operator, env=env)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_audit_log_and_public_responses_are_recursively_sanitized (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_audit_log_and_public_responses_are_recursively_sanitized)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 484, in test_audit_log_and_public_responses_are_recursively_sanitized
+    playbooks = _playbooks(operator=operator, env={"AXXON_DETECTOR_PLAYBOOKS_APPROVE": "1"})
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_connect_catalog_matrix_and_schema_are_sanitized_and_descriptor_backed (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_connect_catalog_matrix_and_schema_are_sanitized_and_descriptor_backed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 272, in test_connect_catalog_matrix_and_schema_are_sanitized_and_descriptor_backed
+    playbooks = _playbooks(archive=archive)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_guidance_and_fixture_needed_intents_are_not_apply_ready (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_guidance_and_fixture_needed_intents_are_not_apply_ready)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 449, in test_guidance_and_fixture_needed_intents_are_not_apply_ready
+    playbooks = _playbooks(operator=operator, env={"AXXON_DETECTOR_PLAYBOOKS_APPROVE": "1"})
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_operator_backed_intents_plan_without_apply_and_hide_operator_internals (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_operator_backed_intents_plan_without_apply_and_hide_operator_internals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 319, in test_operator_backed_intents_plan_without_apply_and_hide_operator_internals
+    playbooks = _playbooks(operator=operator)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_update_detector_geometry_uses_descriptor_value_kind_payloads (tools.tests.test_axxon_mcp_detector_playbooks.AxxonMcpDetectorPlaybooksTests.test_update_detector_geometry_uses_descriptor_value_kind_payloads)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 351, in test_update_detector_geometry_uses_descriptor_value_kind_payloads
+    playbooks = _playbooks(archive=archive, operator=operator)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_detector_playbooks.py", line 255, in _playbooks
+    module = importlib.import_module("axxon_mcp_detector_playbooks")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_detector_playbooks_group_builds_without_credentials (tools.tests.test_axxon_mcp_server.AxxonMcpServerTests.test_detector_playbooks_group_builds_without_credentials)
+Regression: detector playbooks must construct lazily with no live password.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_server.py", line 1436, in test_detector_playbooks_group_builds_without_credentials
+    from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
+ModuleNotFoundError: No module named 'axxon_mcp_detector_playbooks'
+
+======================================================================
+ERROR: test_list_capabilities_reports_detector_playbooks_disabled_and_enabled (tools.tests.test_axxon_mcp_server.AxxonMcpServerTests.test_list_capabilities_reports_detector_playbooks_disabled_and_enabled)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_server.py", line 796, in test_list_capabilities_reports_detector_playbooks_disabled_and_enabled
+    disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+======================================================================
+FAIL: test_create_server_registers_detector_playbooks_tools_only_when_enabled (tools.tests.test_axxon_mcp_server.AxxonMcpServerTests.test_create_server_registers_detector_playbooks_tools_only_when_enabled)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_server.py", line 758, in test_create_server_registers_detector_playbooks_tools_only_when_enabled
+    self.assertIn("detector_playbooks", module.CAPABILITY_GROUPS)
+AssertionError: 'detector_playbooks' not found in {'live': ('Live read-only inspection of a connected server', ('list_cameras', 'list_archives', 'search_events'), '--enable-live'), 'operator': ('Create/modify/delete config (cameras, detectors, layouts, macros) via plan/apply/verify/rollback', ('list_operator_workflows', 'plan_operator_workflow', 'apply_operator_plan'), '--enable-operator'), 'metadata': ('Metadata / VMDA object-track search', ('list_vmda_sources', 'live_track_sample', 'vmda_query'), '--enable-metadata'), 'view': ('Live + archive viewing (URLs, byte/time capped)', ('live_view', 'archive_scrub', 'stream_health'), '--enable-view'), 'view_objects': ('Layouts, maps, markers, walls (reads)', ('list_layouts', 'list_maps', 'get_markers'), '--enable-view-objects'), 'alarms': ('Alarm reads + raise + review lifecycle', ('list_active_alerts', 'raise_alert', 'alarm_subscribe'), '--enable-alarms'), 'logic_alerts': ('Batch alert reads/reviews across nodes', ('batch_get_active_alerts', 'batch_begin_alerts_review'), '--enable-logic-alerts'), 'logic_control': ('Macros, arm-state, config/counters (LogicService)', ('launch_macro', 'change_arm_state', 'change_counters'), '--enable-logic-control'), 'ptz': ('PTZ / telemetry control', ('list_telemetry_sources', 'ptz_absolute_move', 'list_presets'), '--enable-ptz'), 'heatmap': ('HeatMap image + query tools (metadata only)', ('build_heatmap', 'execute_heatmap_query'), '--enable-heatmap'), 'media': ('Media transport probes (metadata only)', ('request_connection', 'stream_probe', 'connect_endpoint'), '--enable-media'), 'export': ('ExportService snapshots, capped downloads, and owned-session cleanup', ('export_start_snapshot', 'export_download', 'export_cleanup_owned'), '--enable-export'), 'recognizer': ('RealtimeRecognizer reads', ('list_recognizers', 'get_recognizer_lists'), '--enable-recognizer'), 'recognizer_write': ('RealtimeRecognizer list writes', ('update_recognizer_list',), '--enable-recognizer-write'), 'discovery': ('DiscoveryService network device discovery', ('discover_devices',), '--enable-discovery'), 'admin': ('Security/system-health/notifier reads', ('security_inventory', 'license_status', 'domain_event_subscribe'), '--enable-admin'), 'license_reads': ('LicenseService reads (key + restrictions)', ('get_license_key', 'list_license_restrictions'), '--enable-license-reads'), 'misc_reads': ('Cross-service batch reads', ('acquire_dynamic_parameters', 'acquire_device_additional_data'), '--enable-misc-reads'), 'bookmarks': ('BookmarkService reads + lifecycle', ('list_bookmarks', 'create_bookmark'), '--enable-bookmarks'), 'layout_manager': ('LayoutManager reads + rename', ('batch_get_layouts', 'update_layout_name'), '--enable-layout-manager'), 'map_providers': ('Map provider configuration', ('list_map_providers', 'configure_map_providers'), '--enable-map-providers'), 'groups': ('Camera/device group management', ('list_groups', 'create_group'), '--enable-groups'), 'timezone': ('Timezone + NTP settings', ('get_timezones', 'set_timezone', 'set_ntp'), '--enable-timezone'), 'settings': ('Data-storage settings (retention/cleanup)', ('get_data_storage_settings', 'update_data_storage_settings'), '--enable-settings'), 'audit': ('AuditEventInjector', ('audit_inject',), '--enable-audit'), 'videowall': ('VideowallService control (register/change/unregister)', ('videowall_list_walls', 'register_wall', 'unregister_wall'), '--enable-videowall'), 'generator': ('Generate Python/Node integration skeletons', ('list_integration_templates', 'generate_integration'), '--enable-generator'), 'partner': ('Partner plugin SDK scaffolds', ('scaffold_plugin', 'plugin_lint', 'plugin_package'), '--enable-partner'), 'translator': ('Natural-language -> operator recipe translator', ('assemble_recipe', 'validate_recipe'), '--enable-translator'), 'detector_archive': ('Detector schemas + archive policy reads', ('detector_schema_catalog', 'archive_policy_get'), '--enable-detector-archive'), 'config_change': ('ConfigurationService unit changes', ('apply_unit_change',), '--enable-config-change'), 'archive_volume': ('ArchiveService volume resize', ('resize_archive_volume',), '--enable-archive-volume'), 'security_credentials': ('Reversible user credential lifecycle', ('security_user_credential_lifecycle',), '--enable-security-credentials'), 'auth_sessions': ('AuthenticationService session reads', ('list_auth_sessions',), '--enable-auth-sessions'), 'gdpr_cleanup': ('GDPR data cleanup', ('gdpr_cleanup_plan',), '--enable-gdpr-cleanup'), 'control': ('StateControl / device control', ('set_device_state',), '--enable-control'), 'server_settings': ('Server log-level + settings', ('get_server_loglevel', 'set_server_loglevel'), '--enable-server'), 'statistics': ('Server/stream statistics reads (CPU/disk/FPS/bitrate health)', ('get_statistics',), '--enable-statistics'), 'event_taxonomy': ('Event grouping tags (event-filter field descriptors)', ('get_event_grouping_tags',), '--enable-event-taxonomy'), 'scene_description': ('Per-camera scene descriptions (analytics geometry)', ('list_scene_description',), '--enable-scene-description'), 'package_availability': ('Installer-package availability check', ('check_package_availability',), '--enable-package-availability'), 'domain_topology': ('Domain + node enumeration (EnumerateNodes)', ('enumerate_nodes',), '--enable-domain-topology'), 'config_revisions': ('Config revision history + capped backup-collectibility probe', ('get_revision_info', 'collect_backup_probe'), '--enable-config-revisions'), 'filesystem_browser': ('Server-side filesystem browsing (list dir, file info, free space)', ('list_directory', 'get_space'), '--enable-filesystem-browser'), 'devices_catalog': ('Supported-device catalog (vendors, models, traits) for adding cameras', ('list_vendors', 'list_devices', 'get_device'), '--enable-devices-catalog'), 'global_tracker': ('Cross-camera tracking profile metadata reads (no images)', ('get_profile',), '--enable-global-tracker'), 'shared_kv': ('Shared key-value store reads + gated commit (plugin/integration state)', ('list_records', 'get_records', 'commit_record'), '--enable-shared-kv'), 'state_control': ('Device state reads + gated SetState (e.g. PTZ patrol controllers)', ('get_current_state', 'set_state'), '--enable-state-control'), 'site_graph': ('Unified read-only site graph for planners and generators', ('build_site_graph',), '--enable-site-graph'), 'bulk_onboarding': ('Bulk CSV/JSON camera onboarding planner with gated apply/verify/rollback', ('bulk_onboarding_plan', 'bulk_onboarding_apply_plan', 'bulk_onboarding_verify_plan'), '--enable-bulk-onboarding')}
+
+======================================================================
+FAIL: test_default_open_enables_all_groups_and_approvals (tools.tests.test_axxon_mcp_server.AxxonMcpServerTests.test_default_open_enables_all_groups_and_approvals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/tools/tests/test_axxon_mcp_server.py", line 1390, in test_default_open_enables_all_groups_and_approvals
+    self.assertIn("AXXON_DETECTOR_PLAYBOOKS_APPROVE", module.APPROVE_ENV_VARS)
+AssertionError: 'AXXON_DETECTOR_PLAYBOOKS_APPROVE' not found in ('AXXON_OPERATOR_APPROVE', 'AXXON_ALARMS_APPROVE', 'AXXON_LOGIC_CONTROL_APPROVE', 'AXXON_VIDEOWALL_APPROVE', 'AXXON_ADMIN_MUTATION_APPROVE', 'AXXON_BOOKMARK_MUTATION_APPROVE', 'AXXON_TIMEZONE_APPROVE', 'AXXON_SETTINGS_APPROVE', 'AXXON_GROUPS_APPROVE', 'AXXON_MAP_APPROVE', 'AXXON_LOGIC_ALERTS_APPROVE', 'AXXON_CONFIG_CHANGE_APPROVE', 'AXXON_ARCHIVE_VOLUME_APPROVE', 'AXXON_BOOKMARK_EXTRAS_APPROVE', 'AXXON_SECURITY_CREDENTIALS_APPROVE', 'AXXON_AUTH_SESSIONS_APPROVE', 'AXXON_LAYOUT_MANAGER_APPROVE', 'AXXON_AUDIT_INJECT_APPROVE', 'AXXON_CONTROL_APPROVE', 'AXXON_RECOGNIZER_WRITE_APPROVE', 'AXXON_SERVER_APPROVE', 'AXXON_GDPR_APPROVE', 'AXXON_MISC_WRITE_APPROVE', 'AXXON_ARCHIVE_MAINTENANCE_APPROVE', 'AXXON_SHARED_KV_APPROVE', 'AXXON_STATE_CONTROL_APPROVE', 'AXXON_EXPORT_APPROVE', 'AXXON_BULK_ONBOARDING_APPROVE')
+
+----------------------------------------------------------------------
+Ran 42 tests in 0.871s
+
+FAILED (failures=2, errors=8)

@@ -1,0 +1,7 @@
+tool_count=317
+server_local_count=312
+translator_tool_count=5
+group_count=51
+detector_playbooks_group=True
+detector_playbooks_tool_count=8
+detector_playbooks_tools=['apply_detector_playbook_plan', 'detector_playbook_parameter_schema', 'detector_playbooks_audit_log', 'detector_playbooks_connect_axxon_profile', 'list_detector_playbooks', 'plan_detector_playbook', 'rollback_detector_playbook_plan', 'verify_detector_playbook_plan']

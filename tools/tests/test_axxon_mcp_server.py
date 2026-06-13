@@ -474,6 +474,32 @@ class StubBulkOnboarding:
         return {"status": "ok", "entries": []}
 
 
+class StubDetectorPlaybooks:
+    def detector_playbooks_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "detector-playbooks"}
+
+    def list_detector_playbooks(self, include_live: bool = True):
+        return {"status": "ok", "include_live": include_live, "intents": ["create_av_detector"]}
+
+    def detector_playbook_parameter_schema(self, unit_type: str, detector_kind: str, intent: str = ""):
+        return {"status": "ok", "unit_type": unit_type, "detector_kind": detector_kind, "intent": intent}
+
+    def plan_detector_playbook(self, intent: str, params: dict | None = None):
+        return {"status": "planned", "intent": intent, "params": dict(params or {})}
+
+    def apply_detector_playbook_plan(self, playbook_plan_id: str, confirmation: str):
+        return {"status": "applied", "playbook_plan_id": playbook_plan_id, "confirmation": confirmation}
+
+    def verify_detector_playbook_plan(self, playbook_plan_id: str):
+        return {"status": "verified", "playbook_plan_id": playbook_plan_id}
+
+    def rollback_detector_playbook_plan(self, playbook_plan_id: str, confirmation: str):
+        return {"status": "rolled_back", "playbook_plan_id": playbook_plan_id, "confirmation": confirmation}
+
+    def detector_playbooks_audit_log(self):
+        return {"status": "ok", "entries": []}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -702,6 +728,82 @@ class AxxonMcpServerTests(unittest.TestCase):
             fastmcp_factory=FakeFastMCP,
         )
         enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "bulk_onboarding")
+        self.assertTrue(enabled["enabled"])
+        self.assertNotIn("enable_flag", enabled)
+
+    def test_create_server_registers_detector_playbooks_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        detector_playbook_tools = {
+            "detector_playbooks_connect_axxon_profile",
+            "list_detector_playbooks",
+            "detector_playbook_parameter_schema",
+            "plan_detector_playbook",
+            "apply_detector_playbook_plan",
+            "verify_detector_playbook_plan",
+            "rollback_detector_playbook_plan",
+            "detector_playbooks_audit_log",
+        }
+        operator_workflow_tools = {
+            "list_operator_workflows",
+            "plan_operator_workflow",
+            "apply_operator_plan",
+            "verify_operator_plan",
+            "rollback_operator_plan",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in detector_playbook_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("detector_playbooks", module.CAPABILITY_GROUPS)
+        self.assertIn("detector_playbooks", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-detector-playbooks"])
+        self.assertTrue(args.enable_detector_playbooks)
+
+        server = module.create_server(
+            docs=StubDocs(),
+            detector_playbooks=StubDetectorPlaybooks(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        self.assertEqual(detector_playbook_tools.intersection(server.tools), detector_playbook_tools)
+        self.assertTrue(operator_workflow_tools.isdisjoint(server.tools))
+        self.assertEqual(
+            server.tools["detector_playbooks_connect_axxon_profile"]("env")["mode"],
+            "detector-playbooks",
+        )
+        self.assertFalse(server.tools["list_detector_playbooks"](False)["include_live"])
+        schema = server.tools["detector_playbook_parameter_schema"]("AVDetector", "MotionDetection", "create_av_detector")
+        self.assertEqual(schema["intent"], "create_av_detector")
+        plan = server.tools["plan_detector_playbook"]("create_av_detector", {"display_name": "Motion"})
+        self.assertEqual(plan["intent"], "create_av_detector")
+        self.assertEqual(
+            server.tools["apply_detector_playbook_plan"]("detector-playbook-plan-1", "CONFIRM-detector-playbooks")["status"],
+            "applied",
+        )
+        self.assertEqual(server.tools["verify_detector_playbook_plan"]("detector-playbook-plan-1")["status"], "verified")
+        self.assertEqual(
+            server.tools["rollback_detector_playbook_plan"](
+                "detector-playbook-plan-1",
+                "CONFIRM-detector-playbooks-rollback",
+            )["status"],
+            "rolled_back",
+        )
+        self.assertEqual(server.tools["detector_playbooks_audit_log"]()["entries"], [])
+
+    def test_list_capabilities_reports_detector_playbooks_disabled_and_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
+        self.assertFalse(disabled["enabled"])
+        self.assertEqual(disabled["enable_flag"], "--enable-detector-playbooks")
+        self.assertIn("plan_detector_playbook", disabled["example_tools"])
+
+        enabled_server = module.create_server(
+            docs=StubDocs(),
+            detector_playbooks=StubDetectorPlaybooks(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
         self.assertTrue(enabled["enabled"])
         self.assertNotIn("enable_flag", enabled)
 
@@ -1285,6 +1387,7 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertTrue(all(enables.values()))
         self.assertIn("AXXON_EXPORT_APPROVE", module.APPROVE_ENV_VARS)
         self.assertIn("AXXON_BULK_ONBOARDING_APPROVE", module.APPROVE_ENV_VARS)
+        self.assertIn("AXXON_DETECTOR_PLAYBOOKS_APPROVE", module.APPROVE_ENV_VARS)
         for var in module.APPROVE_ENV_VARS:
             self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
 
@@ -1320,6 +1423,23 @@ class AxxonMcpServerTests(unittest.TestCase):
             from axxon_mcp_bulk_onboarding import AxxonMcpBulkOnboarding
 
             registry = AxxonMcpBulkOnboarding()
+        self.assertIsNotNone(registry)
+
+    def test_detector_playbooks_group_builds_without_credentials(self) -> None:
+        """Regression: detector playbooks must construct lazily with no live password."""
+        import os
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AXXON_PASSWORD", None)
+            from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
+            from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
+            from axxon_mcp_operator import OperatorRegistry
+
+            registry = AxxonMcpDetectorPlaybooks(
+                detector_archive=AxxonMcpDetectorArchive(),
+                operator=OperatorRegistry(client_factory=lambda: (_ for _ in ()).throw(AssertionError("lazy"))),
+            )
         self.assertIsNotNone(registry)
 
     def test_operator_group_builds_without_credentials(self) -> None:

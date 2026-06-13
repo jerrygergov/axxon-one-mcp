@@ -53,6 +53,7 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "partner": ("Partner plugin SDK scaffolds", ("scaffold_plugin", "plugin_lint", "plugin_package"), "--enable-partner"),
     "translator": ("Natural-language -> operator recipe translator", ("assemble_recipe", "validate_recipe"), "--enable-translator"),
     "detector_archive": ("Detector schemas + archive policy reads", ("detector_schema_catalog", "archive_policy_get"), "--enable-detector-archive"),
+    "detector_playbooks": ("Task-first detector creation/configuration playbooks with gated apply/verify/rollback", ("plan_detector_playbook", "apply_detector_playbook_plan", "list_detector_playbooks"), "--enable-detector-playbooks"),
     "config_change": ("ConfigurationService unit changes", ("apply_unit_change",), "--enable-config-change"),
     "archive_volume": ("ArchiveService volume resize", ("resize_archive_volume",), "--enable-archive-volume"),
     "security_credentials": ("Reversible user credential lifecycle", ("security_user_credential_lifecycle",), "--enable-security-credentials"),
@@ -100,6 +101,7 @@ def create_server(
     alarm_mutator: Any | None = None,
     view_objects: Any | None = None,
     detector_archive: Any | None = None,
+    detector_playbooks: Any | None = None,
     admin: Any | None = None,
     admin_mutator: Any | None = None,
     bookmarks: Any | None = None,
@@ -198,7 +200,7 @@ def create_server(
     enabled_groups = {name: value is not None for name, value in (
         ("live", live), ("operator", operator), ("generator", generator), ("partner", partner),
         ("metadata", metadata), ("view", view), ("alarms", alarms), ("view_objects", view_objects),
-        ("detector_archive", detector_archive), ("admin", admin), ("bookmarks", bookmarks),
+        ("detector_archive", detector_archive), ("detector_playbooks", detector_playbooks), ("admin", admin), ("bookmarks", bookmarks),
         ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
         ("recognizer_write", recognizer_write), ("logic_control", logic_control), ("settings", settings),
         ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
@@ -272,6 +274,9 @@ def create_server(
 
     if detector_archive is not None:
         register_detector_archive_tools(server, detector_archive)
+
+    if detector_playbooks is not None:
+        register_detector_playbooks_tools(server, detector_playbooks)
 
     if admin is not None:
         register_admin_tools(server, admin)
@@ -801,6 +806,48 @@ def register_detector_archive_tools(server: Any, detector_archive: Any) -> None:
     def analytics_fixture_report() -> dict[str, Any]:
         """Report fixture readiness for detector and archive analytics workflows."""
         return detector_archive.analytics_fixture_report()
+
+
+def register_detector_playbooks_tools(server: Any, detector_playbooks: Any) -> None:
+    @server.tool(name="detector_playbooks_connect_axxon_profile")
+    def detector_playbooks_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect detector playbooks to an env-backed Axxon profile without applying changes."""
+        return detector_playbooks.detector_playbooks_connect_axxon_profile(profile)
+
+    @server.tool(name="list_detector_playbooks")
+    def list_detector_playbooks(include_live: bool = True) -> dict[str, Any]:
+        """List detector playbook intents, descriptor policy, gates, and family support matrix."""
+        return detector_playbooks.list_detector_playbooks(include_live)
+
+    @server.tool(name="detector_playbook_parameter_schema")
+    def detector_playbook_parameter_schema(unit_type: str, detector_kind: str, intent: str = "") -> dict[str, Any]:
+        """Return detector descriptor schema augmented with playbook-required params."""
+        return detector_playbooks.detector_playbook_parameter_schema(unit_type, detector_kind, intent)
+
+    @server.tool(name="plan_detector_playbook")
+    def plan_detector_playbook(intent: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Build a detector playbook plan without applying or rolling back mutations."""
+        return detector_playbooks.plan_detector_playbook(intent, params or {})
+
+    @server.tool(name="apply_detector_playbook_plan")
+    def apply_detector_playbook_plan(playbook_plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Apply a detector playbook plan after approval env and confirmation gates pass."""
+        return detector_playbooks.apply_detector_playbook_plan(playbook_plan_id, confirmation)
+
+    @server.tool(name="verify_detector_playbook_plan")
+    def verify_detector_playbook_plan(playbook_plan_id: str) -> dict[str, Any]:
+        """Verify an applied detector playbook plan using the underlying operator workflow."""
+        return detector_playbooks.verify_detector_playbook_plan(playbook_plan_id)
+
+    @server.tool(name="rollback_detector_playbook_plan")
+    def rollback_detector_playbook_plan(playbook_plan_id: str, confirmation: str) -> dict[str, Any]:
+        """Roll back a detector playbook plan after approval env and rollback confirmation gates pass."""
+        return detector_playbooks.rollback_detector_playbook_plan(playbook_plan_id, confirmation)
+
+    @server.tool(name="detector_playbooks_audit_log")
+    def detector_playbooks_audit_log() -> dict[str, Any]:
+        """Return the sanitized in-memory detector playbooks audit trail."""
+        return detector_playbooks.detector_playbooks_audit_log()
 
 
 def register_view_tools(server: Any, view: Any) -> None:
@@ -2478,6 +2525,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 5E read tools for detectors, metadata, and archive policies.",
     )
     parser.add_argument(
+        "--enable-detector-playbooks",
+        action="store_true",
+        help="Enable Phase 4 detector playbook planner/orchestrator. Apply/rollback need AXXON_DETECTOR_PLAYBOOKS_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-admin",
         action="store_true",
         help="Enable Phase 5F-A read-only admin tools for security, health, notifiers, and schedule descriptors.",
@@ -2733,6 +2785,7 @@ APPROVE_ENV_VARS = (
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
     "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE", "AXXON_BULK_ONBOARDING_APPROVE",
+    "AXXON_DETECTOR_PLAYBOOKS_APPROVE",
 )
 
 
@@ -2829,6 +2882,22 @@ def main() -> int:
         from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
 
         detector_archive = AxxonMcpDetectorArchive()
+    detector_playbooks = None
+    if args.enable_detector_playbooks:
+        from axxon_api_client import AxxonApiClient, AxxonClientConfig
+        from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
+        from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
+        from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
+
+        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
+        detector_playbooks = AxxonMcpDetectorPlaybooks(
+            detector_archive=AxxonMcpDetectorArchive(),
+            operator=OperatorRegistry(
+                client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
+                host=f"hosts/{config.tls_cn}",
+                enabled=True,
+            ),
+        )
     admin = None
     if args.enable_admin:
         from axxon_mcp_admin import AxxonMcpAdmin
@@ -3082,6 +3151,7 @@ def main() -> int:
         alarm_mutator=alarm_mutator,
         view_objects=view_objects,
         detector_archive=detector_archive,
+        detector_playbooks=detector_playbooks,
         admin=admin,
         admin_mutator=admin_mutator,
         bookmarks=bookmarks,
