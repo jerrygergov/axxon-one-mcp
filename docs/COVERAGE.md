@@ -2,8 +2,6 @@
 
 Live status of each Axxon One gRPC RPC exposed by this MCP server, generated from
 `docs/api-audit/mcp-corpus/api_methods.json` (the authoritative source).
-For the broader "everything the VMS can do" target and intent-level MCP coverage
-comparison, see [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](ALL_IN_ONE_VMS_API_ROADMAP.md).
 
 **286 / 361 RPCs live-verified** across 51 services (20 pending, 55 fixture-blocked).
 
