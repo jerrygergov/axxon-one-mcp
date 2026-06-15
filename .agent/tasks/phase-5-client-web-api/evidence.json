@@ -1,0 +1,111 @@
+{
+  "task_id": "phase-5-client-web-api",
+  "overall_status": "PASS",
+  "date": "2026-06-15",
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "text": "web_api module AxxonMcpWebApi with 6 tools; env-only lazy connect; secret redaction; injectable client/socket factories for offline tests.",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_web_api.py (AxxonMcpWebApi, web_api_connect_axxon_profile, default_*_factory)",
+        "tools/tests/test_axxon_mcp_web_api.py::ConnectTests::test_connect_env_only_lazy_and_redacts_secrets",
+        "raw/live-evidence.json: web_connect_password_value_absent=true, web_connect_password_present=true"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC2",
+      "text": "client_api module AxxonMcpClientApi with 3 tools; preflight is read-only socket/HTTP probe returning sanitized dicts; list_client_api_operations marks every op fixture-needed and does no wire.",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_client_api.py (client_api_preflight, list_client_api_operations, _OPERATIONS)",
+        "tools/tests/test_axxon_mcp_client_api.py::PreflightTests, ::OperationCatalogTests::test_operations_all_fixture_needed_no_wire",
+        "raw/live-evidence.json: client_api_all_fixture_needed=true, client_api_operations_count=8, client_api_preflight.reachable_count=0"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC3",
+      "text": "web_events_probe is a single handshake; web_events_sample hard-caps frames and seconds, returns opcode/size tallies only (no raw payload), and both restrict to allowlisted WS paths.",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_web_api.py (MAX_EVENT_FRAMES=8, MAX_EVENT_SECONDS=5.0, KNOWN_EVENT_PATHS, _drain_frames)",
+        "tools/tests/test_axxon_mcp_web_api.py::WebEventsTests::test_sample_caps_frames_and_returns_no_raw_bytes, ::test_sample_hard_cap_overrides_large_request, ::test_probe_rejects_unknown_path, ::test_sample_rejects_unknown_path",
+        "raw/live-evidence.json: web_events_sample frames=1 opcode_tallies={close:1} payload_bytes_seen=2 frame_cap=4 seconds_cap=5.0; web_events_probe_events/ws http_status=101 upgraded=true"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC4",
+      "text": "embeddable_component_url builds a valid /embedded.html iframe src with no credentials + paste-ready snippet; embeddable_component_commands returns the typed postMessage catalog matching the integration doc.",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_web_api.py (embeddable_component_url, embeddable_component_commands, _COMMAND_CATALOG, EMBEDDED_PATH)",
+        "tools/tests/test_axxon_mcp_web_api.py::EmbeddableTests",
+        "raw/live-evidence.json: embeddable_url.url=http://<stand-host>/embedded.html?origin=...&mode=live (no credentials); embeddable_commands_types=[init,reInit,'live | archive','play | stop',setTime,setCamera]"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC5",
+      "text": "Both groups wired into axxon_mcp_server.py: CAPABILITY_GROUPS, --enable-web-api/--enable-client-api, register_*_tools, create_server params, enabled_groups, main() lazy construction.",
+      "status": "PASS",
+      "proof": [
+        "tools/axxon_mcp_server.py (CAPABILITY_GROUPS web_api/client_api; register_web_api_tools; register_client_api_tools; create_server kwargs; main() construction)",
+        "raw/build.txt: --help lists both flags; group count 53; 321 server.tool decorators",
+        "tools/tests/test_axxon_mcp_server.py::test_create_server_registers_web_api_tools_only_when_enabled, ::test_create_server_registers_client_api_tools_only_when_enabled, ::test_list_capabilities_reports_web_and_client_api_disabled_and_enabled"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC6",
+      "text": "Offline unit tests cover connect/redaction, URL/command builders, WS probe/sample caps + no-raw-bytes + path allowlist, preflight read-only/sanitized, fixture-needed catalog, and server registration.",
+      "status": "PASS",
+      "proof": [
+        "tools/tests/test_axxon_mcp_web_api.py (11 tests), tools/tests/test_axxon_mcp_client_api.py (6 tests), 3 server tests",
+        "raw/test-new-modules.txt: Ran 17 tests ... OK"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC7",
+      "text": "Full suite python3.12 -m unittest discover -s tools/tests exits 0, +20 over prior 1156, no regressions.",
+      "status": "PASS",
+      "proof": [
+        "raw/test-unit.txt: Ran 1176 tests ... OK"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "AC8",
+      "text": "Docs updated with re-derived counts: README tool-layers + counts; roadmap Current Numbers + HTTP/WebSocket/embeddable row + Layouts/client-UI row + backlog item 3. COVERAGE.md unchanged (RPC-focused, no new RPCs).",
+      "status": "PASS",
+      "proof": [
+        "README.md (326 tools / 53 groups / nine layers; Client / Web API layer row)",
+        "docs/ALL_IN_ONE_VMS_API_ROADMAP.md (Current Numbers 326/53; HTTP/WebSocket/embeddable row; Layouts...client UI row; backlog item 3)"
+      ],
+      "gaps": []
+    }
+  ],
+  "changed_files": [
+    "tools/axxon_mcp_web_api.py",
+    "tools/axxon_mcp_client_api.py",
+    "tools/axxon_mcp_server.py",
+    "tools/tests/test_axxon_mcp_web_api.py",
+    "tools/tests/test_axxon_mcp_client_api.py",
+    "tools/tests/test_axxon_mcp_server.py",
+    "README.md",
+    "docs/ALL_IN_ONE_VMS_API_ROADMAP.md"
+  ],
+  "commands_for_fresh_verifier": [
+    "python3.12 -m unittest discover -s tools/tests",
+    "python3.12 -m unittest tools.tests.test_axxon_mcp_web_api tools.tests.test_axxon_mcp_client_api",
+    "python3.12 tools/axxon_mcp_server.py --help 2>&1 | grep -E 'enable-web-api|enable-client-api'",
+    "PYTHONPATH=tools python3.12 -c \"import axxon_mcp_server as s; print('web_api' in s.CAPABILITY_GROUPS, 'client_api' in s.CAPABILITY_GROUPS, len(s.CAPABILITY_GROUPS))\""
+  ],
+  "known_gaps": [
+    "client_api operations are fixture-needed by design: the stand's Client HTTP API port 8888 is closed; promotion to apply-ready needs a reachable client target.",
+    "web_events_sample reports WS transport-level frame metadata only; application-level event payload decoding needs the undocumented subscribe protocol."
+  ]
+}

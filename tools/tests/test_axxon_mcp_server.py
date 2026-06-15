@@ -500,6 +500,37 @@ class StubDetectorPlaybooks:
         return {"status": "ok", "entries": []}
 
 
+class StubWebApi:
+    def web_api_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read"}
+
+    def embeddable_component_url(self, camera_origin: str = "", mode: str = "live", time: str = "", archive_pane=None):
+        return {"status": "ok", "url": "http://h/embedded.html", "mode": mode}
+
+    def embeddable_component_commands(self):
+        return {"status": "ok", "commands": [{"type": "init"}]}
+
+    def web_events_probe(self, path: str = "/events"):
+        return {"status": "ok", "path": path, "http_status": 101, "upgraded": True}
+
+    def web_events_sample(self, path: str = "/events", max_frames: int = 8):
+        return {"status": "ok", "path": path, "frames": 0, "max_frames": max_frames}
+
+    def web_client_parity_report(self):
+        return {"status": "ok", "surfaces": []}
+
+
+class StubClientApi:
+    def client_api_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read"}
+
+    def client_api_preflight(self, client_http_port: int = 8888):
+        return {"status": "ok", "client_http_port": client_http_port, "reachable_count": 0, "checks": [], "fixture_gap": "gap"}
+
+    def list_client_api_operations(self):
+        return {"status": "ok", "operations": [{"operation": "SwitchLayout", "status": "fixture-needed"}]}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -806,6 +837,67 @@ class AxxonMcpServerTests(unittest.TestCase):
         enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == "detector_playbooks")
         self.assertTrue(enabled["enabled"])
         self.assertNotIn("enable_flag", enabled)
+
+    def test_create_server_registers_web_api_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        web_api_tools = {
+            "web_api_connect_axxon_profile",
+            "embeddable_component_url",
+            "embeddable_component_commands",
+            "web_events_probe",
+            "web_events_sample",
+            "web_client_parity_report",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in web_api_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("web_api", module.CAPABILITY_GROUPS)
+        self.assertIn("web_api", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-web-api"])
+        self.assertTrue(args.enable_web_api)
+
+        server = module.create_server(docs=StubDocs(), web_api=StubWebApi(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(web_api_tools, set(server.tools))
+        self.assertEqual(server.tools["web_api_connect_axxon_profile"]("env")["mode"], "read")
+        self.assertTrue(server.tools["web_events_probe"]("/events")["upgraded"])
+
+    def test_create_server_registers_client_api_tools_only_when_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        client_api_tools = {
+            "client_api_connect_axxon_profile",
+            "client_api_preflight",
+            "list_client_api_operations",
+        }
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for name in client_api_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        self.assertIn("client_api", module.CAPABILITY_GROUPS)
+        self.assertIn("client_api", inspect.signature(module.create_server).parameters)
+        args = module.build_parser().parse_args(["--enable-client-api"])
+        self.assertTrue(args.enable_client_api)
+
+        server = module.create_server(docs=StubDocs(), client_api=StubClientApi(), fastmcp_factory=FakeFastMCP)
+        self.assertLessEqual(client_api_tools, set(server.tools))
+        ops = server.tools["list_client_api_operations"]()["operations"]
+        self.assertTrue(all(op["status"] == "fixture-needed" for op in ops))
+
+    def test_list_capabilities_reports_web_and_client_api_disabled_and_enabled(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for key, flag in (("web_api", "--enable-web-api"), ("client_api", "--enable-client-api")):
+            disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == key)
+            self.assertFalse(disabled["enabled"])
+            self.assertEqual(disabled["enable_flag"], flag)
+
+        enabled_server = module.create_server(docs=StubDocs(), web_api=StubWebApi(), client_api=StubClientApi(), fastmcp_factory=FakeFastMCP)
+        for key in ("web_api", "client_api"):
+            enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == key)
+            self.assertTrue(enabled["enabled"])
+            self.assertNotIn("enable_flag", enabled)
 
     def test_create_server_registers_operator_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")

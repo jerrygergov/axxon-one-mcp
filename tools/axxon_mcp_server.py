@@ -74,6 +74,8 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "state_control": ("Device state reads + gated SetState (e.g. PTZ patrol controllers)", ("get_current_state", "set_state"), "--enable-state-control"),
     "site_graph": ("Unified read-only site graph for planners and generators", ("build_site_graph",), "--enable-site-graph"),
     "bulk_onboarding": ("Bulk CSV/JSON camera onboarding planner with gated apply/verify/rollback", ("bulk_onboarding_plan", "bulk_onboarding_apply_plan", "bulk_onboarding_verify_plan"), "--enable-bulk-onboarding"),
+    "web_api": ("Web server embeddable-component + WebSocket-event helpers (read-only)", ("embeddable_component_url", "web_events_probe", "web_events_sample"), "--enable-web-api"),
+    "client_api": ("Client HTTP API preflight + fixture-needed operation catalog (read-only)", ("client_api_preflight", "list_client_api_operations"), "--enable-client-api"),
 }
 
 
@@ -146,6 +148,8 @@ def create_server(
     media: Any | None = None,
     export: Any | None = None,
     videowall: Any | None = None,
+    web_api: Any | None = None,
+    client_api: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -215,6 +219,7 @@ def create_server(
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
         ("auth_sessions", auth_sessions), ("layout_manager", layout_manager), ("license_reads", license_reads),
         ("misc_reads", misc_reads), ("heatmap", heatmap), ("media", media), ("export", export), ("videowall", videowall),
+        ("web_api", web_api), ("client_api", client_api),
     )}
 
     @server.tool(name="list_capabilities")
@@ -409,6 +414,12 @@ def create_server(
 
     if videowall is not None:
         register_videowall_tools(server, videowall)
+
+    if web_api is not None:
+        register_web_api_tools(server, web_api)
+
+    if client_api is not None:
+        register_client_api_tools(server, client_api)
 
     return server
 
@@ -1624,6 +1635,55 @@ def register_media_tools(server: Any, media: Any) -> None:
         return media.connect_endpoint(source_endpoint=source_endpoint, sink_endpoint=sink_endpoint, priority=priority)
 
 
+def register_web_api_tools(server: Any, web_api: Any) -> None:
+    @server.tool(name="web_api_connect_axxon_profile")
+    def web_api_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the Web server / embeddable-component / WebSocket-event helper layer (read-only)."""
+        return web_api.web_api_connect_axxon_profile(profile)
+
+    @server.tool(name="embeddable_component_url")
+    def embeddable_component_url(camera_origin: str = "", mode: str = "live", time: str = "", archive_pane: bool | None = None) -> dict[str, Any]:
+        """Build the /embedded.html iframe src + snippet for the embeddable video component (no credentials)."""
+        return web_api.embeddable_component_url(camera_origin=camera_origin, mode=mode, time=time, archive_pane=archive_pane)
+
+    @server.tool(name="embeddable_component_commands")
+    def embeddable_component_commands() -> dict[str, Any]:
+        """Return the typed postMessage command catalog for the embeddable video component (knowledge only)."""
+        return web_api.embeddable_component_commands()
+
+    @server.tool(name="web_events_probe")
+    def web_events_probe(path: str = "/events") -> dict[str, Any]:
+        """Perform one bounded WebSocket handshake against a known event path; report 101/upgrade metadata only."""
+        return web_api.web_events_probe(path=path)
+
+    @server.tool(name="web_events_sample")
+    def web_events_sample(path: str = "/events", max_frames: int = 8) -> dict[str, Any]:
+        """Open one bounded WS connection and report frame count + opcode/size tallies (no raw payload bytes)."""
+        return web_api.web_events_sample(path=path, max_frames=max_frames)
+
+    @server.tool(name="web_client_parity_report")
+    def web_client_parity_report() -> dict[str, Any]:
+        """Map the Web client surface to existing MCP groups, highlighting browser-only pieces (offline)."""
+        return web_api.web_client_parity_report()
+
+
+def register_client_api_tools(server: Any, client_api: Any) -> None:
+    @server.tool(name="client_api_connect_axxon_profile")
+    def client_api_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the Client HTTP API preflight layer to the env profile (read-only)."""
+        return client_api.client_api_connect_axxon_profile(profile)
+
+    @server.tool(name="client_api_preflight")
+    def client_api_preflight(client_http_port: int = 8888) -> dict[str, Any]:
+        """Socket-probe the Client HTTP API port locally and on the configured host; report reachability (no mutation)."""
+        return client_api.client_api_preflight(client_http_port=client_http_port)
+
+    @server.tool(name="list_client_api_operations")
+    def list_client_api_operations() -> dict[str, Any]:
+        """Catalog Client HTTP API operations (SwitchLayout/AddCameraToDisplay/...), each marked fixture-needed."""
+        return client_api.list_client_api_operations()
+
+
 def register_export_tools(server: Any, export: Any) -> None:
     @server.tool(name="export_connect_axxon_profile")
     def export_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2745,6 +2805,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 46 VideowallService control tools (register/change/set-control-data/unregister; approval-gated, reversible).",
     )
     parser.add_argument(
+        "--enable-web-api",
+        action="store_true",
+        help="Enable Phase 5 read-only Web server helpers (embeddable-component URL/commands, bounded WebSocket-event probe/sample).",
+    )
+    parser.add_argument(
+        "--enable-client-api",
+        action="store_true",
+        help="Enable Phase 5 read-only Client HTTP API preflight + fixture-needed operation catalog.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -3139,6 +3209,16 @@ def main() -> int:
         from axxon_mcp_videowall import AxxonMcpVideowall
 
         videowall = AxxonMcpVideowall()
+    web_api = None
+    if args.enable_web_api:
+        from axxon_mcp_web_api import AxxonMcpWebApi
+
+        web_api = AxxonMcpWebApi()
+    client_api = None
+    if args.enable_client_api:
+        from axxon_mcp_client_api import AxxonMcpClientApi
+
+        client_api = AxxonMcpClientApi()
     server = create_server(
         corpus_dir=args.corpus_dir,
         live=live,
@@ -3196,6 +3276,8 @@ def main() -> int:
         media=media,
         export=export,
         videowall=videowall,
+        web_api=web_api,
+        client_api=client_api,
     )
     server.run(transport=args.transport)
     return 0

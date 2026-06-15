@@ -18,14 +18,15 @@ is in [`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](docs/ALL_IN_ONE_VMS_API_ROADMAP.md)
   Per-service coverage is summarized in [`docs/COVERAGE.md`](docs/COVERAGE.md); the
   authoritative per-RPC status (machine-readable) lives in
   [`docs/api-audit/mcp-corpus/api_methods.json`](docs/api-audit/mcp-corpus/api_methods.json).
-- **317 MCP tools** across 51 capability groups in eight layers (see below). This is the
-  all-enabled runtime count: 312 tools registered in `tools/axxon_mcp_server.py` plus
+- **326 MCP tools** across 53 capability groups in nine layers (see below). This is the
+  all-enabled runtime count: 321 tools registered in `tools/axxon_mcp_server.py` plus
   5 delegated translator tools from `tools/axxon_mcp_translator.py`. Existing live-audited
   groups are covered by the latest real-stand audit
   ([`docs/api-audit/preexisting-tools-audit-latest.md`](docs/api-audit/preexisting-tools-audit-latest.md));
-  the Phase 1 `site_graph` group is read-only and unit-verified offline, and the Phase 2
+  the Phase 1 `site_graph` group is read-only and unit-verified offline, the Phase 2
   `export` group, Phase 3 `bulk_onboarding` group, and Phase 4 `detector_playbooks` group
-  are approval-gated and unit-verified offline.
+  are approval-gated and unit-verified offline, and the Phase 5 `web_api` / `client_api`
+  groups are read-only (web_api is also live-verified against a reachable Web server).
 
 ### Tool layers
 
@@ -40,6 +41,7 @@ All layers are **on by default** (use `--read-only` to restrict to reads).
 | **Export** | `export_plan_snapshot`, `export_start_snapshot`, `export_status`, `export_download`, `export_cleanup_owned` — plan/start/status/download/cleanup for owned snapshot exports with approval, byte, chunk, timeout, and path caps. |
 | **Bulk onboarding** | `bulk_onboarding_schema`, `bulk_onboarding_validate_manifest`, `bulk_onboarding_plan`, `bulk_onboarding_apply_plan`, `bulk_onboarding_verify_plan`, `bulk_onboarding_rollback_plan` — validate inline CSV/JSON camera manifests, plan catalog/discovery/site-graph-aware onboarding, and apply/rollback with approval. |
 | **Detector playbooks** | `list_detector_playbooks`, `detector_playbook_parameter_schema`, `plan_detector_playbook`, `apply_detector_playbook_plan`, `verify_detector_playbook_plan`, `rollback_detector_playbook_plan` — task-first AVDetector/AppDataDetector, geometry, external-event, VMDA/AppData, metadata/heatmap, and fixture-needed analytics workflows. |
+| **Client / Web API** | `embeddable_component_url`, `embeddable_component_commands`, `web_events_probe`, `web_events_sample`, `web_client_parity_report` (Web server) plus `client_api_preflight`, `list_client_api_operations` — read-only helpers for the embeddable video component, bounded WebSocket-event probing, and a Client HTTP API preflight + fixture-needed operation catalog. |
 | **Generator** | Generate Python / Node integration skeletons (14 templates, each in both languages) and versioned partner plugin scaffolds. |
 
 ## Requirements
