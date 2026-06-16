@@ -1011,7 +1011,7 @@ def _build_create_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str
             "dimensions": {"width": width, "height": height},
             "right_spring": 1.0,
             "bottom_spring": 1.0,
-            "items": [{"access_point": ap}],
+            "camera_ap": ap,
         }
     body = {
         "id": layout_id,
@@ -1075,7 +1075,7 @@ def _build_delete_layout_plan(host_uid: str, params: dict[str, Any]) -> dict[str
         "persistent": True,
         "risk": "mutation",
         "intent": f"delete layout {layout_id}",
-        "steps": [{"operation": "update_layout", "payload": {"removed_layouts": [layout_id]}, "layout_id": layout_id}],
+        "steps": [{"operation": "update_layout", "payload": {"removed": [layout_id]}, "layout_id": layout_id}],
         "rollback": {
             "strategy": "restore_layout_snapshot",
             "description": "Pre-apply snapshot re-adds via created[].",

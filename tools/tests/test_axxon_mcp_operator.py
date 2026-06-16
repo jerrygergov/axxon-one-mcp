@@ -1522,6 +1522,8 @@ class OperatorPlanTests(unittest.TestCase):
             "cols": 1,
         })
         self.assertTrue(plan["caller_owns_lifecycle"])
+        cell = plan["steps"][0]["payload"]["created"][0]["cells"]["0"]
+        self.assertEqual(cell["camera_ap"], "hosts/Server/DeviceIpint.1/SourceEndpoint.video:0:0")
         applied = reg.apply(plan["plan_id"], plan["confirmation_token"])
         self.assertEqual(applied["status"], "applied")
         layout_id = applied["created_uids"][0]
@@ -1689,7 +1691,7 @@ class OperatorPlanTests(unittest.TestCase):
         gap = _build_delete_layout_plan("hosts/Server", {})
         self.assertEqual(gap["status"], "gap")
         plan = _build_delete_layout_plan("hosts/Server", {"layout_id": "lid-1"})
-        self.assertEqual(plan["steps"][0]["payload"]["removed_layouts"], ["lid-1"])
+        self.assertEqual(plan["steps"][0]["payload"]["removed"], ["lid-1"])
         self.assertEqual(plan["rollback"]["strategy"], "restore_layout_snapshot")
 
     def test_apply_dispatches_register_wall_and_records_cookie(self) -> None:
