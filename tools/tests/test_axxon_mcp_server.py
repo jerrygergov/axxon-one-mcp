@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import os
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
 
 
 TOOLS_DIR = Path(__file__).resolve().parents[1]
@@ -558,7 +560,7 @@ class AxxonMcpServerTests(unittest.TestCase):
         module = importlib.import_module("axxon_mcp_server")
         server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
 
-        self.assertEqual(server.name, "Axxon One API Docs")
+        self.assertEqual(server.name, "Axxon One MCP")
         self.assertEqual(
             set(server.tools),
             {
@@ -1471,39 +1473,144 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertTrue(operator["enabled"])
         self.assertNotIn("enable_flag", operator)
 
-    def test_default_open_enables_all_groups_and_approvals(self) -> None:
+    def test_no_flags_leave_every_capability_disabled_and_do_not_change_env(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        env = {"AXXON_OPERATOR_APPROVE": "1", "UNCHANGED": "yes"}
+        before = dict(env)
+
+        args = module.resolve_runtime_profile(module.build_parser().parse_args([]), environ=env)
+
+        enables = {
+            key: value
+            for key, value in vars(args).items()
+            if key.startswith("enable_") and key != "enable_all"
+        }
+        self.assertTrue(enables)
+        self.assertFalse(any(enables.values()))
+        self.assertEqual(env, before)
+
+    def test_enable_all_registers_groups_without_synthesizing_approval(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
         env: dict[str, str] = {}
-        args = module.apply_default_open(module.build_parser().parse_args([]), environ=env)
-        enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
-        self.assertTrue(all(enables.values()))
-        self.assertIn("AXXON_EXPORT_APPROVE", module.APPROVE_ENV_VARS)
-        self.assertIn("AXXON_BULK_ONBOARDING_APPROVE", module.APPROVE_ENV_VARS)
-        self.assertIn("AXXON_DETECTOR_PLAYBOOKS_APPROVE", module.APPROVE_ENV_VARS)
-        for var in module.APPROVE_ENV_VARS:
-            self.assertEqual(env.get(var), "1", f"{var} should default to '1'")
 
-    def test_read_only_enables_groups_but_no_approval_defaults(self) -> None:
-        module = importlib.import_module("axxon_mcp_server")
-        env: dict[str, str] = {}
-        args = module.apply_default_open(module.build_parser().parse_args(["--read-only"]), environ=env)
-        enables = {k: v for k, v in vars(args).items() if k.startswith("enable_")}
-        self.assertTrue(all(enables.values()))  # groups register so reads work
-        for var in module.APPROVE_ENV_VARS:
-            self.assertNotIn(var, env, f"{var} must not be defaulted on in read-only mode")
+        args = module.resolve_runtime_profile(
+            module.apply_enable_all(module.build_parser().parse_args(["--enable-all"])),
+            environ=env,
+        )
 
-    def test_default_open_preserves_user_set_approval(self) -> None:
-        module = importlib.import_module("axxon_mcp_server")
-        env = {"AXXON_OPERATOR_APPROVE": "0"}
-        module.apply_default_open(module.build_parser().parse_args([]), environ=env)
-        self.assertEqual(env["AXXON_OPERATOR_APPROVE"], "0")
+        self.assertTrue(all(value for key, value in vars(args).items() if key.startswith("enable_")))
+        self.assertEqual(env, {})
 
-    def test_explicit_enable_flag_not_overridden_by_default_open(self) -> None:
+    def test_read_only_is_authoritative_over_inherited_approvals(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
-        env: dict[str, str] = {}
-        args = module.apply_default_open(module.build_parser().parse_args(["--enable-live"]), environ=env)
-        self.assertTrue(args.enable_live)
-        self.assertFalse(args.enable_operator)
+        env = {name: "1" for name in module.APPROVE_ENV_VARS}
+
+        args = module.resolve_runtime_profile(
+            module.build_parser().parse_args(["--read-only"]),
+            environ=env,
+        )
+
+        self.assertTrue(all(value for key, value in vars(args).items() if key.startswith("enable_")))
+        for name in module.APPROVE_ENV_VARS:
+            self.assertFalse(module.approval_enabled(name, args=args, environ=env))
+
+    def test_exact_external_approval_is_required_outside_read_only(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        args = module.resolve_runtime_profile(
+            module.build_parser().parse_args(["--enable-operator"]),
+            environ={},
+        )
+
+        self.assertFalse(module.approval_enabled("AXXON_OPERATOR_APPROVE", args=args, environ={}))
+        self.assertFalse(
+            module.approval_enabled(
+                "AXXON_OPERATOR_APPROVE",
+                args=args,
+                environ={"AXXON_OPERATOR_APPROVE": "true"},
+            )
+        )
+        self.assertTrue(
+            module.approval_enabled(
+                "AXXON_OPERATOR_APPROVE",
+                args=args,
+                environ={"AXXON_OPERATOR_APPROVE": "1"},
+            )
+        )
+
+    def test_read_only_disables_every_instantiated_mutation_gate(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        captured: dict[str, object] = {}
+
+        class StubServer:
+            def run(self, *, transport: str) -> None:
+                self.transport = transport
+
+        def capture_server(**kwargs: object) -> StubServer:
+            captured.update(kwargs)
+            return StubServer()
+
+        approvals = {name: "1" for name in module.APPROVE_ENV_VARS}
+        with (
+            mock.patch.dict(os.environ, approvals, clear=False),
+            mock.patch.object(sys, "argv", ["axxon_mcp_server.py", "--read-only"]),
+            mock.patch.object(module, "create_server", side_effect=capture_server),
+        ):
+            self.assertEqual(module.main(), 0)
+
+        enabled_targets = {
+            "AXXON_OPERATOR_APPROVE": "operator",
+            "AXXON_LOGIC_CONTROL_APPROVE": "logic_control",
+            "AXXON_VIDEOWALL_APPROVE": "videowall",
+            "AXXON_ADMIN_MUTATION_APPROVE": "admin_mutator",
+            "AXXON_BOOKMARK_MUTATION_APPROVE": "bookmark_mutator",
+            "AXXON_TIMEZONE_APPROVE": "timezone",
+            "AXXON_SETTINGS_APPROVE": "settings",
+            "AXXON_GROUPS_APPROVE": "groups",
+            "AXXON_MAP_APPROVE": "map_providers",
+            "AXXON_LOGIC_ALERTS_APPROVE": "logic_alerts",
+            "AXXON_CONFIG_CHANGE_APPROVE": "config_change",
+            "AXXON_ARCHIVE_VOLUME_APPROVE": "archive_volume",
+            "AXXON_BOOKMARK_EXTRAS_APPROVE": "bookmark_extras",
+            "AXXON_SECURITY_CREDENTIALS_APPROVE": "security_credentials",
+            "AXXON_AUTH_SESSIONS_APPROVE": "auth_sessions",
+            "AXXON_LAYOUT_MANAGER_APPROVE": "layout_manager",
+            "AXXON_AUDIT_INJECT_APPROVE": "audit",
+            "AXXON_CONTROL_APPROVE": "control",
+            "AXXON_RECOGNIZER_WRITE_APPROVE": "recognizer_write",
+            "AXXON_SERVER_APPROVE": "server_settings",
+            "AXXON_GDPR_APPROVE": "gdpr_cleanup",
+            "AXXON_MISC_WRITE_APPROVE": "misc_reads",
+            "AXXON_ARCHIVE_MAINTENANCE_APPROVE": "operator",
+            "AXXON_SHARED_KV_APPROVE": "shared_kv",
+            "AXXON_STATE_CONTROL_APPROVE": "state_control",
+            "AXXON_EXPORT_APPROVE": "export",
+        }
+        self.assertEqual(
+            set(module.APPROVE_ENV_VARS),
+            set(enabled_targets) | {
+                "AXXON_ALARMS_APPROVE",
+                "AXXON_BULK_ONBOARDING_APPROVE",
+                "AXXON_DETECTOR_PLAYBOOKS_APPROVE",
+            },
+        )
+        for variable, target in enabled_targets.items():
+            self.assertFalse(getattr(captured[target], "enabled"), f"{variable} remained enabled")
+
+        alarm_mutator = captured["alarm_mutator"]
+        self.assertNotEqual(alarm_mutator.env_getter(alarm_mutator.approve_env), "1")
+        self.assertFalse(captured["bulk_onboarding"]._approval_enabled())
+        self.assertNotEqual(
+            captured["detector_playbooks"]._env().get("AXXON_DETECTOR_PLAYBOOKS_APPROVE"),
+            "1",
+        )
+
+    def test_parser_help_explains_secure_profiles(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        help_text = module.build_parser().format_help()
+
+        self.assertIn("No capability flag starts the knowledge-only server", help_text)
+        self.assertIn("does not authorize mutations", help_text)
+        self.assertIn("authoritatively disables mutation execution", help_text)
 
     def test_bulk_onboarding_group_builds_without_credentials(self) -> None:
         """Regression: enabling bulk onboarding must construct lazily with no live password."""

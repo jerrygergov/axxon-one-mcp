@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Docs-only FastMCP server for the Axxon One API corpus."""
+"""FastMCP server for the Axxon One API knowledge and integration tools."""
 
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from typing import Any, Callable
 
@@ -84,7 +85,7 @@ def default_fastmcp_factory(name: str, **kwargs: Any) -> Any:
         from mcp.server.fastmcp import FastMCP
     except ModuleNotFoundError as exc:
         raise SystemExit(
-            "The MCP Python SDK is not installed. Install the docs-only MCP dependency with "
+            "The MCP Python SDK is not installed. Install the MCP dependency with "
             "`python3.12 -m pip install -r tools/requirements-mcp.txt`."
         ) from exc
     return FastMCP(name, **kwargs)
@@ -154,7 +155,7 @@ def create_server(
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
     docs = docs or AxxonMcpDocs.from_corpus_dir(corpus_dir)
-    server = fastmcp_factory("Axxon One API Docs", json_response=True)
+    server = fastmcp_factory("Axxon One MCP", json_response=True)
 
     @server.tool(name="search_api_docs")
     def search_api_docs(query: str, limit: int = 10) -> dict[str, Any]:
@@ -2545,7 +2546,14 @@ def register_bulk_onboarding_tools(server: Any, bulk_onboarding: Any) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the docs-only Axxon One MCP server.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the Axxon One MCP server. No capability flag starts the knowledge-only server. "
+            "--enable-all registers all groups but does not authorize mutations. --read-only "
+            "registers the broad surface and authoritatively disables mutation execution."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument("--corpus-dir", type=Path, default=DEFAULT_CORPUS_DIR)
     parser.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
     parser.add_argument("--enable-live", action="store_true", help="Enable read-only live tools backed by env config.")
@@ -2832,13 +2840,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--enable-all",
         action="store_true",
-        help="Enable every feature group at once (full functionality).",
+        help="Register every capability group; mutation approval still must be supplied separately.",
     )
     parser.add_argument(
         "--read-only",
         action="store_true",
-        help="Restrict to read-only: enables read groups but leaves all mutating tools disabled "
-        "(no approval gate is defaulted on). Use for locked-down deployments.",
+        help="Register the broad capability surface and authoritatively disable every mutation gate.",
     )
     return parser
 
@@ -2852,9 +2859,8 @@ def apply_enable_all(args: argparse.Namespace) -> argparse.Namespace:
     return args
 
 
-# Per-group mutation approval env vars. Open-by-default sets each to "1" unless --read-only is
-# passed or the user already set it, so mutations are gated only by their per-call confirmation
-# token. The confirmation-token layer in each module is unchanged.
+# Per-group mutation approval env vars. Registration does not authorize mutation: each module
+# independently requires its exact external approval value plus its per-call confirmation token.
 APPROVE_ENV_VARS = (
     "AXXON_OPERATOR_APPROVE", "AXXON_ALARMS_APPROVE", "AXXON_LOGIC_CONTROL_APPROVE",
     "AXXON_VIDEOWALL_APPROVE", "AXXON_ADMIN_MUTATION_APPROVE", "AXXON_BOOKMARK_MUTATION_APPROVE",
@@ -2869,38 +2875,34 @@ APPROVE_ENV_VARS = (
 )
 
 
-def apply_default_open(args: argparse.Namespace, environ: dict[str, str] | None = None) -> argparse.Namespace:
-    """Open-by-default: with no explicit enable flag and no --read-only, enable every group and
-    default each mutation approval env var to "1" (gated still by per-call confirmation tokens).
-
-    --read-only suppresses the approval defaults so mutating tools stay disabled. An approval env
-    var the user already set is never overwritten. Explicit --enable-* flags are always respected.
-    """
-    import os as _os
-
-    env = _os.environ if environ is None else environ
-    read_only = getattr(args, "read_only", False)
-    any_enable = any(v for k, v in vars(args).items() if k.startswith("enable_"))
-
-    # No explicit --enable-* selection -> turn every group on (like --enable-all). This applies in
-    # read-only mode too: the groups register, but with the approval gates left off the mutating
-    # tools refuse, so only the read tools work.
-    if not any_enable:
+def resolve_runtime_profile(
+    args: argparse.Namespace,
+    environ: dict[str, str] | None = None,
+) -> argparse.Namespace:
+    """Resolve registration flags without changing the supplied or process environment."""
+    del environ
+    if getattr(args, "enable_all", False) or getattr(args, "read_only", False):
         for name in vars(args):
             if name.startswith("enable_"):
                 setattr(args, name, True)
-
-    # Default the mutation approval gates on unless read-only; never override a user-set value.
-    if not read_only:
-        for var in APPROVE_ENV_VARS:
-            env.setdefault(var, "1")
     return args
 
 
-def main() -> int:
-    import os
+def approval_enabled(
+    variable: str,
+    *,
+    args: argparse.Namespace,
+    environ: dict[str, str] | None = None,
+) -> bool:
+    """Return whether one exact external approval is active for the resolved profile."""
+    env = os.environ if environ is None else environ
+    return not bool(getattr(args, "read_only", False)) and env.get(variable) == "1"
 
-    args = apply_default_open(apply_enable_all(build_parser().parse_args()))
+
+def main() -> int:
+    args = build_parser().parse_args()
+    args = apply_enable_all(args)
+    args = resolve_runtime_profile(args)
     live = None
     if args.enable_live:
         from axxon_mcp_live import AxxonMcpLive
@@ -2911,7 +2913,6 @@ def main() -> int:
         from axxon_api_client import AxxonApiClient, AxxonClientConfig
         from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
 
-        explicit = os.environ.get("AXXON_OPERATOR_APPROVE") == "1"
         config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
         # Build the live client lazily: the server must boot with no credentials, and
         # AxxonApiClient requires a password. Constructing it inside the factory defers that
@@ -2919,7 +2920,7 @@ def main() -> int:
         operator = OperatorRegistry(
             client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
             host=f"hosts/{config.tls_cn}",
-            enabled=explicit,
+            enabled=approval_enabled("AXXON_OPERATOR_APPROVE", args=args),
         )
     generator = None
     if args.enable_generator:
@@ -2951,7 +2952,9 @@ def main() -> int:
     if args.enable_alarms_mutation:
         from axxon_mcp_alarms import AxxonAlarmMutator
 
-        alarm_mutator = AxxonAlarmMutator()
+        alarm_mutator = AxxonAlarmMutator(
+            env_getter=lambda variable: "1" if approval_enabled(variable, args=args) else None,
+        )
     view_objects = None
     if args.enable_view_objects:
         from axxon_mcp_view_objects import AxxonMcpViewObjects
@@ -2966,16 +2969,17 @@ def main() -> int:
     if args.enable_detector_playbooks:
         from axxon_api_client import AxxonApiClient, AxxonClientConfig
         from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
-        from axxon_mcp_detector_playbooks import AxxonMcpDetectorPlaybooks
+        from axxon_mcp_detector_playbooks import APPROVAL_ENV, AxxonMcpDetectorPlaybooks
         from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
 
         config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
         detector_playbooks = AxxonMcpDetectorPlaybooks(
             detector_archive=AxxonMcpDetectorArchive(),
+            environ={APPROVAL_ENV: "1"} if approval_enabled(APPROVAL_ENV, args=args) else {},
             operator=OperatorRegistry(
                 client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
                 host=f"hosts/{config.tls_cn}",
-                enabled=True,
+                enabled=approval_enabled(APPROVAL_ENV, args=args),
             ),
         )
     admin = None
@@ -2985,10 +2989,10 @@ def main() -> int:
         admin = AxxonMcpAdmin()
     admin_mutator = None
     if args.enable_admin_mutations:
-        from axxon_mcp_admin_mutations import AxxonAdminMutationRegistry
+        from axxon_mcp_admin_mutations import ADMIN_MUTATION_APPROVE_ENV, AxxonAdminMutationRegistry
 
         admin_mutator = AxxonAdminMutationRegistry(
-            enabled=os.environ.get("AXXON_ADMIN_MUTATION_APPROVE") == "1",
+            enabled=approval_enabled(ADMIN_MUTATION_APPROVE_ENV, args=args),
         )
     bookmarks = None
     if args.enable_bookmarks:
@@ -2997,10 +3001,10 @@ def main() -> int:
         bookmarks = AxxonMcpBookmarks()
     bookmark_mutator = None
     if args.enable_bookmark_mutations:
-        from axxon_mcp_bookmark_mutations import AxxonBookmarkMutationRegistry
+        from axxon_mcp_bookmark_mutations import BOOKMARK_MUTATION_APPROVE_ENV, AxxonBookmarkMutationRegistry
 
         bookmark_mutator = AxxonBookmarkMutationRegistry(
-            enabled=os.environ.get("AXXON_BOOKMARK_MUTATION_APPROVE") == "1",
+            enabled=approval_enabled(BOOKMARK_MUTATION_APPROVE_ENV, args=args),
         )
     translator = None
     if args.enable_translator:
@@ -3031,9 +3035,9 @@ def main() -> int:
         ptz = AxxonMcpPtz()
     audit = None
     if args.enable_audit:
-        from axxon_mcp_audit import AxxonMcpAudit
+        from axxon_mcp_audit import AUDIT_INJECT_APPROVE_ENV, AxxonMcpAudit
 
-        audit = AxxonMcpAudit()
+        audit = AxxonMcpAudit(enabled=approval_enabled(AUDIT_INJECT_APPROVE_ENV, args=args))
     recognizer = None
     if args.enable_recognizer:
         from axxon_mcp_recognizer import AxxonMcpRecognizer
@@ -3041,29 +3045,29 @@ def main() -> int:
         recognizer = AxxonMcpRecognizer()
     recognizer_write = None
     if args.enable_recognizer_write:
-        from axxon_mcp_recognizer_write import AxxonMcpRecognizerWrite
+        from axxon_mcp_recognizer_write import WRITE_APPROVE_ENV, AxxonMcpRecognizerWrite
 
-        recognizer_write = AxxonMcpRecognizerWrite()
+        recognizer_write = AxxonMcpRecognizerWrite(enabled=approval_enabled(WRITE_APPROVE_ENV, args=args))
     logic_control = None
     if args.enable_logic_control:
-        from axxon_mcp_logic_control import AxxonMcpLogicControl
+        from axxon_mcp_logic_control import LOGIC_CONTROL_APPROVE_ENV, AxxonMcpLogicControl
 
-        logic_control = AxxonMcpLogicControl()
+        logic_control = AxxonMcpLogicControl(enabled=approval_enabled(LOGIC_CONTROL_APPROVE_ENV, args=args))
     settings = None
     if args.enable_settings:
-        from axxon_mcp_settings import AxxonMcpSettings
+        from axxon_mcp_settings import SETTINGS_APPROVE_ENV, AxxonMcpSettings
 
-        settings = AxxonMcpSettings()
+        settings = AxxonMcpSettings(enabled=approval_enabled(SETTINGS_APPROVE_ENV, args=args))
     timezone = None
     if args.enable_timezone:
-        from axxon_mcp_timezone import AxxonMcpTimezone
+        from axxon_mcp_timezone import TIMEZONE_APPROVE_ENV, AxxonMcpTimezone
 
-        timezone = AxxonMcpTimezone()
+        timezone = AxxonMcpTimezone(enabled=approval_enabled(TIMEZONE_APPROVE_ENV, args=args))
     server_settings = None
     if args.enable_server:
-        from axxon_mcp_server_settings import AxxonMcpServerSettings
+        from axxon_mcp_server_settings import SERVER_APPROVE_ENV, AxxonMcpServerSettings
 
-        server_settings = AxxonMcpServerSettings()
+        server_settings = AxxonMcpServerSettings(enabled=approval_enabled(SERVER_APPROVE_ENV, args=args))
     statistics = None
     if args.enable_statistics:
         from axxon_mcp_statistics import AxxonMcpStatistics
@@ -3111,14 +3115,14 @@ def main() -> int:
         global_tracker = AxxonMcpGlobalTracker()
     shared_kv = None
     if args.enable_shared_kv:
-        from axxon_mcp_shared_kv import AxxonMcpSharedKv
+        from axxon_mcp_shared_kv import SHARED_KV_APPROVE_ENV, AxxonMcpSharedKv
 
-        shared_kv = AxxonMcpSharedKv()
+        shared_kv = AxxonMcpSharedKv(enabled=approval_enabled(SHARED_KV_APPROVE_ENV, args=args))
     state_control = None
     if args.enable_state_control:
-        from axxon_mcp_state_control import AxxonMcpStateControl
+        from axxon_mcp_state_control import STATE_CONTROL_APPROVE_ENV, AxxonMcpStateControl
 
-        state_control = AxxonMcpStateControl()
+        state_control = AxxonMcpStateControl(enabled=approval_enabled(STATE_CONTROL_APPROVE_ENV, args=args))
     site_graph = None
     if args.enable_site_graph:
         from axxon_mcp_site_graph import AxxonMcpSiteGraph
@@ -3126,14 +3130,20 @@ def main() -> int:
         site_graph = AxxonMcpSiteGraph()
     bulk_onboarding = None
     if args.enable_bulk_onboarding:
-        from axxon_mcp_bulk_onboarding import AxxonMcpBulkOnboarding
+        from axxon_mcp_bulk_onboarding import BULK_ONBOARDING_APPROVE_ENV, AxxonMcpBulkOnboarding
 
-        bulk_onboarding = AxxonMcpBulkOnboarding()
+        bulk_onboarding = AxxonMcpBulkOnboarding(
+            environ=(
+                {BULK_ONBOARDING_APPROVE_ENV: "1"}
+                if approval_enabled(BULK_ONBOARDING_APPROVE_ENV, args=args)
+                else {}
+            )
+        )
     groups = None
     if args.enable_groups:
-        from axxon_mcp_groups import AxxonMcpGroups
+        from axxon_mcp_groups import GROUPS_APPROVE_ENV, AxxonMcpGroups
 
-        groups = AxxonMcpGroups()
+        groups = AxxonMcpGroups(enabled=approval_enabled(GROUPS_APPROVE_ENV, args=args))
     discovery = None
     if args.enable_discovery:
         from axxon_mcp_discovery import AxxonMcpDiscovery
@@ -3141,54 +3151,56 @@ def main() -> int:
         discovery = AxxonMcpDiscovery()
     gdpr_cleanup = None
     if args.enable_gdpr_cleanup:
-        from axxon_mcp_gdpr_cleanup import AxxonMcpGdprCleanup
+        from axxon_mcp_gdpr_cleanup import GDPR_APPROVE_ENV, AxxonMcpGdprCleanup
 
-        gdpr_cleanup = AxxonMcpGdprCleanup()
+        gdpr_cleanup = AxxonMcpGdprCleanup(enabled=approval_enabled(GDPR_APPROVE_ENV, args=args))
     control = None
     if args.enable_control:
-        from axxon_mcp_acfa_vmda_control import AxxonMcpAcfaVmdaControl
+        from axxon_mcp_acfa_vmda_control import CONTROL_APPROVE_ENV, AxxonMcpAcfaVmdaControl
 
-        control = AxxonMcpAcfaVmdaControl()
+        control = AxxonMcpAcfaVmdaControl(enabled=approval_enabled(CONTROL_APPROVE_ENV, args=args))
     map_providers = None
     if args.enable_map_providers:
-        from axxon_mcp_map_providers import AxxonMcpMapProviders
+        from axxon_mcp_map_providers import MAP_APPROVE_ENV, AxxonMcpMapProviders
 
-        map_providers = AxxonMcpMapProviders()
+        map_providers = AxxonMcpMapProviders(enabled=approval_enabled(MAP_APPROVE_ENV, args=args))
     logic_alerts = None
     if args.enable_logic_alerts:
-        from axxon_mcp_logic_alerts import AxxonMcpLogicAlerts
+        from axxon_mcp_logic_alerts import LOGIC_ALERTS_APPROVE_ENV, AxxonMcpLogicAlerts
 
-        logic_alerts = AxxonMcpLogicAlerts()
+        logic_alerts = AxxonMcpLogicAlerts(enabled=approval_enabled(LOGIC_ALERTS_APPROVE_ENV, args=args))
     config_change = None
     if args.enable_config_change:
-        from axxon_mcp_config_change import AxxonMcpConfigChange
+        from axxon_mcp_config_change import CONFIG_CHANGE_APPROVE_ENV, AxxonMcpConfigChange
 
-        config_change = AxxonMcpConfigChange()
+        config_change = AxxonMcpConfigChange(enabled=approval_enabled(CONFIG_CHANGE_APPROVE_ENV, args=args))
     archive_volume = None
     if args.enable_archive_volume:
-        from axxon_mcp_archive_volume import AxxonMcpArchiveVolume
+        from axxon_mcp_archive_volume import ARCHIVE_VOLUME_APPROVE_ENV, AxxonMcpArchiveVolume
 
-        archive_volume = AxxonMcpArchiveVolume()
+        archive_volume = AxxonMcpArchiveVolume(enabled=approval_enabled(ARCHIVE_VOLUME_APPROVE_ENV, args=args))
     bookmark_extras = None
     if args.enable_bookmark_extras:
-        from axxon_mcp_bookmark_extras import AxxonMcpBookmarkExtras
+        from axxon_mcp_bookmark_extras import BOOKMARK_EXTRAS_APPROVE_ENV, AxxonMcpBookmarkExtras
 
-        bookmark_extras = AxxonMcpBookmarkExtras()
+        bookmark_extras = AxxonMcpBookmarkExtras(enabled=approval_enabled(BOOKMARK_EXTRAS_APPROVE_ENV, args=args))
     security_credentials = None
     if args.enable_security_credentials:
-        from axxon_mcp_security_credentials import AxxonMcpSecurityCredentials
+        from axxon_mcp_security_credentials import SECURITY_CREDENTIALS_APPROVE_ENV, AxxonMcpSecurityCredentials
 
-        security_credentials = AxxonMcpSecurityCredentials()
+        security_credentials = AxxonMcpSecurityCredentials(
+            enabled=approval_enabled(SECURITY_CREDENTIALS_APPROVE_ENV, args=args)
+        )
     auth_sessions = None
     if args.enable_auth_sessions:
-        from axxon_mcp_auth_sessions import AxxonMcpAuthSessions
+        from axxon_mcp_auth_sessions import AUTH_SESSIONS_APPROVE_ENV, AxxonMcpAuthSessions
 
-        auth_sessions = AxxonMcpAuthSessions()
+        auth_sessions = AxxonMcpAuthSessions(enabled=approval_enabled(AUTH_SESSIONS_APPROVE_ENV, args=args))
     layout_manager = None
     if args.enable_layout_manager:
-        from axxon_mcp_layout_manager import AxxonMcpLayoutManager
+        from axxon_mcp_layout_manager import LAYOUT_MANAGER_APPROVE_ENV, AxxonMcpLayoutManager
 
-        layout_manager = AxxonMcpLayoutManager()
+        layout_manager = AxxonMcpLayoutManager(enabled=approval_enabled(LAYOUT_MANAGER_APPROVE_ENV, args=args))
     license_reads = None
     if args.enable_license_reads:
         from axxon_mcp_license_reads import AxxonMcpLicenseReads
@@ -3196,9 +3208,9 @@ def main() -> int:
         license_reads = AxxonMcpLicenseReads()
     misc_reads = None
     if args.enable_misc_reads:
-        from axxon_mcp_misc_reads import AxxonMcpMiscReads
+        from axxon_mcp_misc_reads import MISC_WRITE_APPROVE_ENV, AxxonMcpMiscReads
 
-        misc_reads = AxxonMcpMiscReads()
+        misc_reads = AxxonMcpMiscReads(enabled=approval_enabled(MISC_WRITE_APPROVE_ENV, args=args))
     heatmap = None
     if args.enable_heatmap:
         from axxon_mcp_heatmap import AxxonMcpHeatmap
@@ -3211,14 +3223,14 @@ def main() -> int:
         media = AxxonMcpMedia()
     export = None
     if args.enable_export:
-        from axxon_mcp_export import AxxonMcpExport
+        from axxon_mcp_export import EXPORT_APPROVE_ENV, AxxonMcpExport
 
-        export = AxxonMcpExport()
+        export = AxxonMcpExport(enabled=approval_enabled(EXPORT_APPROVE_ENV, args=args))
     videowall = None
     if args.enable_videowall:
-        from axxon_mcp_videowall import AxxonMcpVideowall
+        from axxon_mcp_videowall import VIDEOWALL_APPROVE_ENV, AxxonMcpVideowall
 
-        videowall = AxxonMcpVideowall()
+        videowall = AxxonMcpVideowall(enabled=approval_enabled(VIDEOWALL_APPROVE_ENV, args=args))
     web_api = None
     if args.enable_web_api:
         from axxon_mcp_web_api import AxxonMcpWebApi
