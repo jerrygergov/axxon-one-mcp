@@ -82,6 +82,31 @@ class GenerateCoverageTests(unittest.TestCase):
             self.assertEqual(result, 0)
             self.assertIn("coverage is current", stdout.getvalue())
 
+    def test_check_treats_crlf_bytes_as_stale_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "COVERAGE.md"
+            output.write_bytes(b"fresh\r\n")
+            original = output.read_bytes()
+
+            result = self.module.check_output(output, "fresh\n")
+
+            self.assertEqual(result, 1)
+            self.assertEqual(output.read_bytes(), original)
+
+    def test_write_output_is_byte_stable_and_uses_lf(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "COVERAGE.md"
+            rendered = "first\nsecond\n"
+
+            self.module.write_output(output, rendered)
+            first = output.read_bytes()
+            self.module.write_output(output, rendered)
+            second = output.read_bytes()
+
+            self.assertEqual(first, second)
+            self.assertEqual(second, b"first\nsecond\n")
+            self.assertNotIn(b"\r\n", second)
+
     def test_tracked_corpus_totals_and_documentation_agree(self) -> None:
         methods = self.module.load_methods()
         services, totals = self.module.aggregate_methods(methods)

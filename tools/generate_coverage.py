@@ -98,15 +98,20 @@ def load_methods(corpus_path: Path = CORPUS) -> list[dict[str, Any]]:
 def check_output(output_path: Path, rendered: str) -> int:
     """Compare rendered output without modifying the tracked file."""
     try:
-        current = output_path.read_text(encoding="utf-8")
+        current = output_path.read_bytes()
     except FileNotFoundError:
         print(f"coverage is stale: {output_path} does not exist; regenerate it")
         return 1
-    if current != rendered:
+    if current != rendered.encode("utf-8"):
         print(f"coverage is stale: {output_path}; run tools/generate_coverage.py")
         return 1
     print(f"coverage is current: {output_path}")
     return 0
+
+
+def write_output(output_path: Path, rendered: str) -> None:
+    """Write deterministic UTF-8 bytes without platform newline translation."""
+    output_path.write_bytes(rendered.encode("utf-8"))
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -121,7 +126,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     rendered = render_coverage(load_methods())
     if args.check:
         return check_output(OUTPUT, rendered)
-    OUTPUT.write_text(rendered, encoding="utf-8")
+    write_output(OUTPUT, rendered)
     print(f"wrote {OUTPUT}")
     return 0
 
