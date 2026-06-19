@@ -36,18 +36,21 @@ As of 2026-06-11:
 | RPCs pending | 20 |
 | HTTP `/v1` endpoints | 221 |
 
-Regenerate the core status counts with:
+Render the tracked coverage report after changing a method's `live_status` or evidence:
 
 ```bash
-python3 - <<'PY'
-import collections, json
-methods = json.load(open("docs/api-audit/mcp-corpus/api_methods.json"))["methods"]
-counts = collections.Counter(method["live_status"] for method in methods)
-verified = sum(count for status, count in counts.items() if status.startswith("tested-pass"))
-print(counts)
-print({"verified": verified, "total": len(methods)})
-PY
+python3.12 tools/generate_coverage.py
 ```
+
+CI verifies both the evidence restamp and generated coverage without writing files:
+
+```bash
+python3.12 tools/axxon_corpus_restamp.py --check
+python3.12 tools/generate_coverage.py --check
+```
+
+The renderer classifies every `tested-pass*` status as verified, every status
+containing `fixture` as fixture-blocked, and all other statuses as pending.
 
 ## MCP Layers That Consume This Corpus
 
@@ -86,8 +89,8 @@ environment variables.
 
 - Keep this corpus sanitized. Do not add credentials, tokens, CA material, private keys,
   full user/security payloads, raw images, raw video, or copied proto/PDF source text.
-- When live evidence changes an RPC status, update `api_methods.json`,
-  `docs/COVERAGE.md`, and any roadmap/status counts together.
+- When live evidence changes an RPC status, update `api_methods.json`, then regenerate
+  `docs/COVERAGE.md`; do not hand-edit derived coverage counts.
 - Record fixture requirements as explicit gaps instead of making tools infer unsupported
   API shapes.
 - Prefer adding task recipes and safety notes here before adding broad new MCP tools.

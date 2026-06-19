@@ -4581,7 +4581,7 @@
       "safety_class": "mutating",
       "service": "StateControlService",
       "streaming": "none",
-      "evidence": "docs/api-audit/phase-b-state-control-gdpr-latest.md (StateControl SetState ON applied, observed, then reverted by dropping the override)"
+      "evidence": "docs/api-audit/phase-b-state-control-gdpr-latest.md (successful reversible live record: SetState ON applied, observed, then reverted by dropping the override); .agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (later unresolved StateControl.relay0:0 fixture observation; does not invalidate the successful method-level pass)"
     },
     {
       "fqmn": "axxonsoft.bl.state.StateControlService.GetDefaultState",

@@ -10,12 +10,14 @@ It is deliberately conservative: methods whose code shipped but whose live run
 was rejected by the stand's driver/emulator (PTZ continuous Move/Zoom/GoPreset/
 Release) stay fixture-needed, not pass.
 
-Run: python3.12 tools/axxon_corpus_restamp.py [--write]
-Without --write it prints the diff and exits without touching the file.
+Run: python3.12 tools/axxon_corpus_restamp.py [--write | --check]
+Without --write it prints the diff and exits without touching the file. ``--check``
+also exits nonzero when the corpus would change, making the dry run CI-usable.
 """
 
 import argparse
 import json
+from collections.abc import Sequence
 from pathlib import Path
 
 CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api_methods.json"
@@ -24,11 +26,18 @@ CORPUS = Path(__file__).resolve().parent.parent / "docs/api-audit/mcp-corpus/api
 # Only methods with an explicit live-pass record are promoted to tested-pass.
 # Driver/emulator-rejected PTZ verbs are noted but kept fixture-needed.
 RESTAMP = {
-    # Phase 47 probe-and-classify (StateControlService + TagAndTrackService). Live-probed, blocked by
-    # stand state (same wall as their already-fixture-warn read siblings) -> tested-warn-fixture-needed.
+    # StateControlService.SetState has an earlier successful reversible live record. A later probe
+    # against a different unresolved relay is useful fixture context, but cannot downgrade the
+    # method-level pass. TagAndTrackService remains blocked by stand state.
     # ConfigurationManager.SetRevision intentionally left pending (destructive whole-config restore).
     ("StateControlService", "SetState"): (
-        "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (INTERNAL 'Can't resolve reference to .../StateControl.relay0:0'; relay I/O not instantiated by the generic driver; read companions GetCurrentState/GetDefaultState already fixture-warn for the same reason)"),
+        "tested-pass-safe-record",
+        "docs/api-audit/phase-b-state-control-gdpr-latest.md (successful reversible live "
+        "record: SetState ON applied, observed, then reverted by dropping the override); "
+        ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (later unresolved "
+        "StateControl.relay0:0 fixture observation; does not invalidate the successful "
+        "method-level pass)",
+    ),
     ("TagAndTrackService", "SetMode"): (
         "tested-warn-fixture-needed", ".agent/tasks/phase-47-state-tnt-probe/evidence.md AC1 (ListTrackers NOT_FOUND on device/telemetry/source; no calibrated Tag&Track tracker configured)"),
     ("TagAndTrackService", "FollowTrack"): (
@@ -553,12 +562,18 @@ RESTAMP = {
 }
 
 
-def main():
+def main(argv: Sequence[str] | None = None, *, corpus_path: Path = CORPUS) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--write", action="store_true", help="apply the restamp to the corpus file")
-    args = ap.parse_args()
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--write", action="store_true", help="apply the restamp to the corpus file")
+    mode.add_argument(
+        "--check",
+        action="store_true",
+        help="exit nonzero if a restamp would change the corpus; never write",
+    )
+    args = ap.parse_args(argv)
 
-    doc = json.loads(CORPUS.read_text())
+    doc = json.loads(corpus_path.read_text(encoding="utf-8"))
     changes = []
     for m in doc["methods"]:
         key = (m["service"], m["method"])
@@ -574,12 +589,15 @@ def main():
 
     for svc, meth, old, new in changes:
         print(f"  {old:28s} -> {new:28s} {svc}.{meth}")
-    print(f"\n{len(changes)} method(s) restamped"
-          f"{' (written)' if args.write else ' (dry-run, pass --write to apply)'}")
+    suffix = " (written)" if args.write else " (dry-run, pass --write to apply)"
+    print(f"\n{len(changes)} method(s) restamped{suffix}")
 
     if args.write and changes:
-        CORPUS.write_text(json.dumps(doc, indent=2) + "\n")
+        corpus_path.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+    if args.check and changes:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
