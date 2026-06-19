@@ -81,11 +81,9 @@ Run the MCP server over stdio:
 python3.12 tools/axxon_mcp_server.py --transport stdio
 ```
 
-That no-flag command starts the knowledge-only profile: exactly seven knowledge tools and
-no credentials. Live and read groups require an explicit `--enable-*` flag. `--enable-all`
-is registration only and never grants mutation approval. Use `--read-only` when
-compatibility requires the broad tool surface while every mutation remains
-authoritatively disabled.
+Use `--read-only` for a locked-down deployment. Running with no capability flags enables
+all groups; mutating tools still require per-call confirmation tokens and their approval
+environment variables.
 
 ## Maintenance Rules
 
@@ -93,11 +91,6 @@ authoritatively disabled.
   full user/security payloads, raw images, raw video, or copied proto/PDF source text.
 - When live evidence changes an RPC status, update `api_methods.json`, then regenerate
   `docs/COVERAGE.md`; do not hand-edit derived coverage counts.
-- Before committing corpus changes, run both drift checks from the repository root:
-  `python3.12 tools/axxon_corpus_restamp.py --check` and
-  `python3.12 tools/generate_coverage.py --check`.
 - Record fixture requirements as explicit gaps instead of making tools infer unsupported
   API shapes.
 - Prefer adding task recipes and safety notes here before adding broad new MCP tools.
-- Preserve the secure default posture: corpus maintenance must not enable capability
-  groups, mutation approvals, credentials, live endpoints, or private proto material.
