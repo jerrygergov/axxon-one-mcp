@@ -259,6 +259,40 @@ class FakeArchiveMaintenanceClient(FakeMutationClient):
         return {"status": 200, "body": {"cancelled": True}}
 
 
+class OperatorExecuteTests(unittest.TestCase):
+    def test_execute_reversible_workflow_plans_and_applies_in_one_call(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        result = registry.execute("temp_camera", {"display_name_hint": "smoke"})
+
+        self.assertEqual(result["status"], "applied")
+        self.assertTrue(result["created_uids"])
+        self.assertEqual(len(client.calls), 1)
+
+    def test_execute_irreversible_workflow_returns_needs_two_step(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        result = registry.execute("set_unit_properties", {"uid": "hosts/Server/x.1", "properties": [{"id": "a", "value_string": "b"}]})
+
+        self.assertTrue(result["needs_two_step"])
+        self.assertEqual(result["status"], "planned")
+        self.assertEqual(client.calls, [])
+
+    def test_execute_respects_disabled_registry(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+        client = FakeMutationClient()
+        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server", enabled=False)
+
+        result = registry.execute("temp_camera", {"display_name_hint": "smoke"})
+
+        self.assertEqual(result["status"], "rejected")
+        self.assertEqual(client.calls, [])
+
+
 class OperatorPlanTests(unittest.TestCase):
     def test_plan_temp_camera_returns_typed_plan_without_server_call(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")

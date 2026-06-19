@@ -2326,9 +2326,19 @@ def register_operator_tools(server: Any, operator: Any) -> None:
         """List operator workflows supported by this MCP server."""
         return {"workflows": operator.known_workflows()}
 
+    @server.tool(name="execute_operator_workflow")
+    def execute_operator_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Plan and apply a reversible workflow in one call (no separate apply step).
+
+        Use this as the default for create/update workflows. Irreversible workflows (deletes
+        with no auto-rollback, property pushes) return the plan with needs_two_step=true; fall
+        back to plan_operator_workflow + apply_operator_plan for those.
+        """
+        return operator.execute(workflow, params or {})
+
     @server.tool(name="plan_operator_workflow")
     def plan_operator_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Build a typed mutation plan without calling the server."""
+        """Build a typed mutation plan without calling the server. Prefer execute_operator_workflow for reversible workflows."""
         return operator.plan(workflow, params or {})
 
     @server.tool(name="apply_operator_plan")
