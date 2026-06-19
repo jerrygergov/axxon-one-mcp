@@ -1,8 +1,0 @@
-import_ok=True
-enabled=False
-tool_count=8
-plan_status=planned
-start_without_approval=disabled
-client_is_none=True
-
-exit_code=0

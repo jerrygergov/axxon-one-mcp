@@ -1,9 +1,0 @@
-server_local_tool_count=296
-delegated_translator_tool_count=5
-all_enabled_runtime_tool_count=301
-capability_group_count=49
-export_group_present=True
-export_tool_count=8
-translator_tools=assemble_recipe,validate_recipe,explain_recipe,resolve_device,run_recipe
-
-exit_code=0

@@ -1,4 +1,0 @@
-                           [--enable-export] [--enable-videowall]
-  --enable-export       Enable ExportService snapshot/export tools
-
-exit_code=0

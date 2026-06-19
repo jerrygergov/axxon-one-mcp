@@ -1,8 +1,0 @@
-capability_groups=50
-server_local_tools_without_translator=304
-delegated_translator_tools=5
-all_enabled_tools=309
-bulk_onboarding_group_present=True
-bulk_tools_registered=True
-translator_tools_registered=True
-computed_split=304+5=309

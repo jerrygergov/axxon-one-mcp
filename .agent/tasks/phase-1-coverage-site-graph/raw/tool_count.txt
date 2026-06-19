@@ -1,7 +1,0 @@
-server_local_tools=288
-unique_server_local_tools=288
-duplicate_server_local_tools=0
-delegated_translator_tools=5
-all_enabled_runtime_tools=293
-capability_groups=48
-site_graph_group=('Unified read-only site graph for planners and generators', ('build_site_graph',), '--enable-site-graph')

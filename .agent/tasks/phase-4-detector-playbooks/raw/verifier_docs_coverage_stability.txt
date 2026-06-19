@@ -1,3 +1,0 @@
-docs/COVERAGE.md unchanged from HEAD
-
-[exit_code] 0

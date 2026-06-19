@@ -1,8 +1,0 @@
-server_local_tool_count=296
-delegated_translator_tool_count=5
-all_enabled_runtime_tool_count=301
-capability_group_count=49
-export_tool_count=8
-registered_export_tools=export_connect_axxon_profile,export_plan_snapshot,export_start_snapshot,export_status,export_download,export_stop,export_destroy,export_cleanup_owned
-
-exit_code=0

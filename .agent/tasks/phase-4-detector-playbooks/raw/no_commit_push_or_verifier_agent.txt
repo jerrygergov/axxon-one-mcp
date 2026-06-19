@@ -1,1 +1,0 @@
-Per user instruction for this builder run: do not spawn additional agents, do not commit, and do not push. Therefore no fresh verifier-agent verdict was run, no commit SHA was created for this task, and no push output exists. Builder self-verification artifacts are present under raw/.
