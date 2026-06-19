@@ -19,6 +19,30 @@ const RETRY_BACKOFF_SECONDS = 2;
 
 const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
 
+type RetryWait = (milliseconds: number) => Promise<void>;
+
+export interface DomainClientLike {
+  ListCameras(request: Record<string, unknown>, options: { deadline: Date }): NodeJS.EventEmitter;
+}
+
+export class SafeGrpcOperationError extends Error {
+  readonly category = 'grpc_failure' as const;
+
+  constructor(
+    readonly operation: string,
+    readonly statusCode: number | null,
+    readonly attempts: number,
+  ) {
+    super(JSON.stringify({
+      category: 'grpc_failure',
+      operation,
+      status_code: statusCode,
+      attempts,
+    }));
+    this.name = 'SafeGrpcOperationError';
+  }
+}
+
 function checkEnv(): string[] {
   return REQUIRED_ENV.filter(name => !process.env[name]);
 }
@@ -46,16 +70,58 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function withRetry<T>(call: () => Promise<T>, label: string): Promise<T> {
+function safeGrpcStatusCode(error: unknown): number | null {
+  if (typeof error !== 'object' || error === null || !('code' in error)) return null;
+  const code = (error as { code: unknown }).code;
+  return typeof code === 'number' && Number.isInteger(code) && code >= 0 && code <= 16
+    ? code
+    : null;
+}
+
+async function withRetry<T>(
+  call: () => Promise<T>,
+  operation: string,
+  wait: RetryWait = sleep,
+): Promise<T> {
+  let statusCode: number | null = null;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       return await call();
-    } catch {
-      console.warn(`${label} attempt ${attempt + 1}/${MAX_RETRIES} failed`);
-      await sleep(RETRY_BACKOFF_SECONDS * (attempt + 1) * 1000);
+    } catch (error) {
+      statusCode = safeGrpcStatusCode(error);
+      console.warn(JSON.stringify({
+        category: 'grpc_retry',
+        operation,
+        status_code: statusCode,
+        attempt: attempt + 1,
+        max_attempts: MAX_RETRIES,
+      }));
+      if (attempt + 1 < MAX_RETRIES) {
+        await wait(RETRY_BACKOFF_SECONDS * (attempt + 1) * 1000);
+      }
     }
   }
-  throw new Error(`${label} failed after ${MAX_RETRIES} attempts`);
+  throw new SafeGrpcOperationError(operation, statusCode, MAX_RETRIES);
+}
+
+function listCamerasOnce(domainClient: DomainClientLike): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const collected: string[] = [];
+    const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
+    const call = domainClient.ListCameras({ view: 0 }, { deadline });
+    call.on('data', (page: Record<string, Array<Record<string, string>>>) => {
+      for (const camera of page['items'] ?? []) collected.push(camera['access_point'] ?? '');
+    });
+    call.on('error', reject);
+    call.on('end', () => resolve(collected));
+  });
+}
+
+export function listCamerasWithRetry(
+  domainClient: DomainClientLike,
+  wait: RetryWait = sleep,
+): Promise<string[]> {
+  return withRetry(() => listCamerasOnce(domainClient), 'list_cameras', wait);
 }
 
 export async function runPlugin(): Promise<Record<string, unknown>> {
@@ -99,16 +165,7 @@ export async function runPlugin(): Promise<Record<string, unknown>> {
   const DomainService = getService(domainProto, ['axxonsoft', 'bl', 'domain', 'DomainService']);
   const domainClient = new DomainService(host, composite, channelOptions);
 
-  const cameras = await withRetry<string[]>(() => new Promise((resolve) => {
-    const collected: string[] = [];
-    const deadline = new Date(Date.now() + DURATION_SECONDS * 1000);
-    const call = (domainClient as Record<string, Function>)['ListCameras']({ view: 0 }, { deadline }) as NodeJS.EventEmitter;
-    call.on('data', (page: Record<string, Array<Record<string, string>>>) => {
-      for (const camera of page['items'] ?? []) collected.push(camera['access_point'] ?? '');
-    });
-    call.on('error', () => resolve(collected));
-    call.on('end', () => resolve(collected));
-  }), 'list_cameras');
+  const cameras = await listCamerasWithRetry(domainClient as unknown as DomainClientLike);
 
   return { plugin: PLUGIN_NAME, cameras: cameras.length };
 }

@@ -149,6 +149,41 @@ class PluginScaffoldTests(unittest.TestCase):
         for command in ("npm ci", "npm run build", "npm test"):
             self.assertIn(f"run: {command}", workflow)
 
+    def test_non_plugin_node_contract_remains_legacy_scoped(self) -> None:
+        """Only plugin_scaffold advertises files and commands it actually emits."""
+        request = self.module.GenerationRequest(
+            template="inventory_sync",
+            params={"output_path": "~/axxon-inventory.json"},
+            language="node",
+        )
+        result = self.gen.generate(request)
+        self.assertIsInstance(result, self.module.GeneratedBundle)
+        package = json.loads(result.files["package.json"])
+        self.assertEqual(package["main"], "dist/index.js")
+        self.assertEqual(
+            package["scripts"],
+            {"build": "tsc", "start": "node dist/index.js"},
+        )
+        self.assertNotIn("tsconfig.json", result.files)
+        self.assertNotIn("test", package["scripts"])
+        self.assertNotIn("npm ci", result.files["README.md"])
+
+    def test_plugin_name_rejects_cross_context_injection(self) -> None:
+        """Names unsafe for TS, comments, npm metadata, or YAML are refused centrally."""
+        for name in ("bad'name", "bad\nworkflow: injected", "bad${process.env.SECRET}"):
+            with self.subTest(name=name):
+                result = self.gen.generate(self._request(language="node", name=name))
+                self.assertIsInstance(result, self.module.GenerationRefusal)
+                self.assertEqual(result.reason, "invalid_param")
+
+    def test_node_stream_errors_reject_for_retry_with_safe_diagnostics(self) -> None:
+        """Generated stream failures reject and expose only structured safe errors."""
+        ts = self.gen.generate(self._request(language="node")).files["src/index.ts"]
+        self.assertIn("class SafeGrpcOperationError", ts)
+        self.assertIn("call.on('error', reject)", ts)
+        self.assertIn("listCamerasWithRetry", ts)
+        self.assertNotIn("throw lastErr", ts)
+
     def test_node_entrypoint_never_derives_log_output_from_password(self) -> None:
         """AC6: the password is only passed to authentication and never transformed for logs."""
         ts = self.gen.generate(self._request(language="node")).files["src/index.ts"]

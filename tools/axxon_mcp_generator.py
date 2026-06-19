@@ -251,18 +251,23 @@ def _read_ts_template(name: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _ts_package_json(title: str) -> str:
+def _ts_package_json(title: str, *, executable_scaffold: bool = False) -> str:
+    scripts = {"build": "tsc", "start": "node dist/index.js"}
+    main = "dist/index.js"
+    if executable_scaffold:
+        main = "dist/src/index.js"
+        scripts = {
+            "build": "tsc -p tsconfig.json",
+            "test": "npm run build --silent && node dist/test/smoke.test.js",
+            "start": "node dist/src/index.js",
+        }
     return json.dumps(
         {
             "name": re.sub(r"[^a-z0-9\-]", "-", title.lower())[:50],
             "version": "1.0.0",
             "description": f"Generated Axxon One integration: {title}",
-            "main": "dist/src/index.js",
-            "scripts": {
-                "build": "tsc -p tsconfig.json",
-                "test": "npm run build --silent && node dist/test/smoke.test.js",
-                "start": "node dist/src/index.js",
-            },
+            "main": main,
+            "scripts": scripts,
             "dependencies": {"@grpc/grpc-js": "^1.10.0", "@grpc/proto-loader": "^0.7.0"},
             "devDependencies": {"typescript": "^5.0.0", "@types/node": "^20.0.0"},
         },
@@ -290,7 +295,8 @@ def _tsconfig_json() -> str:
 
 
 def _readme(title: str, template: str, language: str) -> str:
-    filename = "README.node.md.tmpl" if language == "node" else "README.md.tmpl"
+    is_node_scaffold = template == "plugin_scaffold" and language == "node"
+    filename = "README.node.md.tmpl" if is_node_scaffold else "README.md.tmpl"
     return _render(_read_aux_template(filename), {"TITLE": title, "TEMPLATE": template})
 
 
@@ -405,6 +411,14 @@ class Generator:
                 "unsupported_language",
                 f"template {request.template!r} supports {info.languages}; got {request.language!r}",
             )
+        if request.template == "plugin_scaffold":
+            name = request.params["name"]
+            if not isinstance(name, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", name) is None:
+                return GenerationRefusal(
+                    request.template,
+                    "invalid_param",
+                    "name must match [A-Za-z0-9][A-Za-z0-9._-]{0,63}",
+                )
         return self._dispatch(request, info)
 
     def generate(self, request: GenerationRequest) -> GeneratedBundle | GenerationRefusal:
@@ -980,7 +994,7 @@ class Generator:
                     "src/index.ts": _render(_read_ts_template("plugin_scaffold"), values),
                     "test/smoke.test.ts": _render(_read_aux_template("plugin_scaffold.test.ts.tmpl"), values),
                     "README.md": readme,
-                    "package.json": _ts_package_json(name),
+                    "package.json": _ts_package_json(name, executable_scaffold=True),
                     "tsconfig.json": _tsconfig_json(),
                     ".env.example": env_example,
                     ".github/workflows/ci.yml": _ci_workflow(name, "node"),

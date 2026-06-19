@@ -7,7 +7,12 @@
  */
 
 import assert from 'node:assert';
-import { runPlugin } from '../src/index';
+import { EventEmitter } from 'node:events';
+import {
+  listCamerasWithRetry,
+  runPlugin,
+  SafeGrpcOperationError,
+} from '../src/index';
 
 const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'];
 
@@ -64,8 +69,52 @@ export async function testPasswordMaterialIsNotLogged(): Promise<void> {
   assert.ok(!rendered.includes(prefix));
 }
 
-testRequiredEnvDeclared();
-testMissingEnvDetected();
-testPasswordMaterialIsNotLogged().then(() => {
+export async function testStreamErrorsRetryWithSafeDiagnostics(): Promise<void> {
+  const sentinel = 'S3NT1NEL-REMOTE-DETAIL';
+  const prefix = sentinel.slice(0, 8);
+  let attempts = 0;
+  const client = {
+    ListCameras: (): EventEmitter => {
+      attempts += 1;
+      const call = new EventEmitter();
+      queueMicrotask(() => {
+        call.emit('error', Object.assign(new Error(`remote ${sentinel}`), { code: 14 }));
+      });
+      return call;
+    },
+  };
+  const previousWarn = console.warn;
+  const output: string[] = [];
+  console.warn = (...args: unknown[]) => { output.push(args.join(' ')); };
+  let failure: unknown;
+  try {
+    await listCamerasWithRetry(client, async () => {});
+  } catch (err) {
+    failure = err;
+  } finally {
+    console.warn = previousWarn;
+  }
+  assert.equal(attempts, 3);
+  if (!(failure instanceof SafeGrpcOperationError)) {
+    throw new Error('expected SafeGrpcOperationError');
+  }
+  assert.equal(failure.category, 'grpc_failure');
+  assert.equal(failure.statusCode, 14);
+  assert.equal(failure.attempts, 3);
+  const visible = `${output.join('\n')}\n${String(failure)}`;
+  assert.ok(!visible.includes(sentinel));
+  assert.ok(!visible.includes(prefix));
+}
+
+async function runSmokeTests(): Promise<void> {
+  testRequiredEnvDeclared();
+  testMissingEnvDetected();
+  await testPasswordMaterialIsNotLogged();
+  await testStreamErrorsRetryWithSafeDiagnostics();
   console.log('axxon-reference-plugin scaffold smoke checks passed');
+}
+
+runSmokeTests().catch(() => {
+  console.error('axxon-reference-plugin scaffold smoke checks failed');
+  process.exitCode = 1;
 });
