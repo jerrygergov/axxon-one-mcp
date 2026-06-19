@@ -12,72 +12,79 @@ integrations.
 
 ## What's included
 
-- **327 tools** across **53 capability groups**, all on by default.
-- One shared client (`tools/axxon_api_client.py`) that talks to the server over direct
-  gRPC (with TLS CN override and proto compilation) or the HTTP `/grpc` bridge, plus
-  legacy HTTP and `/v1`. Basic reads work over HTTP with just host + credentials; full
-  gRPC tools also need the Axxon `.proto` files and the gRPC root CA.
-- A knowledge layer (API corpus, verified examples, recipes) that works with **no server
-  connection at all**.
+- **327 available tools** across **53 opt-in capability groups**. A no-flag start is the
+  knowledge-only profile: it exposes exactly seven knowledge tools and requires no
+  credentials or server connection.
+- One client implementation (`tools/axxon_api_client.py`) for direct gRPC (with TLS CN
+  override and proto compilation), the HTTPS `/grpc` bridge, legacy HTTP, and `/v1`.
+- A sanitized knowledge layer: API corpus, verified examples, endpoint catalog, recipes,
+  safety policies, and coverage status.
 
 ## Architecture
 
 The server is layered. The entrypoint is `tools/axxon_mcp_server.py`; each capability
 group is its own module (`tools/axxon_mcp_*.py`) and registers its tools on the FastMCP
-server.
+server. Capability groups reuse the same client implementation class, but currently
+construct separate client instances. There is no process-wide singleton or shared
+session manager in this release.
 
 | Layer | What it does |
 | --- | --- |
 | **Knowledge** | Search the API corpus, verified examples, endpoint catalog, and recipes with no server connection. |
 | **Live read-only** | Connect to a server and inspect cameras, archives, detectors, events, layouts, maps, health, statistics, and bounded live subscriptions. |
-| **Operator / config** | Create, modify, and delete configuration (cameras, detectors, layouts, macros, settings, PTZ, alarms, videowall). Reversible workflows run in one call via `execute`; irreversible ones keep the plan → apply → verify → rollback flow. |
+| **Operator / config** | Create, modify, and delete configuration through separately registered, approval-gated tools and explicit plan/apply/verify/rollback stages. |
 | **Export** | Plan/start/status/download/cleanup for owned snapshot exports, byte- and time-capped. |
 | **Web / client** | Embeddable video-component helpers, bounded WebSocket-event probing, and a Client HTTP API preflight. |
 | **Generator / partner** | Generate Python / Node integration skeletons (14 templates, each in both languages) and partner plugin scaffolds. |
 
-Reversible workflows (create camera, archive, macro, wall) run in a single `execute` call:
-the assistant supplies the confirmation token from the plan automatically. Irreversible
-workflows (deletes, property pushes, event injection) return `needs_two_step`, so the
-assistant falls back to `plan` → `apply` and a destructive call takes a deliberate second
-step.
+Operator execution follows this boundary:
+
+**plan → caller review and approval → explicit apply → verify → optional rollback**.
+
+`execute_operator_workflow` is a plan-only convenience entrypoint. It never supplies its
+own confirmation and never applies the plan. The caller must review the returned plan and
+make a separate `apply_operator_plan` call with the required confirmation.
 
 ## Requirements
 
 - Python 3.12
-- `pip install -r tools/requirements-mcp.txt`
-- An Axxon One server and its credentials (for the live tools).
+- A source checkout
+- An Axxon One server and a least-privilege account only for explicitly enabled live tools
 
 ## Install
 
 ```bash
 git clone https://github.com/jerrygergov/axxon-one-mcp.git
 cd axxon-one-mcp
-pip install -r tools/requirements-mcp.txt
+python3.12 -m pip install -r tools/requirements-mcp.txt
 ```
 
-That alone runs the **knowledge layer** (API search, verified examples) with no server:
+The default starts only the seven knowledge tools with no credentials:
 
 ```bash
-python tools/axxon_mcp_server.py --transport stdio
+python3.12 tools/axxon_mcp_server.py --transport stdio
 ```
 
 ## Run with Claude Desktop
 
 Edit `claude_desktop_config.json` (Settings → Developer → Edit Config) and add the
-server with your Axxon One connection details. **No flags** — running with no flags
-enables every group:
+server. This customer example explicitly opts into live reads and uses an HTTPS endpoint
+with a dedicated least-privilege account:
 
 ```json
 {
   "mcpServers": {
     "axxon-one": {
-      "command": "python",
-      "args": ["/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py"],
+      "command": "python3.12",
+      "args": [
+        "/full/path/to/axxon-one-mcp/tools/axxon_mcp_server.py",
+        "--enable-live"
+      ],
       "env": {
-        "AXXON_HOST": "192.168.1.50",
-        "AXXON_HTTP_URL": "http://192.168.1.50",
-        "AXXON_HTTP_PORT": "80",
-        "AXXON_USERNAME": "root",
+        "AXXON_HOST": "vms.example.com",
+        "AXXON_HTTP_URL": "https://vms.example.com",
+        "AXXON_HTTP_PORT": "443",
+        "AXXON_USERNAME": "axxon-mcp-reader",
         "AXXON_PASSWORD": "your-password"
       }
     }
@@ -85,9 +92,9 @@ enables every group:
 }
 ```
 
-Restart Claude Desktop and ask things like *"list my cameras"*, *"what events fired in
-the last hour?"*, *"add a virtual camera named Lobby-Cam"*, or *"build me the site graph"*.
-Ask the assistant to call `list_capabilities` to see everything the server can do.
+Restart Claude Desktop and ask things like *"list my cameras"* or *"what events fired in
+the last hour?"*. Ask the assistant to call `list_capabilities` to see which explicit
+flag enables another capability.
 
 Any MCP client uses the same shape (a `command`, `args`, and `env`): Cursor, VS Code, and
 frameworks like LangChain or the OpenAI Agents SDK all launch the stdio server the same way.
@@ -95,22 +102,24 @@ frameworks like LangChain or the OpenAI Agents SDK all launch the stdio server t
 ## Connection settings
 
 Set these as environment variables (in the client `env` block, or exported in your shell).
-Only host, URL, username, and password are required.
+Only enabled live groups need connection values. Use a dedicated account with only the
+permissions required by those groups.
 
 | Variable | Required | Default | Notes |
 | --- | --- | --- | --- |
 | `AXXON_HOST` | yes | — | Server IP or hostname |
-| `AXXON_HTTP_URL` | yes | `http://127.0.0.1:8000` | `http://<host>` (or `https://`) |
+| `AXXON_HTTP_URL` | for HTTP-backed live groups | `http://127.0.0.1:8000` | Use `https://<host>` for customer deployments. |
 | `AXXON_USERNAME` | yes | — | Axxon One user |
 | `AXXON_PASSWORD` | yes | — | password (kept in memory, never logged) |
-| `AXXON_HTTP_PORT` | no | `8000` | set to `80` for a standard install |
+| `AXXON_HTTP_PORT` | no | `8000` | Use the port assigned to the HTTPS endpoint. |
 | `AXXON_GRPC_PORT` | no | `20109` | direct gRPC port |
 | `AXXON_TLS_CN` | for gRPC | `Server` | gRPC certificate common name |
 | `AXXON_CA` | for gRPC | — | path to the gRPC root CA |
 | `AXXON_PROTO_DIR` | for gRPC | — | folder with the `.proto` files |
 
-**Basic reads** (cameras, archives, events) work over the HTTP `/grpc` bridge with just
-host + credentials.
+**Basic reads** (cameras, archives, events) work over the HTTPS `/grpc` bridge with host
+and credentials. Plain HTTP is appropriate only in an explicitly accepted, isolated
+trusted lab; it is not the recommended customer configuration.
 
 **Full gRPC tools** (configuration, PTZ, media, etc.) also need the Axxon One `.proto`
 files and the gRPC root CA. These are AxxonSoft material and are **not** in this repo —
@@ -122,6 +131,25 @@ export AXXON_CA=/path/to/api.ngp.root-ca.crt
 ```
 
 The server compiles the protos automatically on first use.
+
+## Capability and mutation authorization
+
+Capability flags control tool registration. Read groups such as `--enable-live`,
+`--enable-view`, and `--enable-site-graph` may be combined so a deployment exposes only
+the reads it needs. `--enable-all` is registration only: it registers the full surface,
+does not authorize mutations, and never grants mutation approval.
+
+A mutation requires all of the following independent controls:
+
+1. The explicit capability group flag, such as `--enable-operator`.
+2. The module's externally supplied `AXXON_<MODULE>_APPROVE=1` variable, with the exact
+   value `1`; for example, operator apply uses `AXXON_OPERATOR_APPROVE=1`.
+3. The per-call plan/confirmation check required by that tool.
+
+Do not put approval variables into a shared base configuration. Add one to a narrowly
+scoped deployment only after reviewing the tools in that group. `--read-only` is the
+authoritative, broad compatibility profile: it registers all groups but leaves every
+mutation-disabled even if the process inherits approval variables.
 
 ## Tools
 
@@ -289,19 +317,24 @@ The knowledge tools are always on; the rest connect to the live server.
 **translator** — `assemble_recipe`, `validate_recipe`, `explain_recipe`, `resolve_device`,
 `run_recipe`
 
-## Restricting what's on (optional)
-
-Running with no flags enables everything. To restrict:
+## Startup profiles
 
 ```bash
-# Reads only — mutating tools disabled
-python tools/axxon_mcp_server.py --read-only --transport stdio
+# Secure default: exactly seven offline knowledge tools, no credentials
+python3.12 tools/axxon_mcp_server.py --transport stdio
 
-# Only specific groups
-python tools/axxon_mcp_server.py --enable-live --enable-ptz --transport stdio
+# Explicit live/read groups only
+python3.12 tools/axxon_mcp_server.py \
+  --enable-live --enable-view --enable-site-graph --transport stdio
+
+# Broad compatibility surface with mutations authoritatively disabled
+python3.12 tools/axxon_mcp_server.py --read-only --transport stdio
+
+# Full registration only; does not approve any mutation
+python3.12 tools/axxon_mcp_server.py --enable-all --transport stdio
 ```
 
-Run `python tools/axxon_mcp_server.py --help` for the full flag list.
+Run `python3.12 tools/axxon_mcp_server.py --help` for the full flag list.
 
 ## Examples
 
@@ -313,11 +346,26 @@ Runnable standalone scripts that use the same client (`tools/examples/`):
 - `inventory_sync.py` — dump the full device inventory
 - `http_grpc_vs_grpc.py` — compare the HTTP `/grpc` bridge vs direct gRPC
 
-## Tests
+## Release checks
 
 ```bash
-python3.12 -m unittest discover -s tools/tests     # offline, no server needed
+# Offline Python suite and real stdio startup profiles
+python3.12 -m unittest discover -s tools/tests -v
+python3.12 tools/verify_mcp_startup.py
+
+# Corpus evidence and deterministic generated coverage
+python3.12 tools/axxon_corpus_restamp.py --check
+python3.12 tools/generate_coverage.py --check
+
+# Committed customer references
+python3.12 -m unittest discover -s customer-templates/python-reference -p 'test*.py' -v
+npm --prefix customer-templates/node-reference ci
+npm --prefix customer-templates/node-reference run build
+npm --prefix customer-templates/node-reference test
 ```
+
+These are the same offline checks run by root CI. They need no Axxon credentials, live
+server, CA file, or private proto material.
 
 ## Layout
 
