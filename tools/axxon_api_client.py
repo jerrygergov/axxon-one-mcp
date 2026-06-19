@@ -129,6 +129,7 @@ class AxxonApiClient:
         self.http_token: str = ""
         self.inventory: dict[str, Any] = {}
         self._archive_volume_id: str | None = None
+        self._node_name: str | None = None
 
     @property
     def grpc_target(self) -> str:
@@ -1487,10 +1488,13 @@ class AxxonApiClient:
         return self.inventory
 
     def node_name(self) -> str:
-        if not self.inventory:
-            self.load_inventory()
-        nodes = self.inventory.get("nodes", [])
-        return nodes[0].get("node_name", self.config.tls_cn) if nodes else self.config.tls_cn
+        if self._node_name is not None:
+            return self._node_name
+        nodes = self.inventory.get("nodes") if self.inventory else None
+        if not nodes:
+            nodes = self._http_grpc_body("axxonsoft.bl.domain.DomainService.ListNodes").get("nodes", [])
+        self._node_name = nodes[0].get("node_name", self.config.tls_cn) if nodes else self.config.tls_cn
+        return self._node_name
 
     def archive_access_point(self) -> str:
         if not self.inventory:
