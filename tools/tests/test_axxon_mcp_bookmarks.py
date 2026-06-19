@@ -46,7 +46,7 @@ class FakeBookmarkClient:
 
     def bookmark_get(self, bookmark_id):
         self.calls.append(("get", {"id": bookmark_id}))
-        return {"body": {"id": bookmark_id, "message": "front gate review", "user_id": "root"}}
+        return {"body": {"bookmark": {"id": bookmark_id, "message": "front gate review", "user_id": "root"}}}
 
 
 def build_tools(client=None):
