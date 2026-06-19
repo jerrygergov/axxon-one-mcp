@@ -45,3 +45,7 @@ Integration APIs 3.0.pdf
 
 # Archived legacy probe runs (kept locally, not published)
 docs/api-test-runs/
+
+# Generated audit snapshots (regenerable, kept locally, not published)
+docs/api-audit/*-latest.md
+docs/api-audit/*-latest.json
