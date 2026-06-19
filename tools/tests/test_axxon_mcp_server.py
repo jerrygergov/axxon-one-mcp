@@ -262,6 +262,8 @@ class StubAdminMutator:
 
 
 class StubPtz:
+    enabled = True
+
     def ptz_connect_axxon_profile(self, profile: str = "env"):
         return {"connected": True, "profile_name": profile, "mode": "ptz-control"}
 
@@ -556,6 +558,88 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(server.tools["ptz_acquire_session"](ap)["session_id"], 1)
         self.assertEqual(server.tools["ptz_absolute_move"](ap, 1, 100, 50, 5)["absolute_position"]["pan"], 100)
         self.assertEqual(server.tools["ptz_move"](ap, 1, 0.5, 0.5, "continuous")["mode"], "continuous")
+
+    def test_disabled_ptz_control_tools_refuse_without_using_backend(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        read_calls: list[str] = []
+
+        class DisabledPtz:
+            enabled = False
+
+            def __getattr__(self, name: str):
+                if name in {
+                    "ptz_connect_axxon_profile",
+                    "list_telemetry_sources",
+                    "session_available",
+                    "get_position",
+                    "get_position_normalized",
+                    "get_tours",
+                    "get_tour_points",
+                    "list_presets",
+                    "auxiliary_operations",
+                }:
+                    def read_method(*_args: object, **_kwargs: object) -> dict[str, object]:
+                        read_calls.append(name)
+                        return {"status": "ok", "tool": name}
+
+                    return read_method
+                raise AssertionError(f"disabled PTZ backend method used: {name}")
+
+        server = module.create_server(docs=StubDocs(), ptz=DisabledPtz(), fastmcp_factory=FakeFastMCP)
+        access_point = "hosts/Server/DeviceIpint.53/TelemetryControl.0"
+        mutation_calls = {
+            "ptz_acquire_session": (access_point,),
+            "ptz_keepalive_session": (access_point, 1),
+            "ptz_release_session": (access_point, 1),
+            "ptz_move": (access_point, 1, 0.1, 0.2),
+            "ptz_zoom": (access_point, 1, 0.1),
+            "ptz_focus": (access_point, 1, 0.1),
+            "ptz_iris": (access_point, 1, 0.1),
+            "ptz_point_move": (access_point, 1, 0.5, 0.5),
+            "ptz_absolute_move": (access_point, 1, 1, 2, 3),
+            "ptz_absolute_move_normalized": (access_point, 1, 0.1, 0.2, 0.3),
+            "ptz_save_preset": (access_point, 1, 2),
+            "ptz_configure_preset": (access_point, 2),
+            "ptz_set_preset": (access_point, 1, 2),
+            "ptz_go_preset": (access_point, 1, 2),
+            "ptz_remove_preset": (access_point, 1, 2),
+        }
+        for tool_name, args in mutation_calls.items():
+            with self.subTest(tool=tool_name):
+                result = server.tools[tool_name](*args)
+                self.assertEqual(result["status"], "disabled")
+                self.assertEqual(result["approval_env"], "AXXON_PTZ_APPROVE")
+
+        self.assertEqual(server.tools["list_telemetry_sources"]()["status"], "ok")
+        self.assertEqual(server.tools["ptz_get_position"](access_point)["status"], "ok")
+        self.assertEqual(read_calls, ["list_telemetry_sources", "get_position"])
+
+    def test_main_ptz_gate_requires_exact_external_approval(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+
+        class StubServer:
+            def run(self, *, transport: str) -> None:
+                self.transport = transport
+
+        def ptz_enabled(value: str | None) -> bool:
+            captured: dict[str, object] = {}
+
+            def capture_server(**kwargs: object) -> StubServer:
+                captured.update(kwargs)
+                return StubServer()
+
+            env = {} if value is None else {"AXXON_PTZ_APPROVE": value}
+            with (
+                mock.patch.dict(os.environ, env, clear=True),
+                mock.patch.object(sys, "argv", ["axxon_mcp_server.py", "--enable-ptz"]),
+                mock.patch.object(module, "create_server", side_effect=capture_server),
+            ):
+                self.assertEqual(module.main(), 0)
+            return bool(captured["ptz"].enabled)
+
+        self.assertFalse(ptz_enabled(None))
+        self.assertFalse(ptz_enabled("true"))
+        self.assertTrue(ptz_enabled("1"))
     def test_create_server_registers_phase_one_tools_and_resources(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
         server = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
@@ -1559,6 +1643,7 @@ class AxxonMcpServerTests(unittest.TestCase):
 
         enabled_targets = {
             "AXXON_OPERATOR_APPROVE": "operator",
+            "AXXON_PTZ_APPROVE": "ptz",
             "AXXON_LOGIC_CONTROL_APPROVE": "logic_control",
             "AXXON_VIDEOWALL_APPROVE": "videowall",
             "AXXON_ADMIN_MUTATION_APPROVE": "admin_mutator",

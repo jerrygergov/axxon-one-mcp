@@ -425,6 +425,17 @@ def create_server(
     return server
 
 
+def _ptz_mutation_refusal(ptz: Any, tool: str) -> dict[str, Any] | None:
+    if bool(getattr(ptz, "enabled", False)):
+        return None
+    return {
+        "status": "disabled",
+        "tool": tool,
+        "message": f"Set {PTZ_APPROVE_ENV}=1 to enable PTZ session and control operations.",
+        "approval_env": PTZ_APPROVE_ENV,
+    }
+
+
 def register_ptz_tools(server: Any, ptz: Any) -> None:
     @server.tool(name="ptz_connect_axxon_profile")
     def ptz_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -444,16 +455,22 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
     @server.tool(name="ptz_acquire_session")
     def ptz_acquire_session(access_point: str, host_name: str = "axxon-mcp") -> dict[str, Any]:
         """Acquire a telemetry control session for a PTZ source."""
+        if refusal := _ptz_mutation_refusal(ptz, "acquire_session"):
+            return refusal
         return ptz.acquire_session(access_point, host_name)
 
     @server.tool(name="ptz_keepalive_session")
     def ptz_keepalive_session(access_point: str, session_id: int) -> dict[str, Any]:
         """Extend a telemetry control session."""
+        if refusal := _ptz_mutation_refusal(ptz, "keepalive_session"):
+            return refusal
         return ptz.keepalive_session(access_point, session_id)
 
     @server.tool(name="ptz_release_session")
     def ptz_release_session(access_point: str, session_id: int) -> dict[str, Any]:
         """Release a telemetry control session."""
+        if refusal := _ptz_mutation_refusal(ptz, "release_session"):
+            return refusal
         return ptz.release_session(access_point, session_id)
 
     @server.tool(name="ptz_get_position")
@@ -464,31 +481,43 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
     @server.tool(name="ptz_move")
     def ptz_move(access_point: str, session_id: int, pan: float, tilt: float, mode: str = "continuous") -> dict[str, Any]:
         """Pan/tilt the camera (mode: continuous, relative, or absolute)."""
+        if refusal := _ptz_mutation_refusal(ptz, "move"):
+            return refusal
         return ptz.move(access_point, session_id, pan, tilt, mode)
 
     @server.tool(name="ptz_zoom")
     def ptz_zoom(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
         """Zoom the camera (mode: continuous, relative, or absolute)."""
+        if refusal := _ptz_mutation_refusal(ptz, "zoom"):
+            return refusal
         return ptz.zoom(access_point, session_id, value, mode)
 
     @server.tool(name="ptz_focus")
     def ptz_focus(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
         """Adjust focus (mode: continuous, relative, or absolute)."""
+        if refusal := _ptz_mutation_refusal(ptz, "focus"):
+            return refusal
         return ptz.focus(access_point, session_id, value, mode)
 
     @server.tool(name="ptz_iris")
     def ptz_iris(access_point: str, session_id: int, value: float, mode: str = "continuous") -> dict[str, Any]:
         """Adjust iris (mode: continuous, relative, or absolute)."""
+        if refusal := _ptz_mutation_refusal(ptz, "iris"):
+            return refusal
         return ptz.iris(access_point, session_id, value, mode)
 
     @server.tool(name="ptz_point_move")
     def ptz_point_move(access_point: str, session_id: int, x: float, y: float) -> dict[str, Any]:
         """Center the camera on a normalized [0..1] image point (click-to-center). Needs a session."""
+        if refusal := _ptz_mutation_refusal(ptz, "point_move"):
+            return refusal
         return ptz.point_move(access_point, session_id, x, y)
 
     @server.tool(name="ptz_absolute_move")
     def ptz_absolute_move(access_point: str, session_id: int, pan: int, tilt: int, zoom: int, mask: int = 7) -> dict[str, Any]:
         """Move to an absolute pan/tilt/zoom position (mask selects axes; 7 = all)."""
+        if refusal := _ptz_mutation_refusal(ptz, "absolute_move"):
+            return refusal
         return ptz.absolute_move(access_point, session_id, pan, tilt, zoom, mask)
 
     @server.tool(name="ptz_get_position_normalized")
@@ -499,16 +528,22 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
     @server.tool(name="ptz_absolute_move_normalized")
     def ptz_absolute_move_normalized(access_point: str, session_id: int, pan: float, tilt: float, zoom: float, mask: int = 7) -> dict[str, Any]:
         """Move to a normalized [0..1] absolute pan/tilt/zoom position (mask selects axes; 7 = all)."""
+        if refusal := _ptz_mutation_refusal(ptz, "absolute_move_normalized"):
+            return refusal
         return ptz.absolute_move_normalized(access_point, session_id, pan, tilt, zoom, mask)
 
     @server.tool(name="ptz_save_preset")
     def ptz_save_preset(access_point: str, session_id: int, position: int, label: str = "") -> dict[str, Any]:
         """Save the current position as a preset via the bare SetPreset RPC."""
+        if refusal := _ptz_mutation_refusal(ptz, "save_preset"):
+            return refusal
         return ptz.save_preset(access_point, session_id, position, label)
 
     @server.tool(name="ptz_configure_preset")
     def ptz_configure_preset(access_point: str, position: int, label: str = "", pan: int = 0, tilt: int = 0, zoom: int = 0) -> dict[str, Any]:
         """Create/update a preset at a slot with an explicit absolute position (ConfigurePreset)."""
+        if refusal := _ptz_mutation_refusal(ptz, "configure_preset"):
+            return refusal
         return ptz.configure_preset(access_point, position, label, pan, tilt, zoom)
 
     @server.tool(name="ptz_get_tours")
@@ -529,16 +564,22 @@ def register_ptz_tools(server: Any, ptz: Any) -> None:
     @server.tool(name="ptz_set_preset")
     def ptz_set_preset(access_point: str, session_id: int, position: int, label: str = "") -> dict[str, Any]:
         """Save the current position as a preset at the given slot."""
+        if refusal := _ptz_mutation_refusal(ptz, "set_preset"):
+            return refusal
         return ptz.set_preset(access_point, session_id, position, label)
 
     @server.tool(name="ptz_go_preset")
     def ptz_go_preset(access_point: str, session_id: int, position: int, speed: float = 1.0) -> dict[str, Any]:
         """Move the camera to a saved preset."""
+        if refusal := _ptz_mutation_refusal(ptz, "go_preset"):
+            return refusal
         return ptz.go_preset(access_point, session_id, position, speed)
 
     @server.tool(name="ptz_remove_preset")
     def ptz_remove_preset(access_point: str, session_id: int, position: int) -> dict[str, Any]:
         """Delete a saved preset."""
+        if refusal := _ptz_mutation_refusal(ptz, "remove_preset"):
+            return refusal
         return ptz.remove_preset(access_point, session_id, position)
 
     @server.tool(name="ptz_auxiliary_operations")
@@ -2861,8 +2902,10 @@ def apply_enable_all(args: argparse.Namespace) -> argparse.Namespace:
 
 # Per-group mutation approval env vars. Registration does not authorize mutation: each module
 # independently requires its exact external approval value plus its per-call confirmation token.
+PTZ_APPROVE_ENV = "AXXON_PTZ_APPROVE"
+
 APPROVE_ENV_VARS = (
-    "AXXON_OPERATOR_APPROVE", "AXXON_ALARMS_APPROVE", "AXXON_LOGIC_CONTROL_APPROVE",
+    "AXXON_OPERATOR_APPROVE", PTZ_APPROVE_ENV, "AXXON_ALARMS_APPROVE", "AXXON_LOGIC_CONTROL_APPROVE",
     "AXXON_VIDEOWALL_APPROVE", "AXXON_ADMIN_MUTATION_APPROVE", "AXXON_BOOKMARK_MUTATION_APPROVE",
     "AXXON_TIMEZONE_APPROVE", "AXXON_SETTINGS_APPROVE", "AXXON_GROUPS_APPROVE", "AXXON_MAP_APPROVE",
     "AXXON_LOGIC_ALERTS_APPROVE", "AXXON_CONFIG_CHANGE_APPROVE", "AXXON_ARCHIVE_VOLUME_APPROVE",
@@ -3033,6 +3076,7 @@ def main() -> int:
         from axxon_mcp_ptz import AxxonMcpPtz
 
         ptz = AxxonMcpPtz()
+        ptz.enabled = approval_enabled(PTZ_APPROVE_ENV, args=args)
     audit = None
     if args.enable_audit:
         from axxon_mcp_audit import AUDIT_INJECT_APPROVE_ENV, AxxonMcpAudit
