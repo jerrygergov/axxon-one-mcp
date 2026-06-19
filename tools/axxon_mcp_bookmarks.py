@@ -83,4 +83,4 @@ class AxxonMcpBookmarks:
 
     def bookmark_get(self, bookmark_id: str) -> dict[str, Any]:
         response = getattr(self.ensure_client(), "bookmark_get")(bookmark_id)
-        return {"status": "ok", "bookmark": _summarize_bookmark(_body(response))}
+        return {"status": "ok", "bookmark": _summarize_bookmark(_body(response).get("bookmark", {}))}
