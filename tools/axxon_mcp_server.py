@@ -2370,17 +2370,17 @@ def register_operator_tools(server: Any, operator: Any) -> None:
 
     @server.tool(name="execute_operator_workflow")
     def execute_operator_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Plan and apply a reversible workflow in one call (no separate apply step).
+        """Compatibility planner that never applies mutations.
 
-        Use this as the default for create/update workflows. Irreversible workflows (deletes
-        with no auto-rollback, property pushes) return the plan with needs_two_step=true; fall
-        back to plan_operator_workflow + apply_operator_plan for those.
+        Review the returned plan, then call apply_operator_plan explicitly with its plan_id
+        and confirmation token. This boundary is the same for reversible and irreversible
+        workflows.
         """
         return operator.execute(workflow, params or {})
 
     @server.tool(name="plan_operator_workflow")
     def plan_operator_workflow(workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Build a typed mutation plan without calling the server. Prefer execute_operator_workflow for reversible workflows."""
+        """Build a typed mutation plan without calling the server."""
         return operator.plan(workflow, params or {})
 
     @server.tool(name="apply_operator_plan")

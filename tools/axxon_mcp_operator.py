@@ -2235,28 +2235,35 @@ class OperatorRegistry:
         return result
 
     def execute(self, workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Plan and apply a reversible workflow in one call, supplying the confirmation token.
+        """Plan a workflow and require a separate, explicitly confirmed apply call.
 
-        Skips the separate apply round trip for workflows whose plan declares an automatic
-        rollback strategy (anything but "noop"). Irreversible workflows return the plan with a
-        needs_two_step hint so the caller falls back to the explicit plan/apply path.
+        This compatibility entry point has the same mutation boundary for every workflow:
+        it creates a plan without constructing a client, then directs the caller to
+        ``apply_operator_plan``. Plan gaps and rejections are returned unchanged.
 
         Args:
             workflow (str): Workflow name from known_workflows().
             params (dict, optional): Workflow parameters.
 
         Returns:
-            (dict): The apply result for reversible workflows, or the plan plus needs_two_step
-            for irreversible ones, gap/rejected records otherwise.
+            (dict): The plan plus ``needs_explicit_apply`` for valid workflows, or the
+            unchanged gap/rejected plan result.
         """
         plan = self.plan(workflow, params)
         if plan.get("status") not in (None, "planned"):
             return plan
-        if str((plan.get("rollback") or {}).get("strategy") or "noop") == "noop":
-            self._record("execute", plan_id=plan.get("plan_id"), workflow=workflow, status="needs_two_step")
-            return {**plan, "needs_two_step": True,
-                    "message": "irreversible workflow; review the plan and call apply_operator_plan explicitly"}
-        return self.apply(plan["plan_id"], plan["confirmation_token"])
+        self._record(
+            "execute",
+            plan_id=plan.get("plan_id"),
+            workflow=workflow,
+            status="planned",
+            needs_explicit_apply=True,
+        )
+        return {
+            **plan,
+            "needs_explicit_apply": True,
+            "message": "review the plan and call apply_operator_plan with the plan_id and confirmation token",
+        }
 
     def verify(self, plan_id: str) -> dict[str, Any]:
         plan = self._plans.get(plan_id)

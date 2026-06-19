@@ -260,37 +260,61 @@ class FakeArchiveMaintenanceClient(FakeMutationClient):
 
 
 class OperatorExecuteTests(unittest.TestCase):
-    def test_execute_reversible_workflow_plans_and_applies_in_one_call(self) -> None:
+    def test_execute_reversible_workflow_requires_explicit_apply(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
-        client = FakeMutationClient()
-        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
+
+        def fail_if_client_is_constructed():
+            raise AssertionError("execute must not construct a mutation client")
+
+        registry = module.OperatorRegistry(client_factory=fail_if_client_is_constructed, host="hosts/Server")
 
         result = registry.execute("temp_camera", {"display_name_hint": "smoke"})
 
-        self.assertEqual(result["status"], "applied")
-        self.assertTrue(result["created_uids"])
-        self.assertEqual(len(client.calls), 1)
-
-    def test_execute_irreversible_workflow_returns_needs_two_step(self) -> None:
-        module = importlib.import_module("axxon_mcp_operator")
-        client = FakeMutationClient()
-        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server")
-
-        result = registry.execute("set_unit_properties", {"uid": "hosts/Server/x.1", "properties": [{"id": "a", "value_string": "b"}]})
-
-        self.assertTrue(result["needs_two_step"])
         self.assertEqual(result["status"], "planned")
-        self.assertEqual(client.calls, [])
+        self.assertTrue(result["needs_explicit_apply"])
+        self.assertIn("plan_id", result)
+        self.assertIn("apply_operator_plan", result["message"])
+        self.assertEqual(registry._plans[result["plan_id"]]["status"], "planned")
+        self.assertEqual(registry._state[result["plan_id"]]["status"], "planned")
 
-    def test_execute_respects_disabled_registry(self) -> None:
+    def test_execute_irreversible_workflow_requires_explicit_apply(self) -> None:
         module = importlib.import_module("axxon_mcp_operator")
-        client = FakeMutationClient()
-        registry = module.OperatorRegistry(client_factory=lambda: client, host="hosts/Server", enabled=False)
+
+        def fail_if_client_is_constructed():
+            raise AssertionError("execute must not construct a mutation client")
+
+        registry = module.OperatorRegistry(client_factory=fail_if_client_is_constructed, host="hosts/Server")
+
+        result = registry.execute(
+            "external_event_inject",
+            {"access_point": "hosts/Server/DetectorEx.1/EventSupplier", "event_type": "test"},
+        )
+
+        self.assertEqual(result["status"], "planned")
+        self.assertTrue(result["needs_explicit_apply"])
+        self.assertIn("plan_id", result)
+        self.assertIn("apply_operator_plan", result["message"])
+        self.assertEqual(registry._plans[result["plan_id"]]["status"], "planned")
+        self.assertEqual(registry._state[result["plan_id"]]["status"], "planned")
+
+    def test_execute_can_plan_when_registry_is_disabled_but_apply_is_rejected(self) -> None:
+        module = importlib.import_module("axxon_mcp_operator")
+
+        def fail_if_client_is_constructed():
+            raise AssertionError("planning and rejected apply must not construct a mutation client")
+
+        registry = module.OperatorRegistry(
+            client_factory=fail_if_client_is_constructed,
+            host="hosts/Server",
+            enabled=False,
+        )
 
         result = registry.execute("temp_camera", {"display_name_hint": "smoke"})
 
-        self.assertEqual(result["status"], "rejected")
-        self.assertEqual(client.calls, [])
+        self.assertEqual(result["status"], "planned")
+        rejected = registry.apply(result["plan_id"], result["confirmation_token"])
+        self.assertEqual(rejected["status"], "rejected")
+        self.assertIn("disabled", rejected["message"].lower())
 
 
 class OperatorPlanTests(unittest.TestCase):
