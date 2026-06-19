@@ -12,7 +12,7 @@ integrations.
 
 ## What's included
 
-- **326 tools** across **53 capability groups**, all on by default.
+- **327 tools** across **53 capability groups**, all on by default.
 - One shared client (`tools/axxon_api_client.py`) that talks to the server over direct
   gRPC (with TLS CN override and proto compilation) or the HTTP `/grpc` bridge, plus
   legacy HTTP and `/v1`. Basic reads work over HTTP with just host + credentials; full
@@ -30,14 +30,16 @@ server.
 | --- | --- |
 | **Knowledge** | Search the API corpus, verified examples, endpoint catalog, and recipes with no server connection. |
 | **Live read-only** | Connect to a server and inspect cameras, archives, detectors, events, layouts, maps, health, statistics, and bounded live subscriptions. |
-| **Operator / config** | Create, modify, and delete configuration (cameras, detectors, layouts, macros, settings, PTZ, alarms, videowall). Mutations use a plan → apply → verify → rollback flow. |
+| **Operator / config** | Create, modify, and delete configuration (cameras, detectors, layouts, macros, settings, PTZ, alarms, videowall). Reversible workflows run in one call via `execute`; irreversible ones keep the plan → apply → verify → rollback flow. |
 | **Export** | Plan/start/status/download/cleanup for owned snapshot exports, byte- and time-capped. |
 | **Web / client** | Embeddable video-component helpers, bounded WebSocket-event probing, and a Client HTTP API preflight. |
 | **Generator / partner** | Generate Python / Node integration skeletons (14 templates, each in both languages) and partner plugin scaffolds. |
 
-Mutating tools follow plan → apply: the `plan` step returns a confirmation token that the
-assistant passes to `apply`, so a destructive call takes a deliberate second step. This
-adds no manual work — the assistant supplies the token automatically.
+Reversible workflows (create camera, archive, macro, wall) run in a single `execute` call:
+the assistant supplies the confirmation token from the plan automatically. Irreversible
+workflows (deletes, property pushes, event injection) return `needs_two_step`, so the
+assistant falls back to `plan` → `apply` and a destructive call takes a deliberate second
+step.
 
 ## Requirements
 
@@ -171,8 +173,8 @@ The knowledge tools are always on; the rest connect to the live server.
 **logic_control** — `list_launchable_macros`, `launch_macro`, `change_arm_state`,
 `change_config`, `change_counters`, `counter_action`
 
-**operator** — `list_operator_workflows`, `plan_operator_workflow`, `apply_operator_plan`,
-`verify_operator_plan`, `rollback_operator_plan`
+**operator** — `list_operator_workflows`, `execute_operator_workflow`, `plan_operator_workflow`,
+`apply_operator_plan`, `verify_operator_plan`, `rollback_operator_plan`
 
 **config_change** — `list_similar_units`, `batch_get_factories`, `change_unit_property`,
 `change_unit_property_stream`
