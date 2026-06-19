@@ -101,11 +101,62 @@ class PluginScaffoldTests(unittest.TestCase):
         files = self.gen.generate(self._request(language="node")).files
         self.assertIn("src/index.ts", files)
         self.assertIn("package.json", files)
+        self.assertIn("tsconfig.json", files)
         self.assertIn("README.md", files)
         self.assertIn(".env.example", files)
         self.assertTrue(any(n.endswith(".test.ts") or (n.startswith("test") and n.endswith(".ts")) for n in files), msg=str(list(files)))
         self.assertTrue(any(n.endswith((".yml", ".yaml")) for n in files), msg=str(list(files)))
         self.assertIn("LICENSE", files)
+
+    def test_node_build_contract(self) -> None:
+        """AC6: node scaffolds compile src and tests and expose executable scripts."""
+        files = self.gen.generate(self._request(language="node")).files
+        package = json.loads(files["package.json"])
+        self.assertEqual(package["main"], "dist/src/index.js")
+        self.assertEqual(
+            package["scripts"],
+            {
+                "build": "tsc -p tsconfig.json",
+                "test": "npm run build --silent && node dist/test/smoke.test.js",
+                "start": "node dist/src/index.js",
+            },
+        )
+        tsconfig = json.loads(files["tsconfig.json"])
+        self.assertEqual(
+            tsconfig["compilerOptions"],
+            {
+                "target": "ES2022",
+                "module": "CommonJS",
+                "moduleResolution": "Node",
+                "rootDir": ".",
+                "outDir": "dist",
+                "strict": True,
+                "esModuleInterop": True,
+                "skipLibCheck": True,
+            },
+        )
+        self.assertEqual(tsconfig["include"], ["src/**/*.ts", "test/**/*.ts"])
+
+    def test_node_readme_and_ci_are_executable(self) -> None:
+        """AC6: node documentation and CI use the locked Node workflow."""
+        files = self.gen.generate(self._request(language="node")).files
+        readme = files["README.md"]
+        for command in ("npm ci", "npm run build", "npm test", "npm start"):
+            self.assertIn(command, readme)
+        self.assertNotIn("pip install", readme)
+        self.assertNotIn("python main.py", readme)
+        workflow = files[".github/workflows/ci.yml"]
+        for command in ("npm ci", "npm run build", "npm test"):
+            self.assertIn(f"run: {command}", workflow)
+
+    def test_node_entrypoint_never_derives_log_output_from_password(self) -> None:
+        """AC6: the password is only passed to authentication and never transformed for logs."""
+        ts = self.gen.generate(self._request(language="node")).files["src/index.ts"]
+        self.assertNotIn("function redact", ts)
+        self.assertNotIn("password=${", ts)
+        self.assertNotIn("AXXON_PASSWORD!)}", ts)
+        self.assertNotRegex(ts, r"AXXON_PASSWORD[^\n]*\.(?:slice|substring|substr)\(")
+        self.assertNotIn("throw lastErr", ts)
 
     def test_node_entrypoint(self) -> None:
         """AC6: src/index.ts reads process.env, references ListCameras, has a retry helper."""

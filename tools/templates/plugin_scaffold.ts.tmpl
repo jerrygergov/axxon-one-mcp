@@ -19,11 +19,6 @@ const RETRY_BACKOFF_SECONDS = 2;
 
 const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'] as const;
 
-function redact(value: string): string {
-  if (!value) return '';
-  return value.slice(0, 2) + '***';
-}
-
 function checkEnv(): string[] {
   return REQUIRED_ENV.filter(name => !process.env[name]);
 }
@@ -33,37 +28,49 @@ function loadProto(protoPath: string): grpc.GrpcObject {
   return grpc.loadPackageDefinition(pkgDef);
 }
 
+function getService(root: grpc.GrpcObject, servicePath: string[]): grpc.ServiceClientConstructor {
+  let current: grpc.GrpcObject | grpc.ServiceClientConstructor | grpc.ProtobufTypeDefinition = root;
+  for (const segment of servicePath) {
+    if (typeof current !== 'object' || current === null || !(segment in current)) {
+      throw new Error(`gRPC service not found: ${servicePath.join('.')}`);
+    }
+    current = (current as grpc.GrpcObject)[segment];
+  }
+  if (typeof current !== 'function') {
+    throw new Error(`gRPC service not found: ${servicePath.join('.')}`);
+  }
+  return current as grpc.ServiceClientConstructor;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function withRetry<T>(call: () => Promise<T>, label: string): Promise<T> {
-  let lastErr: unknown = null;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       return await call();
-    } catch (err) {
-      lastErr = err;
-      console.warn(`${label} attempt ${attempt + 1}/${MAX_RETRIES} failed: ${err}`);
+    } catch {
+      console.warn(`${label} attempt ${attempt + 1}/${MAX_RETRIES} failed`);
       await sleep(RETRY_BACKOFF_SECONDS * (attempt + 1) * 1000);
     }
   }
-  throw lastErr;
+  throw new Error(`${label} failed after ${MAX_RETRIES} attempts`);
 }
 
 export async function runPlugin(): Promise<Record<string, unknown>> {
   const host = process.env.AXXON_HOST!;
   const tlsCn = process.env.AXXON_TLS_CN!;
   const user = process.env.AXXON_USERNAME!;
-  console.info(`plugin=${PLUGIN_NAME} user=${user} password=${redact(process.env.AXXON_PASSWORD!)} host=${host}`);
+  console.info(`plugin=${PLUGIN_NAME} user=${user} host=${host}`);
 
   const stubsPath = process.env.AXXON_STUBS_PATH ?? '/tmp/axxon-grpc-js';
   const caPath = process.env.AXXON_CA;
   let caData: Buffer | null = null;
   if (caPath && fs.existsSync(caPath)) caData = fs.readFileSync(caPath);
 
-  const authProto = loadProto(path.join(stubsPath, 'Authentication.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
-  const AuthService = authProto['axxonsoft']?.['bl']?.['auth']?.['AuthenticationService'] as unknown as grpc.ServiceClientConstructor;
+  const authProto = loadProto(path.join(stubsPath, 'Authentication.proto'));
+  const AuthService = getService(authProto, ['axxonsoft', 'bl', 'auth', 'AuthenticationService']);
 
   const sslCreds = caData ? grpc.credentials.createSsl(caData) : grpc.credentials.createSsl();
   const channelOptions: grpc.ChannelOptions = { 'grpc.ssl_target_name_override': tlsCn };
@@ -88,8 +95,8 @@ export async function runPlugin(): Promise<Record<string, unknown>> {
   });
   const composite = grpc.credentials.combineChannelCredentials(sslCreds, metaCreds);
 
-  const domainProto = loadProto(path.join(stubsPath, 'Domain.proto')) as Record<string, Record<string, grpc.ServiceClientConstructor>>;
-  const DomainService = domainProto['axxonsoft']?.['bl']?.['domain']?.['DomainService'] as unknown as grpc.ServiceClientConstructor;
+  const domainProto = loadProto(path.join(stubsPath, 'Domain.proto'));
+  const DomainService = getService(domainProto, ['axxonsoft', 'bl', 'domain', 'DomainService']);
   const domainClient = new DomainService(host, composite, channelOptions);
 
   const cameras = await withRetry<string[]>(() => new Promise((resolve) => {

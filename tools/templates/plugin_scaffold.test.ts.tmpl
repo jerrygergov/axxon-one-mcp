@@ -7,6 +7,7 @@
  */
 
 import assert from 'node:assert';
+import { runPlugin } from '../src/index';
 
 const REQUIRED_ENV = ['AXXON_HOST', 'AXXON_TLS_CN', 'AXXON_USERNAME', 'AXXON_PASSWORD'];
 
@@ -23,6 +24,48 @@ export function testMissingEnvDetected(): void {
   assert.ok(missing.length >= 0 && missing.length <= REQUIRED_ENV.length);
 }
 
+export async function testPasswordMaterialIsNotLogged(): Promise<void> {
+  const sentinel = 'S3NT1NEL-PASSWORD-MATERIAL';
+  const prefix = sentinel.slice(0, 8);
+  const previous = {
+    host: process.env.AXXON_HOST,
+    tlsCn: process.env.AXXON_TLS_CN,
+    username: process.env.AXXON_USERNAME,
+    password: process.env.AXXON_PASSWORD,
+    stubsPath: process.env.AXXON_STUBS_PATH,
+    info: console.info,
+    warn: console.warn,
+  };
+  const output: string[] = [];
+  process.env.AXXON_HOST = '127.0.0.1:1';
+  process.env.AXXON_TLS_CN = 'Server';
+  process.env.AXXON_USERNAME = 'smoke-test';
+  process.env.AXXON_PASSWORD = sentinel;
+  process.env.AXXON_STUBS_PATH = '/path/that/does/not/exist';
+  console.info = (...args: unknown[]) => { output.push(args.join(' ')); };
+  console.warn = (...args: unknown[]) => { output.push(args.join(' ')); };
+  try {
+    await assert.rejects(runPlugin());
+  } finally {
+    console.info = previous.info;
+    console.warn = previous.warn;
+    const restore = (name: string, value: string | undefined): void => {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    };
+    restore('AXXON_HOST', previous.host);
+    restore('AXXON_TLS_CN', previous.tlsCn);
+    restore('AXXON_USERNAME', previous.username);
+    restore('AXXON_PASSWORD', previous.password);
+    restore('AXXON_STUBS_PATH', previous.stubsPath);
+  }
+  const rendered = output.join('\n');
+  assert.ok(!rendered.includes(sentinel));
+  assert.ok(!rendered.includes(prefix));
+}
+
 testRequiredEnvDeclared();
 testMissingEnvDetected();
-console.log('$NAME scaffold smoke checks passed');
+testPasswordMaterialIsNotLogged().then(() => {
+  console.log('$NAME scaffold smoke checks passed');
+});

@@ -2,10 +2,11 @@
   "name": "axxon-reference-plugin",
   "version": "1.0.0",
   "description": "Generated Axxon One integration: axxon-reference-plugin",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build --silent && node dist/test/smoke.test.js",
+    "start": "node dist/src/index.js"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.0",

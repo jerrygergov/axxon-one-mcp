@@ -257,13 +257,41 @@ def _ts_package_json(title: str) -> str:
             "name": re.sub(r"[^a-z0-9\-]", "-", title.lower())[:50],
             "version": "1.0.0",
             "description": f"Generated Axxon One integration: {title}",
-            "main": "dist/index.js",
-            "scripts": {"build": "tsc", "start": "node dist/index.js"},
+            "main": "dist/src/index.js",
+            "scripts": {
+                "build": "tsc -p tsconfig.json",
+                "test": "npm run build --silent && node dist/test/smoke.test.js",
+                "start": "node dist/src/index.js",
+            },
             "dependencies": {"@grpc/grpc-js": "^1.10.0", "@grpc/proto-loader": "^0.7.0"},
             "devDependencies": {"typescript": "^5.0.0", "@types/node": "^20.0.0"},
         },
         indent=2,
     ) + "\n"
+
+
+def _tsconfig_json() -> str:
+    return json.dumps(
+        {
+            "compilerOptions": {
+                "target": "ES2022",
+                "module": "CommonJS",
+                "moduleResolution": "Node",
+                "rootDir": ".",
+                "outDir": "dist",
+                "strict": True,
+                "esModuleInterop": True,
+                "skipLibCheck": True,
+            },
+            "include": ["src/**/*.ts", "test/**/*.ts"],
+        },
+        indent=2,
+    ) + "\n"
+
+
+def _readme(title: str, template: str, language: str) -> str:
+    filename = "README.node.md.tmpl" if language == "node" else "README.md.tmpl"
+    return _render(_read_aux_template(filename), {"TITLE": title, "TEMPLATE": template})
 
 
 def _render(template_text: str, values: dict[str, Any]) -> str:
@@ -291,6 +319,7 @@ def _ci_workflow(name: str, language: str) -> str:
             "        with:\n"
             "          node-version: '20'\n"
             "      - run: npm ci\n"
+            "      - run: npm run build\n"
             "      - run: npm test\n"
         )
     else:
@@ -438,7 +467,7 @@ class Generator:
             "PROTO": proto,
             "DURATION": str(DEFAULT_DURATION_SECONDS),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "grpc_consumer"})
+        readme = _readme(fqmn, "grpc_consumer", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -479,7 +508,7 @@ class Generator:
             "DURATION": str(DEFAULT_DURATION_SECONDS),
             "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": fqmn, "TEMPLATE": "http_grpc_consumer"})
+        readme = _readme(fqmn, "http_grpc_consumer", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -522,7 +551,7 @@ class Generator:
             "DURATION": str(DEFAULT_DURATION_SECONDS),
             "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": path, "TEMPLATE": "legacy_http_consumer"})
+        readme = _readme(path, "legacy_http_consumer", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -566,7 +595,7 @@ class Generator:
             "COUNT": str(count),
             "APPDATA_HINT": "True" if notes else "False",
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "event_consumer"})
+        readme = _readme(subject, "event_consumer", request.language)
         if request.language == "node":
             ts_values = dict(values)
             ts_values["APPDATA_HINT"] = "true" if notes else "false"
@@ -605,7 +634,7 @@ class Generator:
             "DURATION": str(DEFAULT_DURATION_SECONDS),
             "BYTE_CAP": str(DEFAULT_HTTP_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": ap, "TEMPLATE": "external_event_producer"})
+        readme = _readme(ap, "external_event_producer", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -651,7 +680,7 @@ class Generator:
             "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
             "WINDOW": str(window),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "export_job"})
+        readme = _readme(camera, "export_job", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -690,7 +719,7 @@ class Generator:
             "DURATION": str(duration),
             "COUNT": str(count),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": subject, "TEMPLATE": "webhook_bridge"})
+        readme = _readme(subject, "webhook_bridge", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -720,7 +749,7 @@ class Generator:
             "OUTPUT_PATH": output_path,
             "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "inventory_sync"})
+        readme = _readme(output_path, "inventory_sync", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -765,7 +794,7 @@ class Generator:
             "DURATION": str(duration),
             "COUNT": str(count),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "alarm_responder"})
+        readme = _readme(camera, "alarm_responder", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -805,7 +834,7 @@ class Generator:
                 f"|pan|,|tilt|<= {MAX_PTZ_MAGNITUDE}, hold_ms<= {MAX_PTZ_HOLD_MS}",
             )
         values = {"TELEMETRY_AP": ap, "PAN": str(pan), "TILT": str(tilt), "HOLD_MS": str(hold_ms)}
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": ap, "TEMPLATE": "ptz_controller"})
+        readme = _readme(ap, "ptz_controller", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -843,7 +872,7 @@ class Generator:
             "MAX_RUNS": str(max_runs),
             "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": camera, "TEMPLATE": "scheduled_exporter"})
+        readme = _readme(camera, "scheduled_exporter", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -888,7 +917,7 @@ class Generator:
             "DURATION": str(duration),
             "COUNT": str(count),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": access_point, "TEMPLATE": "ml_detector_bridge"})
+        readme = _readme(access_point, "ml_detector_bridge", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -916,7 +945,7 @@ class Generator:
             "OUTPUT_PATH": output_path,
             "BYTE_CAP": str(DEFAULT_EXPORT_BYTE_CAP),
         }
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": output_path, "TEMPLATE": "dashboard_backend"})
+        readme = _readme(output_path, "dashboard_backend", request.language)
         if request.language == "node":
             return GeneratedBundle(
                 template=request.template,
@@ -941,7 +970,7 @@ class Generator:
     def _build_plugin_scaffold(self, request: GenerationRequest, info: TemplateInfo) -> GeneratedBundle | GenerationRefusal:
         name = request.params["name"]
         values = {"NAME": name}
-        readme = _render(_read_aux_template("README.md.tmpl"), {"TITLE": name, "TEMPLATE": "plugin_scaffold"})
+        readme = _readme(name, "plugin_scaffold", request.language)
         env_example = _env_example(info.required_env)
         license_text = _license_placeholder()
         if request.language == "node":
@@ -952,6 +981,7 @@ class Generator:
                     "test/smoke.test.ts": _render(_read_aux_template("plugin_scaffold.test.ts.tmpl"), values),
                     "README.md": readme,
                     "package.json": _ts_package_json(name),
+                    "tsconfig.json": _tsconfig_json(),
                     ".env.example": env_example,
                     ".github/workflows/ci.yml": _ci_workflow(name, "node"),
                     "LICENSE": license_text,
