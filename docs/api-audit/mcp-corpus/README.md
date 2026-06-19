@@ -81,9 +81,12 @@ Run the MCP server over stdio:
 python3.12 tools/axxon_mcp_server.py --transport stdio
 ```
 
-Use `--read-only` for a locked-down deployment. Running with no capability flags enables
-all groups; mutating tools still require per-call confirmation tokens and their approval
-environment variables.
+Running with no capability flags starts the seven-tool knowledge-only profile from this
+corpus and does not require Axxon credentials. Tool registration never grants mutation approval:
+`--enable-all` registers groups only, while mutation execution still requires
+an explicit group, the exact external approval value, and the per-call confirmation gate.
+Use `--read-only` when a client needs broad tool discovery with mutation execution
+authoritatively disabled.
 
 ## Maintenance Rules
 
