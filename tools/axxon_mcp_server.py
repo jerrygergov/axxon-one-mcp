@@ -151,6 +151,7 @@ def create_server(
     videowall: Any | None = None,
     web_api: Any | None = None,
     client_api: Any | None = None,
+    connection_profile: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
 ) -> Any:
@@ -250,6 +251,9 @@ def create_server(
                 "server args and restart. Mutations additionally need their AXXON_*_APPROVE env var."
             ),
         }
+
+    if connection_profile is not None:
+        register_session_connection_tools(server, connection_profile)
 
     if live is not None:
         register_live_tools(server, live)
@@ -434,6 +438,48 @@ def _ptz_mutation_refusal(ptz: Any, tool: str) -> dict[str, Any] | None:
         "message": f"Set {PTZ_APPROVE_ENV}=1 to enable PTZ session and control operations.",
         "approval_env": PTZ_APPROVE_ENV,
     }
+
+
+def register_session_connection_tools(server: Any, connection_profile: Any) -> None:
+    @server.tool(name="get_axxon_connection_status")
+    def get_axxon_connection_status() -> dict[str, Any]:
+        """Report whether an in-memory Axxon connection profile is configured."""
+        return connection_profile.get_axxon_connection_status()
+
+    @server.tool(name="request_axxon_connection")
+    def request_axxon_connection() -> dict[str, Any]:
+        """Return the fields Claude should ask the user for before live Axxon calls."""
+        return connection_profile.request_axxon_connection()
+
+    @server.tool(name="configure_axxon_connection")
+    def configure_axxon_connection(
+        host: str,
+        grpc_port: int,
+        http_port: int,
+        username: str,
+        password: str,
+        tls_cn: str = "",
+        http_scheme: str = "http",
+        http_url: str = "",
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        """Store Axxon connection details in this MCP process memory only."""
+        return connection_profile.configure_axxon_connection(
+            host=host,
+            grpc_port=grpc_port,
+            http_port=http_port,
+            username=username,
+            password=password,
+            tls_cn=tls_cn,
+            http_scheme=http_scheme,
+            http_url=http_url,
+            timeout=timeout,
+        )
+
+    @server.tool(name="clear_axxon_connection")
+    def clear_axxon_connection() -> dict[str, Any]:
+        """Forget the in-memory Axxon connection profile for this MCP process."""
+        return connection_profile.clear_axxon_connection()
 
 
 def register_ptz_tools(server: Any, ptz: Any) -> None:
@@ -2946,6 +2992,35 @@ def main() -> int:
     args = build_parser().parse_args()
     args = apply_enable_all(args)
     args = resolve_runtime_profile(args)
+    repo_root = Path(__file__).resolve().parents[1]
+    connection_profile = None
+    if any(
+        name.startswith("enable_") and name != "enable_all" and bool(value)
+        for name, value in vars(args).items()
+    ):
+        from axxon_mcp_session_profile import AxxonSessionConnectionProfile
+
+        connection_profile = AxxonSessionConnectionProfile(repo_root=repo_root, environ=os.environ)
+
+    def runtime_config_factory() -> Any:
+        if connection_profile is None:
+            raise RuntimeError("connection profile is not active for this server profile")
+        return connection_profile.config_factory()
+
+    def runtime_api_client_factory() -> Any:
+        from axxon_api_client import AxxonApiClient
+
+        return AxxonApiClient(runtime_config_factory())
+
+    def bind_connection_profile(capability: Any | None) -> Any | None:
+        if capability is None or connection_profile is None:
+            return capability
+        if hasattr(capability, "config_factory"):
+            setattr(capability, "config_factory", runtime_config_factory)
+        if capability.__class__.__name__ in {"AxxonAdminMutationRegistry", "AxxonBookmarkMutationRegistry"}:
+            setattr(capability, "client_factory", runtime_api_client_factory)
+        return connection_profile.wrap(capability)
+
     live = None
     if args.enable_live:
         from axxon_mcp_live import AxxonMcpLive
@@ -2953,16 +3028,11 @@ def main() -> int:
         live = AxxonMcpLive()
     operator = None
     if args.enable_operator:
-        from axxon_api_client import AxxonApiClient, AxxonClientConfig
         from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
 
-        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
-        # Build the live client lazily: the server must boot with no credentials, and
-        # AxxonApiClient requires a password. Constructing it inside the factory defers that
-        # until an operator tool is actually called (and the gate already needs approval+token).
         operator = OperatorRegistry(
-            client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
-            host=f"hosts/{config.tls_cn}",
+            client_factory=lambda: AxxonOperatorClient(runtime_api_client_factory()),
+            host=lambda: connection_profile.host_uid() if connection_profile is not None else "hosts/Server",
             enabled=approval_enabled("AXXON_OPERATOR_APPROVE", args=args),
         )
     generator = None
@@ -3010,18 +3080,16 @@ def main() -> int:
         detector_archive = AxxonMcpDetectorArchive()
     detector_playbooks = None
     if args.enable_detector_playbooks:
-        from axxon_api_client import AxxonApiClient, AxxonClientConfig
         from axxon_mcp_detector_archive import AxxonMcpDetectorArchive
         from axxon_mcp_detector_playbooks import APPROVAL_ENV, AxxonMcpDetectorPlaybooks
         from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
 
-        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
         detector_playbooks = AxxonMcpDetectorPlaybooks(
-            detector_archive=AxxonMcpDetectorArchive(),
+            detector_archive=AxxonMcpDetectorArchive(config_factory=runtime_config_factory),
             environ={APPROVAL_ENV: "1"} if approval_enabled(APPROVAL_ENV, args=args) else {},
             operator=OperatorRegistry(
-                client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
-                host=f"hosts/{config.tls_cn}",
+                client_factory=lambda: AxxonOperatorClient(runtime_api_client_factory()),
+                host=lambda: connection_profile.host_uid() if connection_profile is not None else "hosts/Server",
                 enabled=approval_enabled(APPROVAL_ENV, args=args),
             ),
         )
@@ -3051,24 +3119,20 @@ def main() -> int:
         )
     translator = None
     if args.enable_translator:
-        from axxon_api_client import AxxonApiClient, AxxonClientConfig
         from axxon_mcp_operator import AxxonOperatorClient, OperatorRegistry
         from axxon_mcp_translator import AxxonMcpTranslator
 
-        config = AxxonClientConfig.from_env(repo_root=Path(__file__).resolve().parents[1])
-
         def _make_operator() -> OperatorRegistry:
-            # Lazy client (see operator group): boot must not require credentials.
             return OperatorRegistry(
-                client_factory=lambda: AxxonOperatorClient(AxxonApiClient(config)),
-                host=f"hosts/{config.tls_cn}",
+                client_factory=lambda: AxxonOperatorClient(runtime_api_client_factory()),
+                host=lambda: connection_profile.host_uid() if connection_profile is not None else "hosts/Server",
                 enabled=False,
             )
 
         def _make_devices() -> Any:
             from axxon_mcp_devices_catalog import AxxonMcpDevicesCatalog
 
-            return AxxonMcpDevicesCatalog()
+            return AxxonMcpDevicesCatalog(config_factory=runtime_config_factory)
 
         translator = AxxonMcpTranslator(operator_factory=_make_operator, devices_factory=_make_devices)
     ptz = None
@@ -3285,8 +3349,64 @@ def main() -> int:
         from axxon_mcp_client_api import AxxonMcpClientApi
 
         client_api = AxxonMcpClientApi()
+    live = bind_connection_profile(live)
+    operator = bind_connection_profile(operator)
+    metadata = bind_connection_profile(metadata)
+    view = bind_connection_profile(view)
+    alarms = bind_connection_profile(alarms)
+    alarm_mutator = bind_connection_profile(alarm_mutator)
+    view_objects = bind_connection_profile(view_objects)
+    detector_archive = bind_connection_profile(detector_archive)
+    detector_playbooks = bind_connection_profile(detector_playbooks)
+    admin = bind_connection_profile(admin)
+    admin_mutator = bind_connection_profile(admin_mutator)
+    bookmarks = bind_connection_profile(bookmarks)
+    bookmark_mutator = bind_connection_profile(bookmark_mutator)
+    translator = bind_connection_profile(translator)
+    ptz = bind_connection_profile(ptz)
+    audit = bind_connection_profile(audit)
+    recognizer = bind_connection_profile(recognizer)
+    recognizer_write = bind_connection_profile(recognizer_write)
+    logic_control = bind_connection_profile(logic_control)
+    settings = bind_connection_profile(settings)
+    timezone = bind_connection_profile(timezone)
+    server_settings = bind_connection_profile(server_settings)
+    statistics = bind_connection_profile(statistics)
+    event_taxonomy = bind_connection_profile(event_taxonomy)
+    scene_description = bind_connection_profile(scene_description)
+    package_availability = bind_connection_profile(package_availability)
+    domain_topology = bind_connection_profile(domain_topology)
+    config_revisions = bind_connection_profile(config_revisions)
+    filesystem_browser = bind_connection_profile(filesystem_browser)
+    devices_catalog = bind_connection_profile(devices_catalog)
+    global_tracker = bind_connection_profile(global_tracker)
+    shared_kv = bind_connection_profile(shared_kv)
+    state_control = bind_connection_profile(state_control)
+    site_graph = bind_connection_profile(site_graph)
+    bulk_onboarding = bind_connection_profile(bulk_onboarding)
+    groups = bind_connection_profile(groups)
+    discovery = bind_connection_profile(discovery)
+    gdpr_cleanup = bind_connection_profile(gdpr_cleanup)
+    control = bind_connection_profile(control)
+    map_providers = bind_connection_profile(map_providers)
+    logic_alerts = bind_connection_profile(logic_alerts)
+    config_change = bind_connection_profile(config_change)
+    archive_volume = bind_connection_profile(archive_volume)
+    bookmark_extras = bind_connection_profile(bookmark_extras)
+    security_credentials = bind_connection_profile(security_credentials)
+    auth_sessions = bind_connection_profile(auth_sessions)
+    layout_manager = bind_connection_profile(layout_manager)
+    license_reads = bind_connection_profile(license_reads)
+    misc_reads = bind_connection_profile(misc_reads)
+    heatmap = bind_connection_profile(heatmap)
+    media = bind_connection_profile(media)
+    export = bind_connection_profile(export)
+    videowall = bind_connection_profile(videowall)
+    web_api = bind_connection_profile(web_api)
+    client_api = bind_connection_profile(client_api)
     server = create_server(
         corpus_dir=args.corpus_dir,
+        connection_profile=connection_profile,
         live=live,
         operator=operator,
         generator=generator,

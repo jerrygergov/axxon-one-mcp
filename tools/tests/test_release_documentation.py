@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 import re
 import sys
@@ -47,27 +46,31 @@ class ReleaseDocumentationTests(unittest.TestCase):
         for phrase in forbidden:
             self.assertNotIn(phrase, text)
 
-    def test_readme_documents_runtime_defaults_and_customer_overrides(self) -> None:
-        client = importlib.import_module("axxon_api_client")
-        defaults = client.AxxonClientConfig.from_env()
+    def test_readme_documents_runtime_connection_profile(self) -> None:
         text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertIn(defaults.host, text)
-        self.assertIn(defaults.username, text)
-        self.assertIn(defaults.tls_cn, text)
-        self.assertIn("development-oriented runtime defaults", text)
+        self.assertIn("Do not put the Axxon host/IP", text)
+        self.assertIn("Claude Desktop config or environment variables", text)
+        self.assertIn("configure_axxon_connection", text)
+        self.assertIn("host`, `grpc_port`, `http_port`, `username`, and `password", text)
+        self.assertIn("process memory", text)
+        self.assertIn("clear_axxon_connection", text)
+        self.assertIn("password_present: true", text)
         self.assertIn("least-privilege", text)
         self.assertIn("HTTPS", text)
-        self.assertIn("trusted lab", text)
-        self.assertRegex(text, r"override .*AXXON_HOST.*AXXON_USERNAME.*AXXON_PASSWORD.*AXXON_TLS_CN")
+        self.assertIn("tls_cn", text)
+        self.assertNotRegex(text, r'"AXXON_(HOST|HTTP_URL|HTTP_PORT|GRPC_PORT|USERNAME|PASSWORD|TLS_CN)"')
 
     def test_readme_describes_connect_helper_scope_truthfully(self) -> None:
         text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        lower_text = text.lower()
 
-        self.assertIn("server-backed groups expose connection helper tools", text)
-        self.assertIn("offline authoring and planning exceptions", text)
-        for offline_group in ("generator", "partner", "translator", "operator planning"):
+        self.assertIn("server-backed groups expose connection helper tools", lower_text)
+        self.assertIn("offline authoring exceptions", lower_text)
+        for offline_group in ("generator", "partner", "translator"):
             self.assertIn(offline_group, text)
+        self.assertIn("Operator planning is also transport-free", text)
+        self.assertIn("requires the runtime connection profile", text)
         self.assertNotIn("Every group exposes a `*_connect_axxon_profile` tool", text)
         self.assertNotIn("the rest connect to the live server", text)
 

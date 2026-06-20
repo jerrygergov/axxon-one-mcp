@@ -1845,7 +1845,7 @@ class OperatorRegistry:
     """
 
     client_factory: Callable[[], Any]
-    host: str = "hosts/Server"
+    host: str | Callable[[], str] = "hosts/Server"
     enabled: bool = True
     _plans: dict[str, dict[str, Any]] = field(default_factory=dict)
     _state: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -1860,6 +1860,9 @@ class OperatorRegistry:
     def known_workflows(self) -> list[str]:
         return sorted(WORKFLOWS.keys())
 
+    def host_uid(self) -> str:
+        return self.host() if callable(self.host) else self.host
+
     def plan(self, workflow: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         params = dict(params or {})
         if workflow not in WORKFLOWS:
@@ -1870,7 +1873,7 @@ class OperatorRegistry:
             }
             self._record("plan", workflow=workflow, status="gap")
             return gap
-        plan_body = WORKFLOWS[workflow](self.host, params)
+        plan_body = WORKFLOWS[workflow](self.host_uid(), params)
         # Builders may return a "gap" record (e.g. missing required fixture parameter).
         if plan_body.get("status") == "gap":
             self._record("plan", workflow=workflow, status="gap")
@@ -1928,7 +1931,7 @@ class OperatorRegistry:
 
         def capture_snapshot(target_uid: str) -> dict[str, Any] | None:
             capture = plan.get("snapshot_capture") or {}
-            parent_uid = str(capture.get("parent_uid") or "").strip() or _infer_parent_uid(target_uid, self.host)
+            parent_uid = str(capture.get("parent_uid") or "").strip() or _infer_parent_uid(target_uid, self.host_uid())
             snapshot = _snapshot_unit_from_read(client.read_unit(target_uid), target_uid, parent_uid)
             if snapshot is not None:
                 snapshots.append(snapshot)

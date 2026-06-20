@@ -93,6 +93,26 @@ class StubLive:
         return {"subjects": subjects or [], "event_types": event_types or [], "timeout": timeout, "limit": limit}
 
 
+class StubProfileBackedLive:
+    def __init__(self, config_factory):
+        self.config_factory = config_factory
+
+    def connect_axxon_profile(self, profile: str = "env"):
+        config = self.config_factory()
+        return {
+            "connected": True,
+            "profile_name": profile,
+            "profile": {
+                "host": config.host,
+                "grpc_port": config.grpc_port,
+                "http_port": config.http_port,
+                "username": config.username,
+                "password_present": bool(config.password),
+                "tls_cn": config.tls_cn,
+            },
+        }
+
+
 class StubOperator:
     def known_workflows(self):
         return ["temp_camera"]
@@ -692,6 +712,67 @@ class AxxonMcpServerTests(unittest.TestCase):
         self.assertEqual(intervals["hours"], 2.0)
         bounded = server.tools["subscribe_events_bounded"](["hosts/Server/AppDataDetector.27/EventSupplier"], ["ET_DETECTOR"], 3.0, 10)
         self.assertEqual(bounded["limit"], 10)
+
+    def test_create_server_registers_session_connection_tools(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        from axxon_mcp_session_profile import AxxonSessionConnectionProfile
+
+        connection = AxxonSessionConnectionProfile(repo_root=Path("/repo"), environ={})
+        server = module.create_server(
+            docs=StubDocs(),
+            connection_profile=connection,
+            fastmcp_factory=FakeFastMCP,
+        )
+
+        for name in (
+            "get_axxon_connection_status",
+            "request_axxon_connection",
+            "configure_axxon_connection",
+            "clear_axxon_connection",
+        ):
+            self.assertIn(name, server.tools)
+
+        self.assertEqual(
+            server.tools["get_axxon_connection_status"]()["status"],
+            "needs_connection_profile",
+        )
+        configured = server.tools["configure_axxon_connection"](
+            "10.0.0.5",
+            20109,
+            80,
+            "operator",
+            "secret",
+            "Server",
+        )
+        self.assertEqual(configured["status"], "configured")
+        self.assertTrue(configured["profile"]["password_present"])
+        self.assertNotIn("secret", repr(configured))
+        self.assertEqual(server.tools["clear_axxon_connection"]()["status"], "cleared")
+
+    def test_session_wrapped_live_tools_ask_for_profile_before_configuration(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        from axxon_mcp_session_profile import AxxonSessionConnectionProfile
+
+        connection = AxxonSessionConnectionProfile(repo_root=Path("/repo"), environ={})
+        server = module.create_server(
+            docs=StubDocs(),
+            connection_profile=connection,
+            live=connection.wrap(StubProfileBackedLive(connection.config_factory)),
+            fastmcp_factory=FakeFastMCP,
+        )
+
+        missing = server.tools["connect_axxon_profile"]("env")
+        self.assertEqual(missing["status"], "needs_connection_profile")
+        self.assertEqual(missing["required_fields"], ["host", "grpc_port", "http_port", "username", "password"])
+
+        server.tools["configure_axxon_connection"]("10.0.0.5", 20109, 80, "operator", "secret", "NodeA")
+        connected = server.tools["connect_axxon_profile"]("env")
+
+        self.assertEqual(connected["connected"], True)
+        self.assertEqual(connected["profile"]["host"], "10.0.0.5")
+        self.assertEqual(connected["profile"]["username"], "operator")
+        self.assertTrue(connected["profile"]["password_present"])
+        self.assertNotIn("secret", repr(connected))
 
     def test_create_server_registers_site_graph_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -1748,6 +1829,61 @@ class AxxonMcpServerTests(unittest.TestCase):
         # Building the client eagerly would raise; deferring means only an actual call would.
         with self.assertRaises(ValueError):
             AxxonApiClient(config)
+
+    def test_operator_planning_uses_runtime_profile_host_uid(self) -> None:
+        from axxon_mcp_operator import OperatorRegistry
+        from axxon_mcp_session_profile import AxxonSessionConnectionProfile
+
+        profile = AxxonSessionConnectionProfile(repo_root=Path("/repo"), environ={})
+        operator = profile.wrap(
+            OperatorRegistry(
+                client_factory=lambda: (_ for _ in ()).throw(AssertionError("lazy")),
+                host=profile.host_uid,
+                enabled=False,
+            )
+        )
+
+        missing = operator.plan("temp_camera", {"display_name_hint": "demo"})
+        self.assertEqual(missing["status"], "needs_connection_profile")
+
+        profile.configure_axxon_connection("10.0.0.5", 20109, 80, "operator", "secret", "RuntimeNode")
+        planned = operator.plan("temp_camera", {"display_name_hint": "demo"})
+
+        self.assertEqual(planned["status"], "planned")
+        self.assertEqual(planned["steps"][0]["payload"]["added"][0]["uid"], "hosts/RuntimeNode")
+
+    def test_main_enable_all_uses_runtime_profile_without_connection_env_values(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        captured: dict[str, object] = {}
+
+        class StubServer:
+            def run(self, *, transport: str) -> None:
+                self.transport = transport
+
+        def capture_server(**kwargs: object) -> StubServer:
+            captured.update(kwargs)
+            return StubServer()
+
+        env = {
+            "AXXON_HOST": "persisted.example",
+            "AXXON_HTTP_URL": "http://persisted.example:80",
+            "AXXON_HTTP_PORT": "80",
+            "AXXON_GRPC_PORT": "20109",
+            "AXXON_USERNAME": "persisted-user",
+            "AXXON_PASSWORD": "persisted-password",
+        }
+        with (
+            mock.patch.dict(os.environ, env, clear=True),
+            mock.patch.object(sys, "argv", ["axxon_mcp_server.py", "--enable-all"]),
+            mock.patch.object(module, "create_server", side_effect=capture_server),
+        ):
+            self.assertEqual(module.main(), 0)
+
+        connection_profile = captured["connection_profile"]
+        status = connection_profile.get_axxon_connection_status()
+        self.assertEqual(status["status"], "needs_connection_profile")
+        self.assertNotIn("persisted.example", repr(status))
+        self.assertNotIn("persisted-password", repr(status))
 
 
 if __name__ == "__main__":
