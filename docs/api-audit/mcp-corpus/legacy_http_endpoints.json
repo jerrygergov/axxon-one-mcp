@@ -1,0 +1,816 @@
+{
+  "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json",
+  "endpoint_count": 81,
+  "endpoints": [
+    {
+      "id": "http-grpc-gateway-post-grpc-01-auth-session-get-token-authenticateex",
+      "surface": "http_grpc_gateway",
+      "verb": "POST",
+      "path": "/grpc",
+      "name": "01 \u00b7 Auth & Session / Get token (AuthenticateEx)",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-currentuser-01-auth-session-get-current-web-client-user",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/currentuser",
+      "name": "01 \u00b7 Auth & Session / Get current Web-Client user",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-uuid-01-auth-session-get-uuid",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/uuid",
+      "name": "01 \u00b7 Auth & Session / Get UUID",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-hosts-02-servers-get-server-list",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/hosts/",
+      "name": "02 \u00b7 Servers / Get server list",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-hosts-hostname-02-servers-get-server-info",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/hosts/{{hostname}}",
+      "name": "02 \u00b7 Servers / Get server info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-statistics-hardware-02-servers-hardware-statistics",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/statistics/hardware",
+      "name": "02 \u00b7 Servers / Hardware statistics",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-product-version-02-servers-product-version",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/product/version",
+      "name": "02 \u00b7 Servers / Product version",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-statistics-webserver-02-servers-web-server-statistics",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/statistics/webserver",
+      "name": "02 \u00b7 Servers / Web server statistics",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-camera-list-03-cameras-live-list-all-cameras",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/camera/list",
+      "name": "03 \u00b7 Cameras & Live / List all cameras",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-camera-batch-03-cameras-live-batch-camera-info",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/camera/batch",
+      "name": "03 \u00b7 Cameras & Live / Batch camera info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-stream-info-hostname-deviceipint-2-sourceendpoint-video-0-0-",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/stream-info/{{hostname}}/DeviceIpint.2/SourceEndpoint.video:0:0",
+      "name": "03 \u00b7 Cameras & Live / Stream info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-statistics-hostname-deviceipint-1-sourceendpoint-video-0-0-0",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/statistics/{{hostname}}/DeviceIpint.1/SourceEndpoint.video:0:0",
+      "name": "03 \u00b7 Cameras & Live / Camera statistics",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-live-media-videosourceid-03-cameras-live-get-live-stream-rts",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/live/media/{{videoSourceId}}",
+      "name": "03 \u00b7 Cameras & Live / Get live stream (RTSP link)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-live-media-snapshot-videosourceid-03-cameras-live-get-camera",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/live/media/snapshot/{{videoSourceId}}",
+      "name": "03 \u00b7 Cameras & Live / Get camera snapshot (original resolution)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-rtsp-stat-03-cameras-live-rtsp-statistics",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/rtsp/stat",
+      "name": "03 \u00b7 Cameras & Live / RTSP statistics",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-group-04-groups-list-all-groups",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/group",
+      "name": "04 \u00b7 Groups / List all groups",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-group-9a64e2a0-eb92-4adc-bc4f-81d30ceb6c2f-04-groups-group-c",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/group/9a64e2a0-eb92-4adc-bc4f-81d30ceb6c2f",
+      "name": "04 \u00b7 Groups / Group contents by ID",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-group-contains-videosourceid-04-groups-groups-containing-a-c",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/group/contains/{{videoSourceId}}",
+      "name": "04 \u00b7 Groups / Groups containing a camera",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-list-hostname-deviceipint-1-05-ptz-telemet",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/list/{{hostname}}/DeviceIpint.1",
+      "name": "05 \u00b7 PTZ / Telemetry / List telemetry devices on a camera",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-session-acquire-hostname-deviceipint-2-tel",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/session/acquire/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Acquire telemetry session",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-session-keepalive-hostname-deviceipint-2-t",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/session/keepalive/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Keep session alive",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-session-release-hostname-deviceipint-2-tel",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/session/release/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Release session",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-info-hostname-deviceipint-2-telemetrycontr",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/info/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Get telemetry info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-move-hostname-deviceipint-25-telemetrycont",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/move/{{hostname}}/DeviceIpint.25/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Move (pan/tilt)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-zoom-hostname-deviceipint-25-telemetrycont",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/zoom/{{hostname}}/DeviceIpint.25/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Zoom",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-focus-hostname-deviceipint-25-telemetrycon",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/focus/{{hostname}}/DeviceIpint.25/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Focus",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-iris-hostname-deviceipint-25-telemetrycont",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/iris/{{hostname}}/DeviceIpint.25/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Iris",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-move-point-hostname-deviceipint-23-telemet",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/move/point/{{hostname}}/DeviceIpint.23/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Move to point",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-zoom-area-hostname-deviceipint-24-telemetr",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/zoom/area/{{hostname}}/DeviceIpint.24/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Zoom to area",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-auto-hostname-deviceipint-24-telemetrycont",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/auto/{{hostname}}/DeviceIpint.24/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Auto (focus/iris)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-preset-info-hostname-deviceipint-2-telemet",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/preset/info/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Preset info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-preset-set-hostname-deviceipint-2-telemetr",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/preset/set/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Create / edit preset",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-preset-go-hostname-deviceipint-2-telemetry",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/preset/go/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Go to preset",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-preset-remove-hostname-deviceipint-2-telem",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/preset/remove/{{hostname}}/DeviceIpint.2/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Remove preset",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-control-telemetry-position-hostname-deviceipint-25-telemetry",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/control/telemetry/position/{{hostname}}/DeviceIpint.25/TelemetryControl.0",
+      "name": "05 \u00b7 PTZ / Telemetry / Get PTZ coordinates",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-list-videosourceid-06-archive-list-archives-for-a-ca",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/list/{{videoSourceId}}",
+      "name": "06 \u00b7 Archive / List archives for a camera",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-contents-intervals-videosourceid-past-future-06-arch",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/contents/intervals/{{videoSourceId}}/past/future",
+      "name": "06 \u00b7 Archive / Archive intervals (content ranges)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-statistics-depth-videosourceid-06-archive-archive-de",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/statistics/depth/{{videoSourceId}}",
+      "name": "06 \u00b7 Archive / Archive depth (default archive)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-statistics-capacity-videosourceid-past-future-06-arc",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/statistics/capacity/{{videoSourceId}}/past/future",
+      "name": "06 \u00b7 Archive / Archive capacity",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-health-hostname-past-future-06-archive-archive-healt",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/health/{{hostname}}/past/future",
+      "name": "06 \u00b7 Archive / Archive health",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-calendar-videosourceid-begintime-endtime-06-archive-",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/calendar/{{videoSourceId}}/{{beginTime}}/{{endTime}}",
+      "name": "06 \u00b7 Archive / Archive calendar",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-media-videosourceid-starttime-06-archive-get-archive",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/media/{{videoSourceId}}/{{startTime}}",
+      "name": "06 \u00b7 Archive / Get archive stream (RTSP/HTTP paths)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-media-rendered-info-streamuuid-06-archive-rendered-f",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/media/rendered-info/{{streamUuid}}",
+      "name": "06 \u00b7 Archive / Rendered frame info",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-media-stop-streamuuid-06-archive-stop-archive-stream",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/media/stop/{{streamUuid}}",
+      "name": "06 \u00b7 Archive / Stop archive stream",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-contents-frames-videosourceid-starttime-06-archive-r",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/contents/frames/{{videoSourceId}}/{{startTime}}",
+      "name": "06 \u00b7 Archive / Review frame by timestamp",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-contents-bookmarks-hostname-future-past-07-bookmarks",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/contents/bookmarks/{{hostname}}/future/past",
+      "name": "07 \u00b7 Bookmarks / Get bookmarks (by host)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-contents-bookmarks-videosourceid-future-past-07-book",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/contents/bookmarks/{{videoSourceId}}/future/past",
+      "name": "07 \u00b7 Bookmarks / Get bookmarks (by camera)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-archive-contents-bookmarks-07-bookmarks-create-bookmark",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/archive/contents/bookmarks/",
+      "name": "07 \u00b7 Bookmarks / Create bookmark",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-put-archive-contents-bookmarks-07-bookmarks-edit-bookmark",
+      "surface": "legacy_web_http",
+      "verb": "PUT",
+      "path": "/archive/contents/bookmarks/",
+      "name": "07 \u00b7 Bookmarks / Edit bookmark",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-delete-archive-contents-bookmarks-07-bookmarks-delete-bookmark",
+      "surface": "legacy_web_http",
+      "verb": "DELETE",
+      "path": "/archive/contents/bookmarks/",
+      "name": "07 \u00b7 Bookmarks / Delete bookmark",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-search-face-hostname-avdetector-2-eventsupplier-past-future",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/search/face/{{hostname}}/AVDetector.2/EventSupplier/past/future",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Face search (start)",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-search-face-searchguid-result-08-search-face-lp-vmda-heatmap",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/search/face/{{searchGuid}}/result",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Face search (results)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-search-auto-hostname-avdetector-2-eventsupplier-past-future",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/search/auto/{{hostname}}/AVDetector.2/EventSupplier/past/future",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / LP search (start)",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-search-auto-searchguid-result-08-search-face-lp-vmda-heatmap",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/search/auto/{{searchGuid}}/result",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / LP search (results)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-search-stranger-hostname-avdetector-2-eventsupplier-past-fu",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/search/stranger/{{hostname}}/AVDetector.2/EventSupplier/past/future",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Stranger search (start)",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-search-stranger-searchguid-result-08-search-face-lp-vmda-hea",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/search/stranger/{{searchGuid}}/result",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Stranger search (results)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-faceappearancerate-hostname-avdetector-2-eventsupplier-past",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/faceAppearanceRate/{{hostname}}/AVDetector.2/EventSupplier/past/future",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Face appearance rate",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-search-heatmap-hostname-avdetector-2-sourceendpoint-vmda-pa",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/search/heatmap/{{hostname}}/AVDetector.2/SourceEndpoint.vmda/past/future",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Heat map (start)",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-search-heatmap-searchguid-result-08-search-face-lp-vmda-heat",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/search/heatmap/{{searchGuid}}/result",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Heat map (results)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-delete-search-vmda-searchguid-08-search-face-lp-vmda-heatmap-can",
+      "surface": "legacy_web_http",
+      "verb": "DELETE",
+      "path": "/search/vmda/{{searchGuid}}",
+      "name": "08 \u00b7 Search (Face / LP / VMDA / Heatmap) / Cancel search",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-detectors-hostname-deviceipint-1-09-detectors-events-alarms-",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/detectors/{{hostname}}/DeviceIpint.1",
+      "name": "09 \u00b7 Detectors / Events / Alarms / List detectors on a camera",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-audit-hostname-past-future-09-detectors-events-alarms-get-au",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/audit/{{hostname}}/past/future",
+      "name": "09 \u00b7 Detectors / Events / Alarms / Get audit log",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-events-alerts-future-past-09-detectors-events-alarms",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/events/alerts/future/past",
+      "name": "09 \u00b7 Detectors / Events / Alarms / List alarms (all domain)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-events-alerts-hostname-past-future-09-detectors-even",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/events/alerts/{{hostname}}/past/future",
+      "name": "09 \u00b7 Detectors / Events / Alarms / List alarms (by host)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-archive-events-alerts-videosourceid-past-future-09-detectors",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/archive/events/alerts/{{videoSourceId}}/past/future",
+      "name": "09 \u00b7 Detectors / Events / Alarms / List alarms (by camera)",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-post-export-archive-videosourceid-begintime-endtime-10-export-st",
+      "surface": "legacy_web_http",
+      "verb": "POST",
+      "path": "/export/archive/{{videoSourceId}}/{{beginTime}}/{{endTime}}",
+      "name": "10 \u00b7 Export / Start export",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-export-exportid-status-10-export-get-export-status",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/export/{{exportId}}/status",
+      "name": "10 \u00b7 Export / Get export status",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-export-exportid-file-10-export-download-export-file",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/export/{{exportId}}/file",
+      "name": "10 \u00b7 Export / Download export file",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-delete-export-exportid-10-export-finalize-delete-export",
+      "surface": "legacy_web_http",
+      "verb": "DELETE",
+      "path": "/export/{{exportId}}",
+      "name": "10 \u00b7 Export / Finalize / delete export",
+      "safety_class": "mutating",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-macro-list-11-macros-list-macros",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/macro/list/",
+      "name": "11 \u00b7 Macros / List macros",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-macro-execute-macroid-11-macros-execute-macro",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/macro/execute/{{macroId}}",
+      "name": "11 \u00b7 Macros / Execute macro",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-getlayouts-13-client-http-api-port-8888-get-layouts",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/GetLayouts",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Get layouts",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "client-http-api-get-switchlayout-13-client-http-api-port-8888-switch-layout",
+      "surface": "client_http_api",
+      "verb": "GET",
+      "path": "/SwitchLayout",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Switch layout",
+      "safety_class": "external-client",
+      "live_status": "fixture-needed",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-getcameras-13-client-http-api-port-8888-get-cameras-on-layou",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/GetCameras",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Get cameras on layout",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "client-http-api-get-addcamera-13-client-http-api-port-8888-add-camera-to-layout",
+      "surface": "client_http_api",
+      "verb": "GET",
+      "path": "/AddCamera",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Add camera to layout",
+      "safety_class": "external-client",
+      "live_status": "fixture-needed",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "client-http-api-get-removecamera-13-client-http-api-port-8888-remove-camera-from",
+      "surface": "client_http_api",
+      "verb": "GET",
+      "path": "/RemoveCamera",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Remove camera from layout",
+      "safety_class": "external-client",
+      "live_status": "fixture-needed",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-removeallcameras-13-client-http-api-port-8888-remove-all-cam",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/RemoveAllCameras",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Remove all cameras",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "client-http-api-get-selectdisplay-13-client-http-api-port-8888-select-display",
+      "surface": "client_http_api",
+      "verb": "GET",
+      "path": "/SelectDisplay",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Select display",
+      "safety_class": "external-client",
+      "live_status": "fixture-needed",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-gotoarchive-13-client-http-api-port-8888-go-to-archive",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/GotoArchive",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Go to archive",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-searcharchive-13-client-http-api-port-8888-search-archive",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/SearchArchive",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Search archive",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    },
+    {
+      "id": "legacy-web-http-get-gotoimmersion-13-client-http-api-port-8888-go-to-immersion-m",
+      "surface": "legacy_web_http",
+      "verb": "GET",
+      "path": "/GotoImmersion",
+      "name": "13 \u00b7 Client HTTP API (port 8888) / Go to immersion mode",
+      "safety_class": "read",
+      "live_status": "documented",
+      "source": "/Users/jerrygergov/Documents/GitHub/axxon-one-mcp/docs/Axxon_One_Integration_APIs.postman_collection.json"
+    }
+  ]
+}

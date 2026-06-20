@@ -1,5 +1,5 @@
 {
-  "method_count": 361,
+  "method_count": 363,
   "methods": [
     {
       "fqmn": "axxonsoft.bl.acfa.AcfaService.ListUnitsActions",
@@ -4867,6 +4867,32 @@
       "service": "VMDAService",
       "streaming": "server",
       "evidence": ".agent/tasks/phase-27-vmda-query-typed/raw/live-verify.txt (typed motion-in-area query, real VMDA db + source)"
+    },
+    {
+      "fqmn": "grpc.health.v1.Health.Check",
+      "http_annotation": "",
+      "live_status": "tested-pass",
+      "method": "Check",
+      "package": "grpc.health.v1",
+      "proto": "grpc/health/v1/health.proto",
+      "request": "HealthCheckRequest",
+      "response": "HealthCheckResponse",
+      "safety_class": "read",
+      "service": "Health",
+      "streaming": "none"
+    },
+    {
+      "fqmn": "grpc.health.v1.Health.Watch",
+      "http_annotation": "",
+      "live_status": "tested-pass",
+      "method": "Watch",
+      "package": "grpc.health.v1",
+      "proto": "grpc/health/v1/health.proto",
+      "request": "HealthCheckRequest",
+      "response": "HealthCheckResponse",
+      "safety_class": "read",
+      "service": "Health",
+      "streaming": "server"
     }
   ],
   "source": "docs/api-audit/grpc-api-catalog.csv"

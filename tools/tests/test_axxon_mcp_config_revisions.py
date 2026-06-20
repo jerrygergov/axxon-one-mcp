@@ -81,6 +81,14 @@ class _GetRevisionInfoRequest:
         self.nodes = list(nodes or [])
 
 
+class _SetRevisionRequest:
+    def __init__(self, type=0, node="", revision=None, comment=""):
+        self.type = type
+        self.node = node
+        self.revision = revision
+        self.comment = comment
+
+
 class _CollectBackupRequest:
     EBackupType = _EBackupType
 
@@ -97,10 +105,54 @@ class _BackupChunk:
         self.chunk_data = data
 
 
+class _InitialRestoreData:
+    def __init__(self, type=None, node="", total_size_bytes=0):
+        self.type = list(type or [])
+        self.node = node
+        self.total_size_bytes = total_size_bytes
+
+
+class _RestoreBackupRequest:
+    class ERestoreType:
+        LOCAL = 0
+        CLEAN_LOCAL = 1
+        SHARED = 2
+        CLEAN_SHARED = 3
+        LICENSE = 4
+        TICKETS = 5
+        CLONE = 6
+        _by_name = {
+            "LOCAL": 0,
+            "CLEAN_LOCAL": 1,
+            "SHARED": 2,
+            "CLEAN_SHARED": 3,
+            "LICENSE": 4,
+            "TICKETS": 5,
+            "CLONE": 6,
+        }
+
+        @classmethod
+        def Value(cls, name):
+            return cls._by_name[name]
+
+    InitialData = _InitialRestoreData
+
+    def __init__(self, initial_data=None, chunk_data=b""):
+        self.initial_data = initial_data
+        self.chunk_data = chunk_data
+
+
+class _EmptyResponse:
+    pass
+
+
 class _Pb2:
     EConfigType = _EConfigType
+    Revision = _Revision
     GetRevisionInfoRequest = _GetRevisionInfoRequest
+    SetRevisionRequest = _SetRevisionRequest
     CollectBackupRequest = _CollectBackupRequest
+    RestoreBackupRequest = _RestoreBackupRequest
 
 
 class _Stub:
@@ -117,6 +169,20 @@ class _Stub:
         self._rec.append(("CollectBackup", list(request.type), request.node))
         for i in range(self._chunk_count):
             yield _BackupChunk(total=self._chunk_count * len(_BACKUP_BYTES), index=i, data=_BACKUP_BYTES)
+
+    def SetRevision(self, request, timeout=None):
+        self._rec.append(("SetRevision", request.type, request.node, request.revision.number, request.revision.hash, request.comment))
+        return _EmptyResponse()
+
+    def RestoreBackup(self, requests, timeout=None):
+        summarized = []
+        for request in requests:
+            if request.initial_data is not None:
+                summarized.append(("initial", list(request.initial_data.type), request.initial_data.node, request.initial_data.total_size_bytes))
+            else:
+                summarized.append(("chunk", len(request.chunk_data)))
+        self._rec.append(("RestoreBackup", summarized))
+        return _EmptyResponse()
 
 
 class FakeClient:
@@ -136,10 +202,11 @@ class FakeClient:
         return _Pb2()
 
 
-def _inst(rev_response=None, chunk_count=3):
+def _inst(rev_response=None, chunk_count=3, enabled=False):
     inst = module.AxxonMcpConfigRevisions(
         client_factory=lambda config: FakeClient(config, rev_response, chunk_count),
         config_factory=lambda: FakeConfig(),
+        enabled=enabled,
     )
     inst.config_revisions_connect_axxon_profile("env")
     return inst
@@ -241,6 +308,65 @@ class ExportTests(unittest.TestCase):
     def test_tool_names_exported(self) -> None:
         self.assertIn("get_revision_info", module.CONFIG_REVISIONS_TOOL_NAMES)
         self.assertIn("collect_backup_probe", module.CONFIG_REVISIONS_TOOL_NAMES)
+        self.assertIn("set_revision", module.CONFIG_REVISIONS_TOOL_NAMES)
+        self.assertIn("restore_backup", module.CONFIG_REVISIONS_TOOL_NAMES)
+
+
+class ConfigMaintenanceMutationTests(unittest.TestCase):
+    def test_connect_reports_gate(self) -> None:
+        out = _inst(enabled=True).config_revisions_connect_axxon_profile("env")
+        self.assertEqual(out["mode"], "read+maintenance")
+        self.assertTrue(out["enabled"])
+        self.assertEqual(out["approval_env"], module.CONFIG_REVISIONS_APPROVE_ENV)
+
+    def test_set_revision_requires_approval(self) -> None:
+        inst = _inst(enabled=False)
+        out = inst.set_revision("LOCAL_CONFIG", "Server", 5, "abc", "rollback", module.SET_REVISION_CONFIRMATION)
+        self.assertEqual(out["status"], "disabled")
+        self.assertEqual(out["approval_env"], module.CONFIG_REVISIONS_APPROVE_ENV)
+        self.assertFalse(any(call[0] == "SetRevision" for call in inst.client.calls))
+
+    def test_set_revision_requires_confirmation(self) -> None:
+        inst = _inst(enabled=True)
+        out = inst.set_revision("LOCAL_CONFIG", "Server", 5, "abc", "rollback", "wrong")
+        self.assertEqual(out["status"], "gap")
+        self.assertIn(module.SET_REVISION_CONFIRMATION, out["message"])
+        self.assertFalse(any(call[0] == "SetRevision" for call in inst.client.calls))
+
+    def test_set_revision_dispatches_when_confirmed(self) -> None:
+        inst = _inst(enabled=True)
+        out = inst.set_revision("SHARED_CONFIG", "Server", 7, "hash-7", "codex rollback", module.SET_REVISION_CONFIRMATION)
+        self.assertEqual(out["status"], "applied")
+        self.assertEqual(out["tool"], "set_revision")
+        call = [c for c in inst.client.calls if c[0] == "SetRevision"][0]
+        self.assertEqual(call, ("SetRevision", 1, "Server", 7, "hash-7", "codex rollback"))
+
+    def test_restore_backup_requires_approval(self) -> None:
+        inst = _inst(enabled=False)
+        out = inst.restore_backup(["LOCAL"], "Server", backup_hex=_BACKUP_BYTES.hex(), confirmation=module.RESTORE_BACKUP_CONFIRMATION)
+        self.assertEqual(out["status"], "disabled")
+        self.assertEqual(out["approval_env"], module.CONFIG_REVISIONS_APPROVE_ENV)
+        self.assertFalse(any(call[0] == "RestoreBackup" for call in inst.client.calls))
+
+    def test_restore_backup_sends_initial_and_chunks_without_returning_blob(self) -> None:
+        inst = _inst(enabled=True)
+        out = inst.restore_backup(
+            ["LOCAL", "SHARED"],
+            "Server",
+            backup_hex=_BACKUP_BYTES.hex(),
+            chunk_size_kb=1,
+            max_bytes=len(_BACKUP_BYTES),
+            confirmation=module.RESTORE_BACKUP_CONFIRMATION,
+        )
+        self.assertEqual(out["status"], "applied")
+        self.assertEqual(out["tool"], "restore_backup")
+        self.assertEqual(out["bytes_sent"], len(_BACKUP_BYTES))
+        self.assertGreaterEqual(out["chunks_sent"], 1)
+        self.assertNotIn("SECRET-BACKUP-BYTES", str(out))
+        call = [c for c in inst.client.calls if c[0] == "RestoreBackup"][0]
+        sent = call[1]
+        self.assertEqual(sent[0], ("initial", [0, 2], "Server", len(_BACKUP_BYTES)))
+        self.assertEqual(sum(item[1] for item in sent[1:]), len(_BACKUP_BYTES))
 
 
 if __name__ == "__main__":

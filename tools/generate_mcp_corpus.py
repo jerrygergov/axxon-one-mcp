@@ -14,6 +14,7 @@ from typing import Any
 CORPUS_FILES = [
     "api_methods.json",
     "http_endpoints.json",
+    "legacy_http_endpoints.json",
     "task_recipes.json",
     "fixtures.json",
     "safety_policies.json",
@@ -28,7 +29,16 @@ def read_json(path: Path, fallback: Any) -> Any:
 
 
 def write_json(path: Path, payload: Any) -> None:
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=True, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+
+
+def preserve_existing_if_sources_missing(output_dir: Path, name: str, payload: Any, sources: list[Path]) -> Any:
+    if all(source.exists() for source in sources):
+        return payload
+    existing = read_json(output_dir / name, None)
+    if existing:
+        return existing
+    return payload
 
 
 def coverage_counts(matrix: list[dict[str, Any]]) -> dict[str, int]:
@@ -62,6 +72,39 @@ def load_api_methods(path: Path) -> list[dict[str, Any]]:
         ]
 
 
+def add_standard_health_methods(methods: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    existing = {method.get("fqmn") for method in methods}
+    additions = [
+        {
+            "package": "grpc.health.v1",
+            "service": "Health",
+            "method": "Check",
+            "fqmn": "grpc.health.v1.Health.Check",
+            "request": "HealthCheckRequest",
+            "response": "HealthCheckResponse",
+            "streaming": "none",
+            "safety_class": "read",
+            "live_status": "tested-pass",
+            "http_annotation": "",
+            "proto": "grpc/health/v1/health.proto",
+        },
+        {
+            "package": "grpc.health.v1",
+            "service": "Health",
+            "method": "Watch",
+            "fqmn": "grpc.health.v1.Health.Watch",
+            "request": "HealthCheckRequest",
+            "response": "HealthCheckResponse",
+            "streaming": "server",
+            "safety_class": "read",
+            "live_status": "tested-pass",
+            "http_annotation": "",
+            "proto": "grpc/health/v1/health.proto",
+        },
+    ]
+    return [*methods, *(method for method in additions if method["fqmn"] not in existing)]
+
+
 def parse_http_catalog(path: Path) -> list[dict[str, str]]:
     if not path.exists():
         return []
@@ -85,6 +128,103 @@ def parse_http_catalog(path: Path) -> list[dict[str, str]]:
             }
         )
     return endpoints
+
+
+CLIENT_HTTP_OPERATIONS = {
+    "SwitchLayout",
+    "AddCamera",
+    "RemoveCamera",
+    "GetCurrentLayoutCameras",
+    "SelectDisplay",
+    "SetArchive",
+    "SearchInArchive",
+    "Immersion",
+}
+
+
+def _slug(value: str) -> str:
+    value = re.sub(r"[^A-Za-z0-9]+", "-", value).strip("-").lower()
+    return value[:80] or "endpoint"
+
+
+def _postman_path(url: Any) -> str:
+    if isinstance(url, str):
+        raw = url
+        path_parts: list[str] = []
+    elif isinstance(url, dict):
+        raw = str(url.get("raw", ""))
+        path_parts = [str(part) for part in url.get("path", [])]
+    else:
+        return ""
+    if path_parts:
+        path = "/" + "/".join(path_parts)
+        return path
+    if not raw:
+        return ""
+    raw = re.sub(r"^\{\{[^}]+\}\}", "", raw)
+    raw = re.sub(r"^https?://[^/]+", "", raw)
+    path = raw.split("?", 1)[0].split("#", 1)[0]
+    return path if path.startswith("/") else f"/{path}"
+
+
+def _http_surface(path: str, raw: str) -> str:
+    first = path.strip("/").split("/", 1)[0]
+    if first in CLIENT_HTTP_OPERATIONS or ":8888" in raw:
+        return "client_http_api"
+    if path == "/grpc":
+        return "http_grpc_gateway"
+    return "legacy_web_http"
+
+
+def _http_safety(method: str, surface: str) -> str:
+    if surface == "client_http_api":
+        return "external-client"
+    if method.upper() in {"GET", "HEAD", "OPTIONS"}:
+        return "read"
+    return "mutating"
+
+
+def parse_postman_legacy_http(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    collection = read_json(path, {})
+    endpoints: list[dict[str, str]] = []
+
+    def walk(items: list[dict[str, Any]], parents: list[str]) -> None:
+        for item in items:
+            name = str(item.get("name", "")).strip()
+            if "item" in item:
+                walk(list(item.get("item", [])), parents + ([name] if name else []))
+                continue
+            request = item.get("request", {})
+            if not isinstance(request, dict):
+                continue
+            method = str(request.get("method", "GET")).upper()
+            url = request.get("url", {})
+            raw = url if isinstance(url, str) else str(url.get("raw", "")) if isinstance(url, dict) else ""
+            route_path = _postman_path(url)
+            if not route_path or route_path.startswith("/v1/"):
+                continue
+            surface = _http_surface(route_path, raw)
+            display_name = " / ".join([*parents, name]) if parents else name
+            endpoints.append(
+                {
+                    "id": _slug(f"{surface}-{method}-{route_path}-{display_name}"),
+                    "surface": surface,
+                    "verb": method,
+                    "path": route_path,
+                    "name": display_name,
+                    "safety_class": _http_safety(method, surface),
+                    "live_status": "documented" if surface != "client_http_api" else "fixture-needed",
+                    "source": str(path),
+                }
+            )
+
+    walk(list(collection.get("item", [])), [])
+    unique: dict[tuple[str, str, str], dict[str, str]] = {}
+    for endpoint in endpoints:
+        unique.setdefault((endpoint["surface"], endpoint["verb"], endpoint["path"]), endpoint)
+    return list(unique.values())
 
 
 def extract_task_recipes(playbook_path: Path) -> list[dict[str, str]]:
@@ -135,14 +275,14 @@ def fixture_needed_rows(matrix: list[dict[str, Any]]) -> list[dict[str, str]]:
 
 def safety_policies() -> dict[str, Any]:
     return {
-        "default_mode": "read-only",
         "classes": {
-            "safe-read": {"requires_approval": False, "limits": ["timeout"]},
-            "bounded-stream": {"requires_approval": False, "limits": ["timeout", "event_count", "byte_count"]},
-            "fixture-heavy": {"requires_approval": False, "limits": ["fixture_preflight", "timeout"]},
-            "mutation": {"requires_approval": True, "limits": ["dry_run", "confirmation", "rollback", "audit_log"]},
-            "external-client": {"requires_approval": True, "limits": ["fixture_preflight", "state_snapshot", "rollback"]},
+            "bounded-stream": {"limits": ["timeout", "event_count", "byte_count"], "requires_approval": False},
+            "external-client": {"limits": ["fixture_preflight", "state_snapshot", "rollback"], "requires_approval": True},
+            "fixture-heavy": {"limits": ["fixture_preflight", "timeout"], "requires_approval": False},
+            "mutation": {"limits": ["dry_run", "confirmation", "rollback", "audit_log"], "requires_approval": True},
+            "safe-read": {"limits": ["timeout"], "requires_approval": False},
         },
+        "default_mode": "read-only",
         "redaction": [
             "passwords",
             "bearer_tokens",
@@ -151,6 +291,9 @@ def safety_policies() -> dict[str, Any]:
             "serial_numbers",
             "full_plate_values",
             "raw_security_payloads",
+            "raw_backup_bytes",
+            "installer_package_bytes",
+            "email_message_bodies",
             "raw_images",
             "raw_video",
         ],
@@ -237,33 +380,74 @@ def mutation_playbooks(audit_dir: Path) -> list[dict[str, str]]:
 
 def generate_corpus(*, audit_dir: Path, output_dir: Path) -> list[str]:
     output_dir.mkdir(parents=True, exist_ok=True)
-    matrix = read_json(audit_dir / "pdf-gap-coverage-matrix.json", [])
-    api_methods = load_api_methods(audit_dir / "grpc-api-catalog.csv")
-    endpoints = parse_http_catalog(audit_dir / "http-endpoints-catalog.md")
+    matrix_path = audit_dir / "pdf-gap-coverage-matrix.json"
+    grpc_catalog_path = audit_dir / "grpc-api-catalog.csv"
+    http_catalog_path = audit_dir / "http-endpoints-catalog.md"
+    postman_path = audit_dir.parent / "Axxon_One_Integration_APIs.postman_collection.json"
+    playbook_path = audit_dir / "integration-playbooks.md"
+    matrix = read_json(matrix_path, [])
+    api_methods = add_standard_health_methods(load_api_methods(grpc_catalog_path))
+    endpoints = parse_http_catalog(http_catalog_path)
+    legacy_endpoints = parse_postman_legacy_http(postman_path)
 
     payloads = {
-        "api_methods.json": {
-            "source": str(audit_dir / "grpc-api-catalog.csv"),
-            "method_count": len(api_methods),
-            "methods": api_methods,
-        },
-        "http_endpoints.json": {
-            "source": str(audit_dir / "http-endpoints-catalog.md"),
-            "endpoint_count": len(endpoints),
-            "endpoints": endpoints,
-        },
-        "task_recipes.json": {
-            "source": str(audit_dir / "integration-playbooks.md"),
-            "recipes": extract_task_recipes(audit_dir / "integration-playbooks.md"),
-            "mutation_playbooks": mutation_playbooks(audit_dir),
-        },
-        "fixtures.json": {
-            "source": str(audit_dir / "pdf-gap-coverage-matrix.json"),
-            "coverage_counts": coverage_counts(matrix),
-            "fixture_needed": fixture_needed_rows(matrix),
-        },
+        "api_methods.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "api_methods.json",
+            {
+                "source": str(grpc_catalog_path),
+                "method_count": len(api_methods),
+                "methods": api_methods,
+            },
+            [grpc_catalog_path],
+        ),
+        "http_endpoints.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "http_endpoints.json",
+            {
+                "source": str(http_catalog_path),
+                "endpoint_count": len(endpoints),
+                "endpoints": endpoints,
+            },
+            [http_catalog_path],
+        ),
+        "legacy_http_endpoints.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "legacy_http_endpoints.json",
+            {
+                "source": str(postman_path),
+                "endpoint_count": len(legacy_endpoints),
+                "endpoints": legacy_endpoints,
+            },
+            [postman_path],
+        ),
+        "task_recipes.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "task_recipes.json",
+            {
+                "source": str(playbook_path),
+                "recipes": extract_task_recipes(playbook_path),
+                "mutation_playbooks": mutation_playbooks(audit_dir),
+            },
+            [playbook_path],
+        ),
+        "fixtures.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "fixtures.json",
+            {
+                "source": str(matrix_path),
+                "coverage_counts": coverage_counts(matrix),
+                "fixture_needed": fixture_needed_rows(matrix),
+            },
+            [matrix_path],
+        ),
         "safety_policies.json": safety_policies(),
-        "known_behaviors.json": known_behaviors(matrix, audit_dir),
+        "known_behaviors.json": preserve_existing_if_sources_missing(
+            output_dir,
+            "known_behaviors.json",
+            known_behaviors(matrix, audit_dir),
+            [matrix_path],
+        ),
     }
     for name, payload in payloads.items():
         write_json(output_dir / name, payload)

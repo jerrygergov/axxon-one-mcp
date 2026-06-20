@@ -14,6 +14,7 @@ from axxon_mcp_docs import AxxonMcpDocs, DEFAULT_CORPUS_DIR
 CORPUS_FILE_ALLOWLIST = {
     "api_methods.json",
     "http_endpoints.json",
+    "legacy_http_endpoints.json",
     "task_recipes.json",
     "fixtures.json",
     "safety_policies.json",
@@ -24,6 +25,7 @@ CORPUS_FILE_ALLOWLIST = {
 # server can do and which flag to ask the user for when a needed capability is currently disabled.
 # Each entry: create_server param -> (description, example tools, --enable flag).
 CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
+    "health": ("Standard gRPC health checks", ("grpc_health_check", "grpc_health_watch"), "--enable-health"),
     "live": ("Live read-only inspection of a connected server", ("list_cameras", "list_archives", "search_events"), "--enable-live"),
     "operator": ("Create/modify/delete config (cameras, detectors, layouts, macros) via plan/apply/verify/rollback", ("list_operator_workflows", "plan_operator_workflow", "apply_operator_plan"), "--enable-operator"),
     "metadata": ("Metadata / VMDA object-track search", ("list_vmda_sources", "live_track_sample", "vmda_query"), "--enable-metadata"),
@@ -65,9 +67,10 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "statistics": ("Server/stream statistics reads (CPU/disk/FPS/bitrate health)", ("get_statistics",), "--enable-statistics"),
     "event_taxonomy": ("Event grouping tags (event-filter field descriptors)", ("get_event_grouping_tags",), "--enable-event-taxonomy"),
     "scene_description": ("Per-camera scene descriptions (analytics geometry)", ("list_scene_description",), "--enable-scene-description"),
-    "package_availability": ("Installer-package availability check", ("check_package_availability",), "--enable-package-availability"),
+    "package_availability": ("Installer-package availability check + bounded download probe", ("check_package_availability", "download_installer_package_probe"), "--enable-package-availability"),
     "domain_topology": ("Domain + node enumeration (EnumerateNodes)", ("enumerate_nodes",), "--enable-domain-topology"),
-    "config_revisions": ("Config revision history + capped backup-collectibility probe", ("get_revision_info", "collect_backup_probe"), "--enable-config-revisions"),
+    "backup_source": ("Archive BackupSourceService bundle/start/cancel with gates", ("bundle_backup", "make_backup", "cancel_backup"), "--enable-backup-source"),
+    "config_revisions": ("Config revision history, backup probe, and gated revision restore", ("get_revision_info", "set_revision", "restore_backup"), "--enable-config-revisions"),
     "filesystem_browser": ("Server-side filesystem browsing (list dir, file info, free space)", ("list_directory", "get_space"), "--enable-filesystem-browser"),
     "devices_catalog": ("Supported-device catalog (vendors, models, traits) for adding cameras", ("list_vendors", "list_devices", "get_device"), "--enable-devices-catalog"),
     "global_tracker": ("Cross-camera tracking profile metadata reads (no images)", ("get_profile",), "--enable-global-tracker"),
@@ -77,6 +80,8 @@ CAPABILITY_GROUPS: dict[str, tuple[str, tuple[str, ...], str]] = {
     "bulk_onboarding": ("Bulk CSV/JSON camera onboarding planner with gated apply/verify/rollback", ("bulk_onboarding_plan", "bulk_onboarding_apply_plan", "bulk_onboarding_verify_plan"), "--enable-bulk-onboarding"),
     "web_api": ("Web server embeddable-component + WebSocket-event helpers (read-only)", ("embeddable_component_url", "web_events_probe", "web_events_sample"), "--enable-web-api"),
     "client_api": ("Client HTTP API preflight + fixture-needed operation catalog (read-only)", ("client_api_preflight", "list_client_api_operations"), "--enable-client-api"),
+    "notifier_actions": ("Gated diagnostic event push and email send", ("push_diagnostic_events", "send_email"), "--enable-notifier-actions"),
+    "http_api": ("Documented HTTP API catalog + bounded allowlisted executor", ("list_http_api_endpoints", "http_api_request"), "--enable-http-api"),
 }
 
 
@@ -94,6 +99,7 @@ def default_fastmcp_factory(name: str, **kwargs: Any) -> Any:
 def create_server(
     *,
     docs: AxxonMcpDocs | Any | None = None,
+    health: Any | None = None,
     live: Any | None = None,
     operator: Any | None = None,
     generator: Any | None = None,
@@ -123,6 +129,7 @@ def create_server(
     scene_description: Any | None = None,
     package_availability: Any | None = None,
     domain_topology: Any | None = None,
+    backup_source: Any | None = None,
     config_revisions: Any | None = None,
     filesystem_browser: Any | None = None,
     devices_catalog: Any | None = None,
@@ -151,6 +158,8 @@ def create_server(
     videowall: Any | None = None,
     web_api: Any | None = None,
     client_api: Any | None = None,
+    notifier_actions: Any | None = None,
+    http_api: Any | None = None,
     connection_profile: Any | None = None,
     corpus_dir: Path = DEFAULT_CORPUS_DIR,
     fastmcp_factory: Callable[..., Any] = default_fastmcp_factory,
@@ -204,7 +213,7 @@ def create_server(
         return docs.list_remaining_gaps()
 
     enabled_groups = {name: value is not None for name, value in (
-        ("live", live), ("operator", operator), ("generator", generator), ("partner", partner),
+        ("health", health), ("live", live), ("operator", operator), ("generator", generator), ("partner", partner),
         ("metadata", metadata), ("view", view), ("alarms", alarms), ("view_objects", view_objects),
         ("detector_archive", detector_archive), ("detector_playbooks", detector_playbooks), ("admin", admin), ("bookmarks", bookmarks),
         ("translator", translator), ("ptz", ptz), ("audit", audit), ("recognizer", recognizer),
@@ -212,7 +221,7 @@ def create_server(
         ("timezone", timezone), ("server_settings", server_settings), ("statistics", statistics),
         ("event_taxonomy", event_taxonomy), ("scene_description", scene_description),
         ("package_availability", package_availability), ("domain_topology", domain_topology),
-        ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
+        ("backup_source", backup_source), ("config_revisions", config_revisions), ("filesystem_browser", filesystem_browser),
         ("devices_catalog", devices_catalog), ("global_tracker", global_tracker),
         ("shared_kv", shared_kv), ("state_control", state_control), ("groups", groups),
         ("site_graph", site_graph), ("bulk_onboarding", bulk_onboarding),
@@ -221,7 +230,8 @@ def create_server(
         ("archive_volume", archive_volume), ("security_credentials", security_credentials),
         ("auth_sessions", auth_sessions), ("layout_manager", layout_manager), ("license_reads", license_reads),
         ("misc_reads", misc_reads), ("heatmap", heatmap), ("media", media), ("export", export), ("videowall", videowall),
-        ("web_api", web_api), ("client_api", client_api),
+        ("web_api", web_api), ("client_api", client_api), ("notifier_actions", notifier_actions),
+        ("http_api", http_api),
     )}
 
     @server.tool(name="list_capabilities")
@@ -254,6 +264,9 @@ def create_server(
 
     if connection_profile is not None:
         register_session_connection_tools(server, connection_profile)
+
+    if health is not None:
+        register_health_tools(server, health)
 
     if live is not None:
         register_live_tools(server, live)
@@ -342,6 +355,9 @@ def create_server(
     if domain_topology is not None:
         register_domain_topology_tools(server, domain_topology)
 
+    if backup_source is not None:
+        register_backup_source_tools(server, backup_source)
+
     if config_revisions is not None:
         register_config_revisions_tools(server, config_revisions)
 
@@ -425,6 +441,12 @@ def create_server(
 
     if client_api is not None:
         register_client_api_tools(server, client_api)
+
+    if notifier_actions is not None:
+        register_notifier_actions_tools(server, notifier_actions)
+
+    if http_api is not None:
+        register_http_api_tools(server, http_api)
 
     return server
 
@@ -2155,6 +2177,23 @@ def register_scene_description_tools(server: Any, scene_description: Any) -> Non
         return scene_description.list_scene_description(page_token, page_size)
 
 
+def register_health_tools(server: Any, health: Any) -> None:
+    @server.tool(name="health_connect_axxon_profile")
+    def health_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the standard gRPC health layer to the env profile."""
+        return health.health_connect_axxon_profile(profile)
+
+    @server.tool(name="grpc_health_check")
+    def grpc_health_check(service: str = "") -> dict[str, Any]:
+        """Run grpc.health.v1.Health.Check for the whole server or one service."""
+        return health.grpc_health_check(service)
+
+    @server.tool(name="grpc_health_watch")
+    def grpc_health_watch(service: str = "", max_items: int = 4, timeout_s: float = 5.0) -> dict[str, Any]:
+        """Sample grpc.health.v1.Health.Watch with item and timeout caps."""
+        return health.grpc_health_watch(service, max_items, timeout_s)
+
+
 def register_package_availability_tools(server: Any, package_availability: Any) -> None:
     @server.tool(name="package_availability_connect_axxon_profile")
     def package_availability_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
@@ -2165,6 +2204,25 @@ def register_package_availability_tools(server: Any, package_availability: Any) 
     def check_package_availability(system: str = "Linux", machine: str = "") -> dict[str, Any]:
         """Check installer-package availability for an OS ("Windows"|"Linux") and optional machine."""
         return package_availability.check_package_availability(system, machine)
+
+    @server.tool(name="download_installer_package_probe")
+    def download_installer_package_probe(
+        package_id: str,
+        chunk_size_kb: int = 64,
+        start_from_chunk_index: int = 0,
+        max_chunks: int | None = None,
+        max_bytes: int | None = None,
+        timeout_s: float | None = None,
+    ) -> dict[str, Any]:
+        """Probe installer package download stream with byte/chunk/time caps; bytes are not returned."""
+        return package_availability.download_installer_package_probe(
+            package_id,
+            chunk_size_kb,
+            start_from_chunk_index,
+            max_chunks,
+            max_bytes,
+            timeout_s,
+        )
 
 
 def register_domain_topology_tools(server: Any, domain_topology: Any) -> None:
@@ -2177,6 +2235,34 @@ def register_domain_topology_tools(server: Any, domain_topology: Any) -> None:
     def enumerate_nodes() -> dict[str, Any]:
         """Enumerate the domain and its member / free / other nodes (read-only)."""
         return domain_topology.enumerate_nodes()
+
+
+def register_backup_source_tools(server: Any, backup_source: Any) -> None:
+    @server.tool(name="backup_source_connect_axxon_profile")
+    def backup_source_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the BackupSourceService layer to the env profile."""
+        return backup_source.backup_source_connect_axxon_profile(profile)
+
+    @server.tool(name="bundle_backup")
+    def bundle_backup(
+        access_points: list[str] | None = None,
+        intervals: list[dict[str, Any]] | None = None,
+        report_timeout_sec: int = 1,
+        max_items: int = 8,
+        timeout_s: float = 10.0,
+    ) -> dict[str, Any]:
+        """Run a bounded BundleBackup status sample; no raw data is returned."""
+        return backup_source.bundle_backup(access_points, intervals, report_timeout_sec, max_items, timeout_s)
+
+    @server.tool(name="make_backup")
+    def make_backup(access_point: str = "", intervals: list[dict[str, Any]] | None = None, confirmation: str = "") -> dict[str, Any]:
+        """Start a BackupSourceService MakeBackup task; approval and confirmation required."""
+        return backup_source.make_backup(access_point, intervals, confirmation)
+
+    @server.tool(name="cancel_backup")
+    def cancel_backup(access_point: str = "", task_id: str = "", confirmation: str = "") -> dict[str, Any]:
+        """Cancel a BackupSourceService task; approval and confirmation required."""
+        return backup_source.cancel_backup(access_point, task_id, confirmation)
 
 
 def register_config_revisions_tools(server: Any, config_revisions: Any) -> None:
@@ -2200,6 +2286,85 @@ def register_config_revisions_tools(server: Any, config_revisions: Any) -> None:
     ) -> dict[str, Any]:
         """Probe backup collectibility and tally size (chunk/byte/time capped); blob never returned."""
         return config_revisions.collect_backup_probe(types, node, max_chunks, max_bytes, timeout)
+
+    @server.tool(name="set_revision")
+    def set_revision(
+        config_type: str = "LOCAL_CONFIG",
+        node: str = "",
+        revision_number: int = 0,
+        revision_hash: str = "",
+        comment: str = "",
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Set active config revision; approval and confirmation required."""
+        return config_revisions.set_revision(config_type, node, revision_number, revision_hash, comment, confirmation)
+
+    @server.tool(name="restore_backup")
+    def restore_backup(
+        types: list[str] | None = None,
+        node: str = "",
+        backup_base64: str = "",
+        backup_hex: str = "",
+        chunk_size_kb: int = 64,
+        max_bytes: int | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Restore a config backup from base64/hex data; approval and confirmation required."""
+        return config_revisions.restore_backup(types, node, backup_base64, backup_hex, chunk_size_kb, max_bytes, confirmation)
+
+
+def register_notifier_actions_tools(server: Any, notifier_actions: Any) -> None:
+    @server.tool(name="notifier_actions_connect_axxon_profile")
+    def notifier_actions_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the notifier action layer to the env profile."""
+        return notifier_actions.notifier_actions_connect_axxon_profile(profile)
+
+    @server.tool(name="push_diagnostic_events")
+    def push_diagnostic_events(
+        notifier: str = "domain",
+        alerts: list[dict[str, Any]] | None = None,
+        actions: list[dict[str, Any]] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Push diagnostic alert/action events through DomainNotifier or NodeNotifier."""
+        return notifier_actions.push_diagnostic_events(notifier, alerts, actions, confirmation)
+
+    @server.tool(name="send_email")
+    def send_email(
+        access_point: str = "",
+        subject: str = "",
+        message: str = "",
+        recipients: list[str] | None = None,
+        attachments: list[str] | None = None,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Send email through EMailNotifier; body is not echoed in the response."""
+        return notifier_actions.send_email(access_point, subject, message, recipients, attachments, confirmation)
+
+
+def register_http_api_tools(server: Any, http_api: Any) -> None:
+    @server.tool(name="http_api_connect_axxon_profile")
+    def http_api_connect_axxon_profile(profile: str = "env") -> dict[str, Any]:
+        """Connect the documented HTTP API executor to the env profile."""
+        return http_api.http_api_connect_axxon_profile(profile)
+
+    @server.tool(name="list_http_api_endpoints")
+    def list_http_api_endpoints(surface: str = "", include_mutating: bool = False, limit: int = 100) -> dict[str, Any]:
+        """List documented /v1, legacy web, and local Client HTTP API routes."""
+        return http_api.list_http_api_endpoints(surface, include_mutating, limit)
+
+    @server.tool(name="http_api_request")
+    def http_api_request(
+        method: str = "GET",
+        path: str = "",
+        query: dict[str, Any] | None = None,
+        body: Any = None,
+        max_bytes: int = 262144,
+        max_items: int = 5,
+        confirmation: str = "",
+    ) -> dict[str, Any]:
+        """Execute one documented HTTP route with allowlist and response caps."""
+        return http_api.http_api_request(method, path, query, body, max_bytes, max_items, confirmation)
 
 
 def register_filesystem_browser_tools(server: Any, filesystem_browser: Any) -> None:
@@ -2643,6 +2808,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--corpus-dir", type=Path, default=DEFAULT_CORPUS_DIR)
     parser.add_argument("--transport", choices=["stdio", "streamable-http"], default="stdio")
+    parser.add_argument("--enable-health", action="store_true", help="Enable standard gRPC Health.Check/Watch tools. Read-only.")
     parser.add_argument("--enable-live", action="store_true", help="Enable read-only live tools backed by env config.")
     parser.add_argument(
         "--enable-operator",
@@ -2777,7 +2943,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--enable-package-availability",
         action="store_true",
-        help="Enable InstallationPackageProvider reads (check_package_availability). Read-only.",
+        help="Enable InstallationPackageProvider reads and bounded installer download probe.",
     )
     parser.add_argument(
         "--enable-domain-topology",
@@ -2785,9 +2951,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable DomainManager reads (enumerate_nodes: domain + node topology). Read-only.",
     )
     parser.add_argument(
+        "--enable-backup-source",
+        action="store_true",
+        help="Enable BackupSourceService bundle/status plus gated make/cancel. Make/cancel need AXXON_BACKUP_SOURCE_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-config-revisions",
         action="store_true",
-        help="Enable ConfigurationManager reads (get_revision_info, collect_backup_probe). Read-only, capped.",
+        help="Enable ConfigurationManager reads plus gated set_revision/restore_backup. Writes need AXXON_CONFIG_REVISIONS_APPROVE=1.",
     )
     parser.add_argument(
         "--enable-filesystem-browser",
@@ -2920,6 +3091,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable Phase 5 read-only Client HTTP API preflight + fixture-needed operation catalog.",
     )
     parser.add_argument(
+        "--enable-notifier-actions",
+        action="store_true",
+        help="Enable gated Domain/Node PushDiagnosticEvents and EMailNotifier.SendEMail. Sends need AXXON_NOTIFIER_ACTIONS_APPROVE=1.",
+    )
+    parser.add_argument(
+        "--enable-http-api",
+        action="store_true",
+        help="Enable documented HTTP API catalog and bounded allowlisted executor. Mutating routes need AXXON_HTTP_API_APPROVE=1.",
+    )
+    parser.add_argument(
         "--enable-discovery",
         action="store_true",
         help="Enable Phase 12 read-only DiscoveryService network device-discovery tool.",
@@ -2960,7 +3141,8 @@ APPROVE_ENV_VARS = (
     "AXXON_RECOGNIZER_WRITE_APPROVE", "AXXON_SERVER_APPROVE", "AXXON_GDPR_APPROVE",
     "AXXON_MISC_WRITE_APPROVE", "AXXON_ARCHIVE_MAINTENANCE_APPROVE", "AXXON_SHARED_KV_APPROVE",
     "AXXON_STATE_CONTROL_APPROVE", "AXXON_EXPORT_APPROVE", "AXXON_BULK_ONBOARDING_APPROVE",
-    "AXXON_DETECTOR_PLAYBOOKS_APPROVE",
+    "AXXON_DETECTOR_PLAYBOOKS_APPROVE", "AXXON_BACKUP_SOURCE_APPROVE", "AXXON_CONFIG_REVISIONS_APPROVE",
+    "AXXON_NOTIFIER_ACTIONS_APPROVE", "AXXON_HTTP_API_APPROVE",
 )
 
 
@@ -3021,6 +3203,11 @@ def main() -> int:
             setattr(capability, "client_factory", runtime_api_client_factory)
         return connection_profile.wrap(capability)
 
+    health = None
+    if args.enable_health:
+        from axxon_mcp_health import AxxonMcpHealth
+
+        health = AxxonMcpHealth()
     live = None
     if args.enable_live:
         from axxon_mcp_live import AxxonMcpLive
@@ -3201,11 +3388,16 @@ def main() -> int:
         from axxon_mcp_domain_topology import AxxonMcpDomainTopology
 
         domain_topology = AxxonMcpDomainTopology()
+    backup_source = None
+    if args.enable_backup_source:
+        from axxon_mcp_backup_source import BACKUP_SOURCE_APPROVE_ENV, AxxonMcpBackupSource
+
+        backup_source = AxxonMcpBackupSource(enabled=approval_enabled(BACKUP_SOURCE_APPROVE_ENV, args=args))
     config_revisions = None
     if args.enable_config_revisions:
-        from axxon_mcp_config_revisions import AxxonMcpConfigRevisions
+        from axxon_mcp_config_revisions import CONFIG_REVISIONS_APPROVE_ENV, AxxonMcpConfigRevisions
 
-        config_revisions = AxxonMcpConfigRevisions()
+        config_revisions = AxxonMcpConfigRevisions(enabled=approval_enabled(CONFIG_REVISIONS_APPROVE_ENV, args=args))
     filesystem_browser = None
     if args.enable_filesystem_browser:
         from axxon_mcp_filesystem_browser import AxxonMcpFilesystemBrowser
@@ -3349,6 +3541,17 @@ def main() -> int:
         from axxon_mcp_client_api import AxxonMcpClientApi
 
         client_api = AxxonMcpClientApi()
+    notifier_actions = None
+    if args.enable_notifier_actions:
+        from axxon_mcp_notifier_actions import NOTIFIER_ACTIONS_APPROVE_ENV, AxxonMcpNotifierActions
+
+        notifier_actions = AxxonMcpNotifierActions(enabled=approval_enabled(NOTIFIER_ACTIONS_APPROVE_ENV, args=args))
+    http_api = None
+    if args.enable_http_api:
+        from axxon_mcp_http_api import HTTP_API_APPROVE_ENV, AxxonMcpHttpApi
+
+        http_api = AxxonMcpHttpApi(enabled=approval_enabled(HTTP_API_APPROVE_ENV, args=args))
+    health = bind_connection_profile(health)
     live = bind_connection_profile(live)
     operator = bind_connection_profile(operator)
     metadata = bind_connection_profile(metadata)
@@ -3376,6 +3579,7 @@ def main() -> int:
     scene_description = bind_connection_profile(scene_description)
     package_availability = bind_connection_profile(package_availability)
     domain_topology = bind_connection_profile(domain_topology)
+    backup_source = bind_connection_profile(backup_source)
     config_revisions = bind_connection_profile(config_revisions)
     filesystem_browser = bind_connection_profile(filesystem_browser)
     devices_catalog = bind_connection_profile(devices_catalog)
@@ -3404,9 +3608,12 @@ def main() -> int:
     videowall = bind_connection_profile(videowall)
     web_api = bind_connection_profile(web_api)
     client_api = bind_connection_profile(client_api)
+    notifier_actions = bind_connection_profile(notifier_actions)
+    http_api = bind_connection_profile(http_api)
     server = create_server(
         corpus_dir=args.corpus_dir,
         connection_profile=connection_profile,
+        health=health,
         live=live,
         operator=operator,
         generator=generator,
@@ -3436,6 +3643,7 @@ def main() -> int:
         scene_description=scene_description,
         package_availability=package_availability,
         domain_topology=domain_topology,
+        backup_source=backup_source,
         config_revisions=config_revisions,
         filesystem_browser=filesystem_browser,
         devices_catalog=devices_catalog,
@@ -3464,6 +3672,8 @@ def main() -> int:
         videowall=videowall,
         web_api=web_api,
         client_api=client_api,
+        notifier_actions=notifier_actions,
+        http_api=http_api,
     )
     server.run(transport=args.transport)
     return 0

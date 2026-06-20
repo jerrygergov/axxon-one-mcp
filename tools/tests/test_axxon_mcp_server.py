@@ -555,6 +555,123 @@ class StubClientApi:
         return {"status": "ok", "operations": [{"operation": "SwitchLayout", "status": "fixture-needed"}]}
 
 
+class StubHealth:
+    def health_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read"}
+
+    def grpc_health_check(self, service: str = ""):
+        return {"status": "ok", "service": service, "serving_status": "SERVING"}
+
+    def grpc_health_watch(self, service: str = "", max_items: int = 4, timeout_s: float = 5.0):
+        return {"status": "ok", "service": service, "items_seen": 1, "max_items": max_items, "timeout_s": timeout_s}
+
+
+class StubBackupSource:
+    enabled = True
+
+    def backup_source_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read+backup-control", "enabled": self.enabled}
+
+    def bundle_backup(self, access_points=None, intervals=None, report_timeout_sec: int = 1, max_items: int = 8, timeout_s: float = 10.0):
+        return {"status": "ok", "access_points": list(access_points or []), "intervals": list(intervals or []), "max_items": max_items, "timeout_s": timeout_s}
+
+    def make_backup(self, access_point: str = "", intervals=None, confirmation: str = ""):
+        return {"status": "started", "access_point": access_point, "intervals": list(intervals or []), "confirmation": confirmation}
+
+    def cancel_backup(self, access_point: str = "", task_id: str = "", confirmation: str = ""):
+        return {"status": "cancelled", "access_point": access_point, "task_id": task_id, "confirmation": confirmation}
+
+
+class StubPackageAvailability:
+    def package_availability_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read"}
+
+    def check_package_availability(self, system: str = "Linux", machine: str = ""):
+        return {"status": "ok", "system": system, "machine": machine}
+
+    def download_installer_package_probe(
+        self,
+        package_id: str,
+        chunk_size_kb: int = 64,
+        start_from_chunk_index: int = 0,
+        max_chunks: int | None = None,
+        max_bytes: int | None = None,
+        timeout_s: float | None = None,
+    ):
+        return {
+            "status": "ok",
+            "package_id": package_id,
+            "chunk_size_kb": chunk_size_kb,
+            "start_from_chunk_index": start_from_chunk_index,
+            "max_chunks": max_chunks,
+            "max_bytes": max_bytes,
+            "timeout_s": timeout_s,
+        }
+
+
+class StubConfigRevisions:
+    enabled = True
+
+    def config_revisions_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read+maintenance", "enabled": self.enabled}
+
+    def get_revision_info(self, config_type: str = "LOCAL_CONFIG", nodes=None):
+        return {"status": "ok", "config_type": config_type, "nodes": list(nodes or [])}
+
+    def collect_backup_probe(self, types=None, node: str = "", max_chunks=None, max_bytes=None, timeout=None):
+        return {"status": "ok", "types": list(types or []), "node": node, "max_chunks": max_chunks, "max_bytes": max_bytes, "timeout": timeout}
+
+    def set_revision(self, config_type: str = "LOCAL_CONFIG", node: str = "", revision_number: int = 0, revision_hash: str = "", comment: str = "", confirmation: str = ""):
+        return {"status": "applied", "config_type": config_type, "node": node, "revision_number": revision_number, "revision_hash": revision_hash, "comment": comment, "confirmation": confirmation}
+
+    def restore_backup(
+        self,
+        types=None,
+        node: str = "",
+        backup_base64: str = "",
+        backup_hex: str = "",
+        chunk_size_kb: int = 64,
+        max_bytes: int | None = None,
+        confirmation: str = "",
+    ):
+        return {"status": "applied", "types": list(types or []), "node": node, "chunk_size_kb": chunk_size_kb, "max_bytes": max_bytes, "confirmation": confirmation}
+
+
+class StubNotifierActions:
+    enabled = True
+
+    def notifier_actions_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "write", "enabled": self.enabled}
+
+    def push_diagnostic_events(self, notifier: str = "domain", alerts=None, actions=None, confirmation: str = ""):
+        return {"status": "pushed", "notifier": notifier, "alert_count": len(alerts or []), "action_count": len(actions or []), "confirmation": confirmation}
+
+    def send_email(self, access_point: str = "", subject: str = "", message: str = "", recipients=None, attachments=None, confirmation: str = ""):
+        return {"status": "sent", "access_point": access_point, "subject_length": len(subject), "message_length": len(message), "recipient_count": len(recipients or []), "attachment_count": len(attachments or []), "confirmation": confirmation}
+
+
+class StubHttpApi:
+    enabled = True
+
+    def http_api_connect_axxon_profile(self, profile: str = "env"):
+        return {"connected": True, "profile_name": profile, "mode": "read+http", "enabled": self.enabled}
+
+    def list_http_api_endpoints(self, surface: str = "", include_mutating: bool = False, limit: int = 100):
+        return {"status": "ok", "surface": surface, "include_mutating": include_mutating, "limit": limit}
+
+    def http_api_request(
+        self,
+        method: str = "GET",
+        path: str = "",
+        query=None,
+        body=None,
+        max_bytes: int = 262144,
+        max_items: int = 5,
+        confirmation: str = "",
+    ):
+        return {"status": "ok", "method": method, "path": path, "query": dict(query or {}), "max_bytes": max_bytes, "max_items": max_items, "confirmation": confirmation}
+
+
 class AxxonMcpServerTests(unittest.TestCase):
     def test_create_server_registers_ptz_tools_only_when_enabled(self) -> None:
         module = importlib.import_module("axxon_mcp_server")
@@ -1062,6 +1179,84 @@ class AxxonMcpServerTests(unittest.TestCase):
 
         enabled_server = module.create_server(docs=StubDocs(), web_api=StubWebApi(), client_api=StubClientApi(), fastmcp_factory=FakeFastMCP)
         for key in ("web_api", "client_api"):
+            enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == key)
+            self.assertTrue(enabled["enabled"])
+            self.assertNotIn("enable_flag", enabled)
+
+    def test_create_server_registers_requested_support_groups(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        new_tools = {
+            "health_connect_axxon_profile",
+            "grpc_health_check",
+            "grpc_health_watch",
+            "backup_source_connect_axxon_profile",
+            "bundle_backup",
+            "make_backup",
+            "cancel_backup",
+            "download_installer_package_probe",
+            "set_revision",
+            "restore_backup",
+            "notifier_actions_connect_axxon_profile",
+            "push_diagnostic_events",
+            "send_email",
+            "http_api_connect_axxon_profile",
+            "list_http_api_endpoints",
+            "http_api_request",
+        }
+        for name in new_tools:
+            self.assertNotIn(name, docs_only.tools)
+
+        server = module.create_server(
+            docs=StubDocs(),
+            health=StubHealth(),
+            backup_source=StubBackupSource(),
+            package_availability=StubPackageAvailability(),
+            config_revisions=StubConfigRevisions(),
+            notifier_actions=StubNotifierActions(),
+            http_api=StubHttpApi(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        self.assertLessEqual(new_tools, set(server.tools))
+        self.assertEqual(server.tools["grpc_health_check"]("")["serving_status"], "SERVING")
+        self.assertEqual(server.tools["bundle_backup"](["ap"], [{"begin_time": 1, "end_time": 2}])["max_items"], 8)
+        self.assertEqual(server.tools["download_installer_package_probe"]("pkg-1")["package_id"], "pkg-1")
+        self.assertEqual(server.tools["set_revision"]("LOCAL_CONFIG", "Server", 1, "hash", "comment", "CONFIRM-config-set-revision")["status"], "applied")
+        self.assertEqual(server.tools["push_diagnostic_events"]("node", [], [], "CONFIRM-notifier-actions")["notifier"], "node")
+        self.assertEqual(server.tools["http_api_request"]("GET", "/hosts/")["path"], "/hosts/")
+
+    def test_requested_support_flags_and_capabilities(self) -> None:
+        module = importlib.import_module("axxon_mcp_server")
+        for flag, dest in (
+            ("--enable-health", "enable_health"),
+            ("--enable-backup-source", "enable_backup_source"),
+            ("--enable-notifier-actions", "enable_notifier_actions"),
+            ("--enable-http-api", "enable_http_api"),
+        ):
+            with self.subTest(flag=flag):
+                args = module.build_parser().parse_args([flag])
+                self.assertTrue(getattr(args, dest))
+
+        docs_only = module.create_server(docs=StubDocs(), fastmcp_factory=FakeFastMCP)
+        for key, flag in (
+            ("health", "--enable-health"),
+            ("backup_source", "--enable-backup-source"),
+            ("notifier_actions", "--enable-notifier-actions"),
+            ("http_api", "--enable-http-api"),
+        ):
+            disabled = next(g for g in docs_only.tools["list_capabilities"]()["groups"] if g["key"] == key)
+            self.assertFalse(disabled["enabled"])
+            self.assertEqual(disabled["enable_flag"], flag)
+
+        enabled_server = module.create_server(
+            docs=StubDocs(),
+            health=StubHealth(),
+            backup_source=StubBackupSource(),
+            notifier_actions=StubNotifierActions(),
+            http_api=StubHttpApi(),
+            fastmcp_factory=FakeFastMCP,
+        )
+        for key in ("health", "backup_source", "notifier_actions", "http_api"):
             enabled = next(g for g in enabled_server.tools["list_capabilities"]()["groups"] if g["key"] == key)
             self.assertTrue(enabled["enabled"])
             self.assertNotIn("enable_flag", enabled)
@@ -1750,6 +1945,10 @@ class AxxonMcpServerTests(unittest.TestCase):
             "AXXON_SHARED_KV_APPROVE": "shared_kv",
             "AXXON_STATE_CONTROL_APPROVE": "state_control",
             "AXXON_EXPORT_APPROVE": "export",
+            "AXXON_BACKUP_SOURCE_APPROVE": "backup_source",
+            "AXXON_CONFIG_REVISIONS_APPROVE": "config_revisions",
+            "AXXON_NOTIFIER_ACTIONS_APPROVE": "notifier_actions",
+            "AXXON_HTTP_API_APPROVE": "http_api",
         }
         self.assertEqual(
             set(module.APPROVE_ENV_VARS),

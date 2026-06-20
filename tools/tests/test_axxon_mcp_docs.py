@@ -73,6 +73,37 @@ class AxxonMcpDocsTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
+        (corpus / "legacy_http_endpoints.json").write_text(
+            json.dumps(
+                {
+                    "source": "docs/Axxon_One_Integration_APIs.postman_collection.json",
+                    "endpoint_count": 2,
+                    "endpoints": [
+                        {
+                            "id": "legacy-server-hosts",
+                            "surface": "legacy_web_http",
+                            "verb": "GET",
+                            "path": "/hosts/",
+                            "name": "Get hosts",
+                            "safety_class": "read",
+                            "live_status": "documented",
+                            "source": "docs/Axxon_One_Integration_APIs.postman_collection.json",
+                        },
+                        {
+                            "id": "client-switch-layout",
+                            "surface": "client_http_api",
+                            "verb": "POST",
+                            "path": "/SwitchLayout",
+                            "name": "Switch layout",
+                            "safety_class": "external-client",
+                            "live_status": "fixture-needed",
+                            "source": "docs/Axxon_One_Integration_APIs.postman_collection.json",
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
         (corpus / "task_recipes.json").write_text(
             json.dumps(
                 {
@@ -153,6 +184,15 @@ class AxxonMcpDocsTests(unittest.TestCase):
             self.assertTrue(endpoint["found"])
             self.assertEqual(endpoint["endpoint"]["grpc_method"], "axxonsoft.bl.domain.DomainService.ListCameras")
 
+            legacy_endpoint = docs.get_http_endpoint("/hosts/")
+            self.assertTrue(legacy_endpoint["found"])
+            self.assertEqual(legacy_endpoint["endpoint"]["surface"], "legacy_web_http")
+            self.assertEqual(legacy_endpoint["sources"][0], "docs/Axxon_One_Integration_APIs.postman_collection.json")
+
+            client_endpoint = docs.get_http_endpoint("SwitchLayout")
+            self.assertTrue(client_endpoint["found"])
+            self.assertEqual(client_endpoint["endpoint"]["surface"], "client_http_api")
+
             recipe = docs.explain_task_recipe("camera inventory")
             self.assertTrue(recipe["found"])
             self.assertEqual(recipe["recipe"]["task"], "Inventory And Discovery")
@@ -160,6 +200,9 @@ class AxxonMcpDocsTests(unittest.TestCase):
             results = docs.search_api_docs("change camera configuration")
             self.assertGreaterEqual(len(results["results"]), 2)
             self.assertEqual(results["results"][0]["kind"], "method")
+
+            legacy_results = docs.search_api_docs("hosts legacy http")
+            self.assertTrue(any(result["kind"] == "legacy_http_endpoint" for result in legacy_results["results"]))
 
             example = docs.get_verified_example("websocket events")
             self.assertTrue(example["found"])

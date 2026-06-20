@@ -111,12 +111,12 @@ class GenerateCoverageTests(unittest.TestCase):
         methods = self.module.load_methods()
         services, totals = self.module.aggregate_methods(methods)
 
-        self.assertEqual(len(services), 51)
-        self.assertEqual(totals["total"], 361)
-        self.assertEqual(totals["verified"], 286)
+        self.assertEqual(len(services), 52)
+        self.assertEqual(totals["total"], 363)
+        self.assertEqual(totals["verified"], 288)
         self.assertEqual(totals["fixture-blocked"], 55)
         self.assertEqual(totals["pending"], 20)
-        self.assertEqual(sum(row["total"] for row in services.values()), 361)
+        self.assertEqual(sum(row["total"] for row in services.values()), 363)
 
         coverage = (REPO_ROOT / "docs/COVERAGE.md").read_text(encoding="utf-8")
         self.assertEqual(coverage, self.module.render_coverage(methods))
@@ -124,11 +124,12 @@ class GenerateCoverageTests(unittest.TestCase):
             encoding="utf-8"
         )
         for row in (
-            "| gRPC services | 51 |",
-            "| gRPC RPCs | 361 |",
-            "| RPCs live-verified | 286 |",
+            "| gRPC services | 52 |",
+            "| gRPC RPCs | 363 |",
+            "| RPCs live-verified | 288 |",
             "| RPCs fixture-blocked | 55 |",
             "| RPCs pending | 20 |",
+            "| Legacy/Client HTTP endpoints | 81 |",
         ):
             self.assertIn(row, corpus_readme)
 

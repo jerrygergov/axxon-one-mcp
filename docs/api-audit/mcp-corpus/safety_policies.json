@@ -48,6 +48,9 @@
     "serial_numbers",
     "full_plate_values",
     "raw_security_payloads",
+    "raw_backup_bytes",
+    "installer_package_bytes",
+    "email_message_bodies",
     "raw_images",
     "raw_video"
   ]

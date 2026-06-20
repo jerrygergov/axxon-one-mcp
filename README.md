@@ -33,6 +33,17 @@ npm run build
 npm test
 ```
 
+## API corpus status
+
+The bundled sanitized corpus currently covers:
+
+- 363 gRPC RPCs across 52 services, with 288 live-verified, 55 fixture-blocked, and 20 pending in [docs/COVERAGE.md](docs/COVERAGE.md).
+- 221 annotated `/v1/...` HTTP endpoints in `docs/api-audit/mcp-corpus/http_endpoints.json`.
+- 81 documented legacy, `/grpc`, and local Client HTTP API routes in `docs/api-audit/mcp-corpus/legacy_http_endpoints.json`.
+
+The standard gRPC health service is included in the corpus and tool surface:
+`grpc.health.v1.Health.Check` and `grpc.health.v1.Health.Watch`.
+
 ## Runtime profiles
 
 | Profile | Command shape | Registered tools | Mutation posture |
@@ -102,6 +113,19 @@ Knowledge tools work entirely from `docs/api-audit/mcp-corpus/`:
 
 Use `list_capabilities` to see which groups are registered in the current process and which flags enable disabled groups.
 
+Notable live capability flags include:
+
+| Capability | Flag | Notes |
+| --- | --- | --- |
+| Standard gRPC health | `--enable-health` | Exposes bounded `grpc_health_check` and `grpc_health_watch`. |
+| Installer packages | `--enable-package-availability` | Checks package metadata and probes installer downloads without returning bytes. |
+| Backup source | `--enable-backup-source` | `BundleBackup` status sampling plus gated `MakeBackup` and `CancelBackup`. |
+| Config revisions | `--enable-config-revisions` | Revision reads, capped backup probe, plus gated `SetRevision` and `RestoreBackup`. |
+| Notifier actions | `--enable-notifier-actions` | Gated diagnostic event pushes and email sends; responses are metadata-only. |
+| Documented HTTP API | `--enable-http-api` | Lists `/v1`, legacy web, `/grpc`, and Client HTTP API routes; executes allowlisted server HTTP routes with response caps. |
+
+Client HTTP API routes are cataloged and searchable, but execution remains fixture-needed by default because those routes target a local Axxon Client process rather than the server.
+
 ## Mutation safety
 
 Mutation-capable groups have separate approval variables and per-call guards. Examples include operator workflows, PTZ control, macros, admin changes, settings updates, bookmark mutation, export lifecycle operations, and other write paths. Tool registration is never sufficient by itself.
@@ -113,6 +137,18 @@ For customer operations:
 3. Enable mutation only by setting the exact documented approval variable to `1` outside the server process.
 4. Require caller review of every returned plan and confirmation token before apply.
 5. Run verification and rollback/cleanup where the workflow provides it.
+
+Additional approval variables for the newly exposed gated surfaces:
+
+| Surface | Approval variable | Confirmation token |
+| --- | --- | --- |
+| BackupSourceService `MakeBackup` / `CancelBackup` | `AXXON_BACKUP_SOURCE_APPROVE=1` | `CONFIRM-backup-source` |
+| ConfigurationManager `SetRevision` | `AXXON_CONFIG_REVISIONS_APPROVE=1` | `CONFIRM-config-set-revision` |
+| ConfigurationManager `RestoreBackup` | `AXXON_CONFIG_REVISIONS_APPROVE=1` | `CONFIRM-config-restore-backup` |
+| Domain/Node diagnostic push and email send | `AXXON_NOTIFIER_ACTIONS_APPROVE=1` | `CONFIRM-notifier-actions` |
+| Mutating documented HTTP routes | `AXXON_HTTP_API_APPROVE=1` | `CONFIRM-http-api` |
+
+Backup, restore, installer download, and email tools return status and metadata only. They do not return raw backup bytes, installer package bytes, bearer tokens, passwords, or email message bodies.
 
 ## Repository layout
 

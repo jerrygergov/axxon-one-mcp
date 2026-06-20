@@ -42,6 +42,45 @@ class McpCorpusGeneratorTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            (audit.parent / "Axxon_One_Integration_APIs.postman_collection.json").write_text(
+                json.dumps(
+                    {
+                        "item": [
+                            {
+                                "name": "Legacy web",
+                                "item": [
+                                    {
+                                        "name": "Get hosts",
+                                        "request": {
+                                            "method": "GET",
+                                            "url": {
+                                                "raw": "{{baseUrl}}/hosts/",
+                                                "path": ["hosts", ""],
+                                            },
+                                        },
+                                    }
+                                ],
+                            },
+                            {
+                                "name": "Client HTTP API",
+                                "item": [
+                                    {
+                                        "name": "SwitchLayout",
+                                        "request": {
+                                            "method": "POST",
+                                            "url": {
+                                                "raw": "http://127.0.0.1:8888/SwitchLayout?layout=Main",
+                                                "path": ["SwitchLayout"],
+                                            },
+                                        },
+                                    }
+                                ],
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
             (audit / "pdf-gap-coverage-matrix.json").write_text(
                 json.dumps(
                     [
@@ -83,6 +122,7 @@ class McpCorpusGeneratorTests(unittest.TestCase):
                 {
                     "api_methods.json",
                     "http_endpoints.json",
+                    "legacy_http_endpoints.json",
                     "task_recipes.json",
                     "fixtures.json",
                     "safety_policies.json",
@@ -90,8 +130,10 @@ class McpCorpusGeneratorTests(unittest.TestCase):
                 },
             )
             api_methods = json.loads((output_dir / "api_methods.json").read_text(encoding="utf-8"))
+            self.assertEqual(api_methods["method_count"], 4)
             self.assertEqual(api_methods["methods"][0]["fqmn"], "axxonsoft.bl.domain.DomainService.ListCameras")
             self.assertEqual(api_methods["methods"][1]["safety_class"], "mutating")
+            self.assertIn("grpc.health.v1.Health.Check", {method["fqmn"] for method in api_methods["methods"]})
 
             fixtures = json.loads((output_dir / "fixtures.json").read_text(encoding="utf-8"))
             self.assertEqual(fixtures["coverage_counts"]["verified"], 1)
@@ -100,6 +142,12 @@ class McpCorpusGeneratorTests(unittest.TestCase):
 
             endpoints = json.loads((output_dir / "http_endpoints.json").read_text(encoding="utf-8"))
             self.assertEqual(endpoints["endpoints"][0]["path"], "/v1/domain/cameras")
+
+            legacy = json.loads((output_dir / "legacy_http_endpoints.json").read_text(encoding="utf-8"))
+            self.assertEqual(legacy["endpoint_count"], 2)
+            self.assertEqual(legacy["endpoints"][0]["path"], "/hosts/")
+            self.assertEqual(legacy["endpoints"][0]["surface"], "legacy_web_http")
+            self.assertEqual(legacy["endpoints"][1]["surface"], "client_http_api")
 
 
 if __name__ == "__main__":

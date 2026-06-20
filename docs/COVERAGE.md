@@ -3,7 +3,7 @@
 Live status of each Axxon One gRPC RPC exposed by this MCP server, generated from
 `docs/api-audit/mcp-corpus/api_methods.json` (the authoritative source).
 
-**286 / 361 RPCs live-verified** across 51 services (20 pending, 55 fixture-blocked).
+**288 / 363 RPCs live-verified** across 52 services (20 pending, 55 fixture-blocked).
 
 - **tested-pass** — exercised end-to-end against a live server and returned a valid response.
 - **fixture-blocked** — exercised live, but the stand lacked required hardware, configuration, or infrastructure.
@@ -53,6 +53,7 @@ Live status of each Axxon One gRPC RPC exposed by this MCP server, generated fro
 | EMailNotifier | 0 | 2 | 1 | 3 |
 | DynamicParametersService | 2 | 0 | 0 | 2 |
 | ExternalDetectorService | 2 | 0 | 0 | 2 |
+| Health | 2 | 0 | 0 | 2 |
 | InstallationPackageProvider | 1 | 0 | 1 | 2 |
 | GSMNotifier | 0 | 0 | 2 | 2 |
 | ArchiveVolumeService | 1 | 0 | 0 | 1 |
@@ -62,4 +63,4 @@ Live status of each Axxon One gRPC RPC exposed by this MCP server, generated fro
 | StatisticService | 1 | 0 | 0 | 1 |
 | RealtimeRecognizerExternalService | 0 | 1 | 0 | 1 |
 | TextEventSupportService | 0 | 1 | 0 | 1 |
-| **Total** | **286** | **55** | **20** | **361** |
+| **Total** | **288** | **55** | **20** | **363** |

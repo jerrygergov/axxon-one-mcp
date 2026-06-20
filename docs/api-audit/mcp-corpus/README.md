@@ -1,8 +1,8 @@
 # Axxon One MCP Corpus
 
 This directory contains the sanitized structured API corpus used by the MCP server.
-It is the machine-readable companion to the all-in-one roadmap in
-[`docs/ALL_IN_ONE_VMS_API_ROADMAP.md`](../../ALL_IN_ONE_VMS_API_ROADMAP.md).
+It is the machine-readable source for the knowledge tools and generated coverage in
+[`docs/COVERAGE.md`](../../COVERAGE.md).
 
 The corpus is derived from local proto/PDF/API audit material, but it does not
 redistribute proto files, the Integration APIs PDF, CA files, credentials, bearer
@@ -10,11 +10,14 @@ tokens, or raw media.
 
 ## Files
 
-- `api_methods.json`: 361 gRPC methods with package, service, request/response names,
+- `api_methods.json`: 363 gRPC methods with package, service, request/response names,
   streaming mode, safety class, HTTP annotation, proto path, live status, and evidence
   links when known.
 - `http_endpoints.json`: 221 annotated `/v1/...` HTTP endpoints parsed from the API
   endpoint catalog.
+- `legacy_http_endpoints.json`: 81 documented non-`/v1` HTTP routes from the local
+  Postman/Integration APIs material, including legacy web routes, `/grpc`, and local
+  Client HTTP API catalog entries.
 - `task_recipes.json`: task-oriented integration recipes and mutation playbook
   references.
 - `fixtures.json`: fixture requirements and live coverage blockers.
@@ -25,16 +28,17 @@ tokens, or raw media.
 
 ## Current Summary
 
-As of 2026-06-11:
+As of 2026-06-20:
 
 | Metric | Value |
 | --- | ---: |
-| gRPC services | 51 |
-| gRPC RPCs | 361 |
-| RPCs live-verified | 286 |
+| gRPC services | 52 |
+| gRPC RPCs | 363 |
+| RPCs live-verified | 288 |
 | RPCs fixture-blocked | 55 |
 | RPCs pending | 20 |
 | HTTP `/v1` endpoints | 221 |
+| Legacy/Client HTTP endpoints | 81 |
 
 Render the tracked coverage report after changing a method's `live_status` or evidence:
 

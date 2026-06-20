@@ -79,6 +79,7 @@ class AxxonMcpDocs:
     corpus_dir: Path
     api_methods: dict[str, Any]
     http_endpoints: dict[str, Any]
+    legacy_http_endpoints: dict[str, Any]
     task_recipes: dict[str, Any]
     fixtures: dict[str, Any]
     safety_policies: dict[str, Any]
@@ -91,6 +92,7 @@ class AxxonMcpDocs:
             corpus_dir=corpus_dir,
             api_methods=load_json(corpus_dir / "api_methods.json", {"methods": []}),
             http_endpoints=load_json(corpus_dir / "http_endpoints.json", {"endpoints": []}),
+            legacy_http_endpoints=load_json(corpus_dir / "legacy_http_endpoints.json", {"endpoints": []}),
             task_recipes=load_json(corpus_dir / "task_recipes.json", {"recipes": [], "mutation_playbooks": []}),
             fixtures=load_json(corpus_dir / "fixtures.json", {"coverage_counts": {}, "fixture_needed": []}),
             safety_policies=load_json(corpus_dir / "safety_policies.json", {}),
@@ -118,33 +120,48 @@ class AxxonMcpDocs:
             "sources": source_list(str(self.api_methods.get("source", "")), str(method.get("proto", ""))),
         }
 
+    def _iter_http_endpoints(self) -> list[tuple[dict[str, Any], str, str]]:
+        endpoints: list[tuple[dict[str, Any], str, str]] = []
+        for endpoint in self.http_endpoints.get("endpoints", []):
+            endpoint = dict(endpoint)
+            endpoint.setdefault("surface", "v1_http")
+            endpoints.append((endpoint, str(self.http_endpoints.get("source", "")), "http_endpoint"))
+        for endpoint in self.legacy_http_endpoints.get("endpoints", []):
+            endpoint = dict(endpoint)
+            endpoint.setdefault("surface", "legacy_web_http")
+            endpoints.append((endpoint, str(self.legacy_http_endpoints.get("source", "")), "legacy_http_endpoint"))
+        return endpoints
+
     def get_http_endpoint(self, path_or_topic: str) -> dict[str, Any]:
         query_compact = compact(path_or_topic)
-        scored: list[tuple[int, dict[str, Any]]] = []
-        for endpoint in self.http_endpoints.get("endpoints", []):
+        scored: list[tuple[int, dict[str, Any], str, str]] = []
+        for endpoint, catalog_source, kind in self._iter_http_endpoints():
             haystack = " ".join(
                 [
                     str(endpoint.get("verb", "")),
                     str(endpoint.get("path", "")),
+                    str(endpoint.get("name", "")),
+                    str(endpoint.get("id", "")),
+                    str(endpoint.get("surface", "")),
                     str(endpoint.get("grpc_method", "")),
                     str(endpoint.get("safety_class", "")),
                 ]
             )
             if compact(endpoint.get("path", "")) == query_compact:
-                scored.append((100, endpoint))
+                scored.append((100, endpoint, catalog_source, kind))
                 continue
             score = score_text(path_or_topic, haystack)
             if score >= 10:
-                scored.append((score, endpoint))
+                scored.append((score, endpoint, catalog_source, kind))
         if not scored:
             return self._gap("http_endpoint", path_or_topic)
         scored.sort(key=lambda item: item[0], reverse=True)
-        endpoint = scored[0][1]
+        _, endpoint, catalog_source, kind = scored[0]
         return {
             "found": True,
-            "kind": "http_endpoint",
+            "kind": kind,
             "endpoint": endpoint,
-            "sources": source_list(str(self.http_endpoints.get("source", "")), str(endpoint.get("source", ""))),
+            "sources": source_list(catalog_source, str(endpoint.get("source", ""))),
         }
 
     def search_api_docs(self, query: str, *, limit: int = 10) -> dict[str, Any]:
@@ -162,17 +179,17 @@ class AxxonMcpDocs:
                         "sources": source_list(str(self.api_methods.get("source", "")), str(method.get("proto", ""))),
                     }
                 )
-        for endpoint in self.http_endpoints.get("endpoints", []):
+        for endpoint, catalog_source, kind in self._iter_http_endpoints():
             haystack = " ".join(str(endpoint.get(key, "")) for key in endpoint)
             score = score_text(query, haystack)
             if score:
                 results.append(
                     {
-                        "kind": "http_endpoint",
+                        "kind": kind,
                         "score": score,
                         "title": f"{endpoint.get('verb', '')} {endpoint.get('path', '')}",
                         "item": endpoint,
-                        "sources": source_list(str(self.http_endpoints.get("source", "")), str(endpoint.get("source", ""))),
+                        "sources": source_list(catalog_source, str(endpoint.get("source", ""))),
                     }
                 )
         for recipe in self.task_recipes.get("recipes", []):
