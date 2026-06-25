@@ -49,3 +49,14 @@ docs/api-test-runs/
 # Generated audit snapshots (regenerable, kept locally, not published)
 docs/api-audit/*-latest.md
 docs/api-audit/*-latest.json
+docs/api-audit/*.md.save
+
+# Private local cloud/API research artifacts (kept out of the public repository)
+docs/AXXONNET_CLOUD_APIS.md
+docs/api-audit/mcp-corpus/axxondata_endpoints.json
+docs/api-audit/mcp-corpus/cloud_http_endpoints.json
+docs/api-audit/mcp-corpus/cloud_source_inventory.json
+tools/generate_axxonnet_cloud_corpus.py
+tools/tests/test_generate_axxonnet_cloud_corpus.py
+axxonnet-cloud/
+docs/axxonnet-cloud/
