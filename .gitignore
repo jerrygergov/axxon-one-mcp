@@ -60,3 +60,4 @@ tools/generate_axxonnet_cloud_corpus.py
 tools/tests/test_generate_axxonnet_cloud_corpus.py
 axxonnet-cloud/
 docs/axxonnet-cloud/
+docs/axxonnet-cloud/**
